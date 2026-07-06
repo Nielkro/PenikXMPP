@@ -195,4 +195,18 @@
     <string name="channel_full_jid_example">kanal@konferencija.primjer.hr/nadimak</string>
     <string name="notification_restored_backup_subtitle">Ne zaboravi aktivirati račun.</string>
     <string name="enable_notifications">Aktiviraj obavijesti</string>
+    <string name="action_archive_chat">Arhiviraj razgovor</string>
+    <string name="remove_bookmark">Želite li ukloniti oznaku za %s?</string>
+    <string name="remove_bookmark_and_close">Želite li ukloniti oznaku za %s i arhivirati razgovor?</string>
+    <string name="start_group_chat">Započnite grupni razgovor</string>
+    <string name="crash_report_title">Došlo je do rušenja %1$s</string>
+    <string name="crash_report_message">Korištenje vašeg XMPP računa za slanje ispisa stoga pomaže daljnjem razvoju %1$s.</string>
+    <string name="delete_file_dialog_shared">Ova datoteka je podijeljena s drugim razgovorima.</string>
+    <string name="delete_file_dialog_confirm">Sigurno želite izbrisati ovu datoteku?</string>
+    <string name="delete_file_dialog_copies">Brisanjem se neće ukloniti kopije ove datoteke na drugim uređajima ili poslužiteljima.</string>
+    <plurals name="delete_files_dialog">
+        <item quantity="one">Izbriši %d datoteku</item>
+        <item quantity="few">Izbriši %d datoteke</item>
+        <item quantity="other">Izbriši %d datoteka</item>
+    </plurals>
 </resources>
