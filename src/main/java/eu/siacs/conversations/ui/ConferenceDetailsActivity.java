@@ -55,6 +55,7 @@ import eu.siacs.conversations.xmpp.manager.BookmarkManager;
 import eu.siacs.conversations.xmpp.manager.MultiUserChatManager;
 import im.conversations.android.model.Bookmark;
 import im.conversations.android.xmpp.model.muc.Affiliation;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -122,8 +123,7 @@ public class ConferenceDetailsActivity extends XmppActivity
                         getString(R.string.notify_never)
                     };
                     final AtomicInteger choice;
-                    if (mConversation.getLongAttribute(Conversation.ATTRIBUTE_MUTED_TILL, 0)
-                            == Long.MAX_VALUE) {
+                    if (Instant.MAX.equals(mConversation.getMutedTill())) {
                         choice = new AtomicInteger(2);
                     } else {
                         choice = new AtomicInteger(mConversation.alwaysNotify() ? 0 : 1);
@@ -135,12 +135,10 @@ public class ConferenceDetailsActivity extends XmppActivity
                             R.string.ok,
                             (dialog, which) -> {
                                 if (choice.get() == 2) {
-                                    mConversation.setMutedTill(Long.MAX_VALUE);
+                                    mConversation.setMutedTill(Instant.MAX);
                                 } else {
-                                    mConversation.setMutedTill(0);
-                                    mConversation.setAttribute(
-                                            Conversation.ATTRIBUTE_ALWAYS_NOTIFY,
-                                            String.valueOf(choice.get() == 0));
+                                    mConversation.setMutedTill(null);
+                                    mConversation.setAlwaysNotify(choice.get() == 0);
                                 }
                                 xmppConnectionService.updateConversation(mConversation);
                                 updateView();
@@ -686,12 +684,12 @@ public class ConferenceDetailsActivity extends XmppActivity
             this.binding.mucSettings.setVisibility(View.GONE);
         }
 
-        final long mutedTill = mConversation.getLongAttribute(Conversation.ATTRIBUTE_MUTED_TILL, 0);
-        if (mutedTill == Long.MAX_VALUE) {
+        final var mutedTill = mConversation.getMutedTill();
+        if (Instant.MAX.equals(mutedTill)) {
             this.binding.notificationStatusText.setText(R.string.notify_never);
             this.binding.notificationStatusButton.setImageResource(
                     R.drawable.ic_notifications_off_24dp);
-        } else if (System.currentTimeMillis() < mutedTill) {
+        } else if (mutedTill != null && mutedTill.isBefore(Instant.now())) {
             this.binding.notificationStatusText.setText(R.string.notify_paused);
             this.binding.notificationStatusButton.setImageResource(
                     R.drawable.ic_notifications_paused_24dp);

@@ -65,8 +65,7 @@ public class ConversationMenuConfigurator {
             visible =
                     next != Message.ENCRYPTION_NONE
                             || conversation.isPrivateAndNonAnonymous()
-                            || conversation.getBooleanAttribute(
-                                    Conversation.ATTRIBUTE_FORMERLY_PRIVATE_NON_ANONYMOUS, false);
+                            || conversation.isFormerlyPrivateNonAnonymous();
         } else {
             visible = true;
         }

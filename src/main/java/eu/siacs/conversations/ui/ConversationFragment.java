@@ -340,7 +340,7 @@ public class ConversationFragment extends XmppFragment
             new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    conversation.setAttribute("accept_non_anonymous", true);
+                    conversation.setAcceptNonAnonymous(true);
                     requireXmppActivity().xmppConnectionService.updateConversation(conversation);
                     requireXmppActivity().xmppConnectionService.joinMuc(conversation);
                 }
@@ -718,7 +718,7 @@ public class ConversationFragment extends XmppFragment
                         menuUnmute.setVisible(false);
                     }
                     ConversationMenuConfigurator.configureEncryptionMenu(c, menu);
-                    if (c.getBooleanAttribute(Conversation.ATTRIBUTE_PINNED_ON_TOP, false)) {
+                    if (c.isPinnedOnTop()) {
                         menuTogglePinned.setTitle(R.string.remove_from_favorites);
                     } else {
                         menuTogglePinned.setTitle(R.string.add_to_favorites);
@@ -1808,9 +1808,8 @@ public class ConversationFragment extends XmppFragment
     }
 
     private void togglePinned() {
-        final boolean pinned =
-                conversation.getBooleanAttribute(Conversation.ATTRIBUTE_PINNED_ON_TOP, false);
-        conversation.setAttribute(Conversation.ATTRIBUTE_PINNED_ON_TOP, !pinned);
+        final boolean pinned = conversation.isPinnedOnTop();
+        conversation.setPinnedOnTop(!pinned);
         requireXmppActivity().xmppConnectionService.updateConversation(conversation);
         this.binding.toolbar.invalidateMenu();
     }
@@ -2216,11 +2215,11 @@ public class ConversationFragment extends XmppFragment
         builder.setItems(
                 labels,
                 (dialog, which) -> {
-                    final long till;
+                    final Instant till;
                     if (durations[which] == -1) {
-                        till = Long.MAX_VALUE;
+                        till = Instant.MAX;
                     } else {
-                        till = System.currentTimeMillis() + (durations[which] * 1000L);
+                        till = Instant.now().plus(Duration.ofSeconds(durations[which]));
                     }
                     conversation.setMutedTill(till);
                     requireXmppActivity().xmppConnectionService.updateConversation(conversation);
@@ -2262,7 +2261,7 @@ public class ConversationFragment extends XmppFragment
     }
 
     public void unMuteConversation(final Conversation conversation) {
-        conversation.setMutedTill(0);
+        conversation.setMutedTill(null);
         requireXmppActivity().xmppConnectionService.updateConversation(conversation);
         requireConversationsActivity().onConversationsListItemUpdated();
         refresh();
@@ -2904,8 +2903,9 @@ public class ConversationFragment extends XmppFragment
         final boolean participating =
                 conversation.getMode() == Conversational.MODE_SINGLE
                         || conversation.getMucOptions().participating();
-        if (participating) {
-            this.binding.textInput.setText(this.conversation.getNextMessage());
+        final var draft = this.conversation.getDraft();
+        if (participating && draft != null) {
+            this.binding.textInput.setText(draft.message());
             this.binding.textInput.setSelection(this.binding.textInput.length());
         } else {
             this.binding.textInput.setText(CharSequences.EMPTY_STRING);
@@ -3684,8 +3684,9 @@ public class ConversationFragment extends XmppFragment
         final var connection = c.getAccount().getXmppConnection();
         final boolean mam = hasMamSupport(c) && !c.getContact().isBlocked();
         final MessageArchiveManager service = connection.getManager(MessageArchiveManager.class);
+        final var lastClearHistory = c.getLastClearHistory();
         return mam
-                && (c.getLastClearHistory().getTimestamp() != 0
+                && ((lastClearHistory != null && lastClearHistory.timestamp() != 0)
                         || (c.countMessages() == 0
                                 && c.messagesLoaded.get()
                                 && c.hasMessagesLeftOnServer()

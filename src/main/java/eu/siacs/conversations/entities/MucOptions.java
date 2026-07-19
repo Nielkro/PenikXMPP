@@ -29,7 +29,6 @@ import im.conversations.android.xmpp.model.data.Data;
 import im.conversations.android.xmpp.model.data.Field;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.muc.Affiliation;
-import im.conversations.android.xmpp.model.muc.Item;
 import im.conversations.android.xmpp.model.muc.Role;
 import im.conversations.android.xmpp.model.reactions.Restrictions;
 import im.conversations.android.xmpp.model.stanza.Presence;
@@ -94,14 +93,12 @@ public class MucOptions {
     private boolean mAutoPushConfiguration = true;
     private Error error = Error.NONE;
     private Self self;
-    // TODO get rid of password; access password through attributes
-    private String password = null;
 
     public MucOptions(final Conversation conversation) {
         this.account = conversation.getAccount();
         this.conversation = conversation;
-        final var affiliation = Item.affiliationOrNone(conversation.getAttribute("affiliation"));
-        final var role = Item.roleOrNone(conversation.getAttribute("role"));
+        final var affiliation = conversation.getMucAffiliationOrNone();
+        final var role = conversation.getMucRoleOrNone();
         // TODO wrap createJoinJid into something reliable
         this.self =
                 new Self(
@@ -135,10 +132,9 @@ public class MucOptions {
             this.self = user.asConnectedSelf();
             this.resetOccupantIdMap();
         }
-        final boolean roleChanged =
-                this.conversation.setAttribute("role", user.getRole().toString());
+        final boolean roleChanged = this.conversation.setMucRole(user.getRole());
         final boolean affiliationChanged =
-                this.conversation.setAttribute("affiliation", user.getAffiliation().toString());
+                this.conversation.setMucAffiliation(user.getAffiliation());
         return roleChanged || affiliationChanged;
     }
 
@@ -681,12 +677,12 @@ public class MucOptions {
         return self;
     }
 
-    public boolean setSubject(String subject) {
-        return this.conversation.setAttribute("subject", subject);
+    public boolean setSubject(final String subject) {
+        return this.conversation.setMucSubject(subject);
     }
 
     public String getSubject() {
-        return this.conversation.getAttribute("subject");
+        return this.conversation.getMucSubject();
     }
 
     private List<User> getFallbackUsersFromCryptoTargets() {
@@ -740,27 +736,26 @@ public class MucOptions {
     }
 
     public String getPassword() {
-        this.password = conversation.getAttribute(Conversation.ATTRIBUTE_MUC_PASSWORD);
-        if (this.password == null
+        final var password = this.conversation.getMucPassword();
+        if (password == null
                 && conversation.getBookmark() != null
                 && conversation.getBookmark().getPassword() != null) {
             return conversation.getBookmark().getPassword();
         } else {
-            return this.password;
+            return password;
         }
     }
 
     public void setPassword(final String password) {
-        this.password = password;
-        conversation.setAttribute(Conversation.ATTRIBUTE_MUC_PASSWORD, password);
+        this.conversation.setMucPassword(password);
     }
 
     public boolean setCaps2Hash(final String hash) {
-        return this.conversation.setAttribute(Conversation.ATTRIBUTE_CAPS2_HASH, hash);
+        return this.conversation.setMucCaps2Hash(hash);
     }
 
     public EntityCapabilities2.EntityCaps2Hash getCaps2Hash() {
-        final var caps2Hash = this.conversation.getAttribute(Conversation.ATTRIBUTE_CAPS2_HASH);
+        final var caps2Hash = this.conversation.getMucCaps2Hash();
         if (Strings.isNullOrEmpty(caps2Hash)) {
             return null;
         }

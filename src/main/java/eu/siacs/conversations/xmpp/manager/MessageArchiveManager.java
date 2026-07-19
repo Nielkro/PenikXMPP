@@ -69,15 +69,15 @@ public class MessageArchiveManager extends AbstractManager {
         }
         long endCatchup = connection.getLastSessionEstablished();
         final Query query;
-        if (mamReference.getTimestamp() == 0) {
+        if (mamReference.timestamp() == 0) {
             return;
-        } else if (endCatchup - mamReference.getTimestamp() >= Config.MAM_MAX_CATCHUP) {
+        } else if (endCatchup - mamReference.timestamp() >= Config.MAM_MAX_CATCHUP) {
             long startCatchup = endCatchup - Config.MAM_MAX_CATCHUP;
             List<Conversation> conversations = mXmppConnectionService.getConversations();
             for (Conversation conversation : conversations) {
                 if (conversation.getMode() == Conversation.MODE_SINGLE
                         && conversation.getAccount() == getAccount()
-                        && startCatchup > conversation.getLastMessageTransmitted().getTimestamp()) {
+                        && startCatchup > conversation.getLastMessageTransmitted().timestamp()) {
                     this.query(conversation, startCatchup, true);
                 }
             }
@@ -92,7 +92,7 @@ public class MessageArchiveManager extends AbstractManager {
     }
 
     public void catchupMUC(final Conversation conversation) {
-        if (conversation.getLastMessageTransmitted().getTimestamp() < 0
+        if (conversation.getLastMessageTransmitted().timestamp() < 0
                 && conversation.countMessages() == 0) {
             query(conversation, new MamReference(0), 0, true);
         } else {
@@ -101,7 +101,7 @@ public class MessageArchiveManager extends AbstractManager {
     }
 
     public Query query(final Conversation conversation) {
-        if (conversation.getLastMessageTransmitted().getTimestamp() < 0
+        if (conversation.getLastMessageTransmitted().timestamp() < 0
                 && conversation.countMessages() == 0) {
             return query(conversation, new MamReference(0), System.currentTimeMillis(), false);
         } else {
@@ -150,7 +150,7 @@ public class MessageArchiveManager extends AbstractManager {
             } else {
                 startActual = start;
             }
-            if (start.getTimestamp() == 0) {
+            if (start.timestamp() == 0) {
                 query = new Query(conversation, startActual, end, false);
                 query.reference = conversation.getFirstMamReference();
             } else {
@@ -161,11 +161,7 @@ public class MessageArchiveManager extends AbstractManager {
                                     System.currentTimeMillis() - Config.MAM_MAX_CATCHUP);
                     if (maxCatchup.greaterThan(startActual)) {
                         Query reverseCatchup =
-                                new Query(
-                                        conversation,
-                                        startActual,
-                                        maxCatchup.getTimestamp(),
-                                        false);
+                                new Query(conversation, startActual, maxCatchup.timestamp(), false);
                         this.queries.add(reverseCatchup);
                         this.execute(reverseCatchup);
                     }
@@ -586,10 +582,10 @@ public class MessageArchiveManager extends AbstractManager {
         }
 
         Query(MamReference start, long end) {
-            if (start.getReference() != null) {
-                this.reference = start.getReference();
+            if (start.reference() != null) {
+                this.reference = start.reference();
             } else {
-                this.start = start.getTimestamp();
+                this.start = start.timestamp();
             }
             this.end = end;
             this.queryId = new BigInteger(50, SECURE_RANDOM).toString(32);

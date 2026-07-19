@@ -737,7 +737,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         activity.xmppConnectionService.updateConversation(conversation);
         conversation.setHasMessagesLeftOnServer(true);
         conversation.setFirstMamReference(null);
-        long timestamp = conversation.getLastMessageTransmitted().getTimestamp();
+        long timestamp = conversation.getLastMessageTransmitted().timestamp();
         if (timestamp == 0) {
             timestamp = System.currentTimeMillis();
         }

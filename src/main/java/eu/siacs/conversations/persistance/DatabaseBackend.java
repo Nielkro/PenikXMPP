@@ -63,7 +63,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.json.JSONObject;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.stringprep.XmppStringprepException;
 import org.whispersystems.libsignal.IdentityKey;
@@ -2021,12 +2020,8 @@ public class DatabaseBackend extends SQLiteOpenHelper {
         MamReference maxClearDate = new MamReference(0);
         while (cursor.moveToNext()) {
             try {
-                final JSONObject o = new JSONObject(cursor.getString(0));
-                maxClearDate =
-                        MamReference.max(
-                                maxClearDate,
-                                MamReference.fromAttribute(
-                                        o.getString(Conversation.ATTRIBUTE_LAST_CLEAR_HISTORY)));
+                final var attributes = Conversation.Attributes.parse(cursor.getString(0));
+                maxClearDate = MamReference.max(maxClearDate, attributes.lastClearHistory());
             } catch (Exception e) {
                 // ignored
             }

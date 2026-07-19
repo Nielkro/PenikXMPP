@@ -27,6 +27,7 @@ import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.jingle.OngoingRtpSession;
 import eu.siacs.conversations.xmpp.manager.JingleManager;
+import java.time.Instant;
 import java.util.List;
 
 public class ConversationAdapter
@@ -127,7 +128,7 @@ public class ConversationAdapter
 
         if (draft != null) {
             viewHolder.binding.conversationLastmsgImg.setVisibility(View.GONE);
-            viewHolder.binding.conversationLastmsg.setText(draft.getMessage());
+            viewHolder.binding.conversationLastmsg.setText(draft.message());
             viewHolder.binding.senderName.setText(R.string.draft);
             viewHolder.binding.senderName.setVisibility(View.VISIBLE);
             viewHolder.binding.conversationLastmsg.setTypeface(null, Typeface.NORMAL);
@@ -215,13 +216,12 @@ public class ConversationAdapter
             viewHolder.binding.notificationStatus.setImageResource(
                     R.drawable.ic_phone_in_talk_24dp);
         } else {
-            final long muted_till =
-                    conversation.getLongAttribute(Conversation.ATTRIBUTE_MUTED_TILL, 0);
-            if (muted_till == Long.MAX_VALUE) {
+            final var mutedTill = conversation.getMutedTill();
+            if (mutedTill != null && mutedTill.equals(Instant.MAX)) {
                 viewHolder.binding.notificationStatus.setVisibility(View.VISIBLE);
                 viewHolder.binding.notificationStatus.setImageResource(
                         R.drawable.ic_notifications_off_24dp);
-            } else if (muted_till >= System.currentTimeMillis()) {
+            } else if (mutedTill != null && mutedTill.isAfter(Instant.now())) {
                 viewHolder.binding.notificationStatus.setVisibility(View.VISIBLE);
                 viewHolder.binding.notificationStatus.setImageResource(
                         R.drawable.ic_notifications_paused_24dp);
@@ -236,14 +236,12 @@ public class ConversationAdapter
 
         long timestamp;
         if (draft != null) {
-            timestamp = draft.getTimestamp();
+            timestamp = draft.instant().toEpochMilli();
         } else {
             timestamp = conversation.getLatestMessage().getTimeSent();
         }
         viewHolder.binding.pinnedOnTop.setVisibility(
-                conversation.getBooleanAttribute(Conversation.ATTRIBUTE_PINNED_ON_TOP, false)
-                        ? View.VISIBLE
-                        : View.GONE);
+                conversation.isPinnedOnTop() ? View.VISIBLE : View.GONE);
         viewHolder.binding.conversationLastupdate.setText(
                 UIHelper.readableTimeDifference(activity, timestamp));
         AvatarWorkerTask.loadAvatar(

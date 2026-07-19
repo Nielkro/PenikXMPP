@@ -2,7 +2,7 @@ package eu.siacs.conversations.entities;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.text.TextUtils;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.common.base.Strings;
@@ -12,6 +12,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.crypto.OmemoSetting;
 import eu.siacs.conversations.crypto.PgpDecryptionService;
@@ -25,18 +27,19 @@ import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.mam.MamReference;
 import eu.siacs.conversations.xmpp.manager.BookmarkManager;
 import eu.siacs.conversations.xmpp.manager.MultiUserChatManager;
+import im.conversations.android.json.Services;
 import im.conversations.android.model.Bookmark;
+import im.conversations.android.xmpp.model.muc.Affiliation;
+import im.conversations.android.xmpp.model.muc.Role;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class Conversation extends AbstractEntity
         implements Blockable, Comparable<Conversation>, Conversational, AvatarService.Avatar {
@@ -54,19 +57,6 @@ public class Conversation extends AbstractEntity
     public static final String MODE = "mode";
     public static final String ATTRIBUTES = "attributes";
 
-    public static final String ATTRIBUTE_MUTED_TILL = "muted_till";
-    public static final String ATTRIBUTE_ALWAYS_NOTIFY = "always_notify";
-    public static final String ATTRIBUTE_LAST_CLEAR_HISTORY = "last_clear_history";
-    public static final String ATTRIBUTE_FORMERLY_PRIVATE_NON_ANONYMOUS =
-            "formerly_private_non_anonymous";
-    public static final String ATTRIBUTE_PINNED_ON_TOP = "pinned_on_top";
-    static final String ATTRIBUTE_MUC_PASSWORD = "muc_password";
-    static final String ATTRIBUTE_CAPS2_HASH = "muc_caps2_hash";
-    private static final String ATTRIBUTE_NEXT_MESSAGE = "next_message";
-    private static final String ATTRIBUTE_NEXT_MESSAGE_TIMESTAMP = "next_message_timestamp";
-    private static final String ATTRIBUTE_CRYPTO_TARGETS = "crypto_targets";
-    private static final String ATTRIBUTE_NEXT_ENCRYPTION = "next_encryption";
-    private static final String ATTRIBUTE_CORRECTING_MESSAGE = "correcting_message";
     protected final ArrayList<Message> messages = new ArrayList<>();
     public AtomicBoolean messagesLoaded = new AtomicBoolean(true);
     protected Account account = null;
@@ -78,7 +68,7 @@ public class Conversation extends AbstractEntity
     private int status;
     private final long created;
     private int mode;
-    private final JSONObject attributes;
+    private final Attributes attributes;
     private Jid nextCounterpart;
     private boolean messagesLeftOnServer = true;
     private String mFirstMamReference = null;
@@ -95,7 +85,7 @@ public class Conversation extends AbstractEntity
                 System.currentTimeMillis(),
                 STATUS_AVAILABLE,
                 mode,
-                "");
+                new Attributes());
         this.account = account;
     }
 
@@ -108,7 +98,7 @@ public class Conversation extends AbstractEntity
             final long created,
             final int status,
             final int mode,
-            final String attributes) {
+            final Attributes attributes) {
         this.uuid = uuid;
         this.name = name;
         this.contactUuid = contactUuid;
@@ -117,19 +107,7 @@ public class Conversation extends AbstractEntity
         this.created = created;
         this.status = status;
         this.mode = mode;
-        this.attributes = parseAttributes(attributes);
-    }
-
-    private static JSONObject parseAttributes(final String attributes) {
-        if (Strings.isNullOrEmpty(attributes)) {
-            return new JSONObject();
-        } else {
-            try {
-                return new JSONObject(attributes);
-            } catch (final JSONException e) {
-                return new JSONObject();
-            }
-        }
+        this.attributes = attributes;
     }
 
     public static Conversation fromCursor(final Cursor cursor) {
@@ -142,7 +120,7 @@ public class Conversation extends AbstractEntity
                 cursor.getLong(cursor.getColumnIndexOrThrow(CREATED)),
                 cursor.getInt(cursor.getColumnIndexOrThrow(STATUS)),
                 cursor.getInt(cursor.getColumnIndexOrThrow(MODE)),
-                cursor.getString(cursor.getColumnIndexOrThrow(ATTRIBUTES)));
+                Attributes.parse(cursor.getString(cursor.getColumnIndexOrThrow(ATTRIBUTES))));
     }
 
     public static Message getLatestMarkableMessage(
@@ -166,8 +144,7 @@ public class Conversation extends AbstractEntity
             return false;
         }
         return conversation.isSingleOrPrivateAndNonAnonymous()
-                || conversation.getBooleanAttribute(
-                        ATTRIBUTE_FORMERLY_PRIVATE_NON_ANONYMOUS, false);
+                || conversation.attributes.formerlyPrivateNonAnonymous();
     }
 
     public boolean hasMessagesLeftOnServer() {
@@ -546,52 +523,42 @@ public class Conversation extends AbstractEntity
         this.mFirstMamReference = reference;
     }
 
-    public void setLastClearHistory(long time, String reference) {
-        if (reference != null) {
-            setAttribute(ATTRIBUTE_LAST_CLEAR_HISTORY, time + ":" + reference);
-        } else {
-            setAttribute(ATTRIBUTE_LAST_CLEAR_HISTORY, time);
-        }
+    public void setLastClearHistory(final long time, final String reference) {
+        this.attributes.lastClearHistory = new MamReference(time, reference);
     }
 
     public MamReference getLastClearHistory() {
-        return MamReference.fromAttribute(getAttribute(ATTRIBUTE_LAST_CLEAR_HISTORY));
+        return this.attributes.lastClearHistory;
     }
 
     public ImmutableSet<Jid> getAcceptedCryptoTargets() {
         if (mode == MODE_SINGLE) {
             return ImmutableSet.of(getAddress().asBareJid());
         } else {
-            return getJidListAttribute(ATTRIBUTE_CRYPTO_TARGETS);
+            final var list = this.attributes.cryptoTargets;
+            return list == null ? ImmutableSet.of() : ImmutableSet.copyOf(list);
         }
     }
 
     public void setAcceptedCryptoTargets(final Collection<Jid> acceptedTargets) {
-        setAttribute(ATTRIBUTE_CRYPTO_TARGETS, acceptedTargets);
+        this.attributes.cryptoTargets = ImmutableList.copyOf(acceptedTargets);
     }
 
-    public boolean setCorrectingMessage(Message correctingMessage) {
-        setAttribute(
-                ATTRIBUTE_CORRECTING_MESSAGE,
-                correctingMessage == null ? null : correctingMessage.getUuid());
+    public boolean setCorrectingMessage(final Message correctingMessage) {
+        this.attributes.correctingMessage =
+                correctingMessage == null ? null : correctingMessage.getUuid();
         return correctingMessage == null && draftMessage != null;
     }
 
     public Message getCorrectingMessage() {
-        final String uuid = getAttribute(ATTRIBUTE_CORRECTING_MESSAGE);
+        final String uuid = this.attributes.correctingMessage;
         return uuid == null ? null : findSentMessageWithUuid(uuid);
-    }
-
-    public boolean withSelf() {
-        return getContact().isSelf();
     }
 
     @Override
     public int compareTo(@NonNull Conversation another) {
         return ComparisonChain.start()
-                .compareFalseFirst(
-                        another.getBooleanAttribute(ATTRIBUTE_PINNED_ON_TOP, false),
-                        getBooleanAttribute(ATTRIBUTE_PINNED_ON_TOP, false))
+                .compareFalseFirst(another.attributes.pinnedOnTop(), attributes.pinnedOnTop())
                 .compare(another.getSortableTime(), getSortableTime())
                 .result();
     }
@@ -602,7 +569,7 @@ public class Conversation extends AbstractEntity
         if (draft == null) {
             return messageTime;
         } else {
-            return Math.max(messageTime, draft.getTimestamp());
+            return Math.max(messageTime, draft.instant.toEpochMilli());
         }
     }
 
@@ -610,7 +577,7 @@ public class Conversation extends AbstractEntity
         return draftMessage;
     }
 
-    public void setDraftMessage(String draftMessage) {
+    public void setDraftMessage(final String draftMessage) {
         this.draftMessage = draftMessage;
     }
 
@@ -645,9 +612,11 @@ public class Conversation extends AbstractEntity
     public Message getLatestMessage() {
         synchronized (this.messages) {
             if (this.messages.isEmpty()) {
-                Message message = new Message(this, "", Message.ENCRYPTION_NONE);
+                final var message = new Message(this, "", Message.ENCRYPTION_NONE);
                 message.setType(Message.TYPE_STATUS);
-                message.setTime(Math.max(getCreated(), getLastClearHistory().getTimestamp()));
+                final var lastClear = getLastClearHistory();
+                message.setTime(
+                        Math.max(getCreated(), lastClear == null ? 0 : lastClear.timestamp()));
                 return message;
             } else {
                 return this.messages.get(this.messages.size() - 1);
@@ -744,7 +713,7 @@ public class Conversation extends AbstractEntity
         values.put(STATUS, status);
         values.put(MODE, mode);
         synchronized (this.attributes) {
-            values.put(ATTRIBUTES, attributes.toString());
+            values.put(ATTRIBUTES, Services.GSON.toJson(attributes));
         }
         return values;
     }
@@ -785,6 +754,76 @@ public class Conversation extends AbstractEntity
         this.nextCounterpart = jid;
     }
 
+    public boolean isFormerlyPrivateNonAnonymous() {
+        return this.attributes.formerlyPrivateNonAnonymous();
+    }
+
+    public boolean setFormerlyPrivateNonAnonymous(final boolean value) {
+        final var current = this.attributes.formerlyPrivateNonAnonymous();
+        this.attributes.formerlyPrivateNonAnonymous = value;
+        return current != value;
+    }
+
+    public boolean setMucAffiliation(final Affiliation affiliation) {
+        final var current = getMucAffiliationOrNone();
+        this.attributes.mucAffiliation = affiliation;
+        return current != affiliation;
+    }
+
+    @NonNull
+    public Affiliation getMucAffiliationOrNone() {
+        final var a = this.attributes.mucAffiliation;
+        return a == null ? Affiliation.NONE : a;
+    }
+
+    @NonNull
+    public Role getMucRoleOrNone() {
+        final var r = this.attributes.mucRole;
+        return r == null ? Role.NONE : r;
+    }
+
+    public boolean setMucRole(final Role role) {
+        final var current = getMucRoleOrNone();
+        this.attributes.mucRole = role;
+        return current != role;
+    }
+
+    public boolean setMucSubject(final String subject) {
+        final var current = this.attributes.mucSubject;
+        this.attributes.mucSubject = subject;
+        return !Objects.equals(current, subject);
+    }
+
+    public String getMucSubject() {
+        return this.attributes.mucSubject;
+    }
+
+    public String getMucPassword() {
+        return this.attributes.mucPassword;
+    }
+
+    public void setMucPassword(final String password) {
+        this.attributes.mucPassword = password;
+    }
+
+    public String getMucCaps2Hash() {
+        return this.attributes.mucCaps2Hash;
+    }
+
+    public boolean setMucCaps2Hash(final String hash) {
+        final var current = this.attributes.mucCaps2Hash;
+        this.attributes.mucCaps2Hash = hash;
+        return !Objects.equals(current, hash);
+    }
+
+    public boolean isPinnedOnTop() {
+        return this.attributes.pinnedOnTop();
+    }
+
+    public void setPinnedOnTop(final boolean value) {
+        this.attributes.pinnedOnTop = value;
+    }
+
     public int getNextEncryption() {
         if (OmemoSetting.isAlways()) {
             return suitableForOmemoByDefault(this)
@@ -797,44 +836,39 @@ public class Conversation extends AbstractEntity
         } else {
             defaultEncryption = Message.ENCRYPTION_NONE;
         }
-        int encryption = this.getIntAttribute(ATTRIBUTE_NEXT_ENCRYPTION, defaultEncryption);
-        if (encryption == Message.ENCRYPTION_OTR || encryption < 0) {
+        final var encryption = this.attributes.nextEncryption;
+        if (encryption == null || encryption == Message.ENCRYPTION_OTR) {
             return defaultEncryption;
         } else {
             return encryption;
         }
     }
 
-    public boolean setNextEncryption(int encryption) {
-        return this.setAttribute(ATTRIBUTE_NEXT_ENCRYPTION, encryption);
-    }
-
-    public String getNextMessage() {
-        final String nextMessage = getAttribute(ATTRIBUTE_NEXT_MESSAGE);
-        return nextMessage == null ? "" : nextMessage;
+    public boolean setNextEncryption(final int encryption) {
+        final boolean modified =
+                this.attributes.nextEncryption == null
+                        || this.attributes.nextEncryption != encryption;
+        this.attributes.nextEncryption = encryption;
+        return modified;
     }
 
     public @Nullable Draft getDraft() {
-        long timestamp = getLongAttribute(ATTRIBUTE_NEXT_MESSAGE_TIMESTAMP, 0);
-        if (timestamp > getLatestMessage().getTimeSent()) {
-            String message = getAttribute(ATTRIBUTE_NEXT_MESSAGE);
-            if (!TextUtils.isEmpty(message) && timestamp != 0) {
-                return new Draft(message, timestamp);
-            }
-        }
-        return null;
+        return this.attributes.draft;
     }
 
     public boolean setNextMessage(final String input) {
-        final String message = input == null || input.trim().isEmpty() ? null : input;
-        boolean changed = !getNextMessage().equals(message);
-        this.setAttribute(ATTRIBUTE_NEXT_MESSAGE, message);
-        if (changed) {
-            this.setAttribute(
-                    ATTRIBUTE_NEXT_MESSAGE_TIMESTAMP,
-                    message == null ? 0 : System.currentTimeMillis());
+        final var message = Strings.nullToEmpty(input).trim();
+        final var current = this.attributes.draft;
+        if (message.isEmpty()) {
+            this.attributes.draft = null;
+            return current != null;
         }
-        return changed;
+        final var modified = current == null || !message.equals(current.message);
+        if (modified) {
+            this.attributes.draft = new Draft(Instant.now(), message);
+            return true;
+        }
+        return false;
     }
 
     public Bookmark getBookmark() {
@@ -931,127 +965,37 @@ public class Conversation extends AbstractEntity
         return MamReference.max(lastClear, lastReceived);
     }
 
-    public void setMutedTill(long value) {
-        this.setAttribute(ATTRIBUTE_MUTED_TILL, String.valueOf(value));
+    @org.jspecify.annotations.Nullable
+    public Instant getMutedTill() {
+        return this.attributes.mutedTill;
+    }
+
+    public void setMutedTill(final Instant value) {
+        this.attributes.mutedTill = value;
     }
 
     public boolean isMuted() {
-        return System.currentTimeMillis() < this.getLongAttribute(ATTRIBUTE_MUTED_TILL, 0);
+        final var mutedTill = this.attributes.mutedTill;
+        return mutedTill != null && mutedTill.isAfter(Instant.now());
+    }
+
+    public boolean isAcceptNonAnonymous() {
+        return this.attributes.acceptNonAnonymous();
+    }
+
+    public void setAcceptNonAnonymous(final boolean value) {
+        this.attributes.acceptNonAnonymous = value;
+    }
+
+    public void setAlwaysNotify(final boolean value) {
+        this.attributes.alwaysNotify = value;
     }
 
     public boolean alwaysNotify() {
         return mode == MODE_SINGLE
-                || getBooleanAttribute(
-                        ATTRIBUTE_ALWAYS_NOTIFY,
+                || Attributes.valueOrDefault(
+                        this.attributes.alwaysNotify,
                         Config.ALWAYS_NOTIFY_BY_DEFAULT || isPrivateAndNonAnonymous());
-    }
-
-    public boolean setAttribute(String key, boolean value) {
-        return setAttribute(key, String.valueOf(value));
-    }
-
-    private boolean setAttribute(String key, long value) {
-        return setAttribute(key, Long.toString(value));
-    }
-
-    private boolean setAttribute(String key, int value) {
-        return setAttribute(key, String.valueOf(value));
-    }
-
-    public boolean setAttribute(String key, String value) {
-        synchronized (this.attributes) {
-            try {
-                if (value == null) {
-                    if (this.attributes.has(key)) {
-                        this.attributes.remove(key);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                } else {
-                    final String prev = this.attributes.optString(key, null);
-                    this.attributes.put(key, value);
-                    return !value.equals(prev);
-                }
-            } catch (JSONException e) {
-                throw new AssertionError(e);
-            }
-        }
-    }
-
-    public boolean setAttribute(final String key, final Collection<Jid> addresses) {
-        JSONArray array = new JSONArray();
-        for (Jid jid : addresses) {
-            array.put(jid.asBareJid().toString());
-        }
-        synchronized (this.attributes) {
-            try {
-                this.attributes.put(key, array);
-                return true;
-            } catch (JSONException e) {
-                return false;
-            }
-        }
-    }
-
-    public String getAttribute(String key) {
-        synchronized (this.attributes) {
-            return this.attributes.optString(key, null);
-        }
-    }
-
-    private ImmutableSet<Jid> getJidListAttribute(final String key) {
-        final var builder = new ImmutableSet.Builder<Jid>();
-        synchronized (this.attributes) {
-            try {
-                JSONArray array = this.attributes.getJSONArray(key);
-                for (int i = 0; i < array.length(); ++i) {
-                    try {
-                        builder.add(Jid.of(array.getString(i)));
-                    } catch (IllegalArgumentException e) {
-                        // ignored
-                    }
-                }
-            } catch (JSONException e) {
-                // ignored
-            }
-        }
-        return builder.build();
-    }
-
-    private int getIntAttribute(String key, int defaultValue) {
-        String value = this.getAttribute(key);
-        if (value == null) {
-            return defaultValue;
-        } else {
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException e) {
-                return defaultValue;
-            }
-        }
-    }
-
-    public long getLongAttribute(String key, long defaultValue) {
-        String value = this.getAttribute(key);
-        if (value == null) {
-            return defaultValue;
-        } else {
-            try {
-                return Long.parseLong(value);
-            } catch (NumberFormatException e) {
-                return defaultValue;
-            }
-        }
-    }
-
-    public boolean getBooleanAttribute(String key, boolean defaultValue) {
-        String value = this.getAttribute(key);
-        if (value == null) {
-            return defaultValue;
-        } else {
-            return Boolean.parseBoolean(value);
-        }
     }
 
     public void add(Message message) {
@@ -1202,25 +1146,85 @@ public class Conversation extends AbstractEntity
         return this.displayState;
     }
 
+    public static final class Attributes {
+        @SerializedName("muted_till")
+        private Instant mutedTill;
+
+        @SerializedName("always_notify")
+        private Boolean alwaysNotify;
+
+        @SerializedName("last_clear")
+        private MamReference lastClearHistory;
+
+        @SerializedName("formerly_private_non_anonymous")
+        private Boolean formerlyPrivateNonAnonymous;
+
+        @SerializedName("pinned_on_top")
+        private Boolean pinnedOnTop;
+
+        private Affiliation mucAffiliation;
+        private Role mucRole;
+
+        @SerializedName("muc_password")
+        private String mucPassword;
+
+        @SerializedName("muc_caps2_hash")
+        private String mucCaps2Hash;
+
+        @SerializedName("subject")
+        private String mucSubject;
+
+        @SerializedName("draft")
+        private Draft draft;
+
+        @SerializedName("crypto_targets")
+        private List<Jid> cryptoTargets;
+
+        @SerializedName("next_encryption")
+        private Integer nextEncryption;
+
+        @SerializedName("correcting_message")
+        private String correctingMessage;
+
+        @SerializedName("accept_non_anonymous")
+        private Boolean acceptNonAnonymous;
+
+        public static Attributes parse(final String json) {
+            if (Strings.isNullOrEmpty(json)) {
+                return new Attributes();
+            }
+            try {
+                return Services.GSON.fromJson(json, Attributes.class);
+            } catch (final JsonParseException e) {
+                Log.d(Config.LOGTAG, "could not parse account keys from " + json, e);
+                return new Attributes();
+            }
+        }
+
+        public boolean acceptNonAnonymous() {
+            return valueOrDefault(this.acceptNonAnonymous, false);
+        }
+
+        public boolean pinnedOnTop() {
+            return valueOrDefault(this.pinnedOnTop, false);
+        }
+
+        public boolean formerlyPrivateNonAnonymous() {
+            return valueOrDefault(this.formerlyPrivateNonAnonymous, false);
+        }
+
+        public MamReference lastClearHistory() {
+            return this.lastClearHistory;
+        }
+
+        private static boolean valueOrDefault(final Boolean value, final boolean d) {
+            return value == null ? d : value;
+        }
+    }
+
     public interface OnMessageFound {
         void onMessageFound(final Message message);
     }
 
-    public static class Draft {
-        private final String message;
-        private final long timestamp;
-
-        private Draft(String message, long timestamp) {
-            this.message = message;
-            this.timestamp = timestamp;
-        }
-
-        public long getTimestamp() {
-            return timestamp;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-    }
+    public record Draft(Instant instant, String message) {}
 }

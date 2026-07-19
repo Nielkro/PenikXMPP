@@ -139,6 +139,7 @@ import im.conversations.android.xmpp.model.up.Push;
 import java.io.File;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -615,7 +616,7 @@ public class XmppConnectionService extends Service {
                                                 + ")");
                                 return;
                             }
-                            c.setMutedTill(System.currentTimeMillis() + 30 * 60 * 1000);
+                            c.setMutedTill(Instant.now().plus(Duration.ofMinutes(30)));
                             mNotificationService.clearMessages(c);
                             updateConversation(c);
                         });
@@ -1620,8 +1621,7 @@ public class XmppConnectionService extends Service {
         if (message.getEncryption() != Message.ENCRYPTION_NONE
                 && conversation.getMode() == Conversation.MODE_MULTI
                 && conversation.isPrivateAndNonAnonymous()) {
-            if (conversation.setAttribute(
-                    Conversation.ATTRIBUTE_FORMERLY_PRIVATE_NON_ANONYMOUS, true)) {
+            if (conversation.setFormerlyPrivateNonAnonymous(true)) {
                 databaseBackend.updateConversation(conversation);
             }
         }
@@ -2066,12 +2066,13 @@ public class XmppConnectionService extends Service {
                     final Account account = conversation.getAccount();
                     List<Message> messages =
                             databaseBackend.getMessages(conversation, 50, timestamp);
+                    final var lastClear = conversation.getLastClearHistory();
                     if (messages.size() > 0) {
                         conversation.addAll(0, messages);
                         callback.onMoreMessagesLoaded(messages.size(), conversation);
                     } else if (conversation.hasMessagesLeftOnServer()
                             && account.isOnlineAndConnected()
-                            && conversation.getLastClearHistory().getTimestamp() == 0) {
+                            && (lastClear == null || lastClear.timestamp() == 0)) {
                         final boolean mamAvailable;
                         if (conversation.getMode() == Conversation.MODE_SINGLE) {
                             mamAvailable =

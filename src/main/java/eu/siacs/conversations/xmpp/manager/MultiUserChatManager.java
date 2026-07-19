@@ -55,7 +55,6 @@ import im.conversations.android.xmpp.model.muc.admin.Item;
 import im.conversations.android.xmpp.model.muc.admin.MucAdmin;
 import im.conversations.android.xmpp.model.muc.owner.Destroy;
 import im.conversations.android.xmpp.model.muc.owner.MucOwner;
-import im.conversations.android.xmpp.model.muc.user.Invite;
 import im.conversations.android.xmpp.model.muc.user.MucUser;
 import im.conversations.android.xmpp.model.occupant.OccupantId;
 import im.conversations.android.xmpp.model.pgp.Signed;
@@ -234,7 +233,7 @@ public class MultiUserChatManager extends AbstractManager {
         final MucOptions mucOptions = getOrCreateState(conversation);
         if (mucOptions.nonanonymous()
                 && !mucOptions.membersOnly()
-                && !conversation.getBooleanAttribute("accept_non_anonymous", false)) {
+                && !conversation.isAcceptNonAnonymous()) {
             synchronized (this.inProgressConferenceJoins) {
                 this.inProgressConferenceJoins.remove(conversation);
             }
@@ -262,7 +261,7 @@ public class MultiUserChatManager extends AbstractManager {
             history.setMaxStanzas(0);
         } else {
             // Fallback to muc history
-            history.setSince(conversation.getLastMessageTransmitted().getTimestamp());
+            history.setSince(conversation.getLastMessageTransmitted().timestamp());
         }
         available(joinJid, mucOptions.nonanonymous(), x);
         if (!joinJid.equals(conversation.getAddress())) {
@@ -987,7 +986,7 @@ public class MultiUserChatManager extends AbstractManager {
 
         if (configuration.get("muc#roomconfig_whois") instanceof String whois
                 && whois.equals("anyone")) {
-            conversation.setAttribute("accept_non_anonymous", true);
+            conversation.setAcceptNonAnonymous(true);
             getDatabase().updateConversation(conversation);
         }
 
