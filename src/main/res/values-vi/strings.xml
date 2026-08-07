@@ -33,7 +33,7 @@
     <string name="nick_in_use">Biệt danh đã được sử dụng</string>
     <string name="invalid_muc_nick">Biệt danh không hợp lệ</string>
     <string name="admin">Quản trị viên</string>
-    <string name="owner">Chủ nhân</string>
+    <string name="owner">Chủ nhóm</string>
     <string name="moderator">Điều phối viên</string>
     <string name="participant">Thành viên</string>
     <string name="visitor">Khách</string>
@@ -85,8 +85,8 @@
     <string name="send_message">Gửi tin nhắn</string>
     <string name="send_message_to_x">Gửi tin nhắn đến %s</string>
     <string name="send_omemo_x509_message">Gửi tin nhắn mã hoá v\\OMEMO</string>
-    <string name="your_nick_has_been_changed">Biệt danh mới đang được sử dụng</string>
-    <string name="send_unencrypted">Gửi dạng không mã hoá</string>
+    <string name="your_nick_has_been_changed">Biệt danh của bạn đã được thay đổi</string>
+    <string name="send_unencrypted">Gửi chữ không mã hoá</string>
     <string name="decryption_failed">Giải mã thất bại. Có lẽ bạn không có đúng khoá cá nhân.</string>
     <string name="openkeychain_required">OpenKeychain</string>
     <string name="openkeychain_required_long"><![CDATA[%1$s sử dụng <b>OpenKeychain</b> để mã hoá và giải mã các tin nhắn và quản lý các mã khoá công khi của bạn.<br><br>Nó được cấp phép dưới GPLv3 và có sẵn trên F-Droid và Google Play.<br><br><small>(Vui lòng khởi động lại %1$s sau đó.)</small>]]></string>
@@ -116,8 +116,8 @@
     <string name="pref_notification_grace_period_summary">Khoảng thời gian mà các thông báo được giữ im lặng sau khi phát hiện hoạt động trên một trong những thiết bị khác.</string>
     <string name="pref_advanced_options">Nâng cao</string>
     <string name="pref_never_send_crash_summary">Bằng việc gửi báo cáo hoạt động, bạn đang hỗ trợ sự phát triển</string>
-    <string name="pref_confirm_messages">Xác nhận tin nhắn</string>
-    <string name="pref_confirm_messages_summary">Báo cho liên hệ của bạn biết khi bạn đã nhận và đọc tin nhắn</string>
+    <string name="pref_confirm_messages">Biên nhận tin nhắn</string>
+    <string name="pref_confirm_messages_summary">Khi bật, các liên hệ của bạn sẽ biết khi bạn đã nhận và đọc tin nhắn.</string>
     <string name="pref_prevent_screenshots">Ngăn chặn chụp màn hình</string>
     <string name="pref_prevent_screenshots_summary">Ẩn nội dung ứng dụng trong màn hình chuyển ứng dụng và chặn chụp màn hình</string>
     <string name="pref_ui_options">UI</string>
@@ -134,7 +134,7 @@
     <string name="error_not_an_image_file">Tập tin bạn chọn không phải là hình ảnh</string>
     <string name="error_compressing_image">Không thể chuyển đổi tệp hình ảnh</string>
     <string name="error_file_not_found">Không tìm thấy tập tin</string>
-    <string name="error_io_exception">Lỗi I/O tổng quát. Có lẽ đã hết dung lượng lưu trữ?</string>
+    <string name="error_io_exception">Lỗi I/O tổng quát. Có lẽ bạn đã hết dung lượng lưu trữ?</string>
     <string name="error_security_exception_during_image_copy">Ứng dụng mà bạn dùng để chọn hình ảnh này không cung cấp đủ quyền để đọc tệp.
 \n
 \n<small>Hãy sử dụng trình quản lý tệp khác để chọn hình ảnh</small>.</string>
@@ -144,20 +144,20 @@
     <string name="account_status_online">Trực tuyến</string>
     <string name="account_status_connecting">Đang kết nối\u2026</string>
     <string name="account_status_offline">Ngoại tuyến</string>
-    <string name="account_status_unauthorized">Chưa xác minh</string>
+    <string name="account_status_unauthorized">Không có quyền truy cập</string>
     <string name="account_status_not_found">Không tìm thấy máy chủ</string>
     <string name="account_status_no_internet">Không có kết nối mạng</string>
     <string name="account_status_regis_fail">Đăng ký thất bại</string>
     <string name="account_status_regis_conflict">Tên người dùng đã được sử dụng</string>
     <string name="account_status_regis_success">Đăng ký hoàn tất</string>
-    <string name="account_status_regis_not_sup">Việc đăng ký không được máy chủ hỗ trợ</string>
+    <string name="account_status_regis_not_sup">Máy chủ này không hỗ trợ đăng ký</string>
     <string name="account_status_regis_invalid_token">Mã đăng ký không hợp lệ</string>
-    <string name="account_status_tls_error">Thương lượng TLS thất bại</string>
-    <string name="account_status_tls_error_domain">Miền không thể xác minh được</string>
+    <string name="account_status_tls_error">Thỏa thuận TLS thất bại</string>
+    <string name="account_status_tls_error_domain">Tên miền không thể xác minh được</string>
     <string name="account_status_policy_violation">Vi phạm chính sách</string>
     <string name="account_status_incompatible_server">Máy chủ không tương thích</string>
-    <string name="account_status_stream_error">Lỗi truyền phát</string>
-    <string name="account_status_stream_opening_error">Lỗi khi mở luồng truyền</string>
+    <string name="account_status_stream_error">Lỗi đường truyền</string>
+    <string name="account_status_stream_opening_error">Lỗi khi mở đường truyền</string>
     <string name="encryption_choice_unencrypted">Không mã hoá</string>
     <string name="encryption_choice_otr">OTR</string>
     <string name="encryption_choice_pgp">OpenPGP</string>
@@ -167,10 +167,10 @@
     <string name="mgmt_account_publish_avatar">Đăng ảnh đại diện</string>
     <string name="mgmt_account_publish_pgp">Đăng khoá công cộng OpenPGP</string>
     <string name="unpublish_pgp">Xoá mã khoá OpenPGP công khai</string>
-    <string name="unpublish_pgp_message">Bạn có chắc bạn muốn xoá mã khoá OpenPGP công khai của bạn khỏi sự thông báo có mặt của bạn không?\nCác liên hệ của bạn sẽ không thể gửi các tin nhắn được mã hoá bằng OpenPGP cho bạn nữa.</string>
-    <string name="openpgp_has_been_published">Đã xuất bản mã khoá OpenPGP công khai.</string>
+    <string name="unpublish_pgp_message">Bạn có chắc bạn muốn xoá khoá công khai OpenPGP khỏi thông báo hiện diện của bạn không?\nCác liên hệ của bạn sẽ không thể gửi tin nhắn được mã hoá bằng OpenPGP cho bạn nữa.</string>
+    <string name="openpgp_has_been_published">Đã xuất bản khoá công khai OpenPGP.</string>
     <string name="mgmt_account_enable">Bật tài khoản</string>
-    <string name="mgmt_account_delete_confirm_text">Bạn có chắc chắn muốn xóa tài khoản chứ? Việc xoá tài khoản sẽ xoá toàn bộ lịch sử cuộc hội thoại của bạn</string>
+    <string name="mgmt_account_delete_confirm_text">Bạn có chắc chắn muốn xóa tài khoản chứ? Việc xoá tài khoản sẽ xoá toàn bộ lịch sử các cuộc hội thoại của bạn</string>
     <string name="account_settings_jabber_id">Địa chỉ XMPP</string>
     <string name="block_jabber_id">Chặn địa chỉ XMPP</string>
     <string name="account_settings_example_jabber_id">username@example.com</string>
@@ -179,14 +179,14 @@
     <string name="error_out_of_memory">Hết bộ nhớ. Hình ảnh quá lớn</string>
     <string name="add_phone_book_text">Bạn có muốn thêm %s vào danh bạ?</string>
     <string name="server_info_show_more">Thông tin máy chủ</string>
-    <string name="server_info_mam">XEP-0313: MAM</string>
-    <string name="server_info_carbon_messages">XEP-0280: Message Carbons</string>
-    <string name="server_info_csi">XEP-0352: Biểu thị trạng thái máy trạm</string>
-    <string name="server_info_blocking">XEP-0191: Blocking Command</string>
-    <string name="server_info_roster_version">XEP-0237: Phiên bản hoá danh sách bạn bè</string>
-    <string name="server_info_stream_management">XEP-0198: Stream Management</string>
-    <string name="server_info_external_service_discovery">XEP-0215: Khám phá dịch vụ ngoài</string>
-    <string name="server_info_pep">XEP-0163: PEP (Avatars / OMEMO)</string>
+    <string name="server_info_mam">XEP-0313: MAM (Quản lý lưu trữ tin nhắn nhóm)</string>
+    <string name="server_info_carbon_messages">XEP-0280: Message Carbons (Sao y tin nhắn)</string>
+    <string name="server_info_csi">XEP-0352: Client State Indication (Biểu thị trạng thái máy người dùng)</string>
+    <string name="server_info_blocking">XEP-0191: Blocking Command (Chặn)</string>
+    <string name="server_info_roster_version">XEP-0237: Roster Versioning (Phiên bản hoá danh bạ)</string>
+    <string name="server_info_stream_management">XEP-0198: Stream Management (Quản lý luồng truyền)</string>
+    <string name="server_info_external_service_discovery">XEP-0215: External Service Discovery (Khám phá dịch vụ ngoài XMPP)</string>
+    <string name="server_info_pep">XEP-0163: PEP (Ảnh đại diện / OMEMO)</string>
     <string name="server_info_http_upload">XEP-0363: HTTP File Upload</string>
     <string name="server_info_push">XEP-0357: Push</string>
     <string name="server_info_available">sẵn sàng</string>
@@ -891,7 +891,7 @@
     <string name="backup_started_message">Việc sao lưu đã được bắt đầu. Bạn sẽ nhận một thông báo khi việc đó đã hoàn tất.</string>
     <string name="unable_to_enable_video">Không thể bật video.</string>
     <string name="plain_text_document">Tài liệu văn bản thuần</string>
-    <string name="account_status_incompatible_client">Máy khách không tương thích</string>
+    <string name="account_status_incompatible_client">Máy người dùng không tương thích</string>
     <string name="group_chats">Trò chuyện nhóm</string>
     <string name="pref_autojoin">Đồng bộ dấu trang</string>
     <string name="pref_autojoin_summary">Đặt cờ \"autojoin\" khi tham gia hoặc rời khỏi nhóm trò chuyện và phản hồi sự điều chỉnh của người dùng khác.</string>
@@ -933,4 +933,12 @@
     <string name="reject_switch_to_video">Từ chối yêu cầu chuyển sang video</string>
     <string name="delete_from_server">Xóa tài khoản khỏi máy chủ</string>
     <string name="could_not_delete_account_from_server">Không thể xóa tài khoản khỏi máy chủ</string>
+    <string name="title_activity_share_with">Chia sẻ với…</string>
+    <string name="account_status_airplane_mode">Chế độ máy bay</string>
+    <string name="account_status_connection_timeout">Quá thời gian kết nối</string>
+    <string name="account_status_regis_invalid_captcha">CAPTCHA không hợp lệ</string>
+    <string name="account_status_tls_error_protocol">Đường truyền an toàn kém (không sử dụng TLS 1.3)</string>
+    <string name="account_status_tls_error_untrusted">Chứng chỉ không tin tưởng</string>
+    <string name="account_status_channel_binding">Không có tính năng Channel binding</string>
+    <string name="action_archive_chat">Lưu trữ chat</string>
 </resources>
