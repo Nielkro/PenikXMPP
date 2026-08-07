@@ -1,1 +1,1 @@
-Cliente Jabber/XMPP fácil de implementar y usar
+Jabber/XMPP: Conexión inmediata y búsqueda fácil de amigos
