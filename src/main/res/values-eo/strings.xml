@@ -723,4 +723,11 @@
     <string name="scan_qr_code">Skani QR-kodon</string>
     <string name="show_qr_code">Montri QR-kodon</string>
     <string name="show_block_list">Montri baritliston</string>
+    <string name="conference_creation_failed">Ne povis krei grupan babilejon</string>
+    <string name="account_status_host_unknown">Ne responsa por domajno</string>
+    <string name="use_camera_icon_to_scan_barcode">Uzu kameraon por skanado de QR-kodo de kontaktulo</string>
+    <string name="please_wait_for_keys_to_be_fetched">Bonvolu atendi por elŝutado de ŝlosiloj</string>
+    <string name="share_as_uri">Konigi XMPP-retadreson</string>
+    <string name="share_invitation">Konigi inviton</string>
+    <string name="pref_blind_trust_before_verification">Blinde fidi antaŭ konfirmado</string>
 </resources>
