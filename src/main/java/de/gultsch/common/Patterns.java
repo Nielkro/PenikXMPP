@@ -30,10 +30,7 @@ public class Patterns {
     public static final Pattern URI_MUMBLE = Pattern.compile("mumble://\\S+");
     public static final Pattern URI_WEB_AP = Pattern.compile("web\\+ap://\\S+");
 
-    public static Pattern URI_GEO =
-            Pattern.compile(
-                    "geo:(-?\\d+(?:\\.\\d+)?),(-?\\d+(?:\\.\\d+)?)(?:,-?\\d+(?:\\.\\d+)?)?(?:;crs=[\\w-]+)?(?:;u=\\d+(?:\\.\\d+)?)?(?:;[\\w-]+=(?:[\\w-_.!~*'()]|%[\\da-f][\\da-f])+)*(\\?z=\\d+)?",
-                    Pattern.CASE_INSENSITIVE);
+    public static Pattern URI_GEO = genericUri(ImmutableList.of("geo"));
 
     public static final Pattern IPV4 =
             Pattern.compile(

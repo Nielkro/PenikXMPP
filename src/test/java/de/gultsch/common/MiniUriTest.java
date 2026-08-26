@@ -244,6 +244,28 @@ public class MiniUriTest {
     public void geoUriWithLabel() {
         final var uri = new MiniUri.Geo(123.45, -67.89);
         Assert.assertEquals(
-                "geo:123.45,-67.89?q=123.45,-67.89(Here)", uri.asUniveralsUri("Here").toString());
+                "geo:123.45,-67.89?q=123.45,-67.89(Here)", uri.asUniversalUri("Here").toString());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void invalidGeoUri() {
+        MiniUri.asMiniUri("geo:invalid");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void invalidGeoParametersUri() {
+        MiniUri.asMiniUri("geo:0,0;invalid");
+    }
+
+    @Test
+    public void geoUriIssue916() {
+        final var uri =
+                MiniUri.asMiniUri("geo:48.87052,2.35289?z=22&q=48.87052,2.35289(Le+Saint-Denis)");
+        Assert.assertTrue(uri instanceof MiniUri.Geo);
+        final var geo = (MiniUri.Geo) uri;
+        Assert.assertEquals(48.87052, geo.getLatitude(), 0.0);
+        Assert.assertEquals(2.35289, geo.getLongitude(), 0.0);
+        Assert.assertEquals(22, (long) geo.getZoom().get());
+        Assert.assertEquals("Le Saint-Denis", geo.getLabel().get());
     }
 }

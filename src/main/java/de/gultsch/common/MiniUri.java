@@ -75,7 +75,6 @@ public class MiniUri {
             this.path = authorityPathParts.size() == 2 ? authorityPathParts.get(1) : null;
         } else {
             this.authority = null;
-            // TODO path ; style path components from something like geo uri
             this.path = authorityPath;
         }
         if (authorityPathAndQuery.size() == 2) {
@@ -87,7 +86,7 @@ public class MiniUri {
 
     private static char getDelimiter(final String scheme) {
         return switch (scheme) {
-            case "xmpp", "geo" -> ';';
+            case "xmpp" -> ';';
             default -> '&';
         };
     }
@@ -277,12 +276,7 @@ public class MiniUri {
                 throw new IllegalArgumentException("HTTP URI does not match pattern");
             }
             case "mumble" -> asMiniUriIfMatch(Patterns.URI_MUMBLE, uri);
-            case "geo" -> {
-                if (Patterns.URI_GEO.matcher(uri).matches()) {
-                    yield new Geo(uri);
-                }
-                throw new IllegalArgumentException("GEO URI does not match pattern");
-            }
+            case "geo" -> new Geo(uri);
             case "xmpp" -> new Xmpp(uri);
             case "taler" -> asMiniUriIfMatch(Patterns.URI_TALER, uri);
             case "imto" -> new Imto(uri);
@@ -545,8 +539,17 @@ public class MiniUri {
             this.longitude = longitude;
             if (pathComponents.size() >= 2) {
                 this.geoParameters = parseParameters(Iterables.skip(pathComponents, 1));
+                checkGeoParameters(this.geoParameters);
             } else {
                 this.geoParameters = Collections.emptyMap();
+            }
+        }
+
+        private static void checkGeoParameters(final Map<String, Collection<String>> parameters) {
+            for (final var values : parameters.values()) {
+                if (values.size() != 1 || Strings.isNullOrEmpty(Iterables.getOnlyElement(values))) {
+                    throw new IllegalArgumentException("Invalid geo parameters");
+                }
             }
         }
 
@@ -584,6 +587,19 @@ public class MiniUri {
                 return Optional.absent();
             }
             return Optional.fromNullable(Ints.tryParse(z));
+        }
+
+        public Optional<String> getLabel() {
+            final var q = this.getParameter("q");
+            if (Strings.isNullOrEmpty(q)) {
+                return Optional.absent();
+            }
+            final int start = q.indexOf('(');
+            final int end = q.lastIndexOf(')');
+            if (start != -1 && end != -1 && end > start) {
+                return Optional.of(q.substring(start + 1, end));
+            }
+            return Optional.absent();
         }
 
         public Uri asUniversalUri() {
