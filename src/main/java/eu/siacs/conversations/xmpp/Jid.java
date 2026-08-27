@@ -3,8 +3,8 @@ package eu.siacs.conversations.xmpp;
 import androidx.annotation.NonNull;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+import com.google.common.net.InetAddresses;
 import eu.siacs.conversations.services.QuickConversationsService;
-import eu.siacs.conversations.utils.IP;
 import im.conversations.android.xmpp.model.stanza.Stanza;
 import java.io.Serializable;
 import java.net.IDN;
@@ -109,7 +109,7 @@ public abstract class Jid implements Comparable<Jid>, Serializable, CharSequence
                 }
             }
             return jid.isBareJid() ? bare : bare.withResource(jid.getResource());
-        } else if (IP.matches(domain)) {
+        } else if (InetAddresses.isUriInetAddress(domain)) {
             return jid;
         }
         throw new IllegalArgumentException("Invalid hostname");

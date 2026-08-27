@@ -1,19 +1,9 @@
 package eu.siacs.conversations.utils;
 
 import com.google.common.net.InetAddresses;
-import de.gultsch.common.Patterns;
 import java.net.InetAddress;
 
 public class IP {
-
-    public static boolean matches(final String server) {
-        return server != null
-                && (Patterns.IPV4.matcher(server).matches()
-                        || Patterns.IPV6.matcher(server).matches()
-                        || Patterns.IPV6_6HEX4DEC.matcher(server).matches()
-                        || Patterns.IPV6_HEX4_DECOMPRESSED.matcher(server).matches()
-                        || Patterns.IPV6_HEX_COMPRESSED.matcher(server).matches());
-    }
 
     public static String wrapIPv6(final String host) {
         if (InetAddresses.isInetAddress(host)) {

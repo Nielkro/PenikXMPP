@@ -29,25 +29,7 @@ public class Patterns {
     public static final Pattern URI_HTTP = Pattern.compile("https?://\\S+");
     public static final Pattern URI_MUMBLE = Pattern.compile("mumble://\\S+");
     public static final Pattern URI_WEB_AP = Pattern.compile("web\\+ap://\\S+");
-
-    public static Pattern URI_GEO = genericUri(ImmutableList.of("geo"));
-
-    public static final Pattern IPV4 =
-            Pattern.compile(
-                    "\\A(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z");
-    public static final Pattern IPV6 =
-            Pattern.compile("\\A(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\z");
-    public static final Pattern IPV6_HEX4_DECOMPRESSED =
-            Pattern.compile(
-                    "\\A((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)"
-                        + " ::((?:[0-9A-Fa-f]{1,4}:)*)(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z");
-    public static final Pattern IPV6_6HEX4DEC =
-            Pattern.compile(
-                    "\\A((?:[0-9A-Fa-f]{1,4}:){6,6})(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z");
-    public static final Pattern IPV6_HEX_COMPRESSED =
-            Pattern.compile(
-                    "\\A((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)\\z");
-
+    public static final Pattern URI_GEO = genericUri(ImmutableList.of("geo"));
     public static final Pattern URI_TALER = Pattern.compile("taler://\\S+");
 
     private static Pattern genericUri(final List<String> schemes) {

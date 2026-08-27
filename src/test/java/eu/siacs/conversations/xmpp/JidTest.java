@@ -16,6 +16,26 @@ public class JidTest {
     }
 
     @Test
+    public void ipv6() {
+        Jid.ofUserInput("test@[::1]");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void ipv6Raw() {
+        Jid.ofUserInput("test@::1");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void invalidIp6() {
+        Jid.ofUserInput("test@[2001:db8::1::1]");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void invalidIpv6Alt() {
+        Jid.ofUserInput("test@[2001:db8:12345::1]");
+    }
+
+    @Test
     public void testDoubleDash() {
         Jid.ofUserInput("user@a--z.com");
     }

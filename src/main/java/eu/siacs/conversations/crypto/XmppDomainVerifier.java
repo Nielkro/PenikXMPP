@@ -6,9 +6,10 @@ import androidx.annotation.NonNull;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
-import eu.siacs.conversations.utils.IP;
+import com.google.common.net.InetAddresses;
 import java.io.IOException;
 import java.net.IDN;
+import java.net.InetAddress;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateParsingException;
@@ -123,14 +124,18 @@ public class XmppDomainVerifier {
         try {
             final ValidDomains validDomains = parseValidDomains(certificate);
             Log.d(LOGTAG, "searching for " + domain + " in " + validDomains);
-            if (hostname != null) {
-                Log.d(LOGTAG, "also trying to verify hostname " + hostname);
+            if (InetAddresses.isUriInetAddress(domain)) {
+                Log.d(LOGTAG, "checking for ip in " + validDomains.ipAddresses);
+                return validDomains.ipAddresses.contains(InetAddresses.forUriString(domain));
+            } else {
+                if (hostname != null) {
+                    Log.d(LOGTAG, "also trying to verify hostname " + hostname);
+                }
+                return validDomains.xmppAddresses.contains(domain)
+                        || validDomains.srvNames.contains("_xmpp-client." + domain)
+                        || matchDomain(domain, validDomains.domains)
+                        || (hostname != null && matchDomain(hostname, validDomains.domains));
             }
-            return validDomains.xmppAddresses.contains(domain)
-                    || (IP.matches(domain) && validDomains.ipAddresses.contains(domain))
-                    || validDomains.srvNames.contains("_xmpp-client." + domain)
-                    || matchDomain(domain, validDomains.domains)
-                    || (hostname != null && matchDomain(hostname, validDomains.domains));
         } catch (final Exception e) {
             return false;
         }
@@ -143,7 +148,7 @@ public class XmppDomainVerifier {
         final var xmppAddresses = new ImmutableSet.Builder<String>();
         final var srvNames = new ImmutableSet.Builder<String>();
         final var domains = new ImmutableSet.Builder<String>();
-        final var ips = new ImmutableSet.Builder<String>();
+        final var ips = new ImmutableSet.Builder<InetAddress>();
         if (alternativeNames == null || alternativeNames.isEmpty()) {
             Log.d(LOGTAG, "no alternative names found. using common names");
             return new ValidDomains(
@@ -177,8 +182,8 @@ public class XmppDomainVerifier {
                 }
             } else if (type == 7) {
                 final Object value = san.get(1);
-                if (value instanceof String s) {
-                    ips.add(s);
+                if (value instanceof String s && InetAddresses.isInetAddress(s)) {
+                    ips.add(InetAddresses.forString(s));
                 }
             } else {
                 Log.d(LOGTAG, "found more types: " + type);
@@ -189,13 +194,13 @@ public class XmppDomainVerifier {
     }
 
     public static final class ValidDomains {
-        final Set<String> ipAddresses;
+        final Set<InetAddress> ipAddresses;
         final Set<String> xmppAddresses;
         final Set<String> srvNames;
         final Set<String> domains;
 
         private ValidDomains(
-                Set<String> ipAddresses,
+                Set<InetAddress> ipAddresses,
                 Set<String> xmppAddresses,
                 Set<String> srvNames,
                 Set<String> domains) {

@@ -143,10 +143,10 @@ public class Resolver {
     }
 
     private static List<Result> fromIpAddress(final String domain) {
-        if (IP.matches(domain)) {
+        if (InetAddresses.isUriInetAddress(domain)) {
             final InetAddress inetAddress;
             try {
-                inetAddress = InetAddresses.forString(domain);
+                inetAddress = InetAddresses.forUriString(domain);
             } catch (final IllegalArgumentException e) {
                 return Collections.emptyList();
             }
@@ -463,6 +463,7 @@ public class Resolver {
                 if (port == null || Strings.isNullOrEmpty(hostPart)) {
                     return null;
                 }
+                // TODO instead of unwrap check if uri ip
                 final String host = eu.siacs.conversations.utils.IP.unwrapIPv6(hostPart);
                 result.port = port;
                 if (InetAddresses.isInetAddress(host)) {
