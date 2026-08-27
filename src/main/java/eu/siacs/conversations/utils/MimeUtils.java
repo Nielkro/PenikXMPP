@@ -325,6 +325,8 @@ public final class MimeUtils {
         add("image/vnd.djvu", "djv");
         add("image/vnd.wap.wbmp", "wbmp");
         add("image/webp", "webp");
+        add("image/x-adobe-dng", "dng");
+        add("image/x-raw-adobe", "dng");
         add("image/x-cmu-raster", "ras");
         add("image/x-coreldraw", "cdr");
         add("image/x-coreldrawpattern", "pat");
