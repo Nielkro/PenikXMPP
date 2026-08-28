@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -12,6 +13,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.android.AbstractPhoneContact;
 import eu.siacs.conversations.android.JabberIdContact;
@@ -24,18 +28,16 @@ import eu.siacs.conversations.xmpp.jingle.RtpCapability;
 import eu.siacs.conversations.xmpp.manager.BlockingManager;
 import eu.siacs.conversations.xmpp.manager.DiscoManager;
 import eu.siacs.conversations.xmpp.manager.PresenceManager;
+import im.conversations.android.json.Services;
 import im.conversations.android.model.DynamicTag;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.idle.LastUserInteraction;
 import im.conversations.android.xmpp.model.stanza.Presence;
 import im.conversations.android.xmpp.model.stanza.Stanza;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser {
     public static final String TABLENAME = "contacts";
@@ -63,8 +65,8 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
     private int subscription = 0;
     private Uri systemAccount;
     private String photoUri;
-    private final JSONObject keys;
-    private JSONArray groups = new JSONArray();
+    private Collection<String> groups = Collections.emptySet();
+    private final Attributes attributes;
     protected Account account;
     protected String avatar;
 
@@ -80,10 +82,10 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
             final int subscription,
             final String photoUri,
             final Uri systemAccount,
-            final String keys,
+            final Attributes attributes,
             final String avatar,
             final String presence,
-            final String groups,
+            final Collection<String> groups,
             final RtpCapability.Capability rtpCapability) {
         this.accountUuid = account;
         this.systemName = systemName;
@@ -93,26 +95,16 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
         this.subscription = subscription;
         this.photoUri = photoUri;
         this.systemAccount = systemAccount;
-        JSONObject tmpJsonObject;
-        try {
-            tmpJsonObject = (keys == null ? new JSONObject("") : new JSONObject(keys));
-        } catch (JSONException e) {
-            tmpJsonObject = new JSONObject();
-        }
-        this.keys = tmpJsonObject;
+        this.attributes = attributes;
         this.avatar = avatar;
-        try {
-            this.groups = (groups == null ? new JSONArray() : new JSONArray(groups));
-        } catch (JSONException e) {
-            this.groups = new JSONArray();
-        }
+        this.groups = groups;
         this.mLastPresence = presence;
         this.rtpCapability = rtpCapability;
     }
 
     public Contact(final Jid jid) {
         this.jid = jid;
-        this.keys = new JSONObject();
+        this.attributes = new Attributes();
     }
 
     public static Contact fromCursor(final Cursor cursor) {
@@ -139,12 +131,24 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
                 cursor.getInt(cursor.getColumnIndexOrThrow(OPTIONS)),
                 cursor.getString(cursor.getColumnIndexOrThrow(PHOTOURI)),
                 systemAccount,
-                cursor.getString(cursor.getColumnIndexOrThrow(KEYS)),
+                Attributes.parse(cursor.getString(cursor.getColumnIndexOrThrow(KEYS))),
                 cursor.getString(cursor.getColumnIndexOrThrow(AVATAR)),
                 cursor.getString(cursor.getColumnIndexOrThrow(LAST_PRESENCE)),
-                cursor.getString(cursor.getColumnIndexOrThrow(GROUPS)),
+                jsonToStringCollection(cursor.getString(cursor.getColumnIndexOrThrow(GROUPS))),
                 RtpCapability.Capability.of(
                         cursor.getString(cursor.getColumnIndexOrThrow(RTP_CAPABILITY))));
+    }
+
+    private static Collection<String> jsonToStringCollection(final String json) {
+        if (Strings.isNullOrEmpty(json)) {
+            return Collections.emptyList();
+        }
+        try {
+            return Services.GSON.fromJson(json, new TypeToken<Collection<String>>() {}.getType());
+        } catch (final JsonSyntaxException e) {
+            Log.w(Config.LOGTAG, "could not parse json string collection", e);
+            return Collections.emptyList();
+        }
     }
 
     public static boolean isNoteworthy(final Iterable<DynamicTag> tags) {
@@ -211,23 +215,21 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
     }
 
     public ContentValues getContentValues() {
-        synchronized (this.keys) {
-            final ContentValues values = new ContentValues();
-            values.put(ACCOUNT, accountUuid);
-            values.put(SYSTEMNAME, systemName);
-            values.put(SERVERNAME, serverName);
-            values.put(PRESENCE_NAME, presenceName);
-            values.put(JID, jid.toString());
-            values.put(OPTIONS, subscription);
-            values.put(SYSTEMACCOUNT, systemAccount != null ? systemAccount.toString() : null);
-            values.put(PHOTOURI, photoUri);
-            values.put(KEYS, keys.toString());
-            values.put(AVATAR, avatar);
-            values.put(LAST_PRESENCE, mLastPresence);
-            values.put(GROUPS, groups.toString());
-            values.put(RTP_CAPABILITY, rtpCapability == null ? null : rtpCapability.toString());
-            return values;
-        }
+        final var values = new ContentValues();
+        values.put(ACCOUNT, accountUuid);
+        values.put(SYSTEMNAME, systemName);
+        values.put(SERVERNAME, serverName);
+        values.put(PRESENCE_NAME, presenceName);
+        values.put(JID, jid.toString());
+        values.put(OPTIONS, subscription);
+        values.put(SYSTEMACCOUNT, systemAccount != null ? systemAccount.toString() : null);
+        values.put(PHOTOURI, photoUri);
+        values.put(KEYS, Services.GSON.toJson(this.attributes));
+        values.put(AVATAR, avatar);
+        values.put(LAST_PRESENCE, mLastPresence);
+        values.put(GROUPS, Services.GSON.toJson(this.groups));
+        values.put(RTP_CAPABILITY, rtpCapability == null ? null : rtpCapability.toString());
+        return values;
     }
 
     public Account getAccount() {
@@ -320,41 +322,23 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
         this.systemAccount = lookupUri;
     }
 
+    public void setGroups(final Collection<String> groups) {
+        this.groups = groups;
+    }
+
     public Collection<String> getGroups() {
-        final Collection<String> groups = new HashSet<>();
-        for (int i = 0; i < this.groups.length(); ++i) {
-            try {
-                groups.add(this.groups.getString(i));
-            } catch (final JSONException ignored) {
-            }
-        }
-        return groups;
+        return this.groups;
     }
 
     public long getPgpKeyId() {
-        synchronized (this.keys) {
-            if (this.keys.has("pgp_keyid")) {
-                try {
-                    return this.keys.getLong("pgp_keyid");
-                } catch (JSONException e) {
-                    return 0;
-                }
-            } else {
-                return 0;
-            }
-        }
+        final var pgpKeyId = this.attributes.pgpKeyId;
+        return pgpKeyId == null ? 0 : pgpKeyId;
     }
 
-    public boolean setPgpKeyId(long keyId) {
+    public boolean setPgpKeyId(final long keyId) {
         final long previousKeyId = getPgpKeyId();
-        synchronized (this.keys) {
-            try {
-                this.keys.put("pgp_keyid", keyId);
-                return previousKeyId != keyId;
-            } catch (final JSONException ignored) {
-            }
-        }
-        return false;
+        this.attributes.pgpKeyId = keyId == 0 ? null : keyId;
+        return previousKeyId != keyId;
     }
 
     public void setOption(int option) {
@@ -419,15 +403,6 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
                 this.setOption(Contact.Options.ASKING);
             } else {
                 this.resetOption(Contact.Options.ASKING);
-            }
-        }
-    }
-
-    public void parseGroupsFromElement(Element item) {
-        this.groups = new JSONArray();
-        for (Element element : item.getChildren()) {
-            if (element.getName().equals("group") && element.getContent() != null) {
-                this.groups.put(element.getContent());
             }
         }
     }
@@ -564,6 +539,22 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
     @Override
     public String mucUserOccupantId() {
         return null;
+    }
+
+    public static class Attributes {
+        @SerializedName("pgp_keyid")
+        public Long pgpKeyId;
+
+        public static Attributes parse(final String json) {
+            if (Strings.isNullOrEmpty(json)) {
+                return new Attributes();
+            }
+            try {
+                return Services.GSON.fromJson(json, Attributes.class);
+            } catch (final JsonSyntaxException e) {
+                return new Attributes();
+            }
+        }
     }
 
     public static final class Options {

@@ -165,8 +165,7 @@ public class RosterManager extends AbstractManager implements Roster {
                 contact.getOption(Contact.Options.TO) && contact.getOption(Contact.Options.FROM);
         if (!contact.getOption(Contact.Options.DIRTY_PUSH)) {
             contact.setServerName(name);
-            // TODO use item.getGroups()
-            contact.parseGroupsFromElement(item);
+            contact.setGroups(item.getGroups());
         }
         if (subscription == Item.Subscription.REMOVE) {
             contact.resetOption(Contact.Options.IN_ROSTER);
