@@ -6,6 +6,7 @@ import im.conversations.android.xmpp.model.StreamFeature;
 import im.conversations.android.xmpp.model.bind.Bind;
 import im.conversations.android.xmpp.model.capabilties.EntityCapabilities;
 import im.conversations.android.xmpp.model.csi.ClientStateIndication;
+import im.conversations.android.xmpp.model.limits.Limits;
 import im.conversations.android.xmpp.model.register.RegisterStreamFeature;
 import im.conversations.android.xmpp.model.roster.PreApproval;
 import im.conversations.android.xmpp.model.roster.Versioning;
@@ -45,6 +46,10 @@ public class Features extends StreamElement implements EntityCapabilities {
 
     public boolean hasStreamFeature(final Class<? extends StreamFeature> clazz) {
         return hasExtension(clazz);
+    }
+
+    public boolean limits() {
+        return hasStreamFeature(Limits.class);
     }
 
     public boolean session() {
