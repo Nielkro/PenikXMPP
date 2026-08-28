@@ -15,6 +15,6 @@ dependencies {
 
     annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
     api 'com.google.auto.service:auto-service-annotations:1.1.1'
-    implementation 'com.google.guava:guava:33.5.0-jre'
+    implementation 'com.google.guava:guava:33.7.1-jre'
 
 }
