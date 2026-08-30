@@ -1,3 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="pref_notification_grace_period_summary">ໄລຍະເວລາທີ່ Quicksy ຈະງຽບໄວ້ ຫຼັງຈາກກວດພົບການເຄື່ອນໄຫວຢູ່ອຸປະກອນອື່ນ</string>
+    <string name="pref_never_send_crash_summary">ໂດຍການສົ່ງຂໍ້ມູນການຕິດຕາມລຳດັບການເຮັດວຽກ ທ່ານກຳລັງຊ່ວຍໃນການພັດທະນາຢ່າງຕໍ່ເນື່ອງຂອງ Quicksy</string>
+    <string name="pref_broadcast_last_activity_summary">ໃຫ້ຜູ້ຕິດຕໍ່ທັງໝົດຂອງທ່ານຮູ້ ເມື່ອທ່ານນຳໃຊ້ Quicksy</string>
+    <string name="huawei_protected_apps_summary">ເພື່ອໃຫ້ໄດ້ຮັບການແຈ້ງເຕືອນຢ່າງຕໍ່ເນື່ອງ ເຖິງແມ່ນວ່າຈະປິດໜ້າຈໍແລ້ວ, ທ່ານຈຳເປັນຕ້ອງເພີ່ມ Quicksy ເຂົ້າໃນລາຍຊື່ແອັບທີ່ໄດ້ຮັບການປົກປ້ອງ.</string>
+    <string name="set_profile_picture">ຮູບໂປຣໄຟລ໌ Quicksy</string>
+    <string name="not_available_in_your_country">Quicksy ບໍ່ພ້ອມໃຊ້ງານໃນປະເທດຂອງທ່ານ.</string>
+    <string name="unable_to_verify_server_identity">ບໍ່ສາມາດຢືນຢັນຕົວຕົນຂອງເຊີບເວີໄດ້.</string>
+    <string name="unknown_security_error">ເກີດຂໍ້ຜິດພາດທາງດ້ານຄວາມປອດໄພທີ່ບໍ່ຮູ້ຈັກ.</string>
+    <string name="timeout_while_connecting_to_server">ໝົດເວລາໃນການເຊື່ອມຕໍ່ຫາເຊີບເວີ.</string>
+    <string name="use_physical_device">ກະລຸນານຳໃຊ້ອຸປະກອນຈິງ ເພື່ອລົງທະບຽນບັນຊີຂອງທ່ານ.</string>
 </resources>
