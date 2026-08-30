@@ -1,0 +1,2 @@
+* ປ່ຽນ Target SDK ເປັນ 33 ອີກຄັ້ງ
+* ແກ້ໄຂບັນຫາໃນເຊີເວີທີ່ຮອງຮັບ SASL2 ແຕ່ບໍ່ມີ inline Stream Management

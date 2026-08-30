@@ -1,0 +1,2 @@
+* ຮອງຮັບ 'ສະຖານະການຢຸດໃຫ້ບໍລິການ' (Service Outage Status)
+* ແກ້ໄຂຄວາມປອດໄພເລັກນ້ອຍສຳລັບການວິເຄາະ multiple bodies, occupant-ids ແລະ stanza-id

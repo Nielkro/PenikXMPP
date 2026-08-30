@@ -1,0 +1,1 @@
+* ຮ່ວມກັບ UnifiedPush Distributor ເພື່ອອຳນວຍຄວາມສະດວກໃນການສົ່ງຂໍ້ຄວາມພຸຊ (Push) ໄປຍັງແອັບອື່ນໆທີ່ຮອງຮັບ UnifiedPush ເຊັ່ນ Tusky ແລະ Fedilab

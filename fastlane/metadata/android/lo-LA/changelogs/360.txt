@@ -1,0 +1,1 @@
+* ຮອງຮັບພາລາມິເຕີ XMPP URI ແບບ ?register ແລະ ?register;preauth

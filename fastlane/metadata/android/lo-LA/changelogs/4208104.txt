@@ -1,0 +1,4 @@
+* ເຂົ້າເຖິງ 'ສະແດງລະຫັດ QR' ໄດ້ງ່າຍຂຶ້ນ
+* ຮອງຮັບ PEP Native Bookmarks
+* ເພີ່ມການຮອງຮັບ SDP Offer / Answer Model (ໃຊ້ໂດຍ SIP gateways)
+* ຍົກລະດັບ Target API ເປັນ Android 14

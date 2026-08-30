@@ -1,0 +1,2 @@
+* ນຳໃຊ້ SASL SCRAM Downgrade Protection (XEP-0474)
+* ສົ່ງການຕອບໂຕ້ (Reaction) ໄປຫາ MUC PM ໃຫ້ຖືກຕ້ອງຕາມ JID
