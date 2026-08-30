@@ -1,3 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="pick_a_server">ເລືອກຜູ້ໃຫ້ບໍລິການ XMPP ຂອງທ່ານ</string>
+    <string name="use_conversations.im">ໃຊ້ conversations.im</string>
+    <string name="create_new_account">ສ້າງບັນຊີໃໝ່</string>
+    <string name="do_you_have_an_account">ທ່ານມີບັນຊີ XMPP ແລ້ວບໍ? ນີ້ອາດຈະແມ່ນໃນກໍລະນີທີ່ທ່ານກຳລັງໃຊ້ແອັບ XMPP ອື່ນ ຫຼື ເຄີຍໃຊ້ Conversations ມາກ່ອນ. ຖ້າຍັງບໍ່ມີ ທ່ານສາມາດສ້າງບັນຊີ XMPP ໃໝ່ໄດ້ຕອນນີ້ເລີຍ.\nຄຳແນະນຳ: ຜູ້ໃຫ້ບໍລິການອີເມລບາງແຫ່ງກໍມີບໍລິການບັນຊີ XMPP ເຊັ່ນກັນ.</string>
+    <string name="server_select_text">XMPP ແມ່ນເຄືອຂ່າຍການສົ່ງຂໍ້ຄວາມທັນທີທີ່ເປັນອິດສະຫຼະຈາກຜູ້ໃຫ້ບໍລິການ. ທ່ານສາມາດໃຊ້ແອັບນີ້ກັບເຊີບເວີ XMPP ໃດກໍໄດ້ທີ່ທ່ານເລືອກ.\nແນວໃດກໍຕາມ, ເພື່ອຄວາມສະດວກຂອງທ່ານ ພວກເຮົາໄດ້ເຮັດໃຫ້ການສ້າງບັນຊີໃນ conversations.im ເປັນເລື່ອງງ່າຍ; ເຊິ່ງເປັນຜູ້ໃຫ້ບໍລິການທີ່ເໝາະສົມໂດຍສະເພາະສຳລັບໃຊ້ກັບ Conversations.</string>
+    <string name="magic_create_text_on_x">ທ່ານໄດ້ຮັບຄຳເຊີນໃຫ້ເຂົ້າຮ່ວມ %1$s. ພວກເຮົາຈະແນະນຳທ່ານຜ່ານຂັ້ນຕອນການສ້າງບັນຊີ.\nເມື່ອເລືອກ %1$s ເປັນຜູ້ໃຫ້ບໍລິການ ທ່ານຈະສາມາດຕິດຕໍ່ສື່ສານກັບຜູ້ໃຊ້ຂອງຜູ້ໃຫ້ບໍລິການອື່ນໆໄດ້ ໂດຍການໃຫ້ທີ່ຢູ່ XMPP ເຕັມຂອງທ່ານແກ່ພວກເຂົາ.</string>
+    <string name="magic_create_text_fixed">ທ່ານໄດ້ຮັບຄຳເຊີນໃຫ້ເຂົ້າຮ່ວມ %1$s. ຊື່ຜູ້ໃຊ້ໄດ້ຖືກເລືອກໄວ້ໃຫ້ທ່ານແລ້ວ. ພວກເຮົາຈະແນະນຳທ່ານຜ່ານຂັ້ນຕອນການສ້າງບັນຊີ.\nທ່ານຈະສາມາດຕິດຕໍ່ສື່ສານກັບຜູ້ໃຊ້ຂອງຜູ້ໃຫ້ບໍລິການອື່ນໆໄດ້ ໂດຍການໃຫ້ທີ່ຢູ່ XMPP ເຕັມຂອງທ່ານແກ່ພວກເຂົາ.</string>
+    <string name="your_server_invitation">ຄຳເຊີນເຊີບເວີຂອງທ່ານ</string>
+    <string name="improperly_formatted_provisioning">ລະຫັດການຕັ້ງຄ່າຮູບແບບບໍ່ຖືກຕ້ອງ</string>
+    <string name="tap_share_button_send_invite">ແຕະທີ່ປຸ່ມແບ່ງປັນເພື່ອສົ່ງຄຳເຊີນໃຫ້ຜູ້ຕິດຕໍ່ຂອງທ່ານເຂົ້າຮ່ວມ %1$s.</string>
+    <string name="if_contact_is_nearby_use_qr">ຖ້າຜູ້ຕິດຕໍ່ຂອງທ່ານຢູ່ໃກ້ໆ, ພວກເຂົາກໍສາມາດສະແກນລະຫັດລຸ່ມນີ້ເພື່ອຕອບຮັບຄຳເຊີນຂອງທ່ານ.</string>
+    <string name="share_invite_with">ແບ່ງປັນຄຳເຊີນກັບ…</string>
 </resources>
