@@ -1704,7 +1704,7 @@ public class XmppConnectionService extends Service {
                         if (message.edited()) {
                             message.setBody(decryptedBody);
                             message.setEncryption(Message.ENCRYPTION_DECRYPTED);
-                            if (!databaseBackend.updateMessage(message, message.getEditedId())) {
+                            if (!databaseBackend.updateMessage(message, true)) {
                                 Log.e(Config.LOGTAG, "error updated message in DB after edit");
                             }
                             updateConversationUi();
@@ -1744,7 +1744,7 @@ public class XmppConnectionService extends Service {
             if (saveInDb) {
                 databaseBackend.createMessage(message);
             } else if (message.edited()) {
-                if (!databaseBackend.updateMessage(message, message.getEditedId())) {
+                if (!databaseBackend.updateMessage(message, false)) {
                     Log.e(Config.LOGTAG, "error updated message in DB after edit");
                 }
             }

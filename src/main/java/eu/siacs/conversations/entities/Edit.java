@@ -7,17 +7,20 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import eu.siacs.conversations.Config;
 import im.conversations.android.json.Services;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
 public record Edit(
-        @SerializedName("edited_id") String editedId,
-        @SerializedName("server_msg_id") String serverMsgId) {
+        String id,
+        @SerializedName("server_msg_id") String serverMsgId,
+        Instant sentAt,
+        String body) {
 
     static boolean wasPreviouslyEditedRemoteMsgId(
             final List<Edit> edits, final String remoteMsgId) {
         for (final var edit : edits) {
-            if (edit.editedId != null && edit.editedId.equals(remoteMsgId)) {
+            if (edit.id != null && edit.id.equals(remoteMsgId)) {
                 return true;
             }
         }
@@ -44,5 +47,9 @@ public record Edit(
             Log.w(Config.LOGTAG, "could not parse edits");
             return Collections.emptyList();
         }
+    }
+
+    public Edit withBody(final String body) {
+        return new Edit(this.id, this.serverMsgId, this.sentAt, body);
     }
 }

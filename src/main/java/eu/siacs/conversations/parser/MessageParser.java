@@ -577,21 +577,9 @@ public class MessageParser extends AbstractParser
                             && (trueCountersMatch || occupantIdMatch || !conversationMultiMode)
                             && !duplicate) {
                         synchronized (replacedMessage) {
+                            replacedMessage.putEdited(message);
                             final String uuid = replacedMessage.getUuid();
                             replacedMessage.setUuid(UUID.randomUUID().toString());
-                            replacedMessage.setBody(message.getBody());
-                            // we store the IDs of the replacing message. This is essentially unused
-                            // today (only the fact that there are _some_ edits causes the edit icon
-                            // to appear)
-                            replacedMessage.putEdited(
-                                    message.getRemoteMsgId(), message.getServerMsgId());
-
-                            // we used to call
-                            // `replacedMessage.setServerMsgId(message.getServerMsgId());` so during
-                            // catchup we could start from the edit; not the original message
-                            // however this caused problems for things like reactions that refer to
-                            // the serverMsgId
-
                             replacedMessage.setEncryption(message.getEncryption());
                             if (replacedMessage.getStatus() == Message.STATUS_RECEIVED) {
                                 replacedMessage.markUnread();

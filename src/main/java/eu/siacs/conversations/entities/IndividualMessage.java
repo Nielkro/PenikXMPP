@@ -34,6 +34,7 @@ import android.database.Cursor;
 import eu.siacs.conversations.ui.adapter.MessageAdapter;
 import eu.siacs.conversations.xmpp.Jid;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public class IndividualMessage extends Message {
@@ -59,7 +60,7 @@ public class IndividualMessage extends Message {
             String serverMsgId,
             String fingerprint,
             boolean read,
-            Collection<Edit> edited,
+            final List<Edit> edited,
             boolean oob,
             String errorMessage,
             Set<ReadByMarker> readByMarkers,

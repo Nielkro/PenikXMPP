@@ -176,7 +176,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -1061,9 +1060,11 @@ public class ConversationFragment extends XmppFragment
             Message.configurePrivateMessage(message);
         } else {
             message = conversation.getCorrectingMessage();
-            message.setBody(body);
-            message.putEdited(message.getUuid(), message.getServerMsgId());
-            message.setUuid(UUID.randomUUID().toString());
+            final var uuid = message.getUuid();
+            message.putEdited(body);
+            if (!DatabaseBackend.getInstance(requireContext()).updateMessage(message, uuid)) {
+                throw new IllegalStateException("Could not update message after edit");
+            }
         }
         if (conversation.getNextEncryption() == Message.ENCRYPTION_PGP) {
             sendPgpMessage(message);

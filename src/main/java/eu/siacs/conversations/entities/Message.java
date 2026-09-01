@@ -8,6 +8,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Longs;
@@ -26,13 +27,14 @@ import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.json.Services;
 import java.io.File;
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 import org.jspecify.annotations.NonNull;
 
@@ -108,7 +110,7 @@ public class Message extends AbstractEntity
     protected boolean deleted = false;
     protected boolean carbon = false;
     protected boolean oob = false;
-    protected List<Edit> edits = new ArrayList<>();
+    protected List<Edit> edits = Collections.emptyList();
     protected StorageLocation storageLocation;
     protected boolean read = true;
     protected String remoteMsgId = null;
@@ -221,7 +223,7 @@ public class Message extends AbstractEntity
             final String serverMsgId,
             final String fingerprint,
             final boolean read,
-            @NonNull final Collection<Edit> edited,
+            @NonNull final List<Edit> edited,
             final boolean oob,
             final String errorMessage,
             final Set<ReadByMarker> readByMarkers,
@@ -246,7 +248,7 @@ public class Message extends AbstractEntity
         this.serverMsgId = serverMsgId;
         this.axolotlFingerprint = fingerprint;
         this.read = read;
-        this.edits = new ArrayList<>(edited);
+        this.edits = edited;
         this.oob = oob;
         this.errorMessage = errorMessage;
         this.readByMarkers.addAll(readByMarkers);
@@ -438,6 +440,10 @@ public class Message extends AbstractEntity
         return timeSent;
     }
 
+    public Instant getSentAt() {
+        return Instant.ofEpochMilli(this.timeSent);
+    }
+
     public int getEncryption() {
         return encryption;
     }
@@ -537,10 +543,49 @@ public class Message extends AbstractEntity
         this.carbon = carbon;
     }
 
-    public void putEdited(String edited, String serverMsgId) {
-        final Edit edit = new Edit(edited, serverMsgId);
-        if (this.edits.size() < 128 && !this.edits.contains(edit)) {
-            this.edits.add(edit);
+    public boolean putEdited(final Message edit) {
+        return putEdited(
+                edit.getRemoteMsgId(), edit.getServerMsgId(), edit.getSentAt(), edit.getBody());
+    }
+
+    public void putEdited(final String body) {
+        final var uuid = java.util.UUID.randomUUID();
+        if (!putEdited(uuid.toString(), null, Instant.now(), body)) {
+            throw new IllegalStateException("Could not store edit");
+        }
+        this.uuid = uuid.toString();
+    }
+
+    public boolean putEdited(
+            final String id, final String serverMsgId, final Instant sentAt, final String body) {
+        final List<Edit> versions = getVersions();
+        if (Iterables.any(
+                versions,
+                v ->
+                        v != null
+                                && ((id != null && id.equals(v.id()))
+                                        || (serverMsgId != null
+                                                && serverMsgId.equals(v.serverMsgId()))))) {
+            return false;
+        }
+        final var edit = new Edit(id, serverMsgId, sentAt, null);
+        this.edits = new ImmutableList.Builder<Edit>().addAll(versions).add(edit).build();
+        this.body = body;
+        return true;
+    }
+
+    private List<Edit> getVersions() {
+        final var withoutLegacy =
+                Collections2.filter(
+                        this.edits, e -> e != null && e.id() != null && e.sentAt() != null);
+        if (withoutLegacy.isEmpty()) {
+            final var id = status == Message.STATUS_RECEIVED ? this.remoteMsgId : uuid;
+            return Collections.singletonList(new Edit(id, serverMsgId, getSentAt(), body));
+        } else {
+            final var body = this.body;
+            return ImmutableList.copyOf(
+                    Collections2.transform(
+                            withoutLegacy, e -> e.body() != null ? e : e.withBody(body)));
         }
     }
 
@@ -788,13 +833,6 @@ public class Message extends AbstractEntity
         this.uuid = uuid;
     }
 
-    public String getEditedId() {
-        if (this.edits.isEmpty()) {
-            throw new IllegalStateException("Attempting to access unedited message");
-        }
-        return edits.get(edits.size() - 1).editedId();
-    }
-
     public Collection<String> getEditedServerMessageIds() {
         return Collections2.transform(this.edits, Edit::serverMsgId);
     }
@@ -803,7 +841,7 @@ public class Message extends AbstractEntity
         if (this.edits.isEmpty()) {
             throw new IllegalStateException("Attempting to access unedited message");
         }
-        return edits.get(0).editedId();
+        return edits.get(0).id();
     }
 
     public void setOob(boolean isOob) {
