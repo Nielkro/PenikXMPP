@@ -1527,6 +1527,7 @@ public class ConversationFragment extends XmppFragment
             final MenuItem quoteMessage = menu.findItem(R.id.quote_message);
             final MenuItem retryDecryption = menu.findItem(R.id.retry_decryption);
             final MenuItem correctMessage = menu.findItem(R.id.correct_message);
+            final MenuItem viewEditHistory = menu.findItem(R.id.view_edit_history);
             final MenuItem shareWith = menu.findItem(R.id.share_with);
             final MenuItem sendAgain = menu.findItem(R.id.send_again);
             final MenuItem retryAsP2P = menu.findItem(R.id.send_again_as_p2p);
@@ -1620,6 +1621,7 @@ public class ConversationFragment extends XmppFragment
                     copyLink.setVisible(false);
                 }
             }
+            viewEditHistory.setVisible(m.hasEditHistory());
             if (m.getEncryption() == Message.ENCRYPTION_DECRYPTION_FAILED && !deleted) {
                 retryDecryption.setVisible(true);
             }
@@ -1767,8 +1769,19 @@ public class ConversationFragment extends XmppFragment
                 addReaction(selectedMessage);
                 yield true;
             }
+            case R.id.view_edit_history -> {
+                viewEditHistory(selectedMessage);
+                yield true;
+            }
             default -> super.onContextItemSelected(item);
         };
+    }
+
+    private void viewEditHistory(final Message message) {
+        final var intent = new Intent(getActivity(), EditHistoryActivity.class);
+        intent.putExtra(EditHistoryActivity.EXTRA_CONVERSATION_UUID, message.getConversationUuid());
+        intent.putExtra(EditHistoryActivity.EXTRA_MESSAGE_UUID, message.getUuid());
+        startActivity(intent);
     }
 
     private void startSearch() {

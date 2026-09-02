@@ -186,6 +186,9 @@
             android:name=".ui.SearchActivity"
             android:label="@string/search_messages" />
         <activity
+            android:name=".ui.EditHistoryActivity"
+            android:label="@string/edit_history" />
+        <activity
             android:name=".ui.RecordingActivity"
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.Conversations3.Dialog" />

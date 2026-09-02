@@ -11,6 +11,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import de.gultsch.common.Patterns;
 import eu.siacs.conversations.Config;
@@ -574,6 +575,10 @@ public class Message extends AbstractEntity
         return true;
     }
 
+    public boolean hasEditHistory() {
+        return getVersions().size() >= 2;
+    }
+
     private List<Edit> getVersions() {
         final var withoutLegacy =
                 Collections2.filter(
@@ -587,6 +592,34 @@ public class Message extends AbstractEntity
                     Collections2.transform(
                             withoutLegacy, e -> e.body() != null ? e : e.withBody(body)));
         }
+    }
+
+    public List<Message> getVersionsAsMessages() {
+        final var versions = getVersions();
+        return Lists.transform(
+                versions,
+                e -> {
+                    if (e == null) {
+                        return null;
+                    }
+                    return new MessageVersion(
+                            conversation,
+                            uuid,
+                            conversationUuid,
+                            counterpart,
+                            trueCounterpart,
+                            e.body(),
+                            e.sentAt().toEpochMilli(),
+                            encryption,
+                            status,
+                            type,
+                            carbon,
+                            e.id(),
+                            e.serverMsgId(),
+                            this.axolotlFingerprint,
+                            oob,
+                            occupantId);
+                });
     }
 
     public String getBodyLanguage() {
@@ -1128,4 +1161,52 @@ public class Message extends AbstractEntity
     }
 
     public record StorageLocation(File file, boolean sharedStorage) {}
+
+    public static class MessageVersion extends Message {
+
+        protected MessageVersion(
+                Conversational conversation,
+                String uuid,
+                String conversationUUid,
+                Jid counterpart,
+                Jid trueCounterpart,
+                String body,
+                long timeSent,
+                int encryption,
+                int status,
+                int type,
+                boolean carbon,
+                String remoteMsgId,
+                String serverMsgId,
+                String fingerprint,
+                boolean oob,
+                String occupantId) {
+            super(
+                    conversation,
+                    uuid,
+                    conversationUUid,
+                    counterpart,
+                    trueCounterpart,
+                    body,
+                    timeSent,
+                    encryption,
+                    status,
+                    type,
+                    carbon,
+                    remoteMsgId,
+                    null,
+                    serverMsgId,
+                    fingerprint,
+                    true,
+                    Collections.emptyList(),
+                    oob,
+                    null,
+                    Collections.emptySet(),
+                    false,
+                    false,
+                    null,
+                    occupantId,
+                    Collections.emptySet());
+        }
+    }
 }

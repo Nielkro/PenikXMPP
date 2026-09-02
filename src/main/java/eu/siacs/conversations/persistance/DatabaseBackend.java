@@ -1603,6 +1603,25 @@ public class DatabaseBackend extends SQLiteOpenHelper {
         return message;
     }
 
+    private Message getMessageWithUuid(final Conversation conversation, final String uuid) {
+        final var db = this.getReadableDatabase();
+        final var sql = "select * from messages where conversationUuid=? and uuid=? LIMIT 1";
+        final String[] args = {conversation.getUuid(), uuid};
+        try (final Cursor cursor = db.rawQuery(sql, args)) {
+            if (cursor.moveToFirst()) {
+                return Message.fromCursor(context, cursor, conversation);
+            }
+        }
+        throw new IllegalStateException("No message found with uuid");
+    }
+
+    public ListenableFuture<Message> getMessageWithUuidFuture(
+            final Conversation conversation, final String uuid) {
+        return Futures.submit(
+                () -> getMessageWithUuid(conversation, uuid),
+                XmppConnectionService.DATABASE_READER);
+    }
+
     public Message getIndividualMessage(final String uuid) {
         final var db = this.getReadableDatabase();
         final String sql = "select * from messages where uuid=? LIMIT 1";

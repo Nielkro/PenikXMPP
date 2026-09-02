@@ -13,6 +13,7 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
@@ -98,6 +99,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -290,8 +292,15 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             viewHolder.indicatorEdit().setVisibility(View.GONE);
         }
 
-        final String formattedTime =
-                UIHelper.readableTimeDifferenceFull(getContext(), message.getTimeSent());
+        final String formattedTime;
+        if (message instanceof Message.MessageVersion) {
+            formattedTime =
+                    DateFormat.getTimeFormat(getContext()).format(new Date(message.getTimeSent()));
+        } else {
+            formattedTime =
+                    UIHelper.readableTimeDifferenceFull(getContext(), message.getTimeSent());
+        }
+
         final String bodyLanguage = message.getBodyLanguage();
         final ImmutableList.Builder<String> timeInfoBuilder = new ImmutableList.Builder<>();
 
@@ -1267,7 +1276,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     }
 
     private boolean mergeIntoTop(final int position, final Message message) {
-        if (position < 0) {
+        if (position < 0 || message instanceof Message.MessageVersion) {
             return false;
         }
         final var top = getItem(position - 1);
@@ -1285,6 +1294,9 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     }
 
     private static boolean merge(final Message a, final Message b) {
+        if (a instanceof Message.MessageVersion || b instanceof Message.MessageVersion) {
+            return false;
+        }
         if (getItemViewType(a, false) != getItemViewType(b, false)) {
             return false;
         }

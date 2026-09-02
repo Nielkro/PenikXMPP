@@ -1194,4 +1194,6 @@
     <string name="attachment_choice_contact">Contact</string>
     <string name="note_to_self">Note to self</string>
     <string name="invalid_contact">Could not parse contact</string>
+    <string name="view_edit_history">View edit history</string>
+    <string name="edit_history">Edit history</string>
 </resources>
