@@ -148,20 +148,21 @@ public class WelcomeActivity extends QrCodeProcessingActivity
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_import_backup:
-                if (hasStoragePermission(REQUEST_IMPORT_BACKUP)) {
-                    startActivity(new Intent(this, ImportBackupActivity.class));
-                }
-                break;
-            case R.id.action_scan_qr_code:
-                requestPermissionAndScanQrCode();
-                break;
-            case R.id.action_add_account_with_cert:
-                addAccountFromKey();
-                break;
+        final int itemId = item.getItemId();
+        if (itemId == R.id.action_import_backup) {
+            if (hasStoragePermission(REQUEST_IMPORT_BACKUP)) {
+                startActivity(new Intent(this, ImportBackupActivity.class));
+            }
+            return true;
+        } else if (itemId == R.id.action_scan_qr_code) {
+            requestPermissionAndScanQrCode();
+            return true;
+        } else if (itemId == R.id.action_add_account_with_cert) {
+            addAccountFromKey();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     private void addAccountFromKey() {

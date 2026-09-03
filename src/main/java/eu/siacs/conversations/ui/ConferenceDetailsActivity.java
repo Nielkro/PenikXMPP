@@ -312,35 +312,36 @@ public class ConferenceDetailsActivity extends XmppActivity
         if (MenuDoubleTabUtil.shouldIgnoreTap()) {
             return false;
         }
-        switch (menuItem.getItemId()) {
-            case android.R.id.home:
-                finish();
-                break;
-            case R.id.action_share_http:
-                shareLink(true);
-                break;
-            case R.id.action_share_uri:
-                shareLink(false);
-                break;
-            case R.id.action_save_as_bookmark:
-                saveAsBookmark();
-                break;
-            case R.id.action_destroy_room:
-                destroyRoom();
-                break;
-            case R.id.action_server_info_show_more:
-                final var show = !menuItem.isChecked();
-                this.binding.mucInfoMore.setVisibility(show ? View.VISIBLE : View.GONE);
-                invalidateOptionsMenu();
-                updateView();
-                break;
-            case R.id.action_custom_notifications:
-                if (mConversation != null) {
-                    configureCustomNotifications(mConversation);
-                }
-                break;
+        final int itemId = menuItem.getItemId();
+        if (itemId == android.R.id.home) {
+            finish();
+            return true;
+        } else if (itemId == R.id.action_share_http) {
+            shareLink(true);
+            return true;
+        } else if (itemId == R.id.action_share_uri) {
+            shareLink(false);
+            return true;
+        } else if (itemId == R.id.action_save_as_bookmark) {
+            saveAsBookmark();
+            return true;
+        } else if (itemId == R.id.action_destroy_room) {
+            destroyRoom();
+            return true;
+        } else if (itemId == R.id.action_server_info_show_more) {
+            final var show = !menuItem.isChecked();
+            this.binding.mucInfoMore.setVisibility(show ? View.VISIBLE : View.GONE);
+            invalidateOptionsMenu();
+            updateView();
+            return true;
+        } else if (itemId == R.id.action_custom_notifications) {
+            if (mConversation != null) {
+                configureCustomNotifications(mConversation);
+            }
+            return true;
+        } else {
+            return super.onOptionsItemSelected(menuItem);
         }
-        return super.onOptionsItemSelected(menuItem);
     }
 
     private void configureCustomNotifications(final Conversation conversation) {

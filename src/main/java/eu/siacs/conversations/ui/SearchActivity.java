@@ -44,6 +44,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
+import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
 import com.google.android.material.color.MaterialColors;
 import eu.siacs.conversations.R;
@@ -167,25 +168,27 @@ public class SearchActivity extends XmppActivity
     }
 
     @Override
-    public boolean onContextItemSelected(MenuItem item) {
+    public boolean onContextItemSelected(@NonNull final MenuItem item) {
         final Message message = selectedMessageReference.get();
-        if (message != null) {
-            switch (item.getItemId()) {
-                case R.id.open_conversation:
-                    switchToConversation(wrap(message.getConversation()));
-                    break;
-                case R.id.share_with:
-                    ShareUtil.share(this, message);
-                    break;
-                case R.id.copy_message:
-                    ShareUtil.copyToClipboard(this, message);
-                    break;
-                case R.id.quote_message:
-                    quote(message);
-                    break;
-            }
+        if (message == null) {
+            return super.onContextItemSelected(item);
         }
-        return super.onContextItemSelected(item);
+        final int itemId = item.getItemId();
+        if (itemId == R.id.open_conversation) {
+            switchToConversation(wrap(message.getConversation()));
+            return true;
+        } else if (itemId == R.id.share_with) {
+            ShareUtil.share(this, message);
+            return true;
+        } else if (itemId == R.id.copy_message) {
+            ShareUtil.copyToClipboard(this, message);
+            return true;
+        } else if (itemId == R.id.quote_message) {
+            quote(message);
+            return true;
+        } else {
+            return super.onContextItemSelected(item);
+        }
     }
 
     @Override

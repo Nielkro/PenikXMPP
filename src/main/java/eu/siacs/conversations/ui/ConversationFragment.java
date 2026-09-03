@@ -731,57 +731,55 @@ public class ConversationFragment extends XmppFragment
                     } else if (conversation == null) {
                         return false;
                     }
-                    switch (menuItem.getItemId()) {
-                        case R.id.encryption_choice_axolotl:
-                        case R.id.encryption_choice_pgp:
-                        case R.id.encryption_choice_none:
-                            handleEncryptionSelection(menuItem);
-                            break;
-                        case R.id.action_search:
-                            startSearch();
-                            break;
-                        case R.id.action_archive:
-                            requireXmppActivity()
-                                    .xmppConnectionService
-                                    .archiveConversation(conversation);
-                            break;
-                        case R.id.action_invite:
-                            startActivityForResult(
-                                    ChooseContactActivity.create(requireActivity(), conversation),
-                                    REQUEST_INVITE_TO_CONVERSATION);
-                            break;
-                        case R.id.action_clear_history:
-                            clearHistoryDialog(conversation);
-                            break;
-                        case R.id.action_mute:
-                            muteConversationDialog(conversation);
-                            break;
-                        case R.id.action_unmute:
-                            unMuteConversation(conversation);
-                            break;
-                        case R.id.action_block:
-                        case R.id.action_unblock:
-                            final Activity activity = getActivity();
-                            if (activity instanceof XmppActivity) {
-                                BlockContactDialog.show((XmppActivity) activity, conversation);
-                            }
-                            break;
-                        case R.id.action_audio_call:
-                            checkPermissionAndTriggerAudioCall();
-                            break;
-                        case R.id.action_video_call:
-                            checkPermissionAndTriggerVideoCall();
-                            break;
-                        case R.id.action_ongoing_call:
-                            returnToOngoingCall();
-                            break;
-                        case R.id.action_toggle_pinned:
-                            togglePinned();
-                            break;
-                        default:
-                            break;
+                    final int itemId = menuItem.getItemId();
+                    if (itemId == R.id.encryption_choice_axolotl
+                            || itemId == R.id.encryption_choice_pgp
+                            || itemId == R.id.encryption_choice_none) {
+                        handleEncryptionSelection(menuItem);
+                        return true;
+                    } else if (itemId == R.id.action_search) {
+                        startSearch();
+                        return true;
+                    } else if (itemId == R.id.action_archive) {
+                        requireXmppActivity()
+                                .xmppConnectionService
+                                .archiveConversation(conversation);
+                        return true;
+                    } else if (itemId == R.id.action_invite) {
+                        startActivityForResult(
+                                ChooseContactActivity.create(requireActivity(), conversation),
+                                REQUEST_INVITE_TO_CONVERSATION);
+                        return true;
+                    } else if (itemId == R.id.action_clear_history) {
+                        clearHistoryDialog(conversation);
+                        return true;
+                    } else if (itemId == R.id.action_mute) {
+                        muteConversationDialog(conversation);
+                        return true;
+                    } else if (itemId == R.id.action_unmute) {
+                        unMuteConversation(conversation);
+                        return true;
+                    } else if (itemId == R.id.action_block || itemId == R.id.action_unblock) {
+                        final Activity activity = getActivity();
+                        if (activity instanceof XmppActivity) {
+                            BlockContactDialog.show((XmppActivity) activity, conversation);
+                        }
+                        return true;
+                    } else if (itemId == R.id.action_audio_call) {
+                        checkPermissionAndTriggerAudioCall();
+                        return true;
+                    } else if (itemId == R.id.action_video_call) {
+                        checkPermissionAndTriggerVideoCall();
+                        return true;
+                    } else if (itemId == R.id.action_ongoing_call) {
+                        returnToOngoingCall();
+                        return true;
+                    } else if (itemId == R.id.action_toggle_pinned) {
+                        togglePinned();
+                        return true;
+                    } else {
+                        return false;
                     }
-                    return false;
                 }
             };
     private int completionIndex = 0;
@@ -1696,85 +1694,67 @@ public class ConversationFragment extends XmppFragment
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        return switch (item.getItemId()) {
-            case R.id.share_with -> {
-                ShareUtil.share(requireXmppActivity(), selectedMessage);
-                yield true;
-            }
-            case R.id.correct_message -> {
-                correctMessage(selectedMessage);
-                yield true;
-            }
-            case R.id.copy_message -> {
-                ShareUtil.copyToClipboard(requireXmppActivity(), selectedMessage);
-                yield true;
-            }
-            case R.id.copy_link -> {
-                ShareUtil.copyLinkToClipboard(requireXmppActivity(), selectedMessage);
-                yield true;
-            }
-            case R.id.quote_message -> {
-                quoteMessage(selectedMessage);
-                yield true;
-            }
-            case R.id.send_again -> {
-                resendMessage(selectedMessage, false);
-                yield true;
-            }
-            case R.id.send_again_as_p2p -> {
-                resendMessage(selectedMessage, true);
-                yield true;
-            }
-            case R.id.copy_url -> {
-                ShareUtil.copyUrlToClipboard(requireXmppActivity(), selectedMessage);
-                yield true;
-            }
-            case R.id.download_file -> {
-                startDownloadable(selectedMessage);
-                yield true;
-            }
-            case R.id.cancel_transmission -> {
-                cancelTransmission(selectedMessage);
-                yield true;
-            }
-            case R.id.retry_decryption -> {
-                retryDecryption(selectedMessage);
-                yield true;
-            }
-            case R.id.delete_file -> {
-                deleteFileDialog(selectedMessage);
-                yield true;
-            }
-            case R.id.save_file -> {
-                saveFile(selectedMessage);
-                yield true;
-            }
-            case R.id.moderation -> {
-                moderate(selectedMessage);
-                yield true;
-            }
-            case R.id.show_error_message -> {
-                showErrorMessage(selectedMessage);
-                yield true;
-            }
-            case R.id.open_with -> {
-                openWith(selectedMessage);
-                yield true;
-            }
-            case R.id.action_report_and_block -> {
-                reportMessage(selectedMessage);
-                yield true;
-            }
-            case R.id.action_add_reaction -> {
-                addReaction(selectedMessage);
-                yield true;
-            }
-            case R.id.view_edit_history -> {
-                viewEditHistory(selectedMessage);
-                yield true;
-            }
-            default -> super.onContextItemSelected(item);
-        };
+        final int itemId = item.getItemId();
+        if (itemId == R.id.share_with) {
+            ShareUtil.share(requireXmppActivity(), selectedMessage);
+            return true;
+        } else if (itemId == R.id.correct_message) {
+            correctMessage(selectedMessage);
+            return true;
+        } else if (itemId == R.id.copy_message) {
+            ShareUtil.copyToClipboard(requireXmppActivity(), selectedMessage);
+            return true;
+        } else if (itemId == R.id.copy_link) {
+            ShareUtil.copyLinkToClipboard(requireXmppActivity(), selectedMessage);
+            return true;
+        } else if (itemId == R.id.quote_message) {
+            quoteMessage(selectedMessage);
+            return true;
+        } else if (itemId == R.id.send_again) {
+            resendMessage(selectedMessage, false);
+            return true;
+        } else if (itemId == R.id.send_again_as_p2p) {
+            resendMessage(selectedMessage, true);
+            return true;
+        } else if (itemId == R.id.copy_url) {
+            ShareUtil.copyUrlToClipboard(requireXmppActivity(), selectedMessage);
+            return true;
+        } else if (itemId == R.id.download_file) {
+            startDownloadable(selectedMessage);
+            return true;
+        } else if (itemId == R.id.cancel_transmission) {
+            cancelTransmission(selectedMessage);
+            return true;
+        } else if (itemId == R.id.retry_decryption) {
+            retryDecryption(selectedMessage);
+            return true;
+        } else if (itemId == R.id.delete_file) {
+            deleteFileDialog(selectedMessage);
+            return true;
+        } else if (itemId == R.id.save_file) {
+            saveFile(selectedMessage);
+            return true;
+        } else if (itemId == R.id.moderation) {
+            moderate(selectedMessage);
+            return true;
+        } else if (itemId == R.id.show_error_message) {
+            showErrorMessage(selectedMessage);
+            return true;
+        } else if (itemId == R.id.open_with) {
+            openWith(selectedMessage);
+            return true;
+        } else if (itemId == R.id.action_report_and_block) {
+            reportMessage(selectedMessage);
+            return true;
+        } else if (itemId == R.id.action_add_reaction) {
+            addReaction(selectedMessage);
+            return true;
+        } else if (itemId == R.id.view_edit_history) {
+            viewEditHistory(selectedMessage);
+            return true;
+        } else {
+            return super.onContextItemSelected(item);
+        }
     }
 
     private void viewEditHistory(final Message message) {
@@ -1953,42 +1933,38 @@ public class ConversationFragment extends XmppFragment
             return;
         }
         final boolean updated;
-        switch (item.getItemId()) {
-            case R.id.encryption_choice_none:
-                updated = conversation.setNextEncryption(Message.ENCRYPTION_NONE);
-                item.setChecked(true);
-                break;
-            case R.id.encryption_choice_pgp:
-                if (requireXmppActivity().hasPgp()) {
-                    if (conversation.getAccount().getPgpSignature() != null) {
-                        updated = conversation.setNextEncryption(Message.ENCRYPTION_PGP);
-                        item.setChecked(true);
-                    } else {
-                        updated = false;
-                        requireXmppActivity()
-                                .announcePgp(
-                                        conversation.getAccount(),
-                                        conversation,
-                                        null,
-                                        requireXmppActivity().onOpenPGPKeyPublished);
-                    }
+        final int itemId = item.getItemId();
+        if (itemId == R.id.encryption_choice_none) {
+            updated = conversation.setNextEncryption(Message.ENCRYPTION_NONE);
+            item.setChecked(true);
+        } else if (itemId == R.id.encryption_choice_pgp) {
+            if (requireXmppActivity().hasPgp()) {
+                if (conversation.getAccount().getPgpSignature() != null) {
+                    updated = conversation.setNextEncryption(Message.ENCRYPTION_PGP);
+                    item.setChecked(true);
                 } else {
-                    requireXmppActivity().showInstallPgpDialog();
                     updated = false;
+                    requireXmppActivity()
+                            .announcePgp(
+                                    conversation.getAccount(),
+                                    conversation,
+                                    null,
+                                    requireXmppActivity().onOpenPGPKeyPublished);
                 }
-                break;
-            case R.id.encryption_choice_axolotl:
-                Log.d(
-                        Config.LOGTAG,
-                        AxolotlService.getLogprefix(conversation.getAccount())
-                                + "Enabled axolotl for Contact "
-                                + conversation.getContact().getAddress());
-                updated = conversation.setNextEncryption(Message.ENCRYPTION_AXOLOTL);
-                item.setChecked(true);
-                break;
-            default:
-                updated = conversation.setNextEncryption(Message.ENCRYPTION_NONE);
-                break;
+            } else {
+                requireXmppActivity().showInstallPgpDialog();
+                updated = false;
+            }
+        } else if (itemId == R.id.encryption_choice_axolotl) {
+            Log.d(
+                    Config.LOGTAG,
+                    AxolotlService.getLogprefix(conversation.getAccount())
+                            + "Enabled axolotl for Contact "
+                            + conversation.getContact().getAddress());
+            updated = conversation.setNextEncryption(Message.ENCRYPTION_AXOLOTL);
+            item.setChecked(true);
+        } else {
+            updated = conversation.setNextEncryption(Message.ENCRYPTION_NONE);
         }
         if (updated) {
             requireXmppActivity().xmppConnectionService.updateConversation(conversation);
@@ -3149,26 +3125,22 @@ public class ConversationFragment extends XmppFragment
         popupMenu.getMenu().findItem(R.id.reject).setVisible(showReject);
         popupMenu.setOnMenuItemClickListener(
                 menuItem -> {
-                    Blockable blockable;
-                    switch (menuItem.getItemId()) {
-                        case R.id.reject:
-                            requireXmppActivity()
-                                    .xmppConnectionService
-                                    .stopPresenceUpdatesTo(conversation.getContact());
-                            updateSnackBar(conversation);
-                            return true;
-                        case R.id.block_domain:
-                            blockable =
-                                    conversation
-                                            .getAccount()
-                                            .getRoster()
-                                            .getContact(jid.getDomain());
-                            break;
-                        default:
-                            blockable = conversation;
+                    final int itemId = menuItem.getItemId();
+                    if (itemId == R.id.reject) {
+                        requireXmppActivity()
+                                .xmppConnectionService
+                                .stopPresenceUpdatesTo(conversation.getContact());
+                        updateSnackBar(conversation);
+                        return true;
+                    } else if (itemId == R.id.block_domain) {
+                        final Blockable blockable =
+                                conversation.getAccount().getRoster().getContact(jid.getDomain());
+                        BlockContactDialog.show(requireXmppActivity(), blockable);
+                        return true;
+                    } else {
+                        BlockContactDialog.show(requireXmppActivity(), conversation);
+                        return true;
                     }
-                    BlockContactDialog.show(requireXmppActivity(), blockable);
-                    return true;
                 });
         popupMenu.show();
         return true;
@@ -4123,19 +4095,18 @@ public class ConversationFragment extends XmppFragment
                 popupMenu.inflate(R.menu.one_on_one_context);
                 popupMenu.setOnMenuItemClickListener(
                         item -> {
-                            switch (item.getItemId()) {
-                                case R.id.action_contact_details:
-                                    requireXmppActivity()
-                                            .switchToContactDetails(
-                                                    message.getContact(), fingerprint);
-                                    break;
-                                case R.id.action_show_qr_code:
-                                    final var uri =
-                                            new MiniUri.Xmpp(message.getContact().getAddress());
-                                    requireXmppActivity().showQrCode(uri);
-                                    break;
+                            final int itemId = item.getItemId();
+                            if (itemId == R.id.action_contact_details) {
+                                requireXmppActivity()
+                                        .switchToContactDetails(message.getContact(), fingerprint);
+                                return true;
+                            } else if (itemId == R.id.action_show_qr_code) {
+                                final var uri = new MiniUri.Xmpp(message.getContact().getAddress());
+                                requireXmppActivity().showQrCode(uri);
+                                return true;
+                            } else {
+                                return true;
                             }
-                            return true;
                         });
             }
         } else {
@@ -4145,21 +4116,21 @@ public class ConversationFragment extends XmppFragment
                     .setVisible(QuickConversationsService.isConversations());
             popupMenu.setOnMenuItemClickListener(
                     item -> {
-                        switch (item.getItemId()) {
-                            case R.id.action_show_qr_code:
-                                requireXmppActivity().showQrCode(conversation.getAccount());
-                                break;
-                            case R.id.action_account_details:
-                                requireXmppActivity()
-                                        .switchToAccount(
-                                                message.getConversation().getAccount(),
-                                                fingerprint);
-                                break;
-                            case R.id.action_manage_accounts:
-                                AccountUtils.launchManageAccounts(requireActivity());
-                                break;
+                        final int itemId = item.getItemId();
+                        if (itemId == R.id.action_show_qr_code) {
+                            requireXmppActivity().showQrCode(conversation.getAccount());
+                            return true;
+                        } else if (itemId == R.id.action_account_details) {
+                            requireXmppActivity()
+                                    .switchToAccount(
+                                            message.getConversation().getAccount(), fingerprint);
+                            return true;
+                        } else if (itemId == R.id.action_manage_accounts) {
+                            AccountUtils.launchManageAccounts(requireActivity());
+                            return true;
+                        } else {
+                            return true;
                         }
-                        return true;
                     });
         }
         popupMenu.show();

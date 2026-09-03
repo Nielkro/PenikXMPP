@@ -555,26 +555,26 @@ public abstract class XmppActivity extends ActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                startActivity(
-                        new Intent(
-                                this, eu.siacs.conversations.ui.activity.SettingsActivity.class));
-                break;
-            case R.id.action_accounts:
-                AccountUtils.launchManageAccounts(this);
-                break;
-            case R.id.action_account:
-                AccountUtils.launchManageAccount(this);
-                break;
-            case android.R.id.home:
-                finish();
-                break;
-            case R.id.action_show_qr_code:
-                showQrCode();
-                break;
+        final int itemId = item.getItemId();
+        if (itemId == R.id.action_settings) {
+            startActivity(
+                    new Intent(this, eu.siacs.conversations.ui.activity.SettingsActivity.class));
+            return true;
+        } else if (itemId == R.id.action_accounts) {
+            AccountUtils.launchManageAccounts(this);
+            return true;
+        } else if (itemId == R.id.action_account) {
+            AccountUtils.launchManageAccount(this);
+            return true;
+        } else if (itemId == android.R.id.home) {
+            finish();
+            return true;
+        } else if (itemId == R.id.action_show_qr_code) {
+            showQrCode();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     public void selectPresence(

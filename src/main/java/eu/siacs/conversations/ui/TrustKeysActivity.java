@@ -118,20 +118,22 @@ public class TrustKeysActivity extends OmemoActivity implements OnKeyStatusUpdat
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_scan_qr_code:
-                if (hasPendingKeyFetches()) {
-                    Toast.makeText(
-                                    this,
-                                    R.string.please_wait_for_keys_to_be_fetched,
-                                    Toast.LENGTH_SHORT)
-                            .show();
-                } else {
-                    requestPermissionAndScanQrCode();
-                    return true;
-                }
+        final int itemId = item.getItemId();
+        if (itemId == R.id.action_scan_qr_code) {
+            if (hasPendingKeyFetches()) {
+                Toast.makeText(
+                                this,
+                                R.string.please_wait_for_keys_to_be_fetched,
+                                Toast.LENGTH_SHORT)
+                        .show();
+                return true;
+            } else {
+                requestPermissionAndScanQrCode();
+                return true;
+            }
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override

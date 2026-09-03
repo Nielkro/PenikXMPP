@@ -323,68 +323,67 @@ public class ContactDetailsActivity extends OmemoActivity
         if (MenuDoubleTabUtil.shouldIgnoreTap()) {
             return false;
         }
-        switch (menuItem.getItemId()) {
-            case android.R.id.home:
-                finish();
-                break;
-            case R.id.action_share_http:
-                shareLink(true);
-                break;
-            case R.id.action_share_uri:
-                shareLink(false);
-                break;
-            case R.id.action_delete_contact:
-                final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-                builder.setNegativeButton(getString(R.string.cancel), null);
-                builder.setTitle(getString(R.string.action_delete_contact))
-                        .setMessage(
-                                JidDialog.style(
-                                        this,
-                                        R.string.remove_contact_text,
-                                        contact.getAddress().toString()))
-                        .setPositiveButton(getString(R.string.delete), removeFromRoster)
-                        .create()
-                        .show();
-                break;
-            case R.id.action_edit_contact:
-                final Uri systemAccount = contact.getSystemAccount();
-                if (systemAccount == null) {
-                    quickEdit(
-                            contact.getServerName(),
-                            R.string.contact_name,
-                            value -> {
-                                contact.setServerName(value);
-                                final var connection = contact.getAccount().getXmppConnection();
-                                connection
-                                        .getManager(RosterManager.class)
-                                        .addRosterItem(contact, null);
-                                populateView();
-                                return null;
-                            },
-                            true);
-                } else {
-                    Intent intent = new Intent(Intent.ACTION_EDIT);
-                    intent.setDataAndType(systemAccount, Contacts.CONTENT_ITEM_TYPE);
-                    intent.putExtra("finishActivityOnSaveCompleted", true);
-                    try {
-                        startActivity(intent);
-                    } catch (ActivityNotFoundException e) {
-                        Toast.makeText(
-                                        ContactDetailsActivity.this,
-                                        R.string.no_application_found_to_view_contact,
-                                        Toast.LENGTH_SHORT)
-                                .show();
-                    }
+        final int itemId = menuItem.getItemId();
+        if (itemId == android.R.id.home) {
+            finish();
+            return true;
+        } else if (itemId == R.id.action_share_http) {
+            shareLink(true);
+            return true;
+        } else if (itemId == R.id.action_share_uri) {
+            shareLink(false);
+            return true;
+        } else if (itemId == R.id.action_delete_contact) {
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+            builder.setNegativeButton(getString(R.string.cancel), null);
+            builder.setTitle(getString(R.string.action_delete_contact))
+                    .setMessage(
+                            JidDialog.style(
+                                    this,
+                                    R.string.remove_contact_text,
+                                    contact.getAddress().toString()))
+                    .setPositiveButton(getString(R.string.delete), removeFromRoster)
+                    .create()
+                    .show();
+            return true;
+        } else if (itemId == R.id.action_edit_contact) {
+            final Uri systemAccount = contact.getSystemAccount();
+            if (systemAccount == null) {
+                quickEdit(
+                        contact.getServerName(),
+                        R.string.contact_name,
+                        value -> {
+                            contact.setServerName(value);
+                            final var connection = contact.getAccount().getXmppConnection();
+                            connection.getManager(RosterManager.class).addRosterItem(contact, null);
+                            populateView();
+                            return null;
+                        },
+                        true);
+            } else {
+                Intent intent = new Intent(Intent.ACTION_EDIT);
+                intent.setDataAndType(systemAccount, Contacts.CONTENT_ITEM_TYPE);
+                intent.putExtra("finishActivityOnSaveCompleted", true);
+                try {
+                    startActivity(intent);
+                } catch (ActivityNotFoundException e) {
+                    Toast.makeText(
+                                    ContactDetailsActivity.this,
+                                    R.string.no_application_found_to_view_contact,
+                                    Toast.LENGTH_SHORT)
+                            .show();
                 }
-                break;
-            case R.id.action_block, R.id.action_unblock:
-                BlockContactDialog.show(this, contact);
-                break;
-            case R.id.action_custom_notifications:
-                configureCustomNotifications(contact);
-                break;
+            }
+            return true;
+        } else if (itemId == R.id.action_block || itemId == R.id.action_unblock) {
+            BlockContactDialog.show(this, contact);
+            return true;
+        } else if (itemId == R.id.action_custom_notifications) {
+            configureCustomNotifications(contact);
+            return true;
+        } else {
+            return super.onOptionsItemSelected(menuItem);
         }
-        return super.onOptionsItemSelected(menuItem);
     }
 
     private void configureCustomNotifications(final Contact contact) {

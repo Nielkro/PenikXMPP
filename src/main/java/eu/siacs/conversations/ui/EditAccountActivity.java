@@ -1011,49 +1011,50 @@ public class EditAccountActivity extends OmemoActivity
         if (MenuDoubleTabUtil.shouldIgnoreTap()) {
             return false;
         }
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                deleteAccountAndReturnIfNecessary();
-                break;
-            case R.id.action_show_block_list:
-                final Intent showBlocklistIntent = new Intent(this, BlocklistActivity.class);
-                showBlocklistIntent.putExtra(EXTRA_ACCOUNT, mAccount.getJid().toString());
-                startActivity(showBlocklistIntent);
-                break;
-            case R.id.action_server_info_show_more:
-                changeMoreTableVisibility(!item.isChecked());
-                break;
-            case R.id.action_share_barcode:
-                shareBarcode();
-                break;
-            case R.id.action_share_http:
-                shareInviteLink(true);
-                break;
-            case R.id.action_share_uri:
-                shareInviteLink(false);
-                break;
-            case R.id.action_show_qr_code:
-                if (mAccount != null) {
-                    showQrCode(mAccount);
-                }
-                return true;
-            case R.id.action_change_password_on_server:
-                gotoChangePassword();
-                break;
-            case R.id.action_delete_account:
-                deleteAccount();
-                break;
-            case R.id.action_mam_prefs:
-                editMamPrefs();
-                break;
-            case R.id.action_renew_certificate:
-                renewCertificate();
-                break;
-            case R.id.action_change_presence:
-                changePresence();
-                break;
+        final int itemId = item.getItemId();
+        if (itemId == android.R.id.home) {
+            deleteAccountAndReturnIfNecessary();
+            return true;
+        } else if (itemId == R.id.action_show_block_list) {
+            final Intent showBlocklistIntent = new Intent(this, BlocklistActivity.class);
+            showBlocklistIntent.putExtra(EXTRA_ACCOUNT, mAccount.getJid().toString());
+            startActivity(showBlocklistIntent);
+            return true;
+        } else if (itemId == R.id.action_server_info_show_more) {
+            changeMoreTableVisibility(!item.isChecked());
+            return true;
+        } else if (itemId == R.id.action_share_barcode) {
+            shareBarcode();
+            return true;
+        } else if (itemId == R.id.action_share_http) {
+            shareInviteLink(true);
+            return true;
+        } else if (itemId == R.id.action_share_uri) {
+            shareInviteLink(false);
+            return true;
+        } else if (itemId == R.id.action_show_qr_code) {
+            if (mAccount != null) {
+                showQrCode(mAccount);
+            }
+            return true;
+        } else if (itemId == R.id.action_change_password_on_server) {
+            gotoChangePassword();
+            return true;
+        } else if (itemId == R.id.action_delete_account) {
+            deleteAccount();
+            return true;
+        } else if (itemId == R.id.action_mam_prefs) {
+            editMamPrefs();
+            return true;
+        } else if (itemId == R.id.action_renew_certificate) {
+            renewCertificate();
+            return true;
+        } else if (itemId == R.id.action_change_presence) {
+            changePresence();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override

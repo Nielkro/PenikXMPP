@@ -144,60 +144,60 @@ public final class MucDetailsContextMenuHelper {
             final MenuItem item, User user, final XmppActivity activity, final String fingerprint) {
         final Conversation conversation = user.getConversation();
         Jid jid = user.getRealJid();
-        switch (item.getItemId()) {
-            case R.id.action_contact_details:
-                final Jid realJid = user.getRealJid();
-                final Account account = conversation.getAccount();
-                final Contact contact =
-                        realJid == null ? null : account.getRoster().getContact(realJid);
-                if (contact != null) {
-                    if (contact.isSelf()) {
-                        activity.switchToAccount(account);
-                    } else {
-                        activity.switchToContactDetails(contact, fingerprint);
-                    }
-                }
-                return true;
-            case R.id.start_conversation:
-                startConversation(user, activity);
-                return true;
-            case R.id.give_admin_privileges:
-                changeAffiliationInConference(activity, conversation, jid, Affiliation.ADMIN);
-                return true;
-            case R.id.give_membership:
-            case R.id.remove_admin_privileges:
-            case R.id.revoke_owner_privileges:
-                changeAffiliationInConference(activity, conversation, jid, Affiliation.MEMBER);
-                return true;
-            case R.id.give_owner_privileges:
-                changeAffiliationInConference(activity, conversation, jid, Affiliation.OWNER);
-                return true;
-            case R.id.remove_membership:
-                changeAffiliationInConference(activity, conversation, jid, Affiliation.NONE);
-                return true;
-            case R.id.remove_from_room:
-                removeFromRoom(user, activity);
-                return true;
-            case R.id.send_private_message:
-                if (activity instanceof ConversationsActivity) {
-                    ConversationFragment conversationFragment = ConversationFragment.get(activity);
-                    if (conversationFragment != null) {
-                        conversationFragment.privateMessageWith(user.getFullJid());
-                        return true;
-                    }
-                }
-                activity.privateMsgInMuc(conversation, user.resource());
-                return true;
-            case R.id.invite:
-                // TODO use direct invites for public conferences
-                if (user.ranks(Affiliation.MEMBER)) {
-                    activity.xmppConnectionService.directInvite(conversation, jid.asBareJid());
+        final int itemId = item.getItemId();
+        if (itemId == R.id.action_contact_details) {
+            final Jid realJid = user.getRealJid();
+            final Account account = conversation.getAccount();
+            final Contact contact =
+                    realJid == null ? null : account.getRoster().getContact(realJid);
+            if (contact != null) {
+                if (contact.isSelf()) {
+                    activity.switchToAccount(account);
                 } else {
-                    activity.xmppConnectionService.invite(conversation, jid);
+                    activity.switchToContactDetails(contact, fingerprint);
                 }
-                return true;
-            default:
-                return false;
+            }
+            return true;
+        } else if (itemId == R.id.start_conversation) {
+            startConversation(user, activity);
+            return true;
+        } else if (itemId == R.id.give_admin_privileges) {
+            changeAffiliationInConference(activity, conversation, jid, Affiliation.ADMIN);
+            return true;
+        } else if (itemId == R.id.give_membership
+                || itemId == R.id.remove_admin_privileges
+                || itemId == R.id.revoke_owner_privileges) {
+            changeAffiliationInConference(activity, conversation, jid, Affiliation.MEMBER);
+            return true;
+        } else if (itemId == R.id.give_owner_privileges) {
+            changeAffiliationInConference(activity, conversation, jid, Affiliation.OWNER);
+            return true;
+        } else if (itemId == R.id.remove_membership) {
+            changeAffiliationInConference(activity, conversation, jid, Affiliation.NONE);
+            return true;
+        } else if (itemId == R.id.remove_from_room) {
+            removeFromRoom(user, activity);
+            return true;
+        } else if (itemId == R.id.send_private_message) {
+            if (activity instanceof ConversationsActivity) {
+                ConversationFragment conversationFragment = ConversationFragment.get(activity);
+                if (conversationFragment != null) {
+                    conversationFragment.privateMessageWith(user.getFullJid());
+                    return true;
+                }
+            }
+            activity.privateMsgInMuc(conversation, user.resource());
+            return true;
+        } else if (itemId == R.id.invite) {
+            // TODO use direct invites for public conferences
+            if (user.ranks(Affiliation.MEMBER)) {
+                activity.xmppConnectionService.directInvite(conversation, jid.asBareJid());
+            } else {
+                activity.xmppConnectionService.invite(conversation, jid);
+            }
+            return true;
+        } else {
+            return false;
         }
     }
 

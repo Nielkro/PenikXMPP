@@ -353,29 +353,30 @@ public class StartConversationActivity extends XmppActivity
                     } else {
                         prefilled = null;
                     }
-                    switch (actionItem.getId()) {
-                        case R.id.discover_public_channels:
-                            if (QuickConversationsService.isPlayStoreFlavor()) {
-                                throw new IllegalStateException(
-                                        "Channel discovery is not available on Google Play flavor");
-                            } else {
-                                startActivity(new Intent(this, ChannelDiscoveryActivity.class));
-                            }
-                            break;
-                        case R.id.join_public_channel:
-                            showJoinConferenceDialog(prefilled);
-                            break;
-                        case R.id.create_private_group_chat:
-                            showCreatePrivateGroupChatDialog();
-                            break;
-                        case R.id.create_public_channel:
-                            showPublicChannelDialog();
-                            break;
-                        case R.id.create_contact:
-                            showCreateContactDialog(prefilled, null);
-                            break;
+                    final int itemId = actionItem.getId();
+                    if (itemId == R.id.discover_public_channels) {
+                        if (QuickConversationsService.isPlayStoreFlavor()) {
+                            throw new IllegalStateException(
+                                    "Channel discovery is not available on Google Play flavor");
+                        } else {
+                            startActivity(new Intent(this, ChannelDiscoveryActivity.class));
+                        }
+                        return false;
+                    } else if (itemId == R.id.join_public_channel) {
+                        showJoinConferenceDialog(prefilled);
+                        return false;
+                    } else if (itemId == R.id.create_private_group_chat) {
+                        showCreatePrivateGroupChatDialog();
+                        return false;
+                    } else if (itemId == R.id.create_public_channel) {
+                        showPublicChannelDialog();
+                        return false;
+                    } else if (itemId == R.id.create_contact) {
+                        showCreateContactDialog(prefilled, null);
+                        return false;
+                    } else {
+                        return false;
                     }
-                    return false;
                 });
         final var backDispatcher = this.getOnBackPressedDispatcher();
         backDispatcher.addCallback(this, this.fabBackPressedCallback);
@@ -765,23 +766,25 @@ public class StartConversationActivity extends XmppActivity
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(final MenuItem item) {
         if (MenuDoubleTabUtil.shouldIgnoreTap()) {
             return false;
         }
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                finish();
-                return true;
-            case R.id.action_hide_offline:
-                mHideOfflineContacts = !item.isChecked();
-                getPreferences().edit().putBoolean("hide_offline", mHideOfflineContacts).apply();
-                if (mSearchEditText != null) {
-                    filter(mSearchEditText.getText().toString());
-                }
-                invalidateOptionsMenu();
+        final int itemId = item.getItemId();
+        if (itemId == android.R.id.home) {
+            finish();
+            return true;
+        } else if (itemId == R.id.action_hide_offline) {
+            mHideOfflineContacts = !item.isChecked();
+            getPreferences().edit().putBoolean("hide_offline", mHideOfflineContacts).apply();
+            if (mSearchEditText != null) {
+                filter(mSearchEditText.getText().toString());
+            }
+            invalidateOptionsMenu();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -1370,31 +1373,33 @@ public class StartConversationActivity extends XmppActivity
         }
 
         @Override
-        public boolean onContextItemSelected(final MenuItem item) {
+        public boolean onContextItemSelected(@NonNull final MenuItem item) {
             StartConversationActivity activity = (StartConversationActivity) getActivity();
             if (activity == null) {
                 return true;
             }
-            switch (item.getItemId()) {
-                case R.id.context_contact_details:
-                    activity.openDetailsForContact();
-                    break;
-                case R.id.context_show_qr:
-                    activity.showQrForContact();
-                    break;
-                case R.id.context_contact_block_unblock:
-                    activity.toggleContactBlock();
-                    break;
-                case R.id.context_delete_contact:
-                    activity.deleteContact();
-                    break;
-                case R.id.context_share_uri:
-                    activity.shareBookmarkUri();
-                    break;
-                case R.id.context_delete_conference:
-                    activity.deleteConference();
+            final int itemId = item.getItemId();
+            if (itemId == R.id.context_contact_details) {
+                activity.openDetailsForContact();
+                return true;
+            } else if (itemId == R.id.context_show_qr) {
+                activity.showQrForContact();
+                return true;
+            } else if (itemId == R.id.context_contact_block_unblock) {
+                activity.toggleContactBlock();
+                return true;
+            } else if (itemId == R.id.context_delete_contact) {
+                activity.deleteContact();
+                return true;
+            } else if (itemId == R.id.context_share_uri) {
+                activity.shareBookmarkUri();
+                return true;
+            } else if (itemId == R.id.context_delete_conference) {
+                activity.deleteConference();
+                return true;
+            } else {
+                return super.onContextItemSelected(item);
             }
-            return true;
         }
     }
 
