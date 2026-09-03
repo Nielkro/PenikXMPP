@@ -1059,7 +1059,10 @@ public class ConversationFragment extends XmppFragment
         } else {
             message = conversation.getCorrectingMessage();
             final var uuid = message.getUuid();
-            message.putEdited(body);
+            // this resets both encryption and fingerprint; when using axolotl fingerprint will be
+            // added again on send
+            message.putEdited(
+                    new Message.BodyVersion(body, conversation.getNextEncryption(), null));
             if (!DatabaseBackend.getInstance(requireContext()).updateMessage(message, uuid)) {
                 throw new IllegalStateException("Could not update message after edit");
             }

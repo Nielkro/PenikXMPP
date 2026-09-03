@@ -545,11 +545,11 @@ public class Message extends AbstractEntity
     }
 
     public boolean putEdited(final Message edit) {
-        return putEdited(
-                edit.getRemoteMsgId(), edit.getServerMsgId(), edit.getSentAt(), edit.getBody());
+        final var body = BodyVersion.of(edit);
+        return putEdited(edit.getRemoteMsgId(), edit.getServerMsgId(), edit.getSentAt(), body);
     }
 
-    public void putEdited(final String body) {
+    public void putEdited(final BodyVersion body) {
         final var uuid = java.util.UUID.randomUUID();
         if (!putEdited(uuid.toString(), null, Instant.now(), body)) {
             throw new IllegalStateException("Could not store edit");
@@ -557,8 +557,11 @@ public class Message extends AbstractEntity
         this.uuid = uuid.toString();
     }
 
-    public boolean putEdited(
-            final String id, final String serverMsgId, final Instant sentAt, final String body) {
+    private boolean putEdited(
+            final String id,
+            final String serverMsgId,
+            final Instant sentAt,
+            final BodyVersion body) {
         final List<Edit> versions = getVersions();
         if (Iterables.any(
                 versions,
@@ -569,9 +572,11 @@ public class Message extends AbstractEntity
                                                 && serverMsgId.equals(v.serverMsgId()))))) {
             return false;
         }
-        final var edit = new Edit(id, serverMsgId, sentAt, null);
+        final var edit = new Edit(id, serverMsgId, sentAt, null, null, null);
         this.edits = new ImmutableList.Builder<Edit>().addAll(versions).add(edit).build();
-        this.body = body;
+        this.body = body.body();
+        this.encryption = body.encryption;
+        this.axolotlFingerprint = body.fingerprint;
         return true;
     }
 
@@ -585,12 +590,21 @@ public class Message extends AbstractEntity
                         this.edits, e -> e != null && e.id() != null && e.sentAt() != null);
         if (withoutLegacy.isEmpty()) {
             final var id = status == Message.STATUS_RECEIVED ? this.remoteMsgId : uuid;
-            return Collections.singletonList(new Edit(id, serverMsgId, getSentAt(), body));
+            return Collections.singletonList(
+                    new Edit(id, serverMsgId, getSentAt(), body, encryption, axolotlFingerprint));
         } else {
-            final var body = this.body;
+            final var body = BodyVersion.of(this);
             return ImmutableList.copyOf(
                     Collections2.transform(
-                            withoutLegacy, e -> e.body() != null ? e : e.withBody(body)));
+                            withoutLegacy,
+                            e -> {
+                                Preconditions.checkNotNull(e);
+                                if (e.body() == null || e.encryption() == null) {
+                                    return e.withBody(body);
+                                } else {
+                                    return e;
+                                }
+                            }));
         }
     }
 
@@ -608,15 +622,13 @@ public class Message extends AbstractEntity
                             conversationUuid,
                             counterpart,
                             trueCounterpart,
-                            e.body(),
+                            e.asBodyVersion(),
                             e.sentAt().toEpochMilli(),
-                            encryption,
                             status,
                             type,
                             carbon,
                             e.id(),
                             e.serverMsgId(),
-                            this.axolotlFingerprint,
                             oob,
                             occupantId);
                 });
@@ -1162,6 +1174,12 @@ public class Message extends AbstractEntity
 
     public record StorageLocation(File file, boolean sharedStorage) {}
 
+    public record BodyVersion(String body, int encryption, String fingerprint) {
+        public static BodyVersion of(final Message m) {
+            return new BodyVersion(m.getBody(), m.getEncryption(), m.getFingerprint());
+        }
+    }
+
     public static class MessageVersion extends Message {
 
         protected MessageVersion(
@@ -1170,15 +1188,13 @@ public class Message extends AbstractEntity
                 String conversationUUid,
                 Jid counterpart,
                 Jid trueCounterpart,
-                String body,
+                BodyVersion body,
                 long timeSent,
-                int encryption,
                 int status,
                 int type,
                 boolean carbon,
                 String remoteMsgId,
                 String serverMsgId,
-                String fingerprint,
                 boolean oob,
                 String occupantId) {
             super(
@@ -1187,16 +1203,16 @@ public class Message extends AbstractEntity
                     conversationUUid,
                     counterpart,
                     trueCounterpart,
-                    body,
+                    body.body(),
                     timeSent,
-                    encryption,
+                    body.encryption(),
                     status,
                     type,
                     carbon,
                     remoteMsgId,
                     null,
                     serverMsgId,
-                    fingerprint,
+                    body.fingerprint(),
                     true,
                     Collections.emptyList(),
                     oob,

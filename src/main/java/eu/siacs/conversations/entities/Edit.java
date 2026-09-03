@@ -15,7 +15,9 @@ public record Edit(
         String id,
         @SerializedName("server_msg_id") String serverMsgId,
         Instant sentAt,
-        String body) {
+        String body,
+        Integer encryption,
+        String fingerprint) {
 
     static boolean wasPreviouslyEditedRemoteMsgId(
             final List<Edit> edits, final String remoteMsgId) {
@@ -49,7 +51,18 @@ public record Edit(
         }
     }
 
-    public Edit withBody(final String body) {
-        return new Edit(this.id, this.serverMsgId, this.sentAt, body);
+    public Message.BodyVersion asBodyVersion() {
+        return new Message.BodyVersion(
+                body, encryption == null ? Message.ENCRYPTION_NONE : encryption, fingerprint);
+    }
+
+    public Edit withBody(final Message.BodyVersion body) {
+        return new Edit(
+                this.id,
+                this.serverMsgId,
+                this.sentAt,
+                body.body(),
+                body.encryption(),
+                body.fingerprint());
     }
 }
