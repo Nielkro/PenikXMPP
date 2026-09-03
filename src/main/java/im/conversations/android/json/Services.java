@@ -78,13 +78,22 @@ public class Services {
         public void write(final JsonWriter out, final Instant value) throws IOException {
             if (value == null) {
                 out.nullValue();
+            } else if (value.equals(Instant.MAX)) {
+                out.value(Long.MAX_VALUE);
+            } else if (value.equals(Instant.MIN)) {
+                out.value(Long.MIN_VALUE);
             } else {
-                out.value(value.toEpochMilli());
+                try {
+                    out.value(value.toEpochMilli());
+                } catch (final ArithmeticException e) {
+                    out.value(value.isAfter(Instant.EPOCH) ? Long.MAX_VALUE : Long.MIN_VALUE);
+                }
             }
         }
 
         @Override
         public Instant read(final JsonReader in) throws IOException {
+            final long epochMilli;
             if (in.peek() == JsonToken.NULL) {
                 in.nextNull();
                 return null;
@@ -94,9 +103,20 @@ public class Services {
             } else if (in.peek() == JsonToken.STRING) {
                 final var value = in.nextString();
                 final var asLong = Longs.tryParse(value);
-                return asLong == null ? null : Instant.ofEpochMilli(asLong);
+                if (asLong == null) {
+                    return null;
+                }
+                epochMilli = asLong;
+            } else {
+                throw new IOException("Unexpected token");
             }
-            throw new IOException("Unexpected token");
+            if (epochMilli == Long.MAX_VALUE) {
+                return Instant.MAX;
+            } else if (epochMilli == Long.MIN_VALUE) {
+                return Instant.MIN;
+            } else {
+                return Instant.ofEpochMilli(epochMilli);
+            }
         }
     }
 }
