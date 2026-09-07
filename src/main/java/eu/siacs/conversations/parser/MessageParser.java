@@ -548,12 +548,20 @@ public class MessageParser extends AbstractParser
             }
 
             if (replacementId != null && mXmppConnectionService.allowMessageCorrection()) {
-                final Message replacedMessage =
-                        conversation.findMessageWithRemoteIdAndCounterpart(
+                final String occupantIdFilter;
+                if (conversationMultiMode) {
+                    // a non-null filter ensures that we actually do filter even when we don't have
+                    // one
+                    occupantIdFilter = Strings.nullToEmpty(message.getOccupantId());
+                } else {
+                    occupantIdFilter = null;
+                }
+
+                final var replacedMessage =
+                        conversation.findMessageWithUuidOrRemoteId(
                                 replacementId,
-                                counterpart,
-                                message.getStatus() == Message.STATUS_RECEIVED,
-                                message.isCarbon());
+                                occupantIdFilter,
+                                message.getStatus() == Message.STATUS_RECEIVED);
                 if (replacedMessage != null) {
                     final boolean fingerprintsMatch =
                             replacedMessage.getFingerprint() == null
@@ -572,52 +580,40 @@ public class MessageParser extends AbstractParser
                                     && replacedMessage
                                             .getOccupantId()
                                             .equals(message.getOccupantId());
-                    final boolean duplicate = conversation.hasDuplicateMessage(message);
-                    if (fingerprintsMatch
-                            && (trueCountersMatch || occupantIdMatch || !conversationMultiMode)
-                            && !duplicate) {
-                        synchronized (replacedMessage) {
-                            replacedMessage.putEdited(message);
-                            final String uuid = replacedMessage.getUuid();
-                            replacedMessage.setUuid(UUID.randomUUID().toString());
-                            replacedMessage.setEncryption(message.getEncryption());
-                            if (replacedMessage.getStatus() == Message.STATUS_RECEIVED) {
-                                replacedMessage.markUnread();
-                            }
-                            getManager(ChatStateManager.class).process(packet);
-                            mXmppConnectionService.updateMessage(replacedMessage, uuid);
-                            if (replacedMessage.getStatus() == Message.STATUS_RECEIVED
-                                    && (replacedMessage.trusted()
-                                            || replacedMessage
-                                                    .isPrivateMessage()) // TODO do we really want
-                                    // to send receipts for all
-                                    // PMs?
-                                    && remoteMsgId != null
-                                    && !selfAddressed
-                                    && !isTypeGroupChat) {
-                                getManager(DeliveryReceiptManager.class)
-                                        .processRequest(packet, query);
-                            }
-                            if (replacedMessage.getEncryption() == Message.ENCRYPTION_PGP) {
-                                conversation
-                                        .getAccount()
-                                        .getPgpDecryptionService()
-                                        .discard(replacedMessage);
-                                conversation
-                                        .getAccount()
-                                        .getPgpDecryptionService()
-                                        .decrypt(replacedMessage, false);
-                            }
+                    synchronized (replacedMessage) {
+                        replacedMessage.putEdited(message);
+                        final String uuid = replacedMessage.getUuid();
+                        replacedMessage.setUuid(UUID.randomUUID().toString());
+                        replacedMessage.setEncryption(message.getEncryption());
+                        if (replacedMessage.getStatus() == Message.STATUS_RECEIVED) {
+                            replacedMessage.markUnread();
                         }
-                        mXmppConnectionService.getNotificationService().updateNotification();
-                        return;
-                    } else {
-                        Log.d(
-                                Config.LOGTAG,
-                                account.getJid().asBareJid()
-                                        + ": received message correction but verification didn't"
-                                        + " check out");
+                        getManager(ChatStateManager.class).process(packet);
+                        mXmppConnectionService.updateMessage(replacedMessage, uuid);
+                        if (replacedMessage.getStatus() == Message.STATUS_RECEIVED
+                                && (replacedMessage.trusted()
+                                        || replacedMessage
+                                                .isPrivateMessage()) // TODO do we really want
+                                // to send receipts for all
+                                // PMs?
+                                && remoteMsgId != null
+                                && !selfAddressed
+                                && !isTypeGroupChat) {
+                            getManager(DeliveryReceiptManager.class).processRequest(packet, query);
+                        }
+                        if (replacedMessage.getEncryption() == Message.ENCRYPTION_PGP) {
+                            conversation
+                                    .getAccount()
+                                    .getPgpDecryptionService()
+                                    .discard(replacedMessage);
+                            conversation
+                                    .getAccount()
+                                    .getPgpDecryptionService()
+                                    .decrypt(replacedMessage, false);
+                        }
                     }
+                    mXmppConnectionService.getNotificationService().updateNotification();
+                    return;
                 }
             }
 

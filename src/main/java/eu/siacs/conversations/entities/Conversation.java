@@ -380,49 +380,19 @@ public class Conversation extends AbstractEntity
         }
     }
 
-    public Message findSentMessageWithUuidOrRemoteId(String id) {
+    public Message findMessageWithUuidOrRemoteId(
+            final String id, final String occupantId, final Boolean received) {
         synchronized (this.messages) {
-            for (Message message : this.messages) {
-                if (id.equals(message.getUuid())
-                        || (message.getStatus() >= Message.STATUS_SEND
-                                && id.equals(message.getRemoteMsgId()))) {
+            for (final var message : this.messages) {
+                final var idMatch =
+                        id.equals(message.getUuid()) || id.equals(message.getRemoteMsgId());
+                final var occupantIdMatch =
+                        occupantId == null || occupantId.equals(message.getOccupantId());
+                final var directionMatch =
+                        received == null
+                                || (message.getStatus() == Message.STATUS_RECEIVED) == received;
+                if (idMatch && occupantIdMatch && directionMatch) {
                     return message;
-                }
-            }
-        }
-        return null;
-    }
-
-    public Message findMessageWithUuidOrRemoteId(final String id) {
-        synchronized (this.messages) {
-            for (final Message message : this.messages) {
-                if (id.equals(message.getUuid()) || id.equals(message.getRemoteMsgId())) {
-                    return message;
-                }
-            }
-        }
-        return null;
-    }
-
-    public Message findMessageWithRemoteIdAndCounterpart(
-            String id, Jid counterpart, boolean received, boolean carbon) {
-        synchronized (this.messages) {
-            for (int i = this.messages.size() - 1; i >= 0; --i) {
-                final Message message = messages.get(i);
-                final Jid mcp = message.getCounterpart();
-                if (mcp == null) {
-                    continue;
-                }
-                if (mcp.equals(counterpart)
-                        && ((message.getStatus() == Message.STATUS_RECEIVED) == received)
-                        && (carbon == message.isCarbon() || received)) {
-                    if (id.equals(message.getRemoteMsgId())
-                            && !message.isFileOrImage()
-                            && !message.treatAsDownloadable()) {
-                        return message;
-                    } else {
-                        return null;
-                    }
                 }
             }
         }
@@ -445,18 +415,6 @@ public class Conversation extends AbstractEntity
             for (Message message : this.messages) {
                 if (counterpart.equals(message.getCounterpart())
                         && (id.equals(message.getRemoteMsgId()) || id.equals(message.getUuid()))) {
-                    return message;
-                }
-            }
-        }
-        return null;
-    }
-
-    public Message findReceivedWithRemoteId(final String id) {
-        synchronized (this.messages) {
-            for (final Message message : this.messages) {
-                if (message.getStatus() == Message.STATUS_RECEIVED
-                        && id.equals(message.getRemoteMsgId())) {
                     return message;
                 }
             }

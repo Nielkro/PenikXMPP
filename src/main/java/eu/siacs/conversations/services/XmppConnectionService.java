@@ -3307,10 +3307,11 @@ public class XmppConnectionService extends Service {
         if (uuid == null) {
             return null;
         }
-        for (Conversation conversation : getConversations()) {
+        for (final var conversation : getConversations()) {
             if (conversation.getAddress().asBareJid().equals(recipient)
                     && conversation.getAccount() == account) {
-                final Message message = conversation.findSentMessageWithUuidOrRemoteId(uuid);
+                final Message message =
+                        conversation.findMessageWithUuidOrRemoteId(uuid, null, false);
                 if (message != null) {
                     markMessage(message, status, errorMessage);
                 }

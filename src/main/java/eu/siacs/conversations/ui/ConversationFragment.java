@@ -1589,7 +1589,6 @@ public class ConversationFragment extends XmppFragment
                         !showError
                                 && m.getType() == Message.TYPE_TEXT
                                 && !m.isGeoUri()
-                                && m.isLastCorrectableMessage()
                                 && singleOrOccupantId);
             } else {
                 moderateMessage.setVisible(false);

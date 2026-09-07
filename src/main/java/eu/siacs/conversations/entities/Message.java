@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.util.Log;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -570,6 +571,7 @@ public class Message extends AbstractEntity
                                 && ((id != null && id.equals(v.id()))
                                         || (serverMsgId != null
                                                 && serverMsgId.equals(v.serverMsgId()))))) {
+            Log.d(Config.LOGTAG, "do not put edited. found previous version");
             return false;
         }
         final var edit = new Edit(id, serverMsgId, sentAt, null, null, null);
@@ -589,7 +591,12 @@ public class Message extends AbstractEntity
                 Collections2.filter(
                         this.edits, e -> e != null && e.id() != null && e.sentAt() != null);
         if (withoutLegacy.isEmpty()) {
-            final var id = status == Message.STATUS_RECEIVED ? this.remoteMsgId : uuid;
+            final String id;
+            if (status == Message.STATUS_RECEIVED || this.remoteMsgId != null) {
+                id = this.remoteMsgId;
+            } else {
+                id = uuid;
+            }
             return Collections.singletonList(
                     new Edit(id, serverMsgId, getSentAt(), body, encryption, axolotlFingerprint));
         } else {
@@ -779,17 +786,6 @@ public class Message extends AbstractEntity
         }
     }
 
-    public boolean isLastCorrectableMessage() {
-        Message next = next();
-        while (next != null) {
-            if (next.isEditable()) {
-                return false;
-            }
-            next = next.next();
-        }
-        return isEditable();
-    }
-
     public boolean isEditable() {
         return status != STATUS_RECEIVED
                 && !isCarbon()
@@ -886,7 +882,8 @@ public class Message extends AbstractEntity
         if (this.edits.isEmpty()) {
             throw new IllegalStateException("Attempting to access unedited message");
         }
-        return edits.get(0).id();
+        final var edit = Objects.requireNonNull(Iterables.getFirst(this.edits, null));
+        return edit.id();
     }
 
     public void setOob(boolean isOob) {

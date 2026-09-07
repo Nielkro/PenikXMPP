@@ -42,7 +42,9 @@ public class DisplayedManager extends AbstractManager {
         if (packet.fromAccount(account) && !selfAddressed) {
             final Conversation c = this.service.find(account, counterpart.asBareJid());
             final Message message =
-                    (c == null || id == null) ? null : c.findReceivedWithRemoteId(id);
+                    (c == null || id == null)
+                            ? null
+                            : c.findMessageWithUuidOrRemoteId(id, null, true);
             if (message != null && (query == null || query.isCatchup())) {
                 this.service.markReadUpTo(c, message);
             }

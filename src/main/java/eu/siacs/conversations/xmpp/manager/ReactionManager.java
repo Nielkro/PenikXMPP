@@ -82,7 +82,8 @@ public class ReactionManager extends AbstractManager {
             }
         } else {
             final Message message;
-            final var inMemoryMessage = conversation.findMessageWithUuidOrRemoteId(reactingTo);
+            final var inMemoryMessage =
+                    conversation.findMessageWithUuidOrRemoteId(reactingTo, null, null);
             if (inMemoryMessage != null) {
                 message = inMemoryMessage;
             } else {
