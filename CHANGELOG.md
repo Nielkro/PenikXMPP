@@ -1,5 +1,11 @@
 # Changelog
 
+### Version 2.20.2
+
+* Allow editing of all sent messages; Not just last. Show edit history
+* Fix images not showing in notification
+* Fix some geo URIs not rendering correctly
+
 ### Version 2.20.1
 
 * Add 'Note to self' as search suggestion

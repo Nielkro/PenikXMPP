@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:9.2.1'
-        classpath 'com.diffplug.spotless:spotless-plugin-gradle:8.10.1'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:8.10.2'
     }
 }
 
@@ -77,7 +77,7 @@ dependencies {
     //noinspection NewerVersionAvailable
     implementation 'net.fellbaum:jemoji:1.7.6' //1.7.6 is the latest with Java 8 support
     implementation 'org.bouncycastle:bcmail-jdk18on:1.85'
-    implementation 'org.conscrypt:conscrypt-android:2.6.3'
+    implementation 'org.conscrypt:conscrypt-android:2.7.0'
     implementation 'org.hsluv:hsluv:1.0.2'
     implementation 'org.jxmpp:jxmpp-jid:1.1.0'
     implementation 'org.jxmpp:jxmpp-stringprep-libidn:1.1.0'
@@ -86,7 +86,7 @@ dependencies {
     implementation 'org.osmdroid:osmdroid-android:6.1.20'
     implementation 'org.whispersystems:signal-protocol-java:2.6.2'
     conversationsPlaystoreImplementation 'com.android.installreferrer:installreferrer:2.2'
-    quicksyImplementation 'io.michaelrocks:libphonenumber-android:9.0.36'
+    quicksyImplementation 'io.michaelrocks:libphonenumber-android:9.0.38'
 
     quicksyPlaystoreImplementation 'com.google.android.gms:play-services-auth-api-phone:18.3.1'
 
@@ -107,8 +107,8 @@ android {
 
     defaultConfig {
         minSdkVersion 23
-        versionCode 42178
-        versionName "2.20.1"
+        versionCode 42179
+        versionName "2.20.2"
         applicationId "eu.siacs.conversations"
         resValue "string", "applicationId", applicationId
         def appName = "Conversations"
