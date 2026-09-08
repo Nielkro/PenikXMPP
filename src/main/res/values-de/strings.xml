@@ -1199,6 +1199,6 @@
     <string name="delete_file_dialog_copies">Dadurch werden keine Kopien dieser Datei gelöscht, die auf anderen Geräten oder Servern gespeichert sind.</string>
     <string name="delete_file_dialog_confirm">Möchtest du diese Datei wirklich löschen?</string>
     <string name="delete_file_dialog_shared">Diese Datei wurde in anderen Chats geteilt.</string>
-    <string name="edit_history">Chatverlauf bearbeiten</string>
-    <string name="view_edit_history">Änderungen des Chatverlaufs anzeigen</string>
+    <string name="edit_history">Änderungsverlauf</string>
+    <string name="view_edit_history">Änderungsverlauf zeigen</string>
 </resources>
