@@ -415,7 +415,7 @@ public class Message extends AbstractEntity
         return body;
     }
 
-    public synchronized void setBody(String body) {
+    public synchronized void setBody(final String body) {
         if (body == null) {
             throw new Error("You should not set the message body to null");
         }
@@ -585,7 +585,7 @@ public class Message extends AbstractEntity
         }
         final var edit = new Edit(id, serverMsgId, sentAt, null, null, null);
         this.edits = new ImmutableList.Builder<Edit>().addAll(versions).add(edit).build();
-        this.body = body.body();
+        this.setBody(body.body);
         this.encryption = body.encryption;
         this.axolotlFingerprint = body.fingerprint;
         return true;
