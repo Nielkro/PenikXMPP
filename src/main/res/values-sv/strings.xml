@@ -1214,4 +1214,6 @@
     <string name="note_to_self">Anteckning till mig själv</string>
     <string name="invalid_contact">Kunde inte tolka kontakten</string>
     <string name="delete_file_dialog_copies">Det här kommer att ta bort kopior av den här filen som lagras i andra enheter eller servrar.</string>
+    <string name="view_edit_history">Visa redigeringshistorik</string>
+    <string name="edit_history">Redigeringshistorik</string>
 </resources>
