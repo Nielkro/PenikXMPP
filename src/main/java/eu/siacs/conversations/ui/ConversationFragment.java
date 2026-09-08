@@ -1586,7 +1586,10 @@ public class ConversationFragment extends XmppFragment
                                 ? R.string.moderate_delete
                                 : R.string.moderate_delete_dot_dot_dot);
                 correctMessage.setVisible(
-                        !showError && m.acceptMessageCorrection() && singleOrOccupantId);
+                        !showError
+                                && m.getStatus() != Message.STATUS_RECEIVED
+                                && m.acceptMessageCorrection()
+                                && singleOrOccupantId);
             } else {
                 moderateMessage.setVisible(false);
                 addReaction.setVisible(false);
