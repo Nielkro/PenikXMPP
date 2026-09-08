@@ -1218,4 +1218,6 @@
     <string name="attachment_choice_contact">Contacto</string>
     <string name="note_to_self">Nota personal</string>
     <string name="invalid_contact">No se pudo analizar el contacto</string>
+    <string name="view_edit_history">Historial de cambios</string>
+    <string name="edit_history">Historial de cambios</string>
 </resources>
