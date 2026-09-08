@@ -1,0 +1,3 @@
+* Permitir editar todos los mensajes enviados, no solo el último. Mostrar historial de cambios.
+* Reparar el error que impedía ver las imágenes en las notificaciones.
+* Corregir la visualización incorrecta de algunas URI geográficas
