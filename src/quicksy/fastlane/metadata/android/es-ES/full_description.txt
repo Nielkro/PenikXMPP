@@ -1,14 +1,13 @@
-Quicksy es una derivación de las populares conversaciones del cliente Jabber/XMPP con descubrimiento automático de contactos.
+Quicksy es una derivación del popular cliente de Jabber/XMPP Conversations con detección automática de contactos.
 
-Te registras con tu número de teléfono y Quicksy automáticamente, basándose en los números de teléfono de tu agenda, te sugiere posibles contactos.
+Te registras con tu número de teléfono y Quicksy te sugerirá automáticamente posibles contactos basándose en los números de teléfono de tu agenda.
 
-Under the hood Quicksy es un cliente de Jabber completo que te permite comunicarte con cualquier usuario en cualquier servidor federado públicamente. De la misma manera, los usuarios en Quicksy pueden ser contactados desde el exterior simplemente añadiendo +phonenumber@quicksy.im a su lista de contactos.
+Internamente, Quicksy es un cliente de Jabber completo que te permite comunicarte con cualquier usuario en cualquier servidor federado públicamente. Del mismo modo, se puede contactar a los usuarios de Quicksy desde el exterior simplemente añadiendo +numerodetelefono@quicksy.im a tu lista de contactos.
 
-Aparte de la sincronización de contactos, la interfaz de usuario está deliberadamente lo más cerca posible de las conversaciones. Esto permite a los usuarios migrar de Quicksy a Conversations sin tener que volver a aprender cómo funciona la aplicación.
+Aparte de la sincronización de contactos, la interfaz de usuario es deliberadamente lo más parecida posible a Conversations. Esto permite a los usuarios migrar eventualmente de Quicksy a Conversations sin tener que volver a aprender cómo funciona la aplicación.
 
-Los contactos sugeridos son otros usuarios de Quicksy y usuarios regulares de Jabber/XMPP que han introducido su ID de Jabber en el directorio de Quicksy (https://quicksy.im/#get-listed).
+Los contactos sugeridos se componen de otros usuarios de Quicksy y de usuarios habituales de Jabber/XMPP que han introducido su ID de Jabber en el Directorio de Quicksy (https://quicksy.im/#get-listed).
 
-NOTA: Para ingresar (https://quicksy.im/enter/) tu ID de Jabber en el Quicksy
-Se requiere una cuota de inscripción única para el directorio.
+NOTA: Para introducir (https://quicksy.im/enter/) tu ID de Jabber en el Directorio de Quicksy se requiere el pago de una cuota de registro única.
 
-Lea la política de privacidad (https://quicksy.im/#privacy) para más información.
+Lee la Política de privacidad (https://quicksy.im/#privacy) para más información.
