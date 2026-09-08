@@ -186,11 +186,7 @@ public class ReactionManager extends AbstractManager {
                             conversation.getAccount().getJid(),
                             occupantId);
         } else {
-            if (message.isCarbon() || message.getStatus() == Message.STATUS_RECEIVED) {
-                reactToId = message.getRemoteMsgId();
-            } else {
-                reactToId = message.getUuid();
-            }
+            reactToId = message.getMessageId();
             typeGroupChat = false;
             if (isPrivateMessage) {
                 reactTo = message.getCounterpart();

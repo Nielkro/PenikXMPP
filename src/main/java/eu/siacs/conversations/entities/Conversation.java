@@ -201,7 +201,7 @@ public class Conversation extends AbstractEntity
         synchronized (this.messages) {
             for (final Message message : Lists.reverse(this.messages)) {
                 if (message.isEditable()) {
-                    if (message.isGeoUri() || message.getType() != Message.TYPE_TEXT) {
+                    if (!message.acceptMessageCorrection()) {
                         return null;
                     }
                     return message;
@@ -845,10 +845,6 @@ public class Conversation extends AbstractEntity
             }
         }
         return null;
-    }
-
-    public boolean hasDuplicateMessage(Message message) {
-        return findDuplicateMessage(message) != null;
     }
 
     public Message findSentMessageWithBody(String body) {

@@ -58,7 +58,7 @@ public class MessageGenerator extends AbstractGenerator {
             packet.addExtension(new OriginId(message.getUuid()));
         }
         if (message.edited()) {
-            packet.addExtension(new Replace(message.getEditedIdWireFormat()));
+            packet.addExtension(new Replace(message.getMessageId()));
         }
         return packet;
     }

@@ -547,7 +547,9 @@ public class MessageParser extends AbstractParser
                 updateLastseen(account, from);
             }
 
-            if (replacementId != null && mXmppConnectionService.allowMessageCorrection()) {
+            if (replacementId != null
+                    && message.acceptMessageCorrection()
+                    && mXmppConnectionService.allowMessageCorrection()) {
                 final String occupantIdFilter;
                 if (conversationMultiMode) {
                     // a non-null filter ensures that we actually do filter even when we don't have
@@ -562,26 +564,15 @@ public class MessageParser extends AbstractParser
                                 replacementId,
                                 occupantIdFilter,
                                 message.getStatus() == Message.STATUS_RECEIVED);
-                if (replacedMessage != null) {
-                    final boolean fingerprintsMatch =
-                            replacedMessage.getFingerprint() == null
-                                    || replacedMessage
-                                            .getFingerprint()
-                                            .equals(message.getFingerprint());
-                    final boolean trueCountersMatch =
-                            replacedMessage.getTrueCounterpart() != null
-                                    && message.getTrueCounterpart() != null
-                                    && replacedMessage
-                                            .getTrueCounterpart()
-                                            .asBareJid()
-                                            .equals(message.getTrueCounterpart().asBareJid());
-                    final boolean occupantIdMatch =
-                            replacedMessage.getOccupantId() != null
-                                    && replacedMessage
-                                            .getOccupantId()
-                                            .equals(message.getOccupantId());
+                if (replacedMessage != null && replacedMessage.acceptMessageCorrection()) {
                     synchronized (replacedMessage) {
-                        replacedMessage.putEdited(message);
+                        if (!replacedMessage.putEdited(message)) {
+                            Log.d(
+                                    Config.LOGTAG,
+                                    account.getJid().asBareJid()
+                                            + ": skipping already applied edit");
+                            return;
+                        }
                         final String uuid = replacedMessage.getUuid();
                         replacedMessage.setUuid(UUID.randomUUID().toString());
                         replacedMessage.setEncryption(message.getEncryption());
@@ -614,6 +605,8 @@ public class MessageParser extends AbstractParser
                     }
                     mXmppConnectionService.getNotificationService().updateNotification();
                     return;
+                } else {
+                    Log.d(Config.LOGTAG, "replaced message not found");
                 }
             }
 
@@ -637,11 +630,12 @@ public class MessageParser extends AbstractParser
                                     && getManager(MessageArchiveManager.class)
                                             .isCatchupInProgress(conversation));
             if (checkForDuplicates) {
+                // TODO the duplicate message check seems very legacy.
                 final Message duplicate = conversation.findDuplicateMessage(message);
                 if (duplicate != null) {
                     final boolean serverMsgIdUpdated;
                     if (duplicate.getStatus() != Message.STATUS_RECEIVED
-                            && duplicate.getUuid().equals(message.getRemoteMsgId())
+                            && duplicate.getMessageId().equals(message.getRemoteMsgId())
                             && duplicate.getServerMsgId() == null
                             && message.getServerMsgId() != null) {
                         duplicate.setServerMsgId(message.getServerMsgId());

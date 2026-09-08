@@ -4,7 +4,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.util.Log;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -481,6 +480,14 @@ public class Message extends AbstractEntity
         this.storageLocation = storageLocation;
     }
 
+    public String getMessageId() {
+        if (status == Message.STATUS_RECEIVED || this.remoteMsgId != null) {
+            return this.remoteMsgId;
+        } else {
+            return this.uuid;
+        }
+    }
+
     public String getRemoteMsgId() {
         return this.remoteMsgId;
     }
@@ -537,6 +544,7 @@ public class Message extends AbstractEntity
         this.type = type;
     }
 
+    // TODO carbons is mostly unused these days (only the inValidSession() is still using this)
     public boolean isCarbon() {
         return carbon;
     }
@@ -555,6 +563,7 @@ public class Message extends AbstractEntity
         if (!putEdited(uuid.toString(), null, Instant.now(), body)) {
             throw new IllegalStateException("Could not store edit");
         }
+        this.remoteMsgId = Objects.requireNonNull(Iterables.getFirst(this.edits, null)).id();
         this.uuid = uuid.toString();
     }
 
@@ -571,7 +580,6 @@ public class Message extends AbstractEntity
                                 && ((id != null && id.equals(v.id()))
                                         || (serverMsgId != null
                                                 && serverMsgId.equals(v.serverMsgId()))))) {
-            Log.d(Config.LOGTAG, "do not put edited. found previous version");
             return false;
         }
         final var edit = new Edit(id, serverMsgId, sentAt, null, null, null);
@@ -591,12 +599,7 @@ public class Message extends AbstractEntity
                 Collections2.filter(
                         this.edits, e -> e != null && e.id() != null && e.sentAt() != null);
         if (withoutLegacy.isEmpty()) {
-            final String id;
-            if (status == Message.STATUS_RECEIVED || this.remoteMsgId != null) {
-                id = this.remoteMsgId;
-            } else {
-                id = uuid;
-            }
+            final var id = getMessageId();
             return Collections.singletonList(
                     new Edit(id, serverMsgId, getSentAt(), body, encryption, axolotlFingerprint));
         } else {
@@ -793,6 +796,10 @@ public class Message extends AbstractEntity
                 && type != Message.TYPE_STATUS;
     }
 
+    public boolean acceptMessageCorrection() {
+        return type == Message.TYPE_TEXT && !this.isGeoUri() && !this.treatAsDownloadable();
+    }
+
     public void setCounterparts(List<MucOptions.User> counterparts) {
         this.counterparts = counterparts;
     }
@@ -876,14 +883,6 @@ public class Message extends AbstractEntity
 
     public Collection<String> getEditedServerMessageIds() {
         return Collections2.transform(this.edits, Edit::serverMsgId);
-    }
-
-    public String getEditedIdWireFormat() {
-        if (this.edits.isEmpty()) {
-            throw new IllegalStateException("Attempting to access unedited message");
-        }
-        final var edit = Objects.requireNonNull(Iterables.getFirst(this.edits, null));
-        return edit.id();
     }
 
     public void setOob(boolean isOob) {
