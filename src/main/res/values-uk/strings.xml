@@ -1255,4 +1255,6 @@
     <string name="sheet_music">партитура</string>
     <string name="attachment_choice_contact">Контакт</string>
     <string name="note_to_self">Нотатка для себе</string>
+    <string name="view_edit_history">Переглянути зміни в історії</string>
+    <string name="edit_history">Редагувати історію</string>
 </resources>
