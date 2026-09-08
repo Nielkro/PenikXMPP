@@ -1221,4 +1221,6 @@
     <string name="attachment_choice_contact">Contact</string>
     <string name="note_to_self">Notă pentru sine</string>
     <string name="invalid_contact">Nu s-a putut citii contactul</string>
+    <string name="view_edit_history">Arată istoric editări</string>
+    <string name="edit_history">Istoric editări</string>
 </resources>
