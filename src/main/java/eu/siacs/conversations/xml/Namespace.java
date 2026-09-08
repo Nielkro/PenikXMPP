@@ -133,4 +133,6 @@ public final class Namespace {
     public static final String SERVICE_OUTAGE_STATUS = "urn:xmpp:sos:0";
     public static final String FALLBACK_INDICATION = "urn:xmpp:fallback:0";
     public static final String LIMITS = "urn:xmpp:stream-limits:0";
+    public static final String LAST = "jabber:iq:last";
+    public static final String REPORTING_ACCOUNT_AFFILIATIONS = "urn:xmpp:raa:0";
 }
