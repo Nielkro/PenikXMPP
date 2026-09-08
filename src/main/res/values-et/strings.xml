@@ -1219,4 +1219,6 @@
     <string name="attachment_choice_contact">Kontakt</string>
     <string name="note_to_self">Märge iseendale</string>
     <string name="invalid_contact">Kontaktandmete töötlemine ei õnnestunud</string>
+    <string name="view_edit_history">Vaata muutmiste ajalugu</string>
+    <string name="edit_history">Muutmiste ajalugu</string>
 </resources>
