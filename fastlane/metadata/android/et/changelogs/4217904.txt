@@ -1,0 +1,3 @@
+* Lisandus võimalus muuta kõiki saadetud sõnumeid, mitte ainult viimast. Lisaks saad vaadata muudatuste ajalugu
+* Parandasime vea, kus pilte polnud teavituses näha
+* Parandasime mõnede geoaadresside vigase töötlemise
