@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
+import de.gultsch.common.MiniUri;
 import de.gultsch.common.Patterns;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
@@ -919,7 +920,9 @@ public class Message extends AbstractEntity
 
     public synchronized boolean isGeoUri() {
         if (isGeoUri == null) {
-            isGeoUri = Patterns.URI_GEO.matcher(body).matches();
+            isGeoUri =
+                    Patterns.URI_GEO.matcher(body).matches()
+                            && MiniUri.getOrNull(body) instanceof MiniUri.Geo;
         }
         return isGeoUri;
     }
