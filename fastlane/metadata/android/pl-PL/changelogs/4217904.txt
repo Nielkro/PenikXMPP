@@ -1,0 +1,3 @@
+* Umożliwienie edytowania wszystkich wysłanych wiadomości, nie tylko ostatniej; pokazywanie historii edycji
+* Naprawienie niepokazywania obrazków w powiadomieniach
+* Naprawienie nieprawidłowego wyświetlania niektórych adresów Geo URI
