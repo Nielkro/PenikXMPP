@@ -1233,4 +1233,6 @@
     <string name="attachment_choice_contact">Kontakt</string>
     <string name="note_to_self">Notatka dla siebie</string>
     <string name="invalid_contact">Nie udało się przetworzyć kontaktu</string>
+    <string name="view_edit_history">Pokaż historię edycji</string>
+    <string name="edit_history">Historia edycji</string>
 </resources>
