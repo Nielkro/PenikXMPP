@@ -1200,5 +1200,5 @@
     <string name="delete_file_dialog_confirm">Möchtest du diese Datei wirklich löschen?</string>
     <string name="delete_file_dialog_shared">Diese Datei wurde in anderen Chats geteilt.</string>
     <string name="edit_history">Änderungsverlauf</string>
-    <string name="view_edit_history">Änderungsverlauf zeigen</string>
+    <string name="view_edit_history">Änderungen anzeigen</string>
 </resources>
