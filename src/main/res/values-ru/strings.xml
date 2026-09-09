@@ -1256,4 +1256,6 @@
     <string name="attachment_choice_contact">Контакт</string>
     <string name="note_to_self">Заметка себе</string>
     <string name="invalid_contact">Невозможно обработать контакт</string>
+    <string name="view_edit_history">Просмотр истории правок</string>
+    <string name="edit_history">Изменить историю</string>
 </resources>
