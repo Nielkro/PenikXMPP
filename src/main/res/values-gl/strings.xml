@@ -1199,4 +1199,6 @@
     <string name="attachment_choice_contact">Contacto</string>
     <string name="note_to_self">Nota persoal</string>
     <string name="invalid_contact">Non se puido ler o contacto</string>
+    <string name="view_edit_history">Ver historial de edicións</string>
+    <string name="edit_history">Historial das edicións</string>
 </resources>
