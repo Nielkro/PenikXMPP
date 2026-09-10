@@ -1,0 +1,3 @@
+* Consenti la modifica di tutti i messaggi inviati, non solo l'ultimo. Mostra la cronologia delle modifiche
+* Corretta la visualizzazione delle immagini nelle notifiche
+* Corretto il rendering di alcuni URI geografici
