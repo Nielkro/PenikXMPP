@@ -1220,4 +1220,6 @@
     <string name="attachment_choice_contact">Contatto</string>
     <string name="note_to_self">Nota personale</string>
     <string name="invalid_contact">Impossibile leggere il contatto</string>
+    <string name="view_edit_history">Vedi cronologia modifiche</string>
+    <string name="edit_history">Cronologia modifiche</string>
 </resources>
