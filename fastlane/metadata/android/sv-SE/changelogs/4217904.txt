@@ -1,0 +1,3 @@
+* Tillåt redigering av alla skickade meddelanden, inte bara det senaste. Visa redigeringshistorik
+* Åtgärda bilder som inte visas i aviseringar
+* Åtgärda vissa geo-URI:er som inte återges korrekt
