@@ -205,7 +205,7 @@
     <string name="done">Feito</string>
     <string name="decrypt">Descifrar</string>
     <string name="search">Buscar</string>
-    <string name="enter_contact">Introducir contacto</string>
+    <string name="enter_contact">Escribe o contacto</string>
     <string name="delete_contact">Eliminar contacto</string>
     <string name="view_contact_details">Ver os detalles do contacto</string>
     <string name="block_contact">Bloquear contacto</string>
@@ -253,7 +253,7 @@
     <string name="disable_notifications">Desactivar notificacións</string>
     <string name="enable">Activar</string>
     <string name="conference_requires_password">Precisas un contrasinal para entrar</string>
-    <string name="enter_password">Introducir contrasinal</string>
+    <string name="enter_password">Escribir contrasinal</string>
     <string name="request_presence_updates">Primeiro solicita actualizacións de presenza aos contactos.
 \n
 \n<small>Esto utilizarase para determinar que aplicación de charla está a utilizar o contacto</small>.</string>
@@ -790,7 +790,7 @@
     <string name="unable_to_restore_backup">Non se puido restaurar a copia.</string>
     <string name="unable_to_decrypt_backup">Non se puido descifrar a copia. É correcto o contrasinal?</string>
     <string name="backup_channel_name">Respaldar &amp; Restaurar</string>
-    <string name="enter_jabber_id">Introducir enderezo XMPP</string>
+    <string name="enter_jabber_id">Escribe o enderezo XMPP</string>
     <string name="create_group_chat">Crear parola en grupo</string>
     <string name="join_public_channel">Unirse a canle pública</string>
     <string name="create_private_group_chat">Crear parola en grupo privada</string>
