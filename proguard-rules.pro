@@ -14,6 +14,28 @@
 -keep class org.openintents.openpgp.*
 -keep class org.webrtc.** { *; }
 
+# JNI Zero stuff (used by webrtc; copied from chrome)
+-keep class org.jni_zero.** { *; }
+-dontwarn org.jni_zero.**
+
+-keepclasseswithmembers,allowaccessmodification class ** {
+  @**org.jni_zero.AccessedByNative <fields>;
+}
+-keepclasseswithmembers,includedescriptorclasses,allowaccessmodification,allowoptimization class ** {
+  @**org.jni_zero.CalledByNative <methods>;
+}
+-keepclasseswithmembers,includedescriptorclasses,allowaccessmodification,allowoptimization class ** {
+  @**org.jni_zero.CalledByNativeUnchecked <methods>;
+}
+
+-keepclasseswithmembernames,includedescriptorclasses,allowaccessmodification class ** {
+  native <methods>;
+}
+
+-keepclasseswithmembers class !cr_allowunused,**J.N {
+  public long *_HASH;
+}
+
 -keep class net.fellbaum.jemoji.** { *; }
 -keeppackagenames net.fellbaum.jemoji.**
 -keepdirectories jemoji
