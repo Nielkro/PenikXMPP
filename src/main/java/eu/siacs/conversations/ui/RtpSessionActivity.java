@@ -377,17 +377,12 @@ public class RtpSessionActivity extends XmppActivity
         }
     }
 
-    private List<String> permissions(final Set<Media> media) {
-        final ImmutableList.Builder<String> permissions = ImmutableList.builder();
+    private static List<String> permissions(final Set<Media> media) {
         if (media.contains(Media.VIDEO)) {
-            permissions.add(Manifest.permission.CAMERA).add(Manifest.permission.RECORD_AUDIO);
+            return PermissionUtils.rtpPermissions(true);
         } else {
-            permissions.add(Manifest.permission.RECORD_AUDIO);
+            return PermissionUtils.rtpPermissions(false);
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
-        }
-        return permissions.build();
     }
 
     private void acceptCall() {
@@ -574,8 +569,8 @@ public class RtpSessionActivity extends XmppActivity
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         final PermissionUtils.PermissionResult permissionResult =
-                PermissionUtils.removeBluetoothConnect(permissions, grantResults);
-        if (PermissionUtils.allGranted(permissionResult.grantResults)) {
+                PermissionUtils.removeOptionalRtpPermissions(permissions, grantResults);
+        if (PermissionUtils.allGranted(permissionResult.grantResults())) {
             if (requestCode == REQUEST_ACCEPT_CALL) {
                 acceptCall();
             } else if (requestCode == REQUEST_ACCEPT_CONTENT) {
@@ -586,7 +581,7 @@ public class RtpSessionActivity extends XmppActivity
         } else {
             @StringRes int res;
             final String firstDenied =
-                    getFirstDenied(permissionResult.grantResults, permissionResult.permissions);
+                    getFirstDenied(permissionResult.grantResults(), permissionResult.permissions());
             if (firstDenied == null) {
                 return;
             }

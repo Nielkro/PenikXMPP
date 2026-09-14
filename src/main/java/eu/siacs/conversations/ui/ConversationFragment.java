@@ -1844,16 +1844,7 @@ public class ConversationFragment extends XmppFragment
         if (isAccountInsufficientState()) {
             return;
         }
-        final List<String> permissions;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissions =
-                    Arrays.asList(
-                            Manifest.permission.RECORD_AUDIO,
-                            Manifest.permission.BLUETOOTH_CONNECT);
-        } else {
-            permissions = Collections.singletonList(Manifest.permission.RECORD_AUDIO);
-        }
-        if (hasPermissions(REQUEST_START_AUDIO_CALL, permissions)) {
+        if (hasPermissions(REQUEST_START_AUDIO_CALL, PermissionUtils.rtpPermissions(false))) {
             triggerRtpSession(RtpSessionActivity.ACTION_MAKE_VOICE_CALL);
         }
     }
@@ -1862,18 +1853,7 @@ public class ConversationFragment extends XmppFragment
         if (isAccountInsufficientState()) {
             return;
         }
-        final List<String> permissions;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissions =
-                    Arrays.asList(
-                            Manifest.permission.RECORD_AUDIO,
-                            Manifest.permission.CAMERA,
-                            Manifest.permission.BLUETOOTH_CONNECT);
-        } else {
-            permissions =
-                    Arrays.asList(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA);
-        }
-        if (hasPermissions(REQUEST_START_VIDEO_CALL, permissions)) {
+        if (hasPermissions(REQUEST_START_VIDEO_CALL, PermissionUtils.rtpPermissions(true))) {
             triggerRtpSession(RtpSessionActivity.ACTION_MAKE_VIDEO_CALL);
         }
     }
@@ -2067,12 +2047,12 @@ public class ConversationFragment extends XmppFragment
     @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        final PermissionUtils.PermissionResult permissionResult =
-                PermissionUtils.removeBluetoothConnect(permissions, grantResults);
+        final var permissionResult =
+                PermissionUtils.removeOptionalRtpPermissions(permissions, grantResults);
         if (grantResults.length == 0) {
             return;
         }
-        if (allGranted(permissionResult.grantResults)) {
+        if (allGranted(permissionResult.grantResults())) {
             switch (requestCode) {
                 case REQUEST_START_DOWNLOAD:
                     if (this.mPendingDownloadableMessage != null) {
@@ -2099,7 +2079,7 @@ public class ConversationFragment extends XmppFragment
             }
         } else {
             final var firstDenied =
-                    getFirstDenied(permissionResult.grantResults, permissionResult.permissions);
+                    getFirstDenied(permissionResult.grantResults(), permissionResult.permissions());
             @StringRes
             final int res =
                     switch (firstDenied) {

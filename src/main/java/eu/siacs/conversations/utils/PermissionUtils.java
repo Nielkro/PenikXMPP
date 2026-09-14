@@ -4,16 +4,28 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Build;
-
 import androidx.core.app.ActivityCompat;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class PermissionUtils {
+
+    public static List<String> rtpPermissions(final boolean withCamera) {
+        final var builder = new ImmutableList.Builder<String>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
+            builder.add(Manifest.permission.ACCESS_LOCAL_NETWORK);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.add(Manifest.permission.BLUETOOTH_CONNECT);
+        }
+        if (withCamera) {
+            builder.add(Manifest.permission.CAMERA);
+        }
+        builder.add(Manifest.permission.RECORD_AUDIO);
+        return builder.build();
+    }
 
     public static boolean allGranted(int[] grantResults) {
         for (int grantResult : grantResults) {
@@ -56,17 +68,9 @@ public class PermissionUtils {
         return null;
     }
 
-    public static class PermissionResult {
-        public final String[] permissions;
-        public final int[] grantResults;
+    public record PermissionResult(String[] permissions, int[] grantResults) {}
 
-        public PermissionResult(String[] permissions, int[] grantResults) {
-            this.permissions = permissions;
-            this.grantResults = grantResults;
-        }
-    }
-
-    public static PermissionResult removeBluetoothConnect(
+    public static PermissionResult removeOptionalRtpPermissions(
             final String[] inPermissions, final int[] inGrantResults) {
         final List<String> outPermissions = new ArrayList<>();
         final List<Integer> outGrantResults = new ArrayList<>();
@@ -76,6 +80,13 @@ public class PermissionUtils {
                     continue;
                 }
             }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
+                if (inPermissions[i].equals(Manifest.permission.ACCESS_LOCAL_NETWORK)) {
+                    continue;
+                }
+            }
+
             outPermissions.add(inPermissions[i]);
             outGrantResults.add(inGrantResults[i]);
         }
