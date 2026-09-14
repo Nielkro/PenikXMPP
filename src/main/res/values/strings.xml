@@ -511,6 +511,7 @@
     <string name="shared_text_with_x">Text shared with %s</string>
     <string name="no_storage_permission">Grant %1$s access to external storage</string>
     <string name="no_camera_permission">Grant %1$s access to the camera</string>
+    <string name="no_lan_permission">Grant %1$s access to the local network (nearby devices).</string>
     <string name="no_contacts_permission">%1$s needs access to your contacts</string>
     <string name="quicksy_wants_your_consent">Quicksy asks for your consent to use your data</string>
     <string name="sync_with_contacts">Contact list integration</string>
@@ -587,7 +588,8 @@
     <string name="type_console">Console</string>
     <string name="payment_required">Payment required</string>
     <string name="reconnect_on_other_host">Reconnect on other host</string>
-    <string name="missing_internet_permission">Grant permission to use the Internet</string>
+    <string name="missing_internet_permission">Internet permission required</string>
+    <string name="missing_local_network_permission">LAN permission required</string>
     <string name="me">Me</string>
     <string name="contact_asks_for_presence_subscription">Contact asks for presence subscription</string>
     <string name="allow">Allow</string>
@@ -1196,4 +1198,6 @@
     <string name="invalid_contact">Could not parse contact</string>
     <string name="view_edit_history">View edit history</string>
     <string name="edit_history">Edit history</string>
+    <string name="grant_permission">Grant permission</string>
+    <string name="open_settings">Open Settings</string>
 </resources>

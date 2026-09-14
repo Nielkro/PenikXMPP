@@ -2,7 +2,10 @@ package eu.siacs.conversations.xmpp;
 
 import static eu.siacs.conversations.utils.Random.SECURE_RANDOM;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.SystemClock;
 import android.security.KeyChain;
 import android.util.Base64;
@@ -11,6 +14,7 @@ import android.util.Pair;
 import android.util.SparseArray;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -448,6 +452,12 @@ public class XmppConnection implements Runnable {
                                     + ": injected see-other-host on position 0");
                     results.add(0, seeOtherHost);
                 }
+                final var missingLocalNetworkPermission =
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN
+                                && ContextCompat.checkSelfPermission(
+                                                mXmppConnectionService,
+                                                Manifest.permission.ACCESS_LOCAL_NETWORK)
+                                        != PackageManager.PERMISSION_GRANTED;
                 for (final Iterator<Resolver.Result> iterator = results.iterator();
                         iterator.hasNext(); ) {
                     final Resolver.Result result = iterator.next();
@@ -495,12 +505,14 @@ public class XmppConnection implements Runnable {
 
                         localSocket = new Socket();
                         final int timeout;
-                        if (new NetworkManager(mXmppConnectionService).getHint()
-                                == NetworkManager.Hint.ACTIVE) {
-                            timeout = Config.SOCKET_TIMEOUT;
-                        } else {
+                        if ((result.isLocalAddress() && missingLocalNetworkPermission)
+                                || new NetworkManager(mXmppConnectionService).getHint()
+                                        != NetworkManager.Hint.ACTIVE) {
                             timeout = Config.SOCKET_TIMEOUT_LOW;
+                        } else {
+                            timeout = Config.SOCKET_TIMEOUT;
                         }
+                        Log.d(Config.LOGTAG, "using timeout=" + timeout);
                         localSocket.connect(addr, timeout);
                         localSocket.setSoTimeout(timeout);
                         if (features.encryptionEnabled) {
@@ -531,14 +543,11 @@ public class XmppConnection implements Runnable {
                                         + ": thread was interrupted before beginning stream");
                         return;
                     } catch (final Throwable e) {
-                        Log.d(
-                                Config.LOGTAG,
-                                account.getJid().asBareJid().toString()
-                                        + ": "
-                                        + e.getMessage()
-                                        + "("
-                                        + e.getClass().getName()
-                                        + ")");
+                        if (result.isLocalAddress() && missingLocalNetworkPermission) {
+                            throw new StateChangingException(
+                                    Account.State.MISSING_LOCAL_NETWORK_PERMISSION);
+                        }
+                        Log.d(Config.LOGTAG, "could not connect", e);
                         if (!iterator.hasNext()) {
                             throw new UnknownHostException();
                         }

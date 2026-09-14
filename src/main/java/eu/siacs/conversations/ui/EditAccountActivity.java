@@ -1,12 +1,15 @@
 package eu.siacs.conversations.ui;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -120,6 +123,7 @@ public class EditAccountActivity extends OmemoActivity
     private static final int REQUEST_DATA_SAVER = 0xf244;
     private static final int REQUEST_CHANGE_STATUS = 0xee11;
     private static final int REQUEST_ORBOT = 0xff22;
+    private static final int REQUEST_LOCAL_NETWORK = 0xff33;
     private final PendingItem<PresenceTemplate> mPendingPresenceTemplate = new PendingItem<>();
     private AlertDialog mCaptchaDialog = null;
     private Jid jidToEdit;
@@ -226,7 +230,15 @@ public class EditAccountActivity extends OmemoActivity
                         }
                         return;
                     }
-
+                    if (mAccount != null
+                            && mAccount.getStatus()
+                                    == Account.State.MISSING_LOCAL_NETWORK_PERMISSION
+                            && Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
+                        requestPermissions(
+                                new String[] {Manifest.permission.ACCESS_LOCAL_NETWORK},
+                                REQUEST_LOCAL_NETWORK);
+                        return;
+                    }
                     if (inNeedOfSaslAccept()) {
                         mAccount.resetPinnedMechanism();
                         if (!xmppConnectionService.updateAccount(mAccount)) {
@@ -571,6 +583,42 @@ public class EditAccountActivity extends OmemoActivity
     }
 
     @Override
+    public void onRequestPermissionsResult(
+            int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (grantResults.length == 0) {
+            return;
+        }
+        if (requestCode == REQUEST_LOCAL_NETWORK) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (xmppConnectionService != null && mAccount != null) {
+                    xmppConnectionService.reconnectAccount(mAccount, true);
+                }
+            } else {
+                showLanPermissionDialog();
+            }
+        }
+    }
+
+    private void showLanPermissionDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.missing_local_network_permission)
+                .setMessage(getString(R.string.no_lan_permission, getString(R.string.app_name)))
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(
+                        R.string.open_settings,
+                        (dialogInterface, i) -> {
+                            final var intent =
+                                    new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                            intent.setData(Uri.fromParts("package", getPackageName(), null));
+                            startActivity(intent);
+                        })
+                .create()
+                .show();
+        ;
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         // TODO check for Camera / Scan permission
         super.onActivityResult(requestCode, resultCode, data);
@@ -637,6 +685,10 @@ public class EditAccountActivity extends OmemoActivity
                 && !mInitMode) {
             this.binding.saveButton.setEnabled(true);
             this.binding.saveButton.setText(R.string.enable);
+        } else if (mAccount != null
+                && mAccount.getStatus() == Account.State.MISSING_LOCAL_NETWORK_PERMISSION) {
+            this.binding.saveButton.setEnabled(true);
+            this.binding.saveButton.setText(R.string.grant_permission);
         } else if (torNeedsInstall(mAccount)) {
             this.binding.saveButton.setEnabled(true);
             this.binding.saveButton.setText(R.string.install_orbot);
@@ -1497,7 +1549,8 @@ public class EditAccountActivity extends OmemoActivity
                     || Arrays.asList(
                                     Account.State.NO_INTERNET,
                                     Account.State.AIRPLANE_MODE,
-                                    Account.State.MISSING_INTERNET_PERMISSION)
+                                    Account.State.MISSING_INTERNET_PERMISSION,
+                                    Account.State.MISSING_LOCAL_NETWORK_PERMISSION)
                             .contains(status)) {
                 if (status == Account.State.UNAUTHORIZED
                         || status == Account.State.DOWNGRADE_ATTACK) {

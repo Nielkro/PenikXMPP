@@ -418,6 +418,13 @@ public class Resolver {
             return authenticated;
         }
 
+        public boolean isLocalAddress() {
+            return ip != null
+                    && (ip.isLoopbackAddress()
+                            || ip.isSiteLocalAddress()
+                            || ip.isLinkLocalAddress());
+        }
+
         @Override
         @NonNull
         public String toString() {

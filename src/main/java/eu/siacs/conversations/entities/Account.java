@@ -732,7 +732,8 @@ public class Account extends AbstractEntity implements AvatarService.Avatar {
         STREAM_OPENING_ERROR,
         POLICY_VIOLATION,
         PAYMENT_REQUIRED,
-        MISSING_INTERNET_PERMISSION(false);
+        MISSING_INTERNET_PERMISSION(false),
+        MISSING_LOCAL_NETWORK_PERMISSION(false);
 
         private final boolean isError;
         private final boolean attemptReconnect;
@@ -797,6 +798,7 @@ public class Account extends AbstractEntity implements AvatarService.Avatar {
                 case PAYMENT_REQUIRED -> R.string.payment_required;
                 case SEE_OTHER_HOST -> R.string.reconnect_on_other_host;
                 case MISSING_INTERNET_PERMISSION -> R.string.missing_internet_permission;
+                case MISSING_LOCAL_NETWORK_PERMISSION -> R.string.missing_local_network_permission;
                 case TEMPORARY_AUTH_FAILURE -> R.string.account_status_temporary_auth_failure;
             };
         }
