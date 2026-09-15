@@ -1,5 +1,9 @@
 # Changelog
 
+### Version 2.20.3
+
+* Request permission when XMPP server is on local network
+
 ### Version 2.20.2
 
 * Allow editing of all sent messages; Not just last. Show edit history
