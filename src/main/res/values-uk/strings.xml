@@ -527,7 +527,7 @@
     <string name="type_web">Браузер</string>
     <string name="type_console">Консоль</string>
     <string name="payment_required">Необхідна оплата</string>
-    <string name="missing_internet_permission">Надати дозвіл на доступ до Інтернету</string>
+    <string name="missing_internet_permission">Потрібен дозвіл на доступ до Інтернету</string>
     <string name="me">Я</string>
     <string name="contact_asks_for_presence_subscription">Контакт просить надавати інформацію про присутність</string>
     <string name="allow">Дозволити</string>
@@ -1257,4 +1257,8 @@
     <string name="note_to_self">Нотатка для себе</string>
     <string name="view_edit_history">Переглянути зміни в історії</string>
     <string name="edit_history">Редагувати історію</string>
+    <string name="grant_permission">Надати дозвіл</string>
+    <string name="open_settings">Відкрити налаштування</string>
+    <string name="no_lan_permission">Надати %1$s доступ до локальної мережі (пристрої поблизу).</string>
+    <string name="missing_local_network_permission">Потрібен дозвіл на доступ до локальної мережі</string>
 </resources>
