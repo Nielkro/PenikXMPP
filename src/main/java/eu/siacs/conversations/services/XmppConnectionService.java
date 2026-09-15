@@ -182,16 +182,16 @@ public class XmppConnectionService extends Service {
     public static final String ACTION_TRY_AGAIN = "try_again";
 
     public static final String ACTION_TEMPORARILY_DISABLE = "temporarily_disable";
-    public static final String ACTION_PING = "ping";
-    public static final String ACTION_IDLE_PING = "idle_ping";
-    public static final String ACTION_INTERNAL_PING = "internal_ping";
     public static final String ACTION_FCM_TOKEN_REFRESH = "fcm_token_refresh";
     public static final String ACTION_FCM_MESSAGE_RECEIVED = "fcm_message_received";
     public static final String ACTION_DISMISS_CALL = "dismiss_call";
     public static final String ACTION_END_CALL = "end_call";
     public static final String ACTION_CALL_INTEGRATION_SERVICE_STARTED =
             "call_integration_service_started";
-    private static final String ACTION_POST_CONNECTIVITY_CHANGE =
+    public static final String ACTION_PING = "eu.siacs.conversations.PING";
+    public static final String ACTION_PING_IDLE = "eu.siacs.conversations.PING_IDLE";
+    public static final String ACTION_PING_INTERNAL = "eu.siacs.conversations.PING_INTERNAL";
+    public static final String ACTION_POST_CONNECTIVITY_CHANGE =
             "eu.siacs.conversations.POST_CONNECTIVITY_CHANGE";
     public static final String ACTION_RENEW_UNIFIED_PUSH_ENDPOINTS =
             "eu.siacs.conversations.UNIFIED_PUSH_RENEW";
@@ -451,7 +451,7 @@ public class XmppConnectionService extends Service {
         final boolean needsForegroundService =
                 intent != null
                         && intent.getBooleanExtra(
-                                SystemEventReceiver.EXTRA_NEEDS_FOREGROUND_SERVICE, false);
+                                Compatibility.EXTRA_NEEDS_FOREGROUND_SERVICE, false);
         if (needsForegroundService) {
             Log.d(
                     Config.LOGTAG,
@@ -660,7 +660,7 @@ public class XmppConnectionService extends Service {
                     unifiedPushBroker.rebroadcastEndpoint(messenger, instance, transport.get());
                 }
                 break;
-            case ACTION_IDLE_PING:
+            case ACTION_PING_IDLE:
                 scheduleNextIdlePing();
                 break;
             case ACTION_QUICK_LOG:
@@ -739,7 +739,7 @@ public class XmppConnectionService extends Service {
     }
 
     public void manageAccountConnectionStatesInternal() {
-        manageAccountConnectionStates(ACTION_INTERNAL_PING, null);
+        manageAccountConnectionStates(ACTION_PING_INTERNAL, null);
     }
 
     private synchronized void manageAccountConnectionStates(
@@ -1473,7 +1473,7 @@ public class XmppConnectionService extends Service {
             return;
         }
         final Intent intent = new Intent(this, SystemEventReceiver.class);
-        intent.setAction(ACTION_IDLE_PING);
+        intent.setAction(ACTION_PING_IDLE);
         try {
             final PendingIntent pendingIntent =
                     PendingIntent.getBroadcast(

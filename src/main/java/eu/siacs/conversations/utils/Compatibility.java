@@ -1,7 +1,5 @@
 package eu.siacs.conversations.utils;
 
-import static eu.siacs.conversations.receiver.SystemEventReceiver.EXTRA_NEEDS_FOREGROUND_SERVICE;
-
 import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
 import android.content.Context;
@@ -17,6 +15,8 @@ import androidx.core.content.ContextCompat;
 import eu.siacs.conversations.Config;
 
 public class Compatibility {
+
+    public static final String EXTRA_NEEDS_FOREGROUND_SERVICE = "needs_foreground_service";
 
     public static boolean hasStoragePermission(final Context context) {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
