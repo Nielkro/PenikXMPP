@@ -787,7 +787,7 @@
     <string name="gif">GIF</string>
     <string name="magic_create_text">Me aitama sul luua kasutajakontot veebiteenuses conversations.im.
 \nKui conversations.im on sinu teenusepakkuja, siis saad suhelda kõikide teiste teenusepakkujate serverites asuvate kasutajatega - lihtsalt edasta neile oma XMPP aadress.</string>
-    <string name="missing_internet_permission">Anna õigused internetiühenduse kasutamiseks</string>
+    <string name="missing_internet_permission">Vajalikud on õigused internetiühenduse kasutamiseks</string>
     <string name="me">Mina</string>
     <string name="contact_asks_for_presence_subscription">Sinu kontakt soovib kasutada olekuteadete tellimist</string>
     <string name="allow">Luba</string>
@@ -1221,4 +1221,8 @@
     <string name="invalid_contact">Kontaktandmete töötlemine ei õnnestunud</string>
     <string name="view_edit_history">Vaata muutmiste ajalugu</string>
     <string name="edit_history">Muutmiste ajalugu</string>
+    <string name="no_lan_permission">Luba „%1$s“ rakendusele ligipääs kohtvõrgule (läheduses olevatele seadmetele).</string>
+    <string name="missing_local_network_permission">Vajalikud on õigused kohtvõrguühenduse kasutamiseks</string>
+    <string name="grant_permission">Luba need õigused</string>
+    <string name="open_settings">Ava seadistused</string>
 </resources>
