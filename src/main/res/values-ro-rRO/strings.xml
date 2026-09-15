@@ -544,7 +544,7 @@
     <string name="type_web">Navigator internet</string>
     <string name="type_console">Consola</string>
     <string name="payment_required">Este necesar să efectuați o plată</string>
-    <string name="missing_internet_permission">Permiteți accesul la Internet</string>
+    <string name="missing_internet_permission">Permisiunea de internet este necesară</string>
     <string name="me">Eu</string>
     <string name="contact_asks_for_presence_subscription">Contactul cere abonarea la actualizări de prezență</string>
     <string name="allow">Permite</string>
@@ -1223,4 +1223,8 @@
     <string name="invalid_contact">Nu s-a putut citii contactul</string>
     <string name="view_edit_history">Arată istoric editări</string>
     <string name="edit_history">Istoric editări</string>
+    <string name="no_lan_permission">Acordați %1$s acces la rețeaua locală (dispozitive din apropiere).</string>
+    <string name="missing_local_network_permission">Este necesară permisiunea la rețeaua locală</string>
+    <string name="grant_permission">Oferă permisiunea</string>
+    <string name="open_settings">Deschide setări</string>
 </resources>
