@@ -60,6 +60,12 @@ build your APK file.
 
 Conversations is available on [Google Play](https://play.google.com/store/apps/details?id=eu.siacs.conversations) and on [F-Droid](https://f-droid.org/en/packages/eu.siacs.conversations/).
 
+If you want to use F-Droid you can use the developer’s [F-Droid repository](https://fdroid.link/#https://gultsch.dev/fdroid/repo?fingerprint=9C2E57C85C279E5E1A427F6E87927FC1E2278F62D61D7FCEFDE9346E568CCF86) instead of
+the official one:
+```
+https://gultsch.dev/fdroid/repo?fingerprint=9c2e57c85c279e5e1a427f6e87927fc1e2278f62d61d7fcefde9346e568ccf86
+```
+
 ### How do I create an account?
 XMPP, like email, is a federated protocol, which means that there is not one company you can create an *official XMPP account* with. Instead there are hundreds, or even thousands, of providers out there. One of those providers is our very own [conversations.im](https://account.conversations.im). If you don’t like to use *conversations.im* use a web search engine of your choice to find another provider. Or maybe your university has one. Or you can run your own. Or ask a friend to run one. Once you've found one, you can use Conversations to create an account. Just select *register new account* on server within the create account dialog.
 
