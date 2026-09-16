@@ -1203,4 +1203,6 @@
     <string name="view_edit_history">Änderungen anzeigen</string>
     <string name="no_lan_permission">%1$s Zugriff auf das lokale Netzwerk (Geräte in der Nähe) gewähren.</string>
     <string name="missing_local_network_permission">LAN-Berechtigung erforderlich</string>
+    <string name="grant_permission">Berechtigung erteilen</string>
+    <string name="open_settings">Einstellungen öffnen</string>
 </resources>
