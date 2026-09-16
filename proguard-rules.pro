@@ -1,4 +1,7 @@
 -dontobfuscate
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable
+
 
 -keep class eu.siacs.conversations.**
 -keep class im.conversations.**
