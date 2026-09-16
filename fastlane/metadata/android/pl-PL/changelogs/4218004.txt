@@ -1,0 +1,1 @@
+* Żądanie uprawnienia dostępu gdy serwer XMPP jest w sieci lokalnej
