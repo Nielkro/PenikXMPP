@@ -538,7 +538,7 @@
     <string name="type_web">Webbrowser</string>
     <string name="type_console">Kommandozeile</string>
     <string name="payment_required">Bezahlung erforderlich</string>
-    <string name="missing_internet_permission">Berechtigung zur Nutzung des Internets erteilen</string>
+    <string name="missing_internet_permission">Internetberechtigung erforderlich</string>
     <string name="me">Ich</string>
     <string name="contact_asks_for_presence_subscription">Kontakt möchte Online-Status abonnieren</string>
     <string name="allow">Erlauben</string>
@@ -1201,4 +1201,6 @@
     <string name="delete_file_dialog_shared">Diese Datei wurde in anderen Chats geteilt.</string>
     <string name="edit_history">Änderungsverlauf</string>
     <string name="view_edit_history">Änderungen anzeigen</string>
+    <string name="no_lan_permission">%1$s Zugriff auf das lokale Netzwerk (Geräte in der Nähe) gewähren.</string>
+    <string name="missing_local_network_permission">LAN-Berechtigung erforderlich</string>
 </resources>
