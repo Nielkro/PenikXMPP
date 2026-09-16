@@ -541,11 +541,11 @@
     <string name="type_web">Przeglądarka</string>
     <string name="type_console">Konsola</string>
     <string name="payment_required">Płatność wymagana</string>
-    <string name="missing_internet_permission">Udziel pozwolenia na dostęp do Internetu</string>
+    <string name="missing_internet_permission">Wymagane uprawnienie do dostępu do Internetu</string>
     <string name="me">Ja</string>
     <string name="contact_asks_for_presence_subscription">Kontakt prosi o udostępnienie statusu</string>
     <string name="allow">Pozwól</string>
-    <string name="no_permission_to_access_x">Brak pozwolenia na dostęp do %s</string>
+    <string name="no_permission_to_access_x">Brak uprawnienia do dostępu do %s</string>
     <string name="remote_server_not_found">Nie znaleziono serwera</string>
     <string name="remote_server_timeout">Brak odpowiedzi od zdalnego serwera</string>
     <string name="unable_to_update_account">Nie można zaktualizować konta</string>
@@ -851,7 +851,7 @@
     <string name="please_enter_password">Proszę podać hasło dla tego konta</string>
     <string name="unable_to_perform_this_action">Nie można wykonać tej akcji</string>
     <string name="open_join_dialog">Dołącz do publicznego kanału…</string>
-    <string name="sharing_application_not_grant_permission">Aplikacja udostępniająca nie udzieliła pozwolenia na dostęp do tego pliku.</string>
+    <string name="sharing_application_not_grant_permission">Aplikacja udostępniająca nie nadała uprawnienia do dostępu do tego pliku.</string>
     <string name="group_chats_and_channels"><![CDATA[Rozmowy grupowe i kanały]]></string>
     <string name="jabber_network">jabber.network</string>
     <string name="local_server">Serwer lokalny</string>
@@ -987,7 +987,7 @@
     <string name="rtp_state_contact_offline">Kontakt nie jest dostępny</string>
     <string name="contact_list_integration_not_available">Integracja listy kontaktów nie jest dostępna</string>
     <string name="quicksy_wants_your_consent">Quicksy pyta o pozwolenie na użycie twoich danych</string>
-    <string name="no_permission_to_place_call">Brak pozwolenia na wypisanie numeru telefonu</string>
+    <string name="no_permission_to_place_call">Brak uprawnienia do rozpoczęcia rozmowy telefonicznej</string>
     <string name="call_integration_not_available">Integracja połączeń nie jest dostępna!</string>
     <string name="remove_bookmark">Czy chcesz usunąć zakładkę dla %s?</string>
     <string name="delete_and_close">Usuń i zarchiwizuj rozmowę</string>
@@ -1235,4 +1235,8 @@
     <string name="invalid_contact">Nie udało się przetworzyć kontaktu</string>
     <string name="view_edit_history">Pokaż historię edycji</string>
     <string name="edit_history">Historia edycji</string>
+    <string name="no_lan_permission">Udziel %1$s dostępu do lokalnej sieci (urządzeń w pobliżu).</string>
+    <string name="missing_local_network_permission">Wymagane uprawnienie do dostępu do LAN‑u</string>
+    <string name="grant_permission">Nadaj uprawnienie</string>
+    <string name="open_settings">Otwórz Ustawienia</string>
 </resources>
