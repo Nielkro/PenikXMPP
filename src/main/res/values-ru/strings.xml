@@ -555,7 +555,7 @@
     <string name="type_web">Браузер</string>
     <string name="type_console">Консоль</string>
     <string name="payment_required">Требуется оплата</string>
-    <string name="missing_internet_permission">Предоставить доступ к интернету</string>
+    <string name="missing_internet_permission">Требуется доступ к интернету</string>
     <string name="me">Я</string>
     <string name="contact_asks_for_presence_subscription">Контакт запрашивает подписку</string>
     <string name="allow">Разрешить</string>
@@ -1258,4 +1258,8 @@
     <string name="invalid_contact">Невозможно обработать контакт</string>
     <string name="view_edit_history">Просмотр истории правок</string>
     <string name="edit_history">Изменить историю</string>
+    <string name="no_lan_permission">Предоставить %1$s разрешение на доступ к локальной сети (устройствам поблизости)</string>
+    <string name="missing_local_network_permission">Требуется доступ к LAN</string>
+    <string name="grant_permission">Предоставить разрешение</string>
+    <string name="open_settings">Открыть настройки</string>
 </resources>
