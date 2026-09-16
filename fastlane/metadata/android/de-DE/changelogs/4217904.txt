@@ -1,0 +1,3 @@
+* Bearbeitung aller gesendeten Nachrichten ermöglicht; nicht nur der letzten. Änderungen anzeigen
+* Das Problem behoben, dass Bilder in Benachrichtigungen nicht angezeigt wurden
+* Das Problem behoben, dass einige Geo-URIs nicht korrekt dargestellt wurden
