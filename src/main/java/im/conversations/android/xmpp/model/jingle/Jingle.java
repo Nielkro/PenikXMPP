@@ -89,6 +89,9 @@ public class Jingle extends Extension {
         this.addChild(content);
     }
 
+    // TODO instead of returning eu.siacs.conversations.xmpp.jingle.stanzas.Content return real
+    // Content
+
     public Map<String, Content> getJingleContents() {
         ImmutableMap.Builder<String, Content> builder = new ImmutableMap.Builder<>();
         for (final Element child : this.getChildren()) {

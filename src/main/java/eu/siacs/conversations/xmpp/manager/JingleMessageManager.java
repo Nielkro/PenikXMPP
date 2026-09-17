@@ -15,7 +15,7 @@ import eu.siacs.conversations.xmpp.jingle.Media;
 import im.conversations.android.xmpp.model.hints.Store;
 import im.conversations.android.xmpp.model.jingle.Jingle;
 import im.conversations.android.xmpp.model.jingle.Reason;
-import im.conversations.android.xmpp.model.jingle.apps.rtp.Description;
+import im.conversations.android.xmpp.model.jingle.apps.rtp.RtpDescription;
 import im.conversations.android.xmpp.model.jmi.Accept;
 import im.conversations.android.xmpp.model.jmi.Device;
 import im.conversations.android.xmpp.model.jmi.Finish;
@@ -173,7 +173,7 @@ public class JingleMessageManager extends AbstractManager {
         packet.setId(JingleRtpConnection.JINGLE_MESSAGE_PROPOSE_ID_PREFIX + sessionId);
         final var propose = packet.addExtension(new Propose(sessionId));
         for (final var m : media) {
-            final var description = propose.addExtension(new Description());
+            final var description = propose.addExtension(new RtpDescription());
             description.setMedia(m);
         }
         packet.addExtension(new Request());
