@@ -229,6 +229,11 @@ android {
         resValues = true
         dataBinding = true
     }
+
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 androidComponents {
