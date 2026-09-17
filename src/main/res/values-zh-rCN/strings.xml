@@ -530,7 +530,7 @@
     <string name="type_web">网络浏览器</string>
     <string name="type_console">控制台</string>
     <string name="payment_required">需要付款</string>
-    <string name="missing_internet_permission">授予使用互联网的权限</string>
+    <string name="missing_internet_permission">需要联网权限</string>
     <string name="me">我</string>
     <string name="contact_asks_for_presence_subscription">联系人请求在线状态订阅</string>
     <string name="allow">允许</string>
@@ -1176,4 +1176,8 @@
     <string name="invalid_contact">无法解析联系人</string>
     <string name="view_edit_history">查看编辑记录</string>
     <string name="edit_history">编辑记录</string>
+    <string name="no_lan_permission">授予 %1$s 访问本地网络的权限（附近设备）。</string>
+    <string name="missing_local_network_permission">需要局域网权限</string>
+    <string name="grant_permission">授予权限</string>
+    <string name="open_settings">打开设置</string>
 </resources>
