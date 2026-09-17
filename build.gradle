@@ -97,6 +97,12 @@ dependencies {
 
 def signingPropertiesFile = rootProject.file('signing.properties')
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
 android {
     namespace = 'eu.siacs.conversations'
     compileSdk = 37
