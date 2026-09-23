@@ -538,7 +538,7 @@
     <string name="type_web">Navegador web</string>
     <string name="type_console">Consola</string>
     <string name="payment_required">Pagamento requerido</string>
-    <string name="missing_internet_permission">Conceder permiso para usar Internet</string>
+    <string name="missing_internet_permission">Requírese permiso para internet</string>
     <string name="me">Eu</string>
     <string name="contact_asks_for_presence_subscription">O contacto pide a suscrición de presenza</string>
     <string name="allow">Permitir</string>
@@ -1201,4 +1201,8 @@
     <string name="invalid_contact">Non se puido ler o contacto</string>
     <string name="view_edit_history">Ver historial de edicións</string>
     <string name="edit_history">Historial das edicións</string>
+    <string name="no_lan_permission">Dalle acceso á rede local (dispositivos próximos) a %1$s.</string>
+    <string name="missing_local_network_permission">Requírese permiso para LAN</string>
+    <string name="grant_permission">Conceder permiso</string>
+    <string name="open_settings">Abrir os axustes</string>
 </resources>
