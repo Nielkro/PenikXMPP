@@ -1200,4 +1200,9 @@
     <string name="edit_history">Edit history</string>
     <string name="grant_permission">Grant permission</string>
     <string name="open_settings">Open Settings</string>
+    <string name="add_attachment">Add attachment</string>
+    <string name="hide_attachment_options">Hide attachment options</string>
+    <string name="show_attachment_options">Show attachment options</string>
+    <string name="collapsed">Collapsed</string>
+    <string name="expanded">Expanded</string>
 </resources>

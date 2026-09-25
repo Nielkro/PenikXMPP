@@ -63,6 +63,8 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuProvider;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.core.view.inputmethod.InputConnectionCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
@@ -1390,12 +1392,14 @@ public class ConversationFragment extends XmppFragment
                             false);
             binding.getRoot().setId(id);
             binding.icon.setIconResource(attachmentChoice.icon());
+            binding.icon.setContentDescription(
+                    binding.icon.getContext().getString(attachmentChoice.name()));
             binding.label.setText(attachmentChoice.name());
             binding.icon.setOnClickListener(v -> handleAttachmentChoice(attachmentChoice.type()));
             this.binding.attachmentChoices.addView(binding.getRoot());
             viewIdBuilder.add(id);
         }
-        binding.attachButton.setToggleCheckedStateOnClick(false);
+        setAttachmentChoicesVisibility(false);
         binding.attachButton.setOnClickListener((v) -> toggleAttachmentChoicesVisibility());
         binding.attachmentChoicesFlow.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         binding.getRoot().setOnClickListener(null); // TODO why the fuck did we do this?
@@ -1440,12 +1444,24 @@ public class ConversationFragment extends XmppFragment
     }
 
     private void setAttachmentChoicesVisibility(final boolean visible) {
-        Log.d(Config.LOGTAG, "set attachment choice visibility");
         this.attachmentChoicesBackPressed.setEnabled(visible);
         if (visible) {
+            ViewCompat.setStateDescription(this.binding.attachButton, getString(R.string.expanded));
+            ViewCompat.replaceAccessibilityAction(
+                    this.binding.attachButton,
+                    AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+                    getString(R.string.hide_attachment_options),
+                    null);
             binding.attachmentChoices.setVisibility(View.VISIBLE);
             hideSoftKeyboard(this.binding.textInput);
         } else {
+            ViewCompat.setStateDescription(
+                    this.binding.attachButton, getString(R.string.collapsed));
+            ViewCompat.replaceAccessibilityAction(
+                    this.binding.attachButton,
+                    AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+                    getString(R.string.show_attachment_options),
+                    null);
             binding.attachmentChoices.setVisibility(View.GONE);
         }
     }

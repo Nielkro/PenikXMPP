@@ -148,8 +148,7 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
-                        android:checkable="true"
-                        android:checked="false"
+                        android:contentDescription="@string/add_attachment"
                         app:icon="@drawable/ic_attach_file_24dp"
                         app:iconSize="24dp"
                         app:iconTint="?colorOnTertiaryContainer" />

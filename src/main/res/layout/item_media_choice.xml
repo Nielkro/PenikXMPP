@@ -21,6 +21,7 @@
             tools:icon="@drawable/ic_description_24dp" />
 
         <TextView
+            android:importantForAccessibility="no"
             android:id="@+id/label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
