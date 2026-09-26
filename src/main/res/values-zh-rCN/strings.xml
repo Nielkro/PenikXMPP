@@ -1180,4 +1180,9 @@
     <string name="missing_local_network_permission">需要局域网权限</string>
     <string name="grant_permission">授予权限</string>
     <string name="open_settings">打开设置</string>
+    <string name="add_attachment">添加附件</string>
+    <string name="hide_attachment_options">隐藏附件选项</string>
+    <string name="show_attachment_options">显示附件选项</string>
+    <string name="collapsed">已折叠</string>
+    <string name="expanded">已展开</string>
 </resources>
