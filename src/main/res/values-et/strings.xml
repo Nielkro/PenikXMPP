@@ -1225,4 +1225,9 @@
     <string name="missing_local_network_permission">Vajalikud on õigused kohtvõrguühenduse kasutamiseks</string>
     <string name="grant_permission">Luba need õigused</string>
     <string name="open_settings">Ava seadistused</string>
+    <string name="add_attachment">Lisa manus</string>
+    <string name="hide_attachment_options">Peida manuste valikud</string>
+    <string name="show_attachment_options">Näita manuste valikuid</string>
+    <string name="collapsed">Ahendatud</string>
+    <string name="expanded">Laiendatud</string>
 </resources>
