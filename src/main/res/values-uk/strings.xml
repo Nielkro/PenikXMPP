@@ -1261,4 +1261,5 @@
     <string name="open_settings">Відкрити налаштування</string>
     <string name="no_lan_permission">Надати %1$s доступ до локальної мережі (пристрої поблизу).</string>
     <string name="missing_local_network_permission">Потрібен дозвіл на доступ до локальної мережі</string>
+    <string name="add_attachment">Додати вкладення</string>
 </resources>
