@@ -1262,4 +1262,5 @@
     <string name="missing_local_network_permission">Требуется доступ к LAN</string>
     <string name="grant_permission">Предоставить разрешение</string>
     <string name="open_settings">Открыть настройки</string>
+    <string name="add_attachment">Добавить вложение</string>
 </resources>
