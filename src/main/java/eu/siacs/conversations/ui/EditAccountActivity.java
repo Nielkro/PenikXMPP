@@ -73,7 +73,6 @@ import eu.siacs.conversations.ui.adapter.KnownHostsAdapter;
 import eu.siacs.conversations.ui.adapter.PresenceTemplateAdapter;
 import eu.siacs.conversations.ui.text.FixedURLSpan;
 import eu.siacs.conversations.ui.util.AvatarWorkerTask;
-import eu.siacs.conversations.ui.util.MenuDoubleTabUtil;
 import eu.siacs.conversations.ui.util.PendingItem;
 import eu.siacs.conversations.ui.util.SoftKeyboardUtils;
 import eu.siacs.conversations.utils.Compatibility;
@@ -1060,12 +1059,10 @@ public class EditAccountActivity extends OmemoActivity
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
-        if (MenuDoubleTabUtil.shouldIgnoreTap()) {
-            return false;
-        }
         final int itemId = item.getItemId();
         if (itemId == android.R.id.home) {
             deleteAccountAndReturnIfNecessary();
+            finish();
             return true;
         } else if (itemId == R.id.action_show_block_list) {
             final Intent showBlocklistIntent = new Intent(this, BlocklistActivity.class);
