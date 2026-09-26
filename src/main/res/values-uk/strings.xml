@@ -1262,4 +1262,8 @@
     <string name="no_lan_permission">Надати %1$s доступ до локальної мережі (пристрої поблизу).</string>
     <string name="missing_local_network_permission">Потрібен дозвіл на доступ до локальної мережі</string>
     <string name="add_attachment">Додати вкладення</string>
+    <string name="hide_attachment_options">Сховати налаштування вкладень</string>
+    <string name="show_attachment_options">Показати налаштування вкладень</string>
+    <string name="collapsed">Згорнуто</string>
+    <string name="expanded">Розгорнуто</string>
 </resources>
