@@ -1224,4 +1224,9 @@
     <string name="missing_local_network_permission">Permiso de red local obligatorio</string>
     <string name="grant_permission">Permitir</string>
     <string name="open_settings">Abrir los ajustes</string>
+    <string name="add_attachment">Agregar archivo adjunto</string>
+    <string name="hide_attachment_options">Ocultar opciones de adjuntos</string>
+    <string name="show_attachment_options">Ver opciones de adjuntos</string>
+    <string name="collapsed">Contraído</string>
+    <string name="expanded">Expandido</string>
 </resources>
