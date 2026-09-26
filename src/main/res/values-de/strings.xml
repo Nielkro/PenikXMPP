@@ -1205,4 +1205,9 @@
     <string name="missing_local_network_permission">LAN-Berechtigung erforderlich</string>
     <string name="grant_permission">Berechtigung erteilen</string>
     <string name="open_settings">Einstellungen öffnen</string>
+    <string name="add_attachment">Anhang hinzufügen</string>
+    <string name="hide_attachment_options">Anhangoptionen ausblenden</string>
+    <string name="show_attachment_options">Anhangoptionen anzeigen</string>
+    <string name="collapsed">Eingeklappt</string>
+    <string name="expanded">Ausgeklappt</string>
 </resources>
