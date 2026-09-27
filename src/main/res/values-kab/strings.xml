@@ -123,7 +123,7 @@
     <string name="pref_connection_options">Tuqqna</string>
     <string name="account_settings_hostname">Asenneftaɣ</string>
     <string name="account_settings_port">Tawwurt</string>
-    <string name="correct_message">Seɣti izen</string>
+    <string name="correct_message">Ẓreg</string>
     <string name="presence_away">Ulac-it</string>
     <string name="create_account">Snulfu-d amiḍan</string>
     <string name="gp_disable">Ssens-it</string>
@@ -249,7 +249,7 @@
     <string name="copy_URI">Nɣel URI</string>
     <string name="copy_telephone_number">Nɣel uṭṭun n tiliɣri</string>
     <string name="copy_jabber_id">Nɣel tansa XMPP</string>
-    <string name="copy_to_clipboard">Nɣel ɣer tecfawt</string>
+    <string name="copy_to_clipboard">Nɣel</string>
     <string name="copy_email_address">Nɣel tansa n yimayl</string>
     <string name="copy_original_url">Nɣel URL aɣbalu</string>
     <string name="action_archive_chat">Ḥrez adiwenni</string>
@@ -564,4 +564,29 @@
     <string name="conference_options">Tawila n ugraw udiwenni uslig</string>
     <string name="modified_conference_options">Tinefrunin n ugraw udiwenni yettwabeddelen!</string>
     <string name="could_not_modify_conference_options">Ulamek abeddel n tnefrunin n ugraw n udiwenni</string>
+    <string name="attachment_choice_contact">Anermis</string>
+    <string name="collapsed">Yettwafneẓ</string>
+    <string name="filter_type_audio">Ameslaw</string>
+    <string name="filter_type_videos">Tividyutin</string>
+    <string name="filter_type_images">Tugniwin</string>
+    <string name="visitor">Anerzu</string>
+    <string name="pref_category_avatars">Ivaṭaren</string>
+    <string name="send">Azen</string>
+    <string name="outcast">Yettwaɛzal</string>
+    <string name="filter_type_documents">Isemliyen</string>
+    <string name="attachment_choice_recording">Asekles</string>
+    <string name="attachment_choice_video">Tavidyut</string>
+    <string name="filter_type_other">Wayeḍ</string>
+    <string name="attachment_choice_camera">Takaiṛat</string>
+    <string name="pref_category_backup_storage">Aḥraz</string>
+    <string name="attachment_choice_location">Adig</string>
+    <string name="attachment_choice_file">Afaylu</string>
+    <string name="peer_to_peer">Seg yixef ɣer yixef</string>
+    <string name="apply_filter">Snes</string>
+    <string name="silent_messages_channel_name">Iznan isusamen</string>
+    <string name="notify_never">Nsan yilɣa</string>
+    <string name="choose_participants">Fren imttekkiyen</string>
+    <string name="invite_again">Snubget i tikkelt niḍen</string>
+    <string name="edit_configuration">Beddel asesteb</string>
+    <string name="verified_fingerprints">Idsilen umḍinen i yettwasneqden</string>
 </resources>
