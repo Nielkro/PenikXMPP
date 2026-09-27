@@ -1227,4 +1227,9 @@
     <string name="missing_local_network_permission">Este necesară permisiunea la rețeaua locală</string>
     <string name="grant_permission">Oferă permisiunea</string>
     <string name="open_settings">Deschide setări</string>
+    <string name="add_attachment">Adaugă atașament</string>
+    <string name="hide_attachment_options">Ascunde opțiuni atașament</string>
+    <string name="show_attachment_options">Arată opțiuni atașament</string>
+    <string name="collapsed">Pliat</string>
+    <string name="expanded">Extins</string>
 </resources>
