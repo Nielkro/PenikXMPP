@@ -1239,4 +1239,9 @@
     <string name="missing_local_network_permission">Wymagane uprawnienie do dostępu do LAN‑u</string>
     <string name="grant_permission">Nadaj uprawnienie</string>
     <string name="open_settings">Otwórz Ustawienia</string>
+    <string name="add_attachment">Dodaj załącznik</string>
+    <string name="hide_attachment_options">Ukryj opcje załączników</string>
+    <string name="show_attachment_options">Pokaż opcje załączników</string>
+    <string name="collapsed">Zwinięte</string>
+    <string name="expanded">Rozwinięte</string>
 </resources>
