@@ -5,4 +5,11 @@
     <string name="pick_a_server">Fren asaǧǧaw-ik·im XMPP</string>
     <string name="your_server_invitation">Tinubga-inek n uqeddac</string>
     <string name="share_invite_with">Bḍu tinubga d…</string>
+    <string name="do_you_have_an_account">Tesɛiḍ amiḍan XMPP ? Yezmer ad yili waya ma yella tesseqdaceḍ yakan amsaɣ niḍen n XMPP neɣ tesqedceḍ Conversations yakan. Ma yella ulac, snulfu-d amiḍan amaynut XMPP tura.\nTamawt: Kra n yisaǧǧawen n yimayl ttmuddun imiḍanen XMPP.</string>
+    <string name="server_select_text">XMPP d asaǧǧaw ilelli n uzeṭṭa n unermes amiran. Tzemreḍ ad tesqedceḍ asnas-a akked yal aqeddac n XMPP ara tferneḍ.\nD acu, i wakken ad tifsus fell-ak, nerra asnulfu n umiḍan deg conversation.im; d asaǧǧaw i yeddan akked useqdec n Conversations.</string>
+    <string name="magic_create_text_on_x">Tettusnubegteḍ ɣer %1$s. Ad nili yid-k ɣef teɣzi n usnulfu n umiḍan.\nMi ara tferneḍ n %1$s d asaǧǧaw, ad tizmireḍ akked yiseqdacen s tikci n tansa-k XMPP tummidt.</string>
+    <string name="magic_create_text_fixed">Tettusnubegteḍ ɣer %1$s. Yettwafrren-ak yakan yisem n useqdac. Ad nili yid-k ɣef teɣzi n usnulfu n umiḍan.\nAd tizmireḍ akked yiseqdacen s tikci n tansa-k XMPP tummidt.</string>
+    <string name="improperly_formatted_provisioning">Ur tettwamsal ara tengalt akken iwata</string>
+    <string name="tap_share_button_send_invite">Sit ɣef tqeffalt n beṭṭu i tuzna n tinnubga i unermas-ik ɣer %1$s.</string>
+    <string name="if_contact_is_nearby_use_qr">Ma yella anermas-ik yeqreb, yezmer ad ifreḍ tangalt ddaw i uqbal n tinnubga.</string>
 </resources>
