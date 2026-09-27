@@ -1263,4 +1263,8 @@
     <string name="grant_permission">Предоставить разрешение</string>
     <string name="open_settings">Открыть настройки</string>
     <string name="add_attachment">Добавить вложение</string>
+    <string name="hide_attachment_options">Скрыть параметры вложений</string>
+    <string name="show_attachment_options">Показать параметры вложений</string>
+    <string name="collapsed">Свёрнуто</string>
+    <string name="expanded">Развёрнуто</string>
 </resources>
