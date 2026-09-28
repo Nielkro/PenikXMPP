@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:9.2.1'
-        classpath 'com.diffplug.spotless:spotless-plugin-gradle:8.10.2'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:8.10.3'
     }
 }
 
@@ -87,7 +87,7 @@ dependencies {
     //noinspection NewerVersionAvailable
     implementation 'org.whispersystems:signal-protocol-java:2.6.2'
     conversationsPlaystoreImplementation 'com.android.installreferrer:installreferrer:2.2'
-    quicksyImplementation 'io.michaelrocks:libphonenumber-android:9.0.38'
+    quicksyImplementation 'io.michaelrocks:libphonenumber-android:9.0.40'
     quicksyPlaystoreImplementation 'com.google.android.gms:play-services-auth-api-phone:18.3.1'
 
     testImplementation 'junit:junit:4.13.2'
@@ -109,8 +109,8 @@ android {
 
     defaultConfig {
         minSdk = 23
-        versionCode = 42180
-        versionName = '2.20.3'
+        versionCode = 42181
+        versionName = '2.20.4'
         applicationId = 'eu.siacs.conversations'
         resValue('string', 'applicationId', applicationId)
         def appName = "Conversations"

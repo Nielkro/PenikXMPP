@@ -1,0 +1,2 @@
+* Fix accessibility around adding attachments
+* Fix minor UI glitches

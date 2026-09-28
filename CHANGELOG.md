@@ -1,5 +1,10 @@
 # Changelog
 
+### Version 2.20.4
+
+* Fix accessibility around adding attachments
+* Fix minor UI glitches
+
 ### Version 2.20.3
 
 * Request permission when XMPP server is on local network
