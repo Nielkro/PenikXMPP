@@ -1220,4 +1220,9 @@
     <string name="missing_local_network_permission">LAN behörighet krävs</string>
     <string name="grant_permission">Bevilja behörigheter</string>
     <string name="open_settings">Öppna inställningar</string>
+    <string name="add_attachment">Lägg till bilaga</string>
+    <string name="hide_attachment_options">Dölj bilagealternativ</string>
+    <string name="show_attachment_options">Visa bilagealternativ</string>
+    <string name="collapsed">Kollapsad</string>
+    <string name="expanded">Expanderad</string>
 </resources>
