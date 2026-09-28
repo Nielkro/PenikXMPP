@@ -1105,4 +1105,21 @@
     <string name="video_is_enabled_tap_to_disable">El vídeo està habilitat. Toca per desactivar.</string>
     <string name="video_is_disabled_tap_to_enable">El vídeo està desactivat. Toca per activar-lo.</string>
     <string name="server_info_login_mechanism">Mecanisme d\'inici de sessió</string>
+    <string name="start_group_chat">Començar un xat de grup</string>
+    <string name="delete_file_dialog_shared">Aquest fitxer ha sigut compartit en d\'altres xats.</string>
+    <string name="delete_file_dialog_confirm">Segur que vols esborrar aquest fitxer?</string>
+    <string name="delete_file_dialog_copies">Això no esborarrara les còpies d\'aquest fitxer que es trobin a d\'altres dispositius o servidors.</string>
+    <plurals name="delete_files_dialog">
+        <item quantity="one">Esborrar fitxer</item>
+        <item quantity="many">Esborrar fitxers</item>
+        <item quantity="other">Esborrats %d fitxers</item>
+    </plurals>
+    <plurals name="delete_files_dialog_msg">
+        <item quantity="one">Segur que vols esborrar aquest fitxer?</item>
+        <item quantity="many">Segur que vols esborrar aquests fitxers?</item>
+        <item quantity="other">Segur que vols esborrar aquests fitxers?</item>
+    </plurals>
+    <string name="sheet_music">partitura musical</string>
+    <string name="no_lan_permission">Permet l\'accés a %1$s a la xarxa local (dispositius propers).</string>
+    <string name="missing_local_network_permission">Es requereix permisos de LAN</string>
 </resources>
