@@ -1344,10 +1344,12 @@ public class RtpSessionActivity extends XmppActivity
                 binding.appBarLayout.setVisibility(View.GONE);
                 getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 binding.remoteVideoWrapper.setVisibility(View.VISIBLE);
+                binding.contactPhoto.setVisibility(View.GONE);
             } else {
                 binding.appBarLayout.setVisibility(View.VISIBLE);
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 binding.remoteVideoWrapper.setVisibility(View.GONE);
+                showContactPhotoFallback(state);
             }
             if (isPictureInPicture() && !requireRtpConnection().isMicrophoneEnabled()) {
                 binding.pipLocalMicOffIndicator.setVisibility(View.VISIBLE);
@@ -1358,6 +1360,18 @@ public class RtpSessionActivity extends XmppActivity
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             binding.remoteVideoWrapper.setVisibility(View.GONE);
             binding.pipLocalMicOffIndicator.setVisibility(View.GONE);
+            showContactPhotoFallback(state);
+        }
+    }
+
+    private void showContactPhotoFallback(final RtpEndUserState state) {
+        if (state == RtpEndUserState.CONNECTED
+                && getResources().getBoolean(R.bool.is_portrait_mode)) {
+            binding.contactPhoto.setVisibility(View.VISIBLE);
+            AvatarWorkerTask.loadAvatar(
+                    getWith(), binding.contactPhoto, R.dimen.publish_avatar_size);
+        } else {
+            binding.contactPhoto.setVisibility(View.GONE);
         }
     }
 

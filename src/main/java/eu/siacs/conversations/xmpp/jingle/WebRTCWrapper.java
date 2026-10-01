@@ -382,9 +382,13 @@ public class WebRTCWrapper {
             final RtpTransceiver exactTransceiver =
                     TrackWrapper.getTransceiver(peerConnection, localVideoTrack);
             if (exactTransceiver == null) {
-                throw new IllegalStateException();
+                Log.w(
+                        EXTENDED_LOGGING_TAG,
+                        "unable to find transceiver for local video track during removal."
+                                + " continuing rollback without it");
+            } else {
+                exactTransceiver.setDirection(RtpTransceiver.RtpTransceiverDirection.INACTIVE);
             }
-            exactTransceiver.setDirection(RtpTransceiver.RtpTransceiverDirection.INACTIVE);
         }
         final VideoSourceWrapper videoSourceWrapper = this.videoSourceWrapper;
         if (videoSourceWrapper != null) {

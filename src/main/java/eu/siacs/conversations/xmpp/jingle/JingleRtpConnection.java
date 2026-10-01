@@ -607,7 +607,6 @@ public class JingleRtpConnection extends AbstractJingleConnection
         }
         final Set<ContentAddition.Summary> ourSummary = ContentAddition.summary(outgoingContentAdd);
         if (ourSummary.equals(ContentAddition.summary(receivedContentReject))) {
-            this.outgoingContentAdd = null;
             respondOk(jinglePacket);
             Log.d(Config.LOGTAG, jinglePacket.toString());
             receiveContentReject(ourSummary);
@@ -618,6 +617,19 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     private void receiveContentReject(final Set<ContentAddition.Summary> summary) {
+        rollbackOutgoingContentAdd();
+        Log.d(
+                Config.LOGTAG,
+                id.getAccount().getJid().asBareJid()
+                        + ": remote has rejected our content-add "
+                        + summary);
+    }
+
+    private synchronized void rollbackOutgoingContentAdd() {
+        if (this.outgoingContentAdd == null) {
+            return;
+        }
+        this.outgoingContentAdd = null;
         try {
             this.webRTCWrapper.removeTrack(Media.VIDEO);
             final RtpContentMap localContentMap = customRollback();
@@ -627,8 +639,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
             Log.d(
                     Config.LOGTAG,
                     id.getAccount().getJid().asBareJid()
-                            + ": unable to rollback local description after receiving"
-                            + " content-reject",
+                            + ": unable to roll back outgoing content-add",
                     cause);
             webRTCWrapper.close();
             sendSessionTerminate(new Reason.FailedApplication(), cause.getMessage());
@@ -637,8 +648,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
         Log.d(
                 Config.LOGTAG,
                 id.getAccount().getJid().asBareJid()
-                        + ": remote has rejected our content-add "
-                        + summary);
+                        + ": rolled back outgoing content-add. audio call continues");
     }
 
     private void receiveContentRemove(final Iq jinglePacket, final Jingle jingle) {
@@ -2645,6 +2655,13 @@ public class JingleRtpConnection extends AbstractJingleConnection
                                         "received tie-break as result of our content-add");
                                 return;
                             }
+                        }
+                        if (JingleRtpConnection.this.outgoingContentAdd != null) {
+                            Log.d(
+                                    Config.LOGTAG,
+                                    "peer refused our content-add. rolling back to audio");
+                            JingleRtpConnection.this.rollbackOutgoingContentAdd();
+                            return;
                         }
                         handleIqErrorResponse(t);
                     }
