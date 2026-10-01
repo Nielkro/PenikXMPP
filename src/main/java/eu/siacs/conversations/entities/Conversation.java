@@ -784,20 +784,9 @@ public class Conversation extends AbstractEntity
     }
 
     public int getNextEncryption() {
-        if (OmemoSetting.isAlways()) {
-            return suitableForOmemoByDefault(this)
-                    ? Message.ENCRYPTION_AXOLOTL
-                    : Message.ENCRYPTION_NONE;
-        }
-        final int defaultEncryption;
-        if (suitableForOmemoByDefault(this)) {
-            defaultEncryption = OmemoSetting.getEncryption();
-        } else {
-            defaultEncryption = Message.ENCRYPTION_NONE;
-        }
         final var encryption = this.attributes.nextEncryption;
         if (encryption == null || encryption == Message.ENCRYPTION_OTR) {
-            return defaultEncryption;
+            return Message.ENCRYPTION_NONE;
         } else {
             return encryption;
         }

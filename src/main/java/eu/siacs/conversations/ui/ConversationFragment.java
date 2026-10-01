@@ -117,7 +117,6 @@ import eu.siacs.conversations.ui.adapter.MediaPreviewAdapter;
 import eu.siacs.conversations.ui.adapter.MessageAdapter;
 import eu.siacs.conversations.ui.util.ActivityResult;
 import eu.siacs.conversations.ui.util.Attachment;
-import eu.siacs.conversations.ui.util.ConversationMenuConfigurator;
 import eu.siacs.conversations.ui.util.DateSeparator;
 import eu.siacs.conversations.ui.util.EditMessageActionModeCallback;
 import eu.siacs.conversations.ui.util.ListViewUtils;
@@ -718,7 +717,6 @@ public class ConversationFragment extends XmppFragment
                     } else {
                         menuUnmute.setVisible(false);
                     }
-                    ConversationMenuConfigurator.configureEncryptionMenu(c, menu);
                     if (c.isPinnedOnTop()) {
                         menuTogglePinned.setTitle(R.string.remove_from_favorites);
                     } else {
@@ -734,12 +732,7 @@ public class ConversationFragment extends XmppFragment
                         return false;
                     }
                     final int itemId = menuItem.getItemId();
-                    if (itemId == R.id.encryption_choice_axolotl
-                            || itemId == R.id.encryption_choice_pgp
-                            || itemId == R.id.encryption_choice_none) {
-                        handleEncryptionSelection(menuItem);
-                        return true;
-                    } else if (itemId == R.id.action_search) {
+                    if (itemId == R.id.action_search) {
                         startSearch();
                         return true;
                     } else if (itemId == R.id.action_archive) {
@@ -1077,45 +1070,15 @@ public class ConversationFragment extends XmppFragment
     }
 
     private boolean trustKeysIfNeeded(final Conversation conversation, final int requestCode) {
-        return conversation.getNextEncryption() == Message.ENCRYPTION_AXOLOTL
-                && trustKeysIfNeeded(requestCode);
-    }
-
-    protected boolean trustKeysIfNeeded(final int requestCode) {
-        final var axolotlService = conversation.getAccount().getAxolotlService();
-        final var targets = axolotlService.getCryptoTargets(conversation);
-        boolean hasUnaccepted = !conversation.getAcceptedCryptoTargets().containsAll(targets);
-        // TODO basically all of those are hitting the database. This should be async
-        boolean hasUndecidedOwn =
-                !axolotlService
-                        .getKeysWithTrust(FingerprintStatus.createActiveUndecided())
-                        .isEmpty();
-        boolean hasUndecidedContacts =
-                !axolotlService
-                        .getKeysWithTrust(FingerprintStatus.createActiveUndecided(), targets)
-                        .isEmpty();
-        boolean hasPendingKeys = !axolotlService.findDevicesWithoutSession(conversation).isEmpty();
-        boolean hasNoTrustedKeys = axolotlService.anyTargetHasNoTrustedKeys(targets);
-        boolean downloadInProgress = axolotlService.hasPendingKeyFetches(targets);
-        if (hasUndecidedOwn
-                || hasUndecidedContacts
-                || hasPendingKeys
-                || hasNoTrustedKeys
-                || hasUnaccepted
-                || downloadInProgress) {
-            axolotlService.createSessionsIfNeeded(conversation);
-            final Intent intent = new Intent(requireActivity(), TrustKeysActivity.class);
-            intent.putExtra(
-                    "contacts",
-                    Collections2.transform(targets, Jid::toString).toArray(new String[0]));
-            intent.putExtra(
-                    EXTRA_ACCOUNT, conversation.getAccount().getJid().asBareJid().toString());
-            intent.putExtra("conversation", conversation.getUuid());
-            startActivityForResult(intent, requestCode);
-            return true;
-        } else {
-            return false;
+        if (conversation.getNextEncryption() == Message.ENCRYPTION_AXOLOTL) {
+            final var axolotlService = conversation.getAccount().getAxolotlService();
+            if (axolotlService != null) {
+                conversation.setAcceptedCryptoTargets(
+                        axolotlService.getCryptoTargets(conversation));
+                axolotlService.createSessionsIfNeeded(conversation);
+            }
         }
+        return false;
     }
 
     public void updateChatMsgHint() {
@@ -1924,52 +1887,6 @@ public class ConversationFragment extends XmppFragment
                     case CONTACT -> ATTACHMENT_CHOICE_CONTACT;
                 });
         setAttachmentChoicesVisibility(false);
-    }
-
-    private void handleEncryptionSelection(MenuItem item) {
-        if (conversation == null) {
-            return;
-        }
-        final boolean updated;
-        final int itemId = item.getItemId();
-        if (itemId == R.id.encryption_choice_none) {
-            updated = conversation.setNextEncryption(Message.ENCRYPTION_NONE);
-            item.setChecked(true);
-        } else if (itemId == R.id.encryption_choice_pgp) {
-            if (requireXmppActivity().hasPgp()) {
-                if (conversation.getAccount().getPgpSignature() != null) {
-                    updated = conversation.setNextEncryption(Message.ENCRYPTION_PGP);
-                    item.setChecked(true);
-                } else {
-                    updated = false;
-                    requireXmppActivity()
-                            .announcePgp(
-                                    conversation.getAccount(),
-                                    conversation,
-                                    null,
-                                    requireXmppActivity().onOpenPGPKeyPublished);
-                }
-            } else {
-                requireXmppActivity().showInstallPgpDialog();
-                updated = false;
-            }
-        } else if (itemId == R.id.encryption_choice_axolotl) {
-            Log.d(
-                    Config.LOGTAG,
-                    AxolotlService.getLogprefix(conversation.getAccount())
-                            + "Enabled axolotl for Contact "
-                            + conversation.getContact().getAddress());
-            updated = conversation.setNextEncryption(Message.ENCRYPTION_AXOLOTL);
-            item.setChecked(true);
-        } else {
-            updated = conversation.setNextEncryption(Message.ENCRYPTION_NONE);
-        }
-        if (updated) {
-            requireXmppActivity().xmppConnectionService.updateConversation(conversation);
-        }
-        updateChatMsgHint();
-        this.binding.toolbar.invalidateMenu();
-        requireXmppActivity().refreshUi();
     }
 
     public void attachFile(final int attachmentChoice) {

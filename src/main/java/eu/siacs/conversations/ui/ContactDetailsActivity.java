@@ -552,26 +552,13 @@ public class ContactDetailsActivity extends OmemoActivity
                     showUnverifiedWarning = true;
                 }
             }
-            binding.unverifiedWarning.setVisibility(
-                    showUnverifiedWarning ? View.VISIBLE : View.GONE);
-            if (showsInactive || skippedInactive) {
-                binding.showInactiveDevices.setText(
-                        showsInactive
-                                ? R.string.hide_inactive_devices
-                                : R.string.show_inactive_devices);
-                binding.showInactiveDevices.setVisibility(View.VISIBLE);
-            } else {
-                binding.showInactiveDevices.setVisibility(View.GONE);
-            }
+            binding.unverifiedWarning.setVisibility(View.GONE);
+            binding.showInactiveDevices.setVisibility(View.GONE);
         } else {
             binding.showInactiveDevices.setVisibility(View.GONE);
         }
         final boolean isCameraFeatureAvailable = isCameraFeatureAvailable();
-        binding.scanButton.setVisibility(
-                hasKeys && isCameraFeatureAvailable ? View.VISIBLE : View.GONE);
-        if (hasKeys) {
-            binding.scanButton.setOnClickListener((v) -> requestPermissionAndScanQrCode());
-        }
+        binding.scanButton.setVisibility(View.GONE);
         if (contact.getPgpKeyId() != 0) {
             hasKeys = true;
             View view =
@@ -592,7 +579,7 @@ public class ContactDetailsActivity extends OmemoActivity
             keyType.setOnClickListener(openKey);
             binding.detailsContactKeys.addView(view);
         }
-        binding.keysWrapper.setVisibility(hasKeys ? View.VISIBLE : View.GONE);
+        binding.keysWrapper.setVisibility(View.GONE);
 
         final var tagList = contact.getTags();
         if (Contact.isNoteworthy(tagList) || this.showDynamicTags) {

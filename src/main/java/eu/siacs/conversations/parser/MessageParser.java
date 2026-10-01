@@ -143,6 +143,18 @@ public class MessageParser extends AbstractParser
         return null;
     }
 
+    private void followPeerEncryption(final Conversation conversation) {
+        if (conversation.getNextEncryption() == Message.ENCRYPTION_AXOLOTL) {
+            return;
+        }
+        conversation.setNextEncryption(Message.ENCRYPTION_AXOLOTL);
+        final var axolotlService = conversation.getAccount().getAxolotlService();
+        if (axolotlService != null) {
+            conversation.setAcceptedCryptoTargets(axolotlService.getCryptoTargets(conversation));
+        }
+        mXmppConnectionService.updateConversation(conversation);
+    }
+
     private boolean handleErrorMessage(
             final Account account,
             final im.conversations.android.xmpp.model.stanza.Message packet) {
@@ -500,6 +512,10 @@ public class MessageParser extends AbstractParser
                         }
                     }
                     return;
+                }
+                if (message.getEncryption() == Message.ENCRYPTION_AXOLOTL
+                        && conversation.getMode() == Conversation.MODE_SINGLE) {
+                    followPeerEncryption(conversation);
                 }
                 if (conversationMultiMode) {
                     message.setTrueCounterpart(origin);
