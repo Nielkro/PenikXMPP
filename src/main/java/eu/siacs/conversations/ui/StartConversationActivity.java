@@ -78,6 +78,7 @@ import eu.siacs.conversations.ui.util.SoftKeyboardUtils;
 import eu.siacs.conversations.ui.widget.SwipeRefreshListFragment;
 import eu.siacs.conversations.utils.AccountUtils;
 import eu.siacs.conversations.utils.CharSequences;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.OnUpdateBlocklist;
 import eu.siacs.conversations.xmpp.XmppConnection;
@@ -542,7 +543,9 @@ public class StartConversationActivity extends XmppActivity
         builder.setTitle(R.string.action_delete_contact);
         builder.setMessage(
                 JidDialog.style(
-                        this, R.string.remove_contact_text, contact.getAddress().toString()));
+                        this,
+                        R.string.remove_contact_text,
+                        JidHelper.displayAddress(contact.getAddress())));
         builder.setPositiveButton(
                 R.string.delete,
                 (dialog, which) -> {
@@ -562,14 +565,16 @@ public class StartConversationActivity extends XmppActivity
         builder.setTitle(R.string.delete_bookmark);
         if (hasConversation) {
             builder.setMessage(
-                    JidDialog.style(
-                            this,
-                            R.string.remove_bookmark_and_close,
-                            bookmark.getAddress().toString()));
+                JidDialog.style(
+                        this,
+                        R.string.remove_bookmark_and_close,
+                        JidHelper.displayAddress(bookmark.getAddress())));
         } else {
             builder.setMessage(
-                    JidDialog.style(
-                            this, R.string.remove_bookmark, bookmark.getAddress().toString()));
+                JidDialog.style(
+                        this,
+                        R.string.remove_bookmark,
+                        JidHelper.displayAddress(bookmark.getAddress())));
         }
         builder.setPositiveButton(
                 hasConversation ? R.string.delete_and_close : R.string.delete,

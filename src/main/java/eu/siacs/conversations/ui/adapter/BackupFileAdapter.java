@@ -20,6 +20,7 @@ import eu.siacs.conversations.services.AvatarService;
 import eu.siacs.conversations.utils.BackupFile;
 import eu.siacs.conversations.utils.BackupFileHeader;
 import eu.siacs.conversations.utils.UIHelper;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -48,7 +49,8 @@ public class BackupFileAdapter
     public void onBindViewHolder(@NonNull BackupFileViewHolder backupFileViewHolder, int position) {
         final BackupFile backupFile = files.get(position);
         final BackupFileHeader header = backupFile.getHeader();
-        backupFileViewHolder.binding.accountJid.setText(header.getJid().asBareJid().toString());
+        backupFileViewHolder.binding.accountJid.setText(
+                JidHelper.displayAddress(header.getJid().asBareJid()));
         backupFileViewHolder.binding.accountStatus.setText(
                 String.format(
                         "%s · %s",

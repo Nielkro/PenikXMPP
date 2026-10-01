@@ -62,6 +62,7 @@ import eu.siacs.conversations.utils.AccountUtils;
 import eu.siacs.conversations.utils.Compatibility;
 import eu.siacs.conversations.utils.Emoticons;
 import eu.siacs.conversations.utils.IrregularUnicodeDetector;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.utils.PhoneNumberUtilWrapper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.OnKeyStatusUpdated;
@@ -172,7 +173,7 @@ public class ContactDetailsActivity extends OmemoActivity
         }
         final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(getString(R.string.save_to_contact));
-        builder.setMessage(getString(R.string.add_phone_book_text, value));
+        builder.setMessage(getString(R.string.add_phone_book_text, JidHelper.displayAddress(jid)));
         builder.setNegativeButton(getString(R.string.cancel), null);
         builder.setPositiveButton(
                 getString(R.string.add),
@@ -341,7 +342,7 @@ public class ContactDetailsActivity extends OmemoActivity
                             JidDialog.style(
                                     this,
                                     R.string.remove_contact_text,
-                                    contact.getAddress().toString()))
+                                    JidHelper.displayAddress(contact.getAddress())))
                     .setPositiveButton(getString(R.string.delete), removeFromRoster)
                     .create()
                     .show();
@@ -496,8 +497,9 @@ public class ContactDetailsActivity extends OmemoActivity
             binding.statusMessage.setVisibility(View.GONE);
         }
         binding.detailsContactXmppAddress.setText(
-                IrregularUnicodeDetector.style(this, contact.getAddress()));
-        final String account = contact.getAccount().getJid().asBareJid().toString();
+                IrregularUnicodeDetector.style(this, contact.getAddress(), true));
+        final String account =
+                JidHelper.displayAddress(contact.getAccount().getJid().asBareJid());
         binding.detailsAccount.setOnClickListener(this::onDetailsAccountClicked);
         binding.detailsAccount.setText(getString(R.string.using_account, account));
         AvatarWorkerTask.loadAvatar(contact, binding.detailsAvatar, R.dimen.publish_avatar_size);

@@ -18,6 +18,7 @@ import eu.siacs.conversations.databinding.ItemChannelDiscoveryBinding;
 import eu.siacs.conversations.entities.Room;
 import eu.siacs.conversations.ui.XmppActivity;
 import eu.siacs.conversations.ui.util.AvatarWorkerTask;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 
 import java.util.Locale;
@@ -67,7 +68,8 @@ public class ChannelSearchResultAdapter extends ListAdapter<Room, ChannelSearchR
             viewHolder.binding.language.setVisibility(View.VISIBLE);
         }
         final Jid room = searchResult.getRoom();
-        viewHolder.binding.room.setText(room != null ? room.asBareJid().toString() : "");
+        viewHolder.binding.room.setText(
+                room != null ? JidHelper.displayAddress(room.asBareJid()) : "");
         AvatarWorkerTask.loadAvatar(searchResult, viewHolder.binding.avatar, R.dimen.avatar);
         final View root = viewHolder.binding.getRoot();
         root.setTag(searchResult);

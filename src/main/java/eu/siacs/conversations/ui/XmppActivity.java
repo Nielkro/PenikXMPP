@@ -81,6 +81,7 @@ import eu.siacs.conversations.ui.widget.AddReactionDialog;
 import eu.siacs.conversations.utils.AccountUtils;
 import eu.siacs.conversations.utils.Compatibility;
 import eu.siacs.conversations.utils.SignupUtils;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.OnKeyStatusUpdated;
 import eu.siacs.conversations.xmpp.OnUpdateBlocklist;
@@ -858,7 +859,7 @@ public abstract class XmppActivity extends ActionBarActivity {
 
     protected void showAddToRosterDialog(final Contact contact) {
         final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle(contact.getAddress().toString());
+        builder.setTitle(JidHelper.displayAddress(contact.getAddress()));
         builder.setMessage(getString(R.string.not_in_roster));
         builder.setNegativeButton(getString(R.string.cancel), null);
         builder.setPositiveButton(
@@ -869,7 +870,7 @@ public abstract class XmppActivity extends ActionBarActivity {
 
     private void showAskForPresenceDialog(final Contact contact) {
         final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle(contact.getAddress().toString());
+        builder.setTitle(JidHelper.displayAddress(contact.getAddress()));
         builder.setMessage(R.string.request_presence_updates);
         builder.setNegativeButton(R.string.cancel, null);
         builder.setPositiveButton(

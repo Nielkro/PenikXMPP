@@ -40,6 +40,7 @@ import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Presences;
 import eu.siacs.conversations.utils.CryptoHelper;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.jingle.RtpCapability;
 import im.conversations.android.xmpp.model.stanza.Presence;
@@ -154,7 +155,8 @@ public class PresenceSelector {
             final Conversation conversation,
             final OnPresenceSelected listener) {
         final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
-        builder.setTitle(conversation.getContact().getAddress().toString());
+        builder.setTitle(
+                JidHelper.displayAddress(conversation.getContact().getAddress()));
         builder.setMessage(R.string.without_mutual_presence_updates);
         builder.setNegativeButton(R.string.cancel, null);
         builder.setPositiveButton(

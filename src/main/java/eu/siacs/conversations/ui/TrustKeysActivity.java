@@ -27,6 +27,7 @@ import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.IrregularUnicodeDetector;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.OnKeyStatusUpdated;
 import java.util.ArrayList;
@@ -264,7 +265,8 @@ public class TrustKeysActivity extends OmemoActivity implements OnKeyStatusUpdat
             showCameraToast();
         }
 
-        binding.ownKeysTitle.setText(mAccount.getJid().asBareJid().toString());
+        binding.ownKeysTitle.setText(
+                JidHelper.displayAddress(mAccount.getJid().asBareJid()));
         binding.ownKeysCard.setVisibility(hasOwnKeys ? View.VISIBLE : View.GONE);
         binding.foreignKeys.setVisibility(hasForeignKeys ? View.VISIBLE : View.GONE);
         if (hasPendingKeyFetches()) {

@@ -23,6 +23,7 @@ import eu.siacs.conversations.services.QuickConversationsService;
 import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.utils.MessageUtils;
 import eu.siacs.conversations.utils.UIHelper;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.mam.MamReference;
 import eu.siacs.conversations.xmpp.manager.BookmarkManager;
@@ -598,7 +599,7 @@ public class Conversation extends AbstractEntity
         } else if ((QuickConversationsService.isConversations()
                         || !Config.QUICKSY_DOMAIN.equals(contactJid.getDomain()))
                 && isWithStranger()) {
-            return contactJid;
+            return JidHelper.displayAddress(contactJid);
         } else {
             return this.getContact().getDisplayName();
         }

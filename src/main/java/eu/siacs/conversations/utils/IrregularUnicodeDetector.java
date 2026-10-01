@@ -80,6 +80,24 @@ public class IrregularUnicodeDetector {
                         context, androidx.appcompat.R.attr.colorError, "colorError not found"));
     }
 
+    public static Spannable style(final Context context, final Jid jid, final boolean hideDomain) {
+        if (!hideDomain || jid.getLocal() == null) {
+            return style(context, jid);
+        }
+        final var patternTuple = find(jid);
+        final SpannableString local = new SpannableString(jid.getLocal());
+        if (patternTuple.local != null) {
+            colorize(
+                    local,
+                    patternTuple.local,
+                    MaterialColors.getColor(
+                            context,
+                            androidx.appcompat.R.attr.colorError,
+                            "colorError not found"));
+        }
+        return local;
+    }
+
     private static Spannable style(final Jid jid, final @ColorInt int color) {
         final var patternTuple = find(jid);
         final var builder = new SpannableStringBuilder();

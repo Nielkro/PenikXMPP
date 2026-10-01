@@ -458,9 +458,7 @@ public class UIHelper {
                     return c.getMucOptions().getUserOrStub(message).getDisplayName();
                 } else {
                     final var counterpart = message.getCounterpart();
-                    return counterpart.isBareJid()
-                            ? counterpart.toString()
-                            : counterpart.getResource();
+                    return JidHelper.displayAddress(counterpart);
                 }
             } else {
                 return conversation.getContact().getDisplayName();

@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.receiver.UnifiedPushDistributor;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -85,8 +86,11 @@ public class UpSettingsFragment extends XmppPreferenceFragment {
         final ImmutableList.Builder<CharSequence> entryValues = new ImmutableList.Builder<>();
         entries.add(getString(R.string.no_account_deactivated));
         entryValues.add("none");
-        entries.addAll(accounts);
-        entryValues.addAll(accounts);
+        for (final var account : requireService().getAccounts()) {
+            final var address = account.getJid().asBareJid();
+            entries.add(JidHelper.displayAddress(address));
+            entryValues.add(address.toString());
+        }
         listPreference.setEntries(entries.build().toArray(new CharSequence[0]));
         listPreference.setEntryValues(entryValues.build().toArray(new CharSequence[0]));
         if (!accounts.contains(listPreference.getValue())) {

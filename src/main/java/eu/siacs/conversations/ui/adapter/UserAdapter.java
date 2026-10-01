@@ -33,6 +33,7 @@ import eu.siacs.conversations.ui.util.AvatarWorkerTask;
 import eu.siacs.conversations.ui.util.MucDetailsContextMenuHelper;
 import eu.siacs.conversations.utils.Compatibility;
 import eu.siacs.conversations.utils.XEP0392Helper;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.model.DynamicTag;
 import im.conversations.android.xmpp.model.stanza.Presence;
@@ -121,7 +122,7 @@ public class UserAdapter extends ListAdapter<MucOptions.User, UserAdapter.ViewHo
         viewHolder.binding.contactDisplayName.setText(user.getDisplayName());
         final var jid = user.getRealJid();
         if (jid != null) {
-            viewHolder.binding.contactJid.setText(jid);
+            viewHolder.binding.contactJid.setText(JidHelper.displayAddress(jid));
             viewHolder.binding.contactJid.setVisibility(View.VISIBLE);
         } else {
             viewHolder.binding.contactJid.setVisibility(View.GONE);

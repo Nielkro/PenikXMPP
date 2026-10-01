@@ -81,7 +81,7 @@ public class ListItemAdapter extends ArrayAdapter<ListItem> {
         final Jid jid = item.getAddress();
         if (jid != null) {
             viewHolder.jid.setVisibility(View.VISIBLE);
-            viewHolder.jid.setText(IrregularUnicodeDetector.style(activity, jid));
+            viewHolder.jid.setText(IrregularUnicodeDetector.style(activity, jid, true));
         } else {
             viewHolder.jid.setVisibility(View.GONE);
         }

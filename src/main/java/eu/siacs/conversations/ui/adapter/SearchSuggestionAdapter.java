@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.databinding.ItemSearchSuggestionBinding;
+import eu.siacs.conversations.utils.JidHelper;
 import im.conversations.android.model.SearchSuggestion;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -75,13 +76,13 @@ public class SearchSuggestionAdapter
         } else if (searchSuggestion instanceof SearchSuggestion.Contact contact) {
             holder.binding.searchSuggestion.setMaxLines(1);
             holder.binding.searchSuggestion.setText(contact.name());
-            holder.binding.address.setText(contact.address().toString());
+            holder.binding.address.setText(JidHelper.displayAddress(contact.address()));
             holder.binding.address.setVisibility(View.VISIBLE);
             holder.binding.icon.setImageResource(R.drawable.ic_person_24dp);
         } else if (searchSuggestion instanceof SearchSuggestion.Bookmark bookmark) {
             holder.binding.searchSuggestion.setMaxLines(1);
             holder.binding.searchSuggestion.setText(bookmark.name());
-            holder.binding.address.setText(bookmark.address().toString());
+            holder.binding.address.setText(JidHelper.displayAddress(bookmark.address()));
             holder.binding.address.setVisibility(View.VISIBLE);
             holder.binding.icon.setImageResource(R.drawable.ic_group_24dp);
         } else if (searchSuggestion

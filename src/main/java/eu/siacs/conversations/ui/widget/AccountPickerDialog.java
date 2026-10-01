@@ -7,6 +7,7 @@ import com.google.common.collect.Iterables;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.ui.XmppActivity;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.manager.EasyOnboardingManager;
 import java.util.Collection;
@@ -72,7 +73,8 @@ public class AccountPickerDialog {
     }
 
     private static String[] asStrings(final Collection<Account> accounts) {
-        return Collections2.transform(accounts, a -> a.getJid().asBareJid().toString())
+        return Collections2.transform(
+                        accounts, a -> JidHelper.displayAddress(a.getJid().asBareJid()))
                 .toArray(new String[0]);
     }
 

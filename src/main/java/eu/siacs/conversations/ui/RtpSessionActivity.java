@@ -52,6 +52,7 @@ import eu.siacs.conversations.ui.util.MainThreadExecutor;
 import eu.siacs.conversations.ui.util.Rationals;
 import eu.siacs.conversations.utils.PermissionUtils;
 import eu.siacs.conversations.utils.TimeFrameUtils;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.jingle.AbstractJingleConnection;
 import eu.siacs.conversations.xmpp.jingle.ContentAddition;
@@ -557,7 +558,7 @@ public class RtpSessionActivity extends XmppActivity
         binding.with.setText(contact.getDisplayName());
         if (Arrays.asList(RtpEndUserState.INCOMING_CALL, RtpEndUserState.ACCEPTING_CALL)
                 .contains(state)) {
-            binding.withJid.setText(contact.getAddress().asBareJid().toString());
+            binding.withJid.setText(JidHelper.displayAddress(contact.getAddress().asBareJid()));
             binding.withJid.setVisibility(View.VISIBLE);
         } else {
             binding.withJid.setVisibility(View.GONE);
@@ -917,7 +918,9 @@ public class RtpSessionActivity extends XmppActivity
             final Account account = contact == null ? getWith().getAccount() : contact.getAccount();
             binding.usingAccount.setVisibility(View.VISIBLE);
             binding.usingAccount.setText(
-                    getString(R.string.using_account, account.getJid().asBareJid().toString()));
+                    getString(
+                            R.string.using_account,
+                            JidHelper.displayAddress(account.getJid().asBareJid())));
         } else {
             binding.usingAccount.setVisibility(View.GONE);
             binding.contactPhoto.setVisibility(View.GONE);

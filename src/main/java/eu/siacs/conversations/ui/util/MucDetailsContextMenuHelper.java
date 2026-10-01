@@ -26,6 +26,7 @@ import eu.siacs.conversations.ui.ConversationFragment;
 import eu.siacs.conversations.ui.ConversationsActivity;
 import eu.siacs.conversations.ui.MucUsersActivity;
 import eu.siacs.conversations.ui.XmppActivity;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.manager.ModerationManager;
 import eu.siacs.conversations.xmpp.manager.MultiUserChatManager;
@@ -254,7 +255,7 @@ public final class MucDetailsContextMenuHelper {
         } else {
             binding.deleteMessage.setVisibility(View.GONE);
         }
-        binding.jid.setText(user.getRealJid().asBareJid().toString());
+        binding.jid.setText(JidHelper.displayAddress(user.getRealJid().asBareJid()));
         builder.setView(binding.getRoot());
         builder.setNegativeButton(R.string.cancel, null);
         builder.setPositiveButton(

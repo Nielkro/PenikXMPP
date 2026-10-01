@@ -10,6 +10,7 @@ import eu.siacs.conversations.databinding.DialogBlockContactBinding;
 import eu.siacs.conversations.entities.Blockable;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.ui.util.JidDialog;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.xmpp.manager.BlockingManager;
 
 public final class BlockContactDialog {
@@ -82,7 +83,8 @@ public final class BlockContactDialog {
             value = blockable.getAddress().asBareJid().toString();
             res = isBlocked ? R.string.unblock_contact_text : R.string.block_contact_text;
         }
-        binding.text.setText(JidDialog.style(xmppActivity, res, value));
+        binding.text.setText(
+                JidDialog.style(xmppActivity, res, JidHelper.displayAddress(blockable.getAddress())));
         builder.setPositiveButton(
                 isBlocked ? R.string.unblock : R.string.block,
                 (dialog, which) -> {

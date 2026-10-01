@@ -49,6 +49,17 @@ public class JidHelper {
         }
     }
 
+    public static String displayAddress(final Jid jid) {
+        if (jid.isFullJid()) {
+            final String resource = jid.getResource();
+            if (resource != null) {
+                return resource;
+            }
+        }
+        final String local = jid.getLocal();
+        return local != null ? local : jid.toString();
+    }
+
     public static boolean isQuicksyDomain(final Jid jid) {
         return Config.QUICKSY_DOMAIN != null && Config.QUICKSY_DOMAIN.equals(jid.getDomain());
     }

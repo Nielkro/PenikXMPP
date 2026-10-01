@@ -50,6 +50,7 @@ import eu.siacs.conversations.ui.util.MucDetailsContextMenuHelper;
 import eu.siacs.conversations.ui.util.SoftKeyboardUtils;
 import eu.siacs.conversations.utils.AccountUtils;
 import eu.siacs.conversations.utils.Compatibility;
+import eu.siacs.conversations.utils.JidHelper;
 import eu.siacs.conversations.utils.StylingHelper;
 import eu.siacs.conversations.xmpp.manager.BookmarkManager;
 import eu.siacs.conversations.xmpp.manager.MultiUserChatManager;
@@ -586,7 +587,8 @@ public class ConferenceDetailsActivity extends XmppActivity
         }
         final MucOptions mucOptions = mConversation.getMucOptions();
         final User self = mucOptions.getSelf();
-        final String account = mConversation.getAccount().getJid().asBareJid().toString();
+        final String account =
+                JidHelper.displayAddress(mConversation.getAccount().getJid().asBareJid());
         setTitle(
                 mucOptions.isPrivateAndNonAnonymous()
                         ? R.string.action_muc_details
@@ -596,12 +598,8 @@ public class ConferenceDetailsActivity extends XmppActivity
                         ? View.VISIBLE
                         : View.GONE);
         this.binding.detailsAccount.setText(getString(R.string.using_account, account));
-        if (mConversation.isPrivateAndNonAnonymous()) {
-            this.binding.jid.setText(
-                    getString(R.string.hosted_on, mConversation.getAddress().getDomain()));
-        } else {
-            this.binding.jid.setText(mConversation.getAddress().asBareJid().toString());
-        }
+        this.binding.jid.setText(
+                JidHelper.displayAddress(mConversation.getAddress().asBareJid()));
         AvatarWorkerTask.loadAvatar(
                 mConversation, binding.yourPhoto, R.dimen.avatar_on_details_screen_size);
         String roomName = mucOptions.getName();

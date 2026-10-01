@@ -12,6 +12,7 @@ import eu.siacs.conversations.databinding.ItemAccountBinding;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.ui.XmppActivity;
 import eu.siacs.conversations.ui.util.AvatarWorkerTask;
+import eu.siacs.conversations.utils.JidHelper;
 import java.util.List;
 
 public class AccountAdapter extends ArrayAdapter<Account> {
@@ -52,7 +53,8 @@ public class AccountAdapter extends ArrayAdapter<Account> {
         if (account == null) {
             return view;
         }
-        viewHolder.binding.accountJid.setText(account.getJid().asBareJid().toString());
+        viewHolder.binding.accountJid.setText(
+                JidHelper.displayAddress(account.getJid().asBareJid()));
         AvatarWorkerTask.loadAvatar(account, viewHolder.binding.accountImage, R.dimen.avatar);
         final var status = account.getStatus();
         if (account.isServiceOutage()) {
