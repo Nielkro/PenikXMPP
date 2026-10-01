@@ -2,9 +2,11 @@ package eu.siacs.conversations;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Supplier;
@@ -24,8 +26,15 @@ public class Conversations extends Application {
     @SuppressLint("StaticFieldLeak")
     private static Context CONTEXT;
 
+    private static final java.util.concurrent.atomic.AtomicInteger FOREGROUND_ACTIVITIES =
+            new java.util.concurrent.atomic.AtomicInteger(0);
+
     public static Context getContext() {
         return Conversations.CONTEXT;
+    }
+
+    public static boolean isInForeground() {
+        return FOREGROUND_ACTIVITIES.get() > 0;
     }
 
     private final Supplier<Collection<DatabaseBackend.AccountWithOptions>>
@@ -70,6 +79,34 @@ public class Conversations extends Application {
         super.onCreate();
         installSecurityProvider();
         CONTEXT = this.getApplicationContext();
+        registerActivityLifecycleCallbacks(
+                new ActivityLifecycleCallbacks() {
+                    @Override
+                    public void onActivityStarted(final Activity activity) {
+                        FOREGROUND_ACTIVITIES.incrementAndGet();
+                    }
+
+                    @Override
+                    public void onActivityStopped(final Activity activity) {
+                        FOREGROUND_ACTIVITIES.decrementAndGet();
+                    }
+
+                    @Override
+                    public void onActivityCreated(final Activity activity, final Bundle bundle) {}
+
+                    @Override
+                    public void onActivityResumed(final Activity activity) {}
+
+                    @Override
+                    public void onActivityPaused(final Activity activity) {}
+
+                    @Override
+                    public void onActivitySaveInstanceState(
+                            final Activity activity, final Bundle bundle) {}
+
+                    @Override
+                    public void onActivityDestroyed(final Activity activity) {}
+                });
         EmojiInitializationService.execute(getApplicationContext());
         ExceptionHelper.init(getApplicationContext());
         SettingsUtils.applyThemeSettings(this);

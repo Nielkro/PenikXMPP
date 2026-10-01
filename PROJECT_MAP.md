@@ -14,7 +14,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `signing.properties` — Release keystore config (local only, not committed).
 - `libs/annotation/`, `libs/annotation-processor/` — Local annotation libraries used by the app.
 - `src/main/AndroidManifest.xml` — App declaration (application theme `Theme.Penik`): permissions, services, 20+ activities, FileProvider (`${applicationId}.files`, `.barcodes`), UnifiedPush, backup intents.
-- `src/main/java/eu/siacs/conversations/Conversations.java` — Application class: global context, account supplier, Conscrypt init, emoji init.
+- `src/main/java/eu/siacs/conversations/Conversations.java` — Application class: global context, account supplier, Conscrypt init, emoji init, foreground activity tracker (`isInForeground()`).
 - `src/main/java/eu/siacs/conversations/Config.java` — Global constants: domains, timeouts, ping intervals, avatar/image sizes, feature flags.
 - `src/main/java/eu/siacs/conversations/AppSettings.java` — Typed wrapper over SharedPreferences settings.
 
@@ -118,7 +118,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 ## Services (Android Runtime)
 
 - `src/main/java/eu/siacs/conversations/services/XmppConnectionService.java` — Central foreground service: accounts, conversations, send/receive, notifications, Jingle dispatch, backup hooks.
-- `src/main/java/eu/siacs/conversations/services/NotificationService.java` — MessagingStyle notifications, reply/mark-read actions, summary grouping.
+- `src/main/java/eu/siacs/conversations/services/NotificationService.java` — MessagingStyle notifications, reply/mark-read actions, summary grouping. Incoming calls open `RtpSessionActivity` directly when the app is in the foreground.
 - `src/main/java/eu/siacs/conversations/services/AvatarService.java` — Avatar load/cache/publish pipeline.
 - `src/main/java/eu/siacs/conversations/services/ChannelDiscoveryService.java` — Public channel search (`search.jabber.network`).
 - `src/main/java/eu/siacs/conversations/services/BarcodeProvider.java` — QR barcode content provider.
@@ -239,7 +239,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 
 ## Project Configuration & Docs
 
-- `README.md` — Upstream Conversations overview and features.
+- `README.md` — Penik (XMPP) overview: changes vs upstream, stack, layout, build, server operator notes (5222/5223, S2S).
 - `CHANGELOG.md` — Release history.
 - `conversations.doap` — Project metadata.
 - `fastlane/metadata/` — Play Store listings and screenshots (rebrand target).

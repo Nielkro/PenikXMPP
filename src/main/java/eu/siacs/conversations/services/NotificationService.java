@@ -50,6 +50,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
 import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.Conversations;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.android.Device;
 import eu.siacs.conversations.entities.Account;
@@ -568,6 +569,17 @@ public class NotificationService {
 
     public synchronized void startRinging(
             final AbstractJingleConnection.Id id, final Set<Media> media) {
+        if (Conversations.isInForeground()) {
+            final Intent fullScreenIntent =
+                    new Intent(mXmppConnectionService, RtpSessionActivity.class);
+            fullScreenIntent.putExtra(
+                    RtpSessionActivity.EXTRA_ACCOUNT, id.account.getJid().asBareJid().toString());
+            fullScreenIntent.putExtra(RtpSessionActivity.EXTRA_WITH, id.with.toString());
+            fullScreenIntent.putExtra(RtpSessionActivity.EXTRA_SESSION_ID, id.sessionId);
+            fullScreenIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            fullScreenIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            mXmppConnectionService.startActivity(fullScreenIntent);
+        }
         showIncomingCallNotification(id, media, false);
     }
 
