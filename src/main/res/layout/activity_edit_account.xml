@@ -55,7 +55,7 @@
                             android:layout_alignParentTop="true"
                             android:layout_marginEnd="@dimen/avatar_item_distance"
                             android:contentDescription="@string/account_image_description"
-                            app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedCornersMedium" />
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
 
                         <LinearLayout
                             android:layout_width="fill_parent"

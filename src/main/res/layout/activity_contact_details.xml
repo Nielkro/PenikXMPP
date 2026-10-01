@@ -51,7 +51,7 @@
                             android:layout_alignParentTop="true"
                             android:layout_centerHorizontal="true"
                             android:scaleType="centerCrop"
-                            app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedCornersMedium" />
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
 
                         <TextView
                             android:id="@+id/details_contact_xmpp_address"

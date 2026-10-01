@@ -16,7 +16,7 @@
             android:scaleType="fitXY"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@id/message_box"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedCornersMedium" />
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
 
         <!-- TODO port app:layout_constraintWidth_max="@dimen/message_bubble_max_width" from c3 -->
         <LinearLayout

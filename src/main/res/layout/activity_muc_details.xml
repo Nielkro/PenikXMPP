@@ -57,7 +57,7 @@
                                 android:layout_height="@dimen/avatar_on_details_screen_size"
                                 android:layout_alignParentStart="true"
                                 android:layout_marginEnd="@dimen/avatar_item_distance"
-                                app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedCornersMedium" />
+                                app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
 
                             <LinearLayout
                                 android:layout_width="fill_parent"

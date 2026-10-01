@@ -13,6 +13,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedCornersLight" />
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
     </eu.siacs.conversations.ui.widget.SquareFrameLayout>
 </layout>

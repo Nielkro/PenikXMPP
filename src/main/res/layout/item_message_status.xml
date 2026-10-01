@@ -45,7 +45,7 @@
                 android:layout_height="32dp"
                 android:padding="0dp"
                 android:scaleType="fitXY"
-                app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedCornersVeryLight" />
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
         </LinearLayout>
 
 
