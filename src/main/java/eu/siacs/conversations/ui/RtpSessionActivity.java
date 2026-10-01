@@ -1222,13 +1222,16 @@ public class RtpSessionActivity extends XmppActivity
 
     private void enableVideo(final View view) {
         resetVisibilityToggleExecutor();
+        final var connection = requireRtpConnection();
         try {
-            requireRtpConnection().setVideoEnabled(true);
+            connection.setVideoEnabled(true);
         } catch (final IllegalStateException e) {
-            Toast.makeText(this, R.string.unable_to_enable_video, Toast.LENGTH_SHORT).show();
+            requestPermissionAndSwitchToVideo();
+            updateInCallButtonConfigurationVideo(
+                    true, connection.isCameraSwitchable());
             return;
         }
-        updateInCallButtonConfigurationVideo(true, requireRtpConnection().isCameraSwitchable());
+        updateInCallButtonConfigurationVideo(true, connection.isCameraSwitchable());
     }
 
     private void disableVideo(final View view) {

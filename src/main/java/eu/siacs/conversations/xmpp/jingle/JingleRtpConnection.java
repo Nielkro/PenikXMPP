@@ -766,49 +766,11 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
         if (contentAddition.equals(ContentAddition.summary(incomingContentAdd))) {
             this.incomingContentAdd = null;
-            final Set<Content.Senders> senders = incomingContentAdd.getSenders();
-            Log.d(Config.LOGTAG, "senders of incoming content-add: " + senders);
-            if (senders.equals(Content.Senders.receiveOnly(isInitiator()))) {
-                Log.d(
-                        Config.LOGTAG,
-                        "content addition is receive only. we want to upgrade to 'both'");
-                final RtpContentMap modifiedSenders =
-                        incomingContentAdd.modifiedSenders(Content.Senders.BOTH);
-                final Iq proposedContentModification =
-                        modifiedSenders
-                                .toStub()
-                                .toJinglePacket(Jingle.Action.CONTENT_MODIFY, id.sessionId);
-                proposedContentModification.setTo(id.with);
-                final var future =
-                        id.account.getXmppConnection().sendIqPacket(proposedContentModification);
-                Futures.addCallback(
-                        future,
-                        new FutureCallback<Iq>() {
-                            @Override
-                            public void onSuccess(Iq result) {
-                                Log.d(
-                                        Config.LOGTAG,
-                                        id.account.getJid().asBareJid()
-                                                + ": remote has accepted our upgrade to"
-                                                + " senders=both");
-                                acceptContentAdd(
-                                        ContentAddition.summary(modifiedSenders), modifiedSenders);
-                            }
-
-                            @Override
-                            public void onFailure(@NonNull Throwable t) {
-                                Log.d(
-                                        Config.LOGTAG,
-                                        id.account.getJid().asBareJid()
-                                                + ": remote has rejected our upgrade to"
-                                                + " senders=both");
-                                acceptContentAdd(contentAddition, incomingContentAdd);
-                            }
-                        },
-                        MoreExecutors.directExecutor());
-            } else {
-                acceptContentAdd(contentAddition, incomingContentAdd);
-            }
+            Log.d(
+                    Config.LOGTAG,
+                    id.getAccount().getJid().asBareJid()
+                            + ": accepting content-add as offered. not touching local video");
+            acceptContentAdd(contentAddition, incomingContentAdd);
         } else {
             throw new IllegalStateException(
                     "Accepted content add does not match pending content-add");
@@ -837,15 +799,6 @@ public class JingleRtpConnection extends AbstractJingleConnection
             return;
         }
         this.incomingContentAdd = null;
-        if (!this.webRTCWrapper.canAddVideoTrack()) {
-            Log.d(
-                    Config.LOGTAG,
-                    id.getAccount().getJid().asBareJid()
-                            + ": no camera available. rejecting content-add instead of accepting");
-            updateEndUserState();
-            rejectContentAdd(incomingContentAdd);
-            return;
-        }
         acceptContentAdd(contentAddition, offer);
     }
 
@@ -861,7 +814,15 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
             // TODO if senders.sending(isInitiator())
 
-            this.webRTCWrapper.addTrack(Media.VIDEO);
+            if (this.webRTCWrapper.hasLocalVideoTrack()) {
+                this.webRTCWrapper.addTrack(Media.VIDEO);
+            } else {
+                Log.d(
+                        Config.LOGTAG,
+                        id.getAccount().getJid().asBareJid()
+                                + ": accepting video upgrade receive-only."
+                                + " local camera stays off");
+            }
 
             // TODO add additional transceivers for recv only cases
 

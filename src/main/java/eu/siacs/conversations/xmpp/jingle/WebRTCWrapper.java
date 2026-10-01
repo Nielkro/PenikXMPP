@@ -337,6 +337,10 @@ public class WebRTCWrapper {
         return new VideoSourceWrapper.Factory(requireContext()).create() != null;
     }
 
+    synchronized boolean hasLocalVideoTrack() {
+        return this.localVideoTrack != null;
+    }
+
     public synchronized void removeTrack(final Media media) {
         if (media == Media.VIDEO) {
             removeVideoTrack(requirePeerConnection());
