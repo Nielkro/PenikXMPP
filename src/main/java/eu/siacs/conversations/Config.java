@@ -12,7 +12,7 @@ public final class Config {
 
     public static final boolean QUICK_LOG = false;
 
-    public static final Jid BUG_REPORTS = Jid.of("bugs@conversations.im");
+    public static final Jid BUG_REPORTS = Jid.of("niel_kro@snikket.penik.ru");
     public static final Uri HELP = Uri.parse("https://help.conversations.im");
     public static final String MAGIC_CREATE_DOMAIN = "snikket.penik.ru";
     public static final Jid QUICKSY_DOMAIN = Jid.of("quicksy.im");

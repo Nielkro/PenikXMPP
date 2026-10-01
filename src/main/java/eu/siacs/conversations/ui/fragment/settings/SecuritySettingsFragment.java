@@ -9,10 +9,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.common.base.Strings;
 import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.R;
-import eu.siacs.conversations.crypto.OmemoSetting;
 import eu.siacs.conversations.services.MemorizingTrustManager;
 import eu.siacs.conversations.services.QuickConversationsService;
 import java.security.KeyStoreException;
@@ -27,14 +25,12 @@ public class SecuritySettingsFragment extends XmppPreferenceFragment {
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         setPreferencesFromResource(R.xml.preferences_security, rootKey);
-        final ListPreference omemo = findPreference(AppSettings.OMEMO);
         final ListPreference automaticMessageDeletion =
                 findPreference(AppSettings.AUTOMATIC_MESSAGE_DELETION);
         final Preference serverConnection = findPreference(SERVER_CONNECTION);
-        if (omemo == null || automaticMessageDeletion == null || serverConnection == null) {
+        if (automaticMessageDeletion == null || serverConnection == null) {
             throw new IllegalStateException("The preference resource file is missing preferences");
         }
-        omemo.setSummaryProvider(new OmemoSummaryProvider());
         setValues(
                 automaticMessageDeletion,
                 R.array.automatic_message_deletion_values,
@@ -48,9 +44,6 @@ public class SecuritySettingsFragment extends XmppPreferenceFragment {
     protected void onSharedPreferenceChanged(@NonNull String key) {
         super.onSharedPreferenceChanged(key);
         switch (key) {
-            case AppSettings.OMEMO -> {
-                OmemoSetting.load(requireContext());
-            }
             case AppSettings.TRUST_SYSTEM_CA_STORE -> {
                 requireService().updateMemorizingTrustManager();
                 reconnectAccounts();
@@ -144,31 +137,5 @@ public class SecuritySettingsFragment extends XmppPreferenceFragment {
                                         R.plurals.toast_delete_certificates, count, count),
                         Toast.LENGTH_LONG)
                 .show();
-    }
-
-    private static class OmemoSummaryProvider
-            implements Preference.SummaryProvider<ListPreference> {
-
-        @Nullable
-        @Override
-        public CharSequence provideSummary(@NonNull ListPreference preference) {
-            final var context = preference.getContext();
-            final var sharedPreferences = preference.getSharedPreferences();
-            final String value;
-            if (sharedPreferences == null) {
-                value = null;
-            } else {
-                value =
-                        sharedPreferences.getString(
-                                preference.getKey(),
-                                context.getString(R.string.omemo_setting_default));
-            }
-            return switch (Strings.nullToEmpty(value)) {
-                case "always" -> context.getString(R.string.pref_omemo_setting_summary_always);
-                case "default_off" ->
-                        context.getString(R.string.pref_omemo_setting_summary_default_off);
-                default -> context.getString(R.string.pref_omemo_setting_summary_default_on);
-            };
-        }
     }
 }
