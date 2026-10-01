@@ -85,6 +85,46 @@
         <item name="preferenceTheme">@style/MaterialPreferenceThemeOverlay</item>
     </style>
 
+    <style name="Theme.Penik" parent="Theme.Material3.Light.NoActionBar">
+        <item name="windowActionModeOverlay">true</item>
+        <item name="colorPrimary">@color/penik_accent</item>
+        <item name="colorOnPrimary">@color/penik_sent_message_text</item>
+        <item name="colorSecondary">@color/penik_panel_secondary</item>
+        <item name="colorOnSecondary">@color/penik_text_primary</item>
+        <item name="colorTertiary">@color/penik_accent_hover</item>
+        <item name="colorOnTertiary">@color/penik_sent_message_text</item>
+        <item name="colorError">@color/penik_danger</item>
+        <item name="colorOnError">@color/penik_sent_message_text</item>
+        <item name="android:colorBackground">@color/penik_background</item>
+        <item name="colorOnBackground">@color/penik_text_primary</item>
+        <item name="colorSurface">@color/penik_panel</item>
+        <item name="colorOnSurface">@color/penik_text_primary</item>
+        <item name="colorSurfaceVariant">@color/penik_panel_secondary</item>
+        <item name="colorOnSurfaceVariant">@color/penik_text_muted</item>
+        <item name="colorOutline">@color/penik_border</item>
+        <item name="preferenceTheme">@style/MaterialPreferenceThemeOverlay</item>
+    </style>
+
+    <style name="Theme.Penik.Dark" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="windowActionModeOverlay">true</item>
+        <item name="colorPrimary">@color/penik_accent</item>
+        <item name="colorOnPrimary">@color/penik_sent_message_text</item>
+        <item name="colorSecondary">@color/penik_panel_secondary</item>
+        <item name="colorOnSecondary">@color/penik_text_primary</item>
+        <item name="colorTertiary">@color/penik_accent_hover</item>
+        <item name="colorOnTertiary">@color/penik_sent_message_text</item>
+        <item name="colorError">@color/penik_danger</item>
+        <item name="colorOnError">@color/penik_sent_message_text</item>
+        <item name="android:colorBackground">@color/penik_background</item>
+        <item name="colorOnBackground">@color/penik_text_primary</item>
+        <item name="colorSurface">@color/penik_panel</item>
+        <item name="colorOnSurface">@color/penik_text_primary</item>
+        <item name="colorSurfaceVariant">@color/penik_panel_secondary</item>
+        <item name="colorOnSurfaceVariant">@color/penik_text_muted</item>
+        <item name="colorOutline">@color/penik_border</item>
+        <item name="preferenceTheme">@style/MaterialPreferenceThemeOverlay</item>
+    </style>
+
     <style name="MaterialPreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
         <item name="switchPreferenceCompatStyle">@style/MaterialSwitchPreference</item>
     </style>

@@ -29,7 +29,7 @@ import org.osmdroid.util.GeoPoint;
 
 public class ShowLocationActivity extends LocationActivity implements LocationListener {
 
-    public static final String ACTION_SHOW_LOCATION = "eu.siacs.conversations.location.show";
+    public static final String ACTION_SHOW_LOCATION = "ru.penik.xmpp.location.show";
 
     private GeoPoint loc = LocationProvider.FALLBACK;
     private ActivityShowLocationBinding binding;

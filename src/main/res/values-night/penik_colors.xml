@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Penik dark palette (default). Ported from libs/Penik Color.kt (DarkAppColors). -->
+<resources>
+    <color name="penik_background">#FF0D0D12</color>
+    <color name="penik_panel">#FF13131A</color>
+    <color name="penik_panel_secondary">#FF1A1A24</color>
+    <color name="penik_input_bg">#FF1E1E2A</color>
+    <color name="penik_border">#FF252535</color>
+    <color name="penik_border_light">#FF2E2E42</color>
+    <color name="penik_accent">#FF5B6EF5</color>
+    <color name="penik_accent_hover">#FF4A5DE4</color>
+    <color name="penik_text_primary">#FFEEEEF5</color>
+    <color name="penik_text_muted">#FF7B7B9B</color>
+    <color name="penik_text_dim">#FF44445A</color>
+    <color name="penik_sent_message_bg">#FF2B2D6B</color>
+    <color name="penik_sent_message_text">#FFC8CDFF</color>
+    <color name="penik_recv_message_bg">#FF1A1A24</color>
+    <color name="penik_danger">#FFF05A5A</color>
+    <color name="penik_success">#FF4EC97A</color>
+    <color name="penik_warning">#FFF5A623</color>
+</resources>

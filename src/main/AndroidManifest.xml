@@ -68,10 +68,10 @@
         <package android:name="org.torproject.android" />
 
         <intent>
-            <action android:name="eu.siacs.conversations.location.request" />
+            <action android:name="ru.penik.xmpp.location.request" />
         </intent>
         <intent>
-            <action android:name="eu.siacs.conversations.location.show" />
+            <action android:name="ru.penik.xmpp.location.show" />
         </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />

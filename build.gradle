@@ -111,9 +111,9 @@ android {
         minSdk = 23
         versionCode = 42181
         versionName = '2.20.4'
-        applicationId = 'eu.siacs.conversations'
+        applicationId = 'ru.penik.xmpp'
         resValue('string', 'applicationId', applicationId)
-        def appName = "Conversations"
+        def appName = "Penik"
         resValue('string', 'app_name', appName)
         buildConfigField('String', 'APP_NAME', "\"${appName}\"")
     }

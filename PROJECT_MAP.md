@@ -194,6 +194,9 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `src/main/res/values/themes.xml` — `Theme.Conversations3` (+ Dark, Splash, Dialog, FullScreen); rebrand target `Theme.Penik`.
 - `src/main/res/values/strings.xml` — `app_name` and all user strings.
 - `src/main/res/values/colors-md.xml` — Material3 palette; rebrand target `penik_colors.xml`.
+- `src/main/res/values/penik_colors.xml` — Penik light palette ported from `libs/Penik` `Color.kt` (`LightAppColors`).
+- `src/main/res/values-night/penik_colors.xml` — Penik dark palette, default (`DarkAppColors`).
+- `src/main/res/values/themes.xml` — Now also declares `Theme.Penik` and `Theme.Penik.Dark` on top of the Penik palette.
 - `src/main/res/menu/` — Chat, MUC, contact, media, search menus.
 - `src/main/res/xml/` — Preferences (`preferences_*.xml`), `shortcuts.xml`, `file_paths.xml`, `network_security_configuration.xml`, backup rules.
 - `src/main/res/mipmap-*/`, `drawable-*/` — Launcher icons (`new_launcher` → Penik icon).
