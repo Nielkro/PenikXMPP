@@ -142,7 +142,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 
 - `src/main/java/eu/siacs/conversations/ui/ConversationActivity.java` — Main chat screen (launcher): conversation list + active chat fragment.
 - `src/main/java/eu/siacs/conversations/ui/ConversationFragment.java` — Chat room: messages, input, receipts, call buttons.
-- `src/main/java/eu/siacs/conversations/ui/compose/PenikChatsList.kt` — Penik-style conversation list (Compose, first ported screen): rows with circular avatars, previews, timestamps, unread badges, lock/mute icons, long-press archive dialog; data bridged from `ConversationsOverviewFragment` via `PenikChatsState`.
+- `src/main/java/eu/siacs/conversations/ui/compose/PenikChatsList.kt` — Penik main screen (Compose, 1:1 with Penik app): TopAppBar with search, connection banner, chats tab (self-chat row, archive folder, rows with avatars/unread/lock/mute, archive dialogs), calls tab from RTP history, profile tab, bottom navigation; data bridged from `ConversationsOverviewFragment` via `PenikChatsState`.
 - `src/main/java/eu/siacs/conversations/ui/ConversationsActivity.java` — Account/conversation overview host (`singleTask`).
 - `src/main/java/eu/siacs/conversations/ui/ConversationsOverviewFragment.java` — Unified inbox list.
 - `src/main/java/eu/siacs/conversations/ui/StartConversationActivity.java` — New chat, search contacts, join conference.

@@ -69,6 +69,7 @@ import eu.siacs.conversations.BuildConfig;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.databinding.FragmentConversationsOverviewBinding;
+import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.services.QuickConversationsService;
@@ -212,8 +213,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
         pendingActionHelper.execute();
         this.swipedConversation.push(c);
         this.conversations.remove(c);
-        renderComposeList();
-        toggleHintVisibility();
+        refresh();
         requireXmppActivity().xmppConnectionService.markRead(swipedConversation.peek());
         if (getActivity() instanceof OnConversationArchived callback) {
             callback.onConversationArchived(swipedConversation.peek());
@@ -270,15 +270,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
         if (c != null && !conversations.contains(c)) {
             conversations.add(c);
         }
-        renderComposeList();
-        toggleHintVisibility();
-    }
-
-    private void renderComposeList() {
-        if (this.binding == null) {
-            return;
-        }
-        this.penikChatsState.setConversations(ImmutableList.copyOf(this.conversations));
+        refresh();
     }
 
     public static Conversation getSuggestion(final FragmentActivity activity) {
@@ -364,8 +356,8 @@ public class ConversationsOverviewFragment extends XmppFragment {
                                     .contains(newState);
                     searchViewOnBackPressedCallback.setEnabled(isShowing);
                 });
-        this.binding.fab.setOnClickListener(
-                (view) -> StartConversationActivity.launch(getActivity()));
+        this.binding.searchBar.setVisibility(View.GONE);
+        this.binding.searchView.setVisibility(View.GONE);
 
         this.searchSuggestionAdapter = new SearchSuggestionAdapter();
         this.binding.searchSuggestionList.setAdapter(this.searchSuggestionAdapter);
@@ -389,6 +381,26 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     @Override
                     public void onArchiveConversation(final Conversation conversation) {
                         ConversationsOverviewFragment.this.onArchiveConversation(conversation);
+                    }
+
+                    @Override
+                    public void onUnarchiveConversation(final Conversation conversation) {
+                        ConversationsOverviewFragment.this.onUnarchiveConversation(conversation);
+                    }
+
+                    @Override
+                    public void onOpenSelfChat() {
+                        ConversationsOverviewFragment.this.openSelfChat();
+                    }
+
+                    @Override
+                    public void onOpenSettings() {
+                        ConversationsOverviewFragment.this.openSettings();
+                    }
+
+                    @Override
+                    public void onNewChat() {
+                        StartConversationActivity.launch(getActivity());
                     }
                 });
         return binding.getRoot();
@@ -552,10 +564,12 @@ public class ConversationsOverviewFragment extends XmppFragment {
                             + " or activity was null");
             return;
         }
+        final var service = this.requireXmppActivity().xmppConnectionService;
+        if (service == null) {
+            return;
+        }
         this.binding.searchBar.invalidateMenu();
-        this.requireXmppActivity()
-                .xmppConnectionService
-                .populateWithOrderedConversations(this.conversations);
+        service.populateWithOrderedConversations(this.conversations);
         Conversation removed = this.swipedConversation.peek();
         if (removed != null) {
             if (removed.isRead()) {
@@ -564,23 +578,76 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 pendingActionHelper.execute();
             }
         }
-        if (this.conversations.isEmpty()) {
+        final var main = new ArrayList<Conversation>();
+        final var archived = new ArrayList<Conversation>();
+        Conversation self = null;
+        for (final var c : this.conversations) {
+            if (c.getStatus() == Conversation.STATUS_ARCHIVED) {
+                archived.add(c);
+            } else {
+                main.add(c);
+                if (self == null
+                        && c.getMode() == Conversation.MODE_SINGLE
+                        && c.getContact() != null
+                        && c.getContact().isSelf()) {
+                    self = c;
+                }
+            }
+        }
+        boolean online = false;
+        Account firstEnabled = null;
+        for (final var a : service.getAccounts()) {
+            if (a.isEnabled()) {
+                if (firstEnabled == null) {
+                    firstEnabled = a;
+                }
+                if (a.getStatus() == Account.State.ONLINE) {
+                    online = true;
+                }
+            }
+        }
+        this.penikChatsState.setConversations(ImmutableList.copyOf(main));
+        this.penikChatsState.setArchived(ImmutableList.copyOf(archived));
+        this.penikChatsState.setOnline(online);
+        this.penikChatsState.setSelfChat(self);
+        this.penikChatsState.setAccount(firstEnabled);
+        if (main.isEmpty()) {
             this.binding.composeList.setVisibility(View.GONE);
             this.binding.emptyChatHint.setVisibility(View.VISIBLE);
         } else {
             this.binding.emptyChatHint.setVisibility(View.GONE);
             this.binding.composeList.setVisibility(View.VISIBLE);
-            renderComposeList();
         }
     }
 
-    private void toggleHintVisibility() {
-        if (this.conversations.isEmpty()) {
-            this.binding.composeList.setVisibility(View.GONE);
-            this.binding.emptyChatHint.setVisibility(View.VISIBLE);
-        } else {
-            this.binding.emptyChatHint.setVisibility(View.GONE);
-            this.binding.composeList.setVisibility(View.VISIBLE);
+    public void onUnarchiveConversation(final Conversation c) {
+        c.setStatus(Conversation.STATUS_AVAILABLE);
+        requireXmppActivity().xmppConnectionService.updateConversation(c);
+        refresh();
+    }
+
+    public void openSelfChat() {
+        final var service = requireXmppActivity().xmppConnectionService;
+        if (service == null) {
+            return;
         }
+        for (final var a : service.getAccounts()) {
+            if (!a.isEnabled()) {
+                continue;
+            }
+            final var contact = a.getSelfContact();
+            if (contact == null) {
+                continue;
+            }
+            final var conversation =
+                    service.findOrCreateConversation(
+                            contact.getAccount(), contact.getAddress(), false, true);
+            requireXmppActivity().switchToConversation(conversation);
+            return;
+        }
+    }
+
+    public void openSettings() {
+        startActivity(new Intent(requireContext(), SettingsActivity.class));
     }
 }
