@@ -940,6 +940,7 @@
     <string name="no_active_accounts_support_this">Ни один активный аккаунт не поддерживает эту функцию</string>
     <string name="backup_started_message">Резервное копирование начато. Вы получите уведомление, как только оно будет завершено.</string>
     <string name="unable_to_enable_video">Невозможно включить видео.</string>
+    <string name="no_camera_on_device">На этом устройстве нет камеры.</string>
     <string name="plain_text_document">Текстовые данные</string>
     <plurals name="n_missed_calls">
         <item quantity="one">%d пропущенный вызов</item>

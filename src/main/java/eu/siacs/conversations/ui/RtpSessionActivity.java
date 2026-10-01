@@ -341,7 +341,9 @@ public class RtpSessionActivity extends XmppActivity
 
     private void switchToVideo() {
         try {
-            requireRtpConnection().addMedia(Media.VIDEO);
+            if (!requireRtpConnection().addMedia(Media.VIDEO)) {
+                Toast.makeText(this, R.string.no_camera_on_device, Toast.LENGTH_SHORT).show();
+            }
         } catch (final IllegalStateException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
