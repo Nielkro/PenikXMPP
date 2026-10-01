@@ -2654,6 +2654,13 @@ public class JingleRtpConnection extends AbstractJingleConnection
                     @Override
                     public void onFailure(@NonNull Throwable t) {
                         if (t instanceof TimeoutException) {
+                            if (JingleRtpConnection.this.outgoingContentAdd != null) {
+                                Log.d(
+                                        Config.LOGTAG,
+                                        "content-add timed out. rolling back to audio");
+                                JingleRtpConnection.this.rollbackOutgoingContentAdd();
+                                return;
+                            }
                             handleIqTimeoutResponse();
                             return;
                         } else if (t instanceof IqErrorException iqErrorException) {

@@ -356,6 +356,23 @@ public class RtpSessionActivity extends XmppActivity
         requestPermissionAndAcceptContentAdd(contentAddition);
     }
 
+    private void autoAcceptContentAdd(final ContentAddition contentAddition) {
+        if (contentAddition == null
+                || contentAddition.direction != ContentAddition.Direction.INCOMING
+                || !contentAddition.media().contains(Media.VIDEO)) {
+            return;
+        }
+        if (!isCameraFeatureAvailable()) {
+            try {
+                requireRtpConnection().rejectContentAdd();
+            } catch (final IllegalStateException e) {
+                Log.d(Config.LOGTAG, "no incoming content-add to reject", e);
+            }
+            return;
+        }
+        acceptContentAdd(contentAddition);
+    }
+
     private void requestPermissionAndAcceptContentAdd(final ContentAddition contentAddition) {
         final List<String> permissions = permissions(contentAddition.media());
         if (PermissionUtils.hasPermission(this, permissions, REQUEST_ACCEPT_CONTENT)) {
@@ -368,7 +385,11 @@ public class RtpSessionActivity extends XmppActivity
     }
 
     private void rejectContentAdd(final View view) {
-        requireRtpConnection().rejectContentAdd();
+        try {
+            requireRtpConnection().rejectContentAdd();
+        } catch (final IllegalStateException e) {
+            Toast.makeText(this, Strings.nullToEmpty(e.getMessage()), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void requestPermissionsAndAcceptCall() {
@@ -1571,6 +1592,9 @@ public class RtpSessionActivity extends XmppActivity
                         updateIncomingCallScreen(state, contact);
                         updateSupportWarning(state, contact);
                         invalidateOptionsMenu();
+                        if (state == RtpEndUserState.INCOMING_CONTENT_ADD) {
+                            autoAcceptContentAdd(contentAddition);
+                        }
                     });
             if (END_CARD.contains(state)) {
                 final JingleRtpConnection rtpConnection = requireRtpConnection();
