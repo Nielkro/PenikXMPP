@@ -86,6 +86,7 @@ interface PenikChatsListener {
     fun onOpenSelfChat()
     fun onOpenSettings()
     fun onNewChat()
+    fun onEditAvatar()
 }
 
 class PenikChatsState {
@@ -944,7 +945,6 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
 @Composable
 fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: PenikChatsListener) {
     val background = colorResource(R.color.penik_background)
-    val panel = colorResource(R.color.penik_panel)
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
     val accent = colorResource(R.color.penik_accent)
@@ -978,16 +978,17 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
         }
         Spacer(modifier = Modifier.height(24.dp))
         val loaded = bitmap
+        val avatarModifier = Modifier.size(96.dp).clip(CircleShape).clickable(onClick = { listener.onEditAvatar() })
         if (loaded != null) {
             androidx.compose.foundation.Image(
                     bitmap = loaded.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.size(96.dp).clip(CircleShape)
+                    contentDescription = "Сменить аватар",
+                    modifier = avatarModifier
             )
         } else {
             val local = JidHelper.displayAddress(account.jid.asBareJid())
             Box(
-                    modifier = Modifier.size(96.dp).clip(CircleShape).background(penikInitialsColor(local)),
+                    modifier = avatarModifier.background(penikInitialsColor(local)),
                     contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -1012,12 +1013,11 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                 color = if (online) accent else textMuted,
                 fontSize = 14.sp
         )
-        Spacer(modifier = Modifier.height(24.dp))
-        TextButton(
-                onClick = { listener.onOpenSettings() },
-                modifier = Modifier.fillMaxWidth().background(panel, RoundedCornerShape(12.dp)).padding(vertical = 4.dp)
-        ) {
-            Text(text = "Настройки", color = textPrimary, fontSize = 16.sp)
-        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+                text = "Нажмите на аватар, чтобы сменить его",
+                color = textMuted,
+                fontSize = 13.sp
+        )
     }
 }

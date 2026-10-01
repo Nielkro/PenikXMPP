@@ -402,6 +402,11 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     public void onNewChat() {
                         StartConversationActivity.launch(getActivity());
                     }
+
+                    @Override
+                    public void onEditAvatar() {
+                        ConversationsOverviewFragment.this.editAvatar();
+                    }
                 });
         return binding.getRoot();
     }
@@ -649,5 +654,16 @@ public class ConversationsOverviewFragment extends XmppFragment {
 
     public void openSettings() {
         startActivity(new Intent(requireContext(), SettingsActivity.class));
+    }
+
+    public void editAvatar() {
+        final Account account = this.penikChatsState.getAccount();
+        if (account == null) {
+            return;
+        }
+        final var intent = new Intent(requireContext(), PublishProfilePictureActivity.class);
+        intent.putExtra(
+                XmppActivity.EXTRA_ACCOUNT, account.getJid().asBareJid().toString());
+        startActivity(intent);
     }
 }
