@@ -7,11 +7,21 @@ import android.util.Rational;
 
 import eu.siacs.conversations.Config;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.webrtc.VideoFrame;
+
+import org.webrtc.VideoFrame;
+
 public class SurfaceViewRenderer extends org.webrtc.SurfaceViewRenderer {
 
     private Rational aspectRatio = new Rational(1,1);
 
     private OnAspectRatioChanged onAspectRatioChanged;
+
+    private OnFirstFrameListener onFirstFrameListener;
+
+    private final AtomicBoolean firstFrameDelivered = new AtomicBoolean(false);
 
     public SurfaceViewRenderer(Context context) {
         super(context);
@@ -38,11 +48,38 @@ public class SurfaceViewRenderer extends org.webrtc.SurfaceViewRenderer {
         this.onAspectRatioChanged = onAspectRatioChanged;
     }
 
+    @Override
+    public void onFrame(final VideoFrame frame) {
+        super.onFrame(frame);
+        if (firstFrameDelivered.compareAndSet(false, true)) {
+            final OnFirstFrameListener listener = this.onFirstFrameListener;
+            if (listener != null) {
+                listener.onFirstFrame();
+            }
+        }
+    }
+
+    public void setOnFirstFrameListener(final OnFirstFrameListener onFirstFrameListener) {
+        this.onFirstFrameListener = onFirstFrameListener;
+    }
+
+    public void resetFirstFrame() {
+        firstFrameDelivered.set(false);
+    }
+
+    public boolean hasReceivedFirstFrame() {
+        return firstFrameDelivered.get();
+    }
+
     public Rational getAspectRatio() {
         return this.aspectRatio;
     }
 
     public interface OnAspectRatioChanged {
         void onAspectRatioChanged(final Rational rational);
+    }
+
+    public interface OnFirstFrameListener {
+        void onFirstFrame();
     }
 }

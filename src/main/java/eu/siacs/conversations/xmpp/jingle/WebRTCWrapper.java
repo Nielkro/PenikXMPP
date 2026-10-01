@@ -330,6 +330,13 @@ public class WebRTCWrapper {
         throw new IllegalStateException(String.format("Could not add track for %s", media));
     }
 
+    synchronized boolean canAddVideoTrack() {
+        if (this.localVideoTrack != null) {
+            return true;
+        }
+        return new VideoSourceWrapper.Factory(requireContext()).create() != null;
+    }
+
     public synchronized void removeTrack(final Media media) {
         if (media == Media.VIDEO) {
             removeVideoTrack(requirePeerConnection());

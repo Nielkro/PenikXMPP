@@ -128,6 +128,7 @@ public class RtpSessionActivity extends XmppActivity
     private static final int REQUEST_ACCEPT_CONTENT = 0x1112;
     private static final int REQUEST_ADD_CONTENT = 0x1113;
     private WeakReference<JingleRtpConnection> rtpConnectionReference;
+    private VideoTrack lastRemoteVideoTrack;
 
     private ActivityRtpSessionBinding binding;
     private PowerManager.WakeLock mProximityWakeLock;
@@ -604,6 +605,16 @@ public class RtpSessionActivity extends XmppActivity
         mHandler.postDelayed(mTickExecutor, CALL_DURATION_UPDATE_INTERVAL);
         mHandler.postDelayed(mVisibilityToggleExecutor, BUTTON_VISIBILITY_TIMEOUT);
         this.binding.remoteVideo.setOnAspectRatioChanged(this);
+        this.binding.remoteVideo.setOnFirstFrameListener(
+                () ->
+                        runOnUiThread(
+                                () -> {
+                                    if (isFinishing() || isPictureInPicture()) {
+                                        return;
+                                    }
+                                    binding.remoteVideoWrapper.setVisibility(View.VISIBLE);
+                                    binding.contactPhoto.setVisibility(View.GONE);
+                                }));
     }
 
     @Override
@@ -618,6 +629,7 @@ public class RtpSessionActivity extends XmppActivity
         mHandler.removeCallbacks(mVisibilityToggleExecutor);
         binding.remoteVideo.release();
         binding.remoteVideo.setOnAspectRatioChanged(null);
+        binding.remoteVideo.setOnFirstFrameListener(null);
         binding.localVideo.release();
         final WeakReference<JingleRtpConnection> weakReference = this.rtpConnectionReference;
         final JingleRtpConnection jingleRtpConnection =
@@ -1335,6 +1347,10 @@ public class RtpSessionActivity extends XmppActivity
         }
         final Optional<VideoTrack> remoteVideoTrack = getRemoteVideoTrack();
         if (remoteVideoTrack.isPresent()) {
+            if (remoteVideoTrack.get() != this.lastRemoteVideoTrack) {
+                this.lastRemoteVideoTrack = remoteVideoTrack.get();
+                binding.remoteVideo.resetFirstFrame();
+            }
             ensureSurfaceViewRendererIsSetup(binding.remoteVideo);
             addSink(remoteVideoTrack.get(), binding.remoteVideo);
             binding.remoteVideo.setScalingType(
@@ -1343,8 +1359,13 @@ public class RtpSessionActivity extends XmppActivity
             if (state == RtpEndUserState.CONNECTED) {
                 binding.appBarLayout.setVisibility(View.GONE);
                 getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                binding.remoteVideoWrapper.setVisibility(View.VISIBLE);
-                binding.contactPhoto.setVisibility(View.GONE);
+                if (binding.remoteVideo.hasReceivedFirstFrame()) {
+                    binding.remoteVideoWrapper.setVisibility(View.VISIBLE);
+                    binding.contactPhoto.setVisibility(View.GONE);
+                } else {
+                    binding.remoteVideoWrapper.setVisibility(View.GONE);
+                    showContactPhotoFallback(state);
+                }
             } else {
                 binding.appBarLayout.setVisibility(View.VISIBLE);
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);

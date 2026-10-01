@@ -837,6 +837,15 @@ public class JingleRtpConnection extends AbstractJingleConnection
             return;
         }
         this.incomingContentAdd = null;
+        if (!this.webRTCWrapper.canAddVideoTrack()) {
+            Log.d(
+                    Config.LOGTAG,
+                    id.getAccount().getJid().asBareJid()
+                            + ": no camera available. rejecting content-add instead of accepting");
+            updateEndUserState();
+            rejectContentAdd(incomingContentAdd);
+            return;
+        }
         acceptContentAdd(contentAddition, offer);
     }
 
