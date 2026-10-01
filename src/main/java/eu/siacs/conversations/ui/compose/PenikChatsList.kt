@@ -92,9 +92,15 @@ interface PenikChatsListener {
 class PenikChatsState {
     var conversations by mutableStateOf<List<Conversation>>(emptyList())
     var archived by mutableStateOf<List<Conversation>>(emptyList())
-    var isOnline by mutableStateOf(true)
+    var connectionState by mutableStateOf(PenikConnectionState.OFFLINE)
     var selfChat by mutableStateOf<Conversation?>(null)
     var account by mutableStateOf<Account?>(null)
+}
+
+enum class PenikConnectionState {
+    ONLINE,
+    CONNECTING,
+    OFFLINE
 }
 
 object PenikChatsBridge {
@@ -201,7 +207,13 @@ fun PenikMainScreen(
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 22.sp
                                         )
-                                        if (!state.isOnline) {
+                                        if (state.connectionState == PenikConnectionState.CONNECTING) {
+                                            Text(
+                                                    text = "подключение...",
+                                                    fontSize = 12.sp,
+                                                    color = textMuted
+                                            )
+                                        } else if (state.connectionState == PenikConnectionState.OFFLINE) {
                                             Text(
                                                     text = "ожидание сети",
                                                     fontSize = 12.sp,
@@ -259,8 +271,8 @@ fun PenikMainScreen(
                                             titleContentColor = textPrimary
                                     )
                     )
-                    if (!state.isOnline) {
-                        ConnectionBanner()
+                    if (state.connectionState != PenikConnectionState.ONLINE) {
+                        ConnectionBanner(state = state.connectionState)
                     }
                 }
             },
@@ -361,13 +373,16 @@ fun PenikMainScreen(
 }
 
 @Composable
-fun ConnectionBanner() {
+fun ConnectionBanner(state: PenikConnectionState) {
+    val warning = colorResource(R.color.penik_warning)
     val danger = colorResource(R.color.penik_danger)
+    val color = if (state == PenikConnectionState.CONNECTING) warning else danger
+    val text = if (state == PenikConnectionState.CONNECTING) "Подключение..." else "Нет соединения"
     Box(
-            modifier = Modifier.fillMaxWidth().background(danger.copy(alpha = 0.15f)).padding(vertical = 6.dp),
+            modifier = Modifier.fillMaxWidth().background(color.copy(alpha = 0.15f)).padding(vertical = 6.dp),
             contentAlignment = Alignment.Center
     ) {
-        Text(text = "Нет соединения", color = danger, fontSize = 13.sp)
+        Text(text = text, color = color, fontSize = 13.sp)
     }
 }
 

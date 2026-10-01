@@ -79,6 +79,7 @@ import eu.siacs.conversations.ui.adapter.SearchSuggestionAdapter;
 import eu.siacs.conversations.ui.compose.PenikChatsBridge;
 import eu.siacs.conversations.ui.compose.PenikChatsListener;
 import eu.siacs.conversations.ui.compose.PenikChatsState;
+import eu.siacs.conversations.ui.compose.PenikConnectionState;
 import eu.siacs.conversations.ui.interfaces.OnConversationArchived;
 import eu.siacs.conversations.ui.interfaces.OnConversationSelected;
 import eu.siacs.conversations.ui.util.PendingActionHelper;
@@ -600,6 +601,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
             }
         }
         boolean online = false;
+        boolean connecting = false;
         Account firstEnabled = null;
         for (final var a : service.getAccounts()) {
             if (a.isEnabled()) {
@@ -608,12 +610,17 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 }
                 if (a.getStatus() == Account.State.ONLINE) {
                     online = true;
+                } else if (a.getStatus() == Account.State.CONNECTING) {
+                    connecting = true;
                 }
             }
         }
         this.penikChatsState.setConversations(ImmutableList.copyOf(main));
         this.penikChatsState.setArchived(ImmutableList.copyOf(archived));
-        this.penikChatsState.setOnline(online);
+        this.penikChatsState.setConnectionState(
+                online
+                        ? PenikConnectionState.ONLINE
+                        : connecting ? PenikConnectionState.CONNECTING : PenikConnectionState.OFFLINE);
         this.penikChatsState.setSelfChat(self);
         this.penikChatsState.setAccount(firstEnabled);
         if (main.isEmpty()) {
