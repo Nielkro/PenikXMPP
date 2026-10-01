@@ -1,0 +1,4 @@
+[submodule "libs/Penik"]
+	path = libs/Penik
+	url = https://github.com/Nielkro/Penik.git
+	branch = feat/cloud-chats
