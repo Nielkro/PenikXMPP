@@ -115,6 +115,10 @@ import eu.siacs.conversations.services.QuickConversationsService;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.adapter.MediaPreviewAdapter;
 import eu.siacs.conversations.ui.adapter.MessageAdapter;
+import eu.siacs.conversations.ui.compose.PenikChatActions;
+import eu.siacs.conversations.ui.compose.PenikChatBridge;
+import eu.siacs.conversations.ui.compose.PenikChatListener;
+import eu.siacs.conversations.ui.compose.PenikChatState;
 import eu.siacs.conversations.ui.util.ActivityResult;
 import eu.siacs.conversations.ui.util.Attachment;
 import eu.siacs.conversations.ui.util.DateSeparator;
@@ -425,6 +429,7 @@ public class ConversationFragment extends XmppFragment
             Log.d(Config.LOGTAG, "could not update status messages");
         }
         messageListAdapter.notifyDataSetChanged();
+        pushPenikChatState();
         int pos = Math.max(getIndexOf(uuid, messageList), 0);
         binding.messagesView.setSelectionFromTop(pos, pxOffset);
         if (messageLoaderToast != null) {
@@ -1396,6 +1401,27 @@ public class ConversationFragment extends XmppFragment
         binding.messagesView.setAdapter(messageListAdapter);
 
         registerForContextMenu(binding.messagesView);
+
+        PenikChatBridge.render(
+                this.binding.composeMessages,
+                this.penikChatState,
+                requireXmppActivity(),
+                new PenikChatListener() {
+                    @Override
+                    public void onMessageAction(final String action, final Message message) {
+                        ConversationFragment.this.onPenikMessageAction(action, message);
+                    }
+
+                    @Override
+                    public void onLoadMore() {
+                        ConversationFragment.this.onPenikLoadMore();
+                    }
+
+                    @Override
+                    public void onBottomVisible(final String uuid) {
+                        ConversationFragment.this.onPenikBottomVisible(uuid);
+                    }
+                });
 
         this.binding.textInput.setCustomInsertionActionModeCallback(
                 new EditMessageActionModeCallback(this.binding.textInput));
@@ -3203,21 +3229,77 @@ public class ConversationFragment extends XmppFragment
                 conversation.populateWithMessages(this.messageList);
                 updateSnackBar(conversation);
                 updateStatusMessages();
-                if (conversation.getReceivedMessagesCountSinceUuid(lastMessageUuid) != 0) {
-                    binding.unreadCountCustomView.setVisibility(View.VISIBLE);
-                    binding.unreadCountCustomView.setUnreadCount(
-                            conversation.getReceivedMessagesCountSinceUuid(lastMessageUuid));
-                }
                 this.messageListAdapter.notifyDataSetChanged();
+                pushPenikChatState();
                 updateChatMsgHint();
-                if (notifyConversationRead) {
-                    binding.messagesView.post(this::fireReadEvent);
-                }
                 updateSendButton();
                 updateAttachmentButton();
                 updateEditablity();
                 updateToolbar();
             }
+        }
+    }
+
+    private final PenikChatState penikChatState = new PenikChatState();
+    private String penikReadUuid = null;
+
+    private void pushPenikChatState() {
+        if (this.binding == null || this.conversation == null) {
+            return;
+        }
+        this.penikChatState.setMessages(new ArrayList<>(this.messageList));
+        this.penikChatState.setMuc(
+                this.conversation.getMode() == Conversational.MODE_MULTI);
+    }
+
+    public void onPenikMessageAction(final String action, final Message message) {
+        switch (action) {
+            case PenikChatActions.COPY ->
+                    ShareUtil.copyToClipboard(requireXmppActivity(), message);
+            case PenikChatActions.QUOTE -> quoteMessage(message);
+            case PenikChatActions.CORRECT -> correctMessage(message);
+            case PenikChatActions.SHARE -> ShareUtil.share(requireXmppActivity(), message);
+            case PenikChatActions.RESEND -> resendMessage(message, false);
+            case PenikChatActions.OPEN -> {
+                if (message.isGeoUri()) {
+                    GeoHelper.view(getActivity(), message);
+                } else {
+                    messageListAdapter.openDownloadable(message);
+                }
+            }
+        }
+    }
+
+    public void onPenikLoadMore() {
+        if (binding == null) {
+            return;
+        }
+        synchronized (this.messageList) {
+            if (conversation != null
+                    && conversation.messagesLoaded.compareAndSet(true, false)
+                    && !messageList.isEmpty()) {
+                long timestamp;
+                if (messageList.get(0).getType() == Message.TYPE_STATUS
+                        && messageList.size() >= 2) {
+                    timestamp = messageList.get(1).getTimeSent();
+                } else {
+                    timestamp = messageList.get(0).getTimeSent();
+                }
+                requireXmppActivity()
+                        .xmppConnectionService
+                        .loadMoreMessages(conversation, timestamp, onMoreMessagesLoaded);
+            }
+        }
+    }
+
+    public void onPenikBottomVisible(final String uuid) {
+        final var c = this.conversation;
+        if (c == null || uuid == null || uuid.equals(penikReadUuid)) {
+            return;
+        }
+        penikReadUuid = uuid;
+        if (getActivity() instanceof ConversationsActivity ca) {
+            ca.onConversationRead(c, uuid);
         }
     }
 

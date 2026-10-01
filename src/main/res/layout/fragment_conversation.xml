@@ -41,7 +41,16 @@
                 android:listSelector="@android:color/transparent"
                 android:stackFromBottom="true"
                 android:transcriptMode="normal"
+                android:visibility="gone"
                 tools:listitem="@layout/item_message_end" />
+
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/compose_messages"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_above="@+id/snackbar"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/scroll_to_bottom_button"
@@ -51,7 +60,7 @@
                 android:layout_alignBottom="@+id/messages_view"
                 android:layout_alignParentEnd="true"
                 android:src="@drawable/ic_keyboard_double_arrow_down_24dp"
-                android:visibility="visible"
+                android:visibility="gone"
                 app:useCompatPadding="true" />
 
             <eu.siacs.conversations.ui.widget.UnreadCountCustomView
