@@ -102,6 +102,17 @@
         <item name="colorSurfaceVariant">@color/penik_panel_secondary</item>
         <item name="colorOnSurfaceVariant">@color/penik_text_muted</item>
         <item name="colorOutline">@color/penik_border</item>
+        <item name="colorAccent">@color/penik_accent</item>
+        <item name="colorPrimaryContainer">@color/penik_sent_message_bg</item>
+        <item name="colorOnPrimaryContainer">@color/penik_sent_message_text</item>
+        <item name="colorSecondaryContainer">@color/penik_recv_message_bg</item>
+        <item name="colorOnSecondaryContainer">@color/penik_text_primary</item>
+        <item name="colorTertiaryContainer">@color/penik_sent_message_bg</item>
+        <item name="colorOnTertiaryContainer">@color/penik_sent_message_text</item>
+        <item name="colorSurfaceContainerLow">@color/penik_panel</item>
+        <item name="colorSurfaceContainer">@color/penik_panel</item>
+        <item name="colorSurfaceContainerHigh">@color/penik_recv_message_bg</item>
+        <item name="colorSurfaceContainerHighest">@color/penik_recv_message_bg</item>
         <item name="preferenceTheme">@style/MaterialPreferenceThemeOverlay</item>
     </style>
 
@@ -122,6 +133,17 @@
         <item name="colorSurfaceVariant">@color/penik_panel_secondary</item>
         <item name="colorOnSurfaceVariant">@color/penik_text_muted</item>
         <item name="colorOutline">@color/penik_border</item>
+        <item name="colorAccent">@color/penik_accent</item>
+        <item name="colorPrimaryContainer">@color/penik_sent_message_bg</item>
+        <item name="colorOnPrimaryContainer">@color/penik_sent_message_text</item>
+        <item name="colorSecondaryContainer">@color/penik_recv_message_bg</item>
+        <item name="colorOnSecondaryContainer">@color/penik_text_primary</item>
+        <item name="colorTertiaryContainer">@color/penik_sent_message_bg</item>
+        <item name="colorOnTertiaryContainer">@color/penik_sent_message_text</item>
+        <item name="colorSurfaceContainerLow">@color/penik_panel</item>
+        <item name="colorSurfaceContainer">@color/penik_panel</item>
+        <item name="colorSurfaceContainerHigh">@color/penik_recv_message_bg</item>
+        <item name="colorSurfaceContainerHighest">@color/penik_recv_message_bg</item>
         <item name="preferenceTheme">@style/MaterialPreferenceThemeOverlay</item>
     </style>
 
@@ -146,6 +168,7 @@
     </style>
 
     <style name="MaterialPreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
+        <item name="preferenceCategoryTitleTextColor">@color/penik_accent</item>
         <item name="switchPreferenceCompatStyle">@style/MaterialSwitchPreference</item>
     </style>
 
