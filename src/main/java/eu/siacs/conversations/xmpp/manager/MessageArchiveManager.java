@@ -664,9 +664,6 @@ public class MessageArchiveManager extends AbstractManager {
         public void callback(boolean done) {
             if (this.callback != null) {
                 this.callback.onMoreMessagesLoaded(actualCount, conversation);
-                if (done) {
-                    this.callback.informUser(R.string.no_more_history_on_server);
-                }
             }
         }
 
