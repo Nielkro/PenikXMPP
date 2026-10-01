@@ -1,8 +1,8 @@
-<h1 align="center">Conversations</h1>
+<h1 align="center">Penik</h1>
 
 > Fork of [codeberg.org/iNPUTmice/Conversations](https://codeberg.org/iNPUTmice/Conversations) for Penik (`ru.penik.xmpp`). Upstream development happens on Codeberg; this repository tracks it plus the Penik UI port (see `plan/penik-xmpp-ui-port-plan.md`).
 
-<p align="center">Conversations: the very last word in instant messaging</p>
+<p align="center">Penik: the very last word in instant messaging</p>
 
 <p align="center">
   <a href="https://play.google.com/store/apps/details?id=eu.siacs.conversations&amp;referrer=utm_source%3Dcodeberg">
@@ -54,13 +54,13 @@ A free and open-source Jabber/XMPP client for Android. Easy to use, reliable, an
 
 ## FAQ
 
-### How do I install Conversations?
+### How do I install Penik?
 
-Conversations is entirely open source and licensed under GPLv3. So if you are a
+Penik is entirely open source and licensed under GPLv3. So if you are a
 software developer you can check out the sources from Codeberg and use Gradle to
 build your APK file.
 
-Conversations is available on [Google Play](https://play.google.com/store/apps/details?id=eu.siacs.conversations) and on [F-Droid](https://f-droid.org/en/packages/eu.siacs.conversations/).
+Penik is available on [Google Play](https://play.google.com/store/apps/details?id=eu.siacs.conversations) and on [F-Droid](https://f-droid.org/en/packages/eu.siacs.conversations/).
 
 If you want to use F-Droid you can use the developer’s [F-Droid repository](https://fdroid.link/#https://gultsch.dev/fdroid/repo?fingerprint=9C2E57C85C279E5E1A427F6E87927FC1E2278F62D61D7FCEFDE9346E568CCF86) instead of
 the official one:
@@ -69,7 +69,7 @@ https://gultsch.dev/fdroid/repo?fingerprint=9c2e57c85c279e5e1a427f6e87927fc1e227
 ```
 
 ### How do I create an account?
-XMPP, like email, is a federated protocol, which means that there is not one company you can create an *official XMPP account* with. Instead there are hundreds, or even thousands, of providers out there. One of those providers is our very own [conversations.im](https://account.conversations.im). If you don’t like to use *conversations.im* use a web search engine of your choice to find another provider. Or maybe your university has one. Or you can run your own. Or ask a friend to run one. Once you've found one, you can use Conversations to create an account. Just select *register new account* on server within the create account dialog.
+XMPP, like email, is a federated protocol, which means that there is not one company you can create an *official XMPP account* with. Instead there are hundreds, or even thousands, of providers out there. One of those providers is our very own [conversations.im](https://account.conversations.im). If you don’t like to use *conversations.im* use a web search engine of your choice to find another provider. Or maybe your university has one. Or you can run your own. Or ask a friend to run one. Once you've found one, you can use Penik to create an account. Just select *register new account* on server within the create account dialog.
 
 #### Domain hosting
 Using your own domain not only gives you a more recognizable Jabber ID, it also gives you the flexibility to migrate your account between different XMPP providers. This is a good compromise between the responsibilities of having to operate your own server and the downsides of being dependent on a single provider.
@@ -79,7 +79,7 @@ Learn more about [conversations.im Jabber/XMPP domain hosting](https://account.c
 #### Running your own
 If you already have a server somewhere and are willing and able to put the necessary work in you can run your own XMPP server.
 
-As of 2023 XMPP has reached a level of maturity where all major XMPP servers ([ejabberd](https://ejabberd.im), [Prosody](https://prosody.im), [Openfire](https://www.igniterealtime.org/projects/openfire/), [Tigase](https://tigase.net/xmpp-server/)) should work well with Conversations.
+As of 2023 XMPP has reached a level of maturity where all major XMPP servers ([ejabberd](https://ejabberd.im), [Prosody](https://prosody.im), [Openfire](https://www.igniterealtime.org/projects/openfire/), [Tigase](https://tigase.net/xmpp-server/)) should work well with Penik.
 
 Interoperability with Prosody and ejabberd is tested fairly regularly just because of their market share but we occasionally test with other servers too and fix issues as soon as we are being made aware of them.
 
@@ -106,12 +106,12 @@ TLDR: If you know what F-Droid is and have it installed for other apps as well, 
 ³: Firebase Cloud Messaging (FCM) notifications are only issued by the XMPP server if the persisent connection via Foreground Service fails. This is very rare and only happens due to aggressive power saving by some Android vendors and/or after long periods of not using the app. Notifications send through Google are wake up signals only and never contain any content.</small>
 
 ### Where can I set up a custom hostname / port
-Conversations will automatically look up the SRV records for your domain name
+Penik will automatically look up the SRV records for your domain name
 which can point to any hostname port combination. If your server doesn’t provide
 those please contact your admin and have them read
 [this](http://prosody.im/doc/dns#srv_records). If your server operator is unwilling
 to fix this you can enable advanced server settings in the expert settings of
-Conversations.
+Penik.
 
 ### I get 'Incompatible Server'
 
@@ -122,39 +122,39 @@ If you are a server administrator you should make sure that your server provides
 either STARTTLS or [XEP-0368: SRV records for XMPP over TLS](https://xmpp.org/extensions/xep-0368.html).
 
 On rare occasions this error message might also be caused by a server not providing
-a login (SASL) mechanism that Conversations is able to handle. Conversations supports
+a login (SASL) mechanism that Penik is able to handle. Penik supports
 SCRAM-SHA1, PLAIN, EXTERNAL (client certs) and DIGEST-MD5.
 
 ### I get 'Bind failure'. What does that mean?
 
 Some Bind failures are transient and resolve themselves after a reconnect.
 
-When trying to connect to OpenFire the bind failure can be a permanent problem when the domain part of the Jabber ID entered in Conversations doesn’t match the domain the OpenFire server feels responsible for. For example OpenFire is configured to use the domain `a.tld` but the Jabber ID entered is `user@b.tld` where `b.tld` also points to the same host. During bind OpenFire tries to reassign the Jabber to `user@a.tld`. Conversations doesn’t like that.
-This can be fixed by creating a new account in Conversations that uses the Jabber ID `user@a.tld`. 
+When trying to connect to OpenFire the bind failure can be a permanent problem when the domain part of the Jabber ID entered in Penik doesn’t match the domain the OpenFire server feels responsible for. For example OpenFire is configured to use the domain `a.tld` but the Jabber ID entered is `user@b.tld` where `b.tld` also points to the same host. During bind OpenFire tries to reassign the Jabber to `user@a.tld`. Penik doesn’t like that.
+This can be fixed by creating a new account in Penik that uses the Jabber ID `user@a.tld`. 
 
 Note: This is kind of a weird quirk in OpenFire. Most other servers would just throw a 'Server not responsible for domain' error instead of attempting to reassign the Jabber ID.
 
-Maybe you attempted to use the Jabber ID `test@b.tld` because `a.tld` doesn’t point to the correct host. In that case you might have to enable the extended connection settings in the expert settings of Conversations and set a host name.
+Maybe you attempted to use the Jabber ID `test@b.tld` because `a.tld` doesn’t point to the correct host. In that case you might have to enable the extended connection settings in the expert settings of Penik and set a host name.
 
-### Conversations is consuming a lot of battery, what can I do?
+### Penik is consuming a lot of battery, what can I do?
 
-Battery attribution on Android can be misleading. Conversations may appear to consume a lot of battery because it’s active, but this doesn’t necessarily mean it drains your battery significantly faster. For example, if your phone lasts 24 hours with Conversations and 25 hours without it, the impact is only about an hour, which is often negligible for most users who charge their phones nightly.
+Battery attribution on Android can be misleading. Penik may appear to consume a lot of battery because it’s active, but this doesn’t necessarily mean it drains your battery significantly faster. For example, if your phone lasts 24 hours with Penik and 25 hours without it, the impact is only about an hour, which is often negligible for most users who charge their phones nightly.
 
-To check for potential issues, use the account server info screen in Conversations to verify whether server features are consistently available. Additionally, ensure your session age is appropriately long (e.g., several days or since the last time you restarted your phone). A session age of just minutes might indicate a problem unless you recently turned on your phone.
+To check for potential issues, use the account server info screen in Penik to verify whether server features are consistently available. Additionally, ensure your session age is appropriately long (e.g., several days or since the last time you restarted your phone). A session age of just minutes might indicate a problem unless you recently turned on your phone.
 
-Battery usage percentages can also be deceptive. On low-usage days, Conversations might rank high simply because it’s running, even if its actual impact is minimal compared to something like taking a photo with the camera. Evaluating battery life with and without the app under similar conditions is the best way to assess its true effect.
+Battery usage percentages can also be deceptive. On low-usage days, Penik might rank high simply because it’s running, even if its actual impact is minimal compared to something like taking a photo with the camera. Evaluating battery life with and without the app under similar conditions is the best way to assess its true effect.
 
 ### I’m getting this annoying permanent notification
 
-On devices running Android 8 and later Conversations will display a permanent notification to indicate that the app maintains a connection to the XMPP server. This is a feature (or restriction, if you will) of the operating system. This notification can be hidden via settings in the operating system (not in Conversations itself). How to get to the relevant setting varies from Android version to Android version but can usually be reached by long-pressing the notification. Once in the notification control center the slider for 'Foreground Service' can be disabled. This doesn’t negatively impact other notifications.
+On devices running Android 8 and later Penik will display a permanent notification to indicate that the app maintains a connection to the XMPP server. This is a feature (or restriction, if you will) of the operating system. This notification can be hidden via settings in the operating system (not in Penik itself). How to get to the relevant setting varies from Android version to Android version but can usually be reached by long-pressing the notification. Once in the notification control center the slider for 'Foreground Service' can be disabled. This doesn’t negatively impact other notifications.
 
 
 ### How do XEP-0357: Push Notifications work?
-You need to be running the Play Store version of Conversations and your server needs to support push notifications.¹ Because *Google’s Firebase Cloud Messaging (FCM)* are tied with an API key to a specific app your server can not initiate the push message directly. Instead your server will send the push notification to the [Conversations App server](https://codeberg.org/iNPUTmice/p2) (operated by us) which then acts as a proxy and initiates the push message for you. The push message sent from our App server through FCM doesn’t contain any personal information. It is just an empty message which will wake up your device and tell Conversations to reconnect to your server. The information sent from your server to our App server depends on the configuration of your server but can be limited to your account name. (In any case the Conversations App server won't redirect any information through FCM even if your server sends this information.)
+You need to be running the Play Store version of Penik and your server needs to support push notifications.¹ Because *Google’s Firebase Cloud Messaging (FCM)* are tied with an API key to a specific app your server can not initiate the push message directly. Instead your server will send the push notification to the [Conversations App server](https://codeberg.org/iNPUTmice/p2) (operated by us) which then acts as a proxy and initiates the push message for you. The push message sent from our App server through FCM doesn’t contain any personal information. It is just an empty message which will wake up your device and tell Penik to reconnect to your server. The information sent from your server to our App server depends on the configuration of your server but can be limited to your account name. (In any case the Conversations App server won't redirect any information through FCM even if your server sends this information.)
 
 In summary Google will never get hold of any personal information besides that *something* happened. (Which doesn’t even have to be a message but can be some automated event as well.) We - as the operator of the App server - will just get hold of your account name (without being able to tie this to your specific device).
 
-If you don’t want this simply pick a server which does not offer Push Notifications or build Conversations yourself without support for push notifications. (This is available via a gradle build flavor.) Non-play store source of Conversations like the Amazon App store will also offer a version without push notifications. Conversations will just work as before and maintain its own TCP connection in the background.
+If you don’t want this simply pick a server which does not offer Push Notifications or build Penik yourself without support for push notifications. (This is available via a gradle build flavor.) Non-play store source of Penik like the Amazon App store will also offer a version without push notifications. Penik will just work as before and maintain its own TCP connection in the background.
 
 You can find a detailed description of how your server, the app server and FCM are interacting with each other in the [README.md](https://codeberg.org/iNPUTmice/p2/src/branch/master/README.md) of the Conversations App Server.
 
@@ -162,20 +162,20 @@ You can find a detailed description of how your server, the app server and FCM a
 
 
 ### But why do I need a permanent notification if I use Google Push?
-FCM (Google Push) allows an app to wake up from *Doze* which is (as the name suggests) a hibernation feature of the Android operating system that cuts the network connection and also reduces the number of times the app is allowed to wake up (to ping the server for example). The app can ask to be excluded from doze. Non push variants of the app (from F-Droid or if the server doesn’t support it) will do this on first start up. So if you get exemption from *Doze*, or if you get regular push events sent to you, Doze should not pose a threat to Conversatons working properly. But even with *Doze* the app is still open in the background (kept in memory); it is just limited in the actions it can do. Conversations needs to stay in memory to hold certain session state (online status of contacts, join status of group chats, …). However with Android 8 Google changed all of this again and now an App that wants to stay in memory needs to have a foreground service which is visible to the user via the annoying notification. But why does Conversations need to hold that state? XMPP is a statefull protocol that has a lot of per-session information; packets need to be counted, presence information needs to be held, some features like Message Carbons get activated once per session, MAM catch-up happens once, service discovery happens only once; the list goes on. When Conversations was created in early 2014 none of this was a problem because apps were just allowed to stay in memory. Basically every XMPP client out there holds that information in memory because it would be a lot more complicated trying to persist it to disk. An entire rewrite of Conversations in the year 2019 would attempt to do that and would probably succeed however it would require exactly that; a complete rewrite which is not feasible right now. That’s by the way also the reason why it is difficult to write an XMPP client on iOS. Or more broadly put this is also the reason why other protocols are designed as or migrated to stateless protocols (often based on HTTP); take for example the migration of IMAP to [JMAP](https://jmap.io/).
+FCM (Google Push) allows an app to wake up from *Doze* which is (as the name suggests) a hibernation feature of the Android operating system that cuts the network connection and also reduces the number of times the app is allowed to wake up (to ping the server for example). The app can ask to be excluded from doze. Non push variants of the app (from F-Droid or if the server doesn’t support it) will do this on first start up. So if you get exemption from *Doze*, or if you get regular push events sent to you, Doze should not pose a threat to Conversatons working properly. But even with *Doze* the app is still open in the background (kept in memory); it is just limited in the actions it can do. Penik needs to stay in memory to hold certain session state (online status of contacts, join status of group chats, …). However with Android 8 Google changed all of this again and now an App that wants to stay in memory needs to have a foreground service which is visible to the user via the annoying notification. But why does Penik need to hold that state? XMPP is a statefull protocol that has a lot of per-session information; packets need to be counted, presence information needs to be held, some features like Message Carbons get activated once per session, MAM catch-up happens once, service discovery happens only once; the list goes on. When Penik was created in early 2014 none of this was a problem because apps were just allowed to stay in memory. Basically every XMPP client out there holds that information in memory because it would be a lot more complicated trying to persist it to disk. An entire rewrite of Penik in the year 2019 would attempt to do that and would probably succeed however it would require exactly that; a complete rewrite which is not feasible right now. That’s by the way also the reason why it is difficult to write an XMPP client on iOS. Or more broadly put this is also the reason why other protocols are designed as or migrated to stateless protocols (often based on HTTP); take for example the migration of IMAP to [JMAP](https://jmap.io/).
 
 ### How does the address book integration work?
 
 *Address book integration is only available in the F-Droid version.*
 
-The address book integration was designed to protect your privacy. Conversations
+The address book integration was designed to protect your privacy. Penik
 neither uploads contacts from your address book to your server nor fills your
 address book with unnecessary contacts from your online roster. If you manually
-add a Jabber ID to your phones address book Conversations will use the name and
+add a Jabber ID to your phones address book Penik will use the name and
 the profile picture of this contact. To make the process of adding Jabber IDs to
 your address book easier you can click on the profile picture in the contact
-details within Conversations. This will start an "add to address book" intent
-with the JID as the payload. This doesn't require Conversations to have write
+details within Penik. This will start an "add to address book" intent
+with the JID as the payload. This doesn't require Penik to have write
 permissions on your address book but also doesn't require you to copy/paste a
 JID from one app to another.
 
@@ -221,7 +221,7 @@ everybody in your contact list to know that you have been using your computer at
 
 In the past status has been used to judge the likelihood of whether or not your
 messages are being read. This is no longer necessary. With Chat Markers
-(XEP-0333, supported by Conversations since 0.4) we have the ability to **know**
+(XEP-0333, supported by Penik since 0.4) we have the ability to **know**
 whether or not your messages are being read.
 * one check mark ✓: message has been send (arrived at server)
 * two check marks ✓✓: message has arrived at receiver
@@ -229,7 +229,7 @@ whether or not your messages are being read.
 
 Similar things can be said for priorities. In the past priorities have been used
 (by servers, not by clients!) to route your messages to one specific client.
-With carbon messages (XEP-0280, supported by Conversations since 0.1) this is no
+With carbon messages (XEP-0280, supported by Penik since 0.1) this is no
 longer necessary.
 
 ### Translations
@@ -237,7 +237,7 @@ Translations are managed on [Weblate](https://translate.codeberg.org/projects/co
 
 You can log in with your Codeberg account and start translating.
 
-### How do I backup / move Conversations to a new device?
+### How do I backup / move Penik to a new device?
 
 See the dedicated guides for 
 - [backups](docs/user/backup.md)
@@ -247,9 +247,9 @@ See the dedicated guides for
 
 There is a tool called [ceb2txt](https://codeberg.org/iNPUTmice/ceb2txt) that can convert backup file (.ceb) into txt files.
 
-### Conversations is missing a certain feature
+### Penik is missing a certain feature
 
-I'm open for new feature suggestions. You can use the [issue tracker](https://codeberg.org/iNPUTmice/Conversations/issues)
+I'm open for new feature suggestions. You can use the [issue tracker](https://github.com/Nielkro/PenikXMPP/issues)
 on Codeberg.  Please take some time to browse through the issues to see if someone
 else already suggested it. Be assured that I read each and every ticket. If I
 like it I will leave it open until it's implemented. If I don't like it I will
@@ -266,7 +266,7 @@ will it accelerate the development.
 ### How do I use OpenPGP
 
 Before you continue reading you should note that the OpenPGP support in
-Conversations is experimental. This is not because it will make the app unstable
+Penik is experimental. This is not because it will make the app unstable
 but because the fundamental concepts of PGP aren't ready for widespread use.
 The way PGP works is that you trust Key IDs instead of JID's or email addresses.
 So in theory your contact list should consist of Public-Key-IDs instead of
@@ -288,7 +288,7 @@ OMEMO has two requirements: Your server and the server of your contact need to s
 
 #### OMEMO
 
-OMEMO encryption works only in private (members only) conferences that are non-anonymous. Non-anonymous (being able to discover the real JID of other participants) is a technical requirement to discover the key material. Members only is a sort of arbitrary requirement imposed by Conversations. (see 'OMEMO is grayed out')
+OMEMO encryption works only in private (members only) conferences that are non-anonymous. Non-anonymous (being able to discover the real JID of other participants) is a technical requirement to discover the key material. Members only is a sort of arbitrary requirement imposed by Penik. (see 'OMEMO is grayed out')
 
 The server of all participants need to pass the OMEMO [Compliance Test](https://conversations.im/compliance/).
 In other words they either need to run ejabberd 18.01+ or Prosody 0.11+.
@@ -304,12 +304,12 @@ details and hit the settings button (the one with the gears) and select both *pr
 Every participant has to announce their OpenPGP key (see answer above).
 If you would like to send encrypted messages to a conference you have to make
 sure that you have every participant's public key in your OpenKeychain.
-Right now there is no check in Conversations to ensure that.
+Right now there is no check in Penik to ensure that.
 You have to take care of that yourself. Go to the conference details and
 touch every key id (The hexadecimal number below a contact). This will send you
 to OpenKeychain which will assist you on adding the key.  This works best in
 very small conferences with contacts you are already using OpenPGP with. This
-feature is regarded experimental. Conversations is the only client that uses
+feature is regarded experimental. Penik is the only client that uses
 XEP-0027 with conferences. (The XEP neither specifically allows nor disallows
 this.)
 
@@ -321,11 +321,11 @@ Read more about the concept on https://gultsch.de/trust.html
 If you bought the App on [Google Play](https://play.google.com/store/apps/details?id=eu.siacs.conversations)
 you can get access to the the latest beta version by signing up using [this link](https://play.google.com/apps/testing/eu.siacs.conversations).
 
-### How do I build Conversations
+### How do I build Penik
 
 Make sure to have ANDROID_HOME point to your Android SDK. Use the Android SDK Manager to install missing dependencies.
 
-Alternatively (and to avoid thinking about environment variables), create a file called local.properties, in the root of the Conversations build tree,
+Alternatively (and to avoid thinking about environment variables), create a file called local.properties, in the root of the Penik build tree,
 with the following contents:
 
 ```
@@ -342,29 +342,29 @@ sdk.dir=Path-To-Sdk
 
 Then issue the following commands in order to build the apk.
 
-    git clone https://codeberg.org/iNPUTmice/Conversations.git
-    cd Conversations
+    git clone https://github.com/Nielkro/PenikXMPP.git
+    cd PenikXMPP
     ./gradlew assembleConversationsFreeDebug
 
 There are two build flavors available. *free* and *playstore*. Unless you know what you are doing you only need *free*.
 
 You will find the apks in the `./build/outputs/apk/conversationsFree/debug/` directory.
 
-Be careful, the resulting apks will not install unless you delete your existing Conversations installation (which will delete all the messages from your phone, and if you have used OMEMO, you will not be able to restore them from the server).
+Be careful, the resulting apks will not install unless you delete your existing Penik installation (which will delete all the messages from your phone, and if you have used OMEMO, you will not be able to restore them from the server).
 Do it at your own risk.
 
-You, though, can make your own build a "test build", that can be installed alongside the normal (F-Droid or Google Play) Conversations:
+You, though, can make your own build a "test build", that can be installed alongside the normal (F-Droid or Google Play) Penik:
 
-In the file `build.gradle`, find the line `applicationId "eu.siacs.conversations"` , and replace it with `applicationId "my.conversations.fork"`, also below replace "Conversations" appName with "MyCFork".
-Then the resulting APK can be installed ALONGSIDE normal Conversations. And have a different name so it's not confusing
+In the file `build.gradle`, find the line `applicationId "eu.siacs.conversations"` , and replace it with `applicationId "my.conversations.fork"`, also below replace "Penik" appName with "MyCFork".
+Then the resulting APK can be installed ALONGSIDE normal Penik. And have a different name so it's not confusing
 
 WARNING: DO NOT REPLACE ANYTHING ELSE ANYWHERE ELSE, DO NOT REPLACE THIS PROJECT WIDE. JUST 2 strings in THAT specific file!
 
-### How do I debug Conversations
+### How do I debug Penik
 
-If something goes wrong Conversations usually exposes very little information in
+If something goes wrong Penik usually exposes very little information in
 the UI (other than the fact that something didn't work). However with adb
-(android debug bridge) you can squeeze some more information out of Conversations.
+(android debug bridge) you can squeeze some more information out of Penik.
 These information are especially useful if you are experiencing trouble with
 your connection or with file transfer.
 
@@ -383,7 +383,7 @@ directly on your rooted phone. (Search for logcat). However in regards to furthe
 
 ### I found a bug
 
-Please report it to our [issue tracker](https://codeberg.org/iNPUTmice/Conversations/issues). If your app crashes please
+Please report it to our [issue tracker](https://github.com/Nielkro/PenikXMPP/issues). If your app crashes please
 provide a stack trace. If you are experiencing misbehavior please provide
 detailed steps to reproduce. Always mention whether you are running the latest
 Play Store version or the current HEAD. If you are having problems connecting to
