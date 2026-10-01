@@ -406,7 +406,8 @@ public class JingleRtpConnection extends AbstractJingleConnection
             return;
         }
         final Set<ContentAddition.Summary> ourSummary = ContentAddition.summary(outgoingContentAdd);
-        if (ourSummary.equals(ContentAddition.summary(receivedContentAccept))) {
+        if (coversContentAdd(
+                ContentAddition.summary(receivedContentAccept), ourSummary)) {
             this.outgoingContentAdd = null;
             respondOk(jinglePacket);
             final boolean hasFullTransportInfo = receivedContentAccept.hasFullTransportInfo();
@@ -434,6 +435,31 @@ public class JingleRtpConnection extends AbstractJingleConnection
             Log.d(Config.LOGTAG, "received content-accept did not match our outgoing content-add");
             receiveOutOfOrderAction(jinglePacket, Jingle.Action.CONTENT_ACCEPT);
         }
+    }
+
+    private static boolean coversContentAdd(
+            final Set<ContentAddition.Summary> received,
+            final Set<ContentAddition.Summary> proposed) {
+        for (final ContentAddition.Summary p : proposed) {
+            boolean found = false;
+            for (final ContentAddition.Summary r : received) {
+                if (r.name.equals(p.name) && r.media == p.media) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                Log.d(
+                        Config.LOGTAG,
+                        "received content-accept did not match our outgoing content-add."
+                                + " received="
+                                + received
+                                + " proposed="
+                                + proposed);
+                return false;
+            }
+        }
+        return true;
     }
 
     private void receiveContentAccept(final RtpContentMap receivedContentAccept) {
