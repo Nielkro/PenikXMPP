@@ -67,6 +67,8 @@
     <string name="crash_report_message">Отправляя отчёты об ошибках, вы помогаете совершенствованию %1$s.</string>
     <string name="send_now">Отправить сейчас</string>
     <string name="send_never">Больше не спрашивать</string>
+    <string name="bug_report_collapsed_title">Отчёт об ошибке</string>
+    <string name="bug_report_collapsed_hint">Этот отчёт поможет нам разобраться с ошибкой. Нажмите, чтобы показать.</string>
     <string name="problem_connecting_to_account">Невозможно подключиться к аккаунту</string>
     <string name="problem_connecting_to_accounts">Невозможно подключиться к аккаунтам</string>
     <string name="touch_to_fix">Нажмите, чтобы настроить аккаунт</string>

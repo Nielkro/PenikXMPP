@@ -100,8 +100,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -124,6 +126,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     private OnContactPictureLongClicked mOnContactPictureLongClickedListener;
     private BubbleDesign bubbleDesign = new BubbleDesign(false, false, false, true, true);
     private final boolean mForceNames;
+    private final Set<String> expandedBugReports = new HashSet<>();
+    private static final int BUG_REPORT_COLLAPSE_CHARS = 800;
 
     public MessageAdapter(
             final XmppActivity activity, final List<Message> messages, final boolean forceNames) {
@@ -488,6 +492,59 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         return startsWithQuote;
     }
 
+    private static boolean isCollapsibleBugReport(final Message message) {
+        if (Config.BUG_REPORTS == null) {
+            return false;
+        }
+        if (!(message.getConversation() instanceof Conversation conversation)) {
+            return false;
+        }
+        if (!conversation.getAddress().asBareJid().equals(Config.BUG_REPORTS)) {
+            return false;
+        }
+        final var body = message.getBody();
+        return body != null && body.length() > BUG_REPORT_COLLAPSE_CHARS;
+    }
+
+    private void displayCollapsedBugReport(
+            final BubbleMessageItemViewHolder viewHolder,
+            final Message message,
+            final BubbleColor bubbleColor) {
+        viewHolder.downloadButton().setVisibility(View.GONE);
+        viewHolder.image().setVisibility(View.GONE);
+        viewHolder.audioPlayer().setVisibility(View.GONE);
+        final var bodyView = viewHolder.messageBody();
+        bodyView.setVisibility(View.VISIBLE);
+        setTextColor(bodyView, bubbleColor);
+        setTextSize(bodyView, false);
+        bodyView.setTypeface(null, Typeface.ITALIC);
+        final var label = new SpannableStringBuilder();
+        final var title = activity.getString(R.string.bug_report_collapsed_title);
+        label.append(title);
+        label.append("\n");
+        final int hintStart = label.length();
+        label.append(activity.getString(R.string.bug_report_collapsed_hint));
+        label.setSpan(
+                new StyleSpan(Typeface.BOLD),
+                0,
+                title.length(),
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        label.setSpan(
+                new ForegroundColorSpan(bubbleToOnSurfaceVariant(bodyView, bubbleColor)),
+                hintStart,
+                label.length(),
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        bodyView.setText(label);
+        bodyView.setTextIsSelectable(false);
+        final View.OnClickListener expand =
+                v -> {
+                    expandedBugReports.add(message.getUuid());
+                    notifyDataSetChanged();
+                };
+        viewHolder.messageBox().setOnClickListener(expand);
+        bodyView.setOnClickListener(expand);
+    }
+
     private void displayTextMessage(
             final BubbleMessageItemViewHolder viewHolder,
             final Message message,
@@ -503,6 +560,10 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         if (Strings.isNullOrEmpty(rawBody)) {
             viewHolder.messageBody().setText("");
             viewHolder.messageBody().setTextIsSelectable(false);
+            return;
+        }
+        if (isCollapsibleBugReport(message) && !expandedBugReports.contains(message.getUuid())) {
+            displayCollapsedBugReport(viewHolder, message, bubbleColor);
             return;
         }
         final String nick = UIHelper.getMessageDisplayName(message);

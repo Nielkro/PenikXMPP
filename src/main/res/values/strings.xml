@@ -72,6 +72,8 @@
     <string name="crash_report_message">Using your XMPP account to send in stack traces helps the ongoing development of %1$s.</string>
     <string name="send_now">Send now</string>
     <string name="send_never">Never ask again</string>
+    <string name="bug_report_collapsed_title">Bug report</string>
+    <string name="bug_report_collapsed_hint">This report will help us understand the error. Tap to show it.</string>
     <string name="problem_connecting_to_account">Could not connect to account</string>
     <string name="problem_connecting_to_accounts">Could not connect to multiple accounts</string>
     <string name="touch_to_fix">Tap to manage your accounts</string>
