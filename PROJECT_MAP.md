@@ -4,7 +4,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 
 ## App Entry & Build Configuration
 
-- `build.gradle` — Main Gradle build: application config, `namespace` / `applicationId` (target `ru.penik.xmpp`), flavors (`conversations`, `quicksy` x `free`, `playstore`), sourceSets, signing, R8, dataBinding.
+- `build.gradle` — Main Gradle build: `namespace eu.siacs.conversations` / `applicationId ru.penik.xmpp` (`appName Penik`), Compose BOM + navigation/coil deps (Compose compiler plugin, `compose = true`), `minSdk 26`, flavors (`conversations`, `quicksy` x `free`, `playstore`), sourceSets, signing, R8, dataBinding.
 - `settings.gradle` — Gradle modules: `libs:annotation`, `libs:annotation-processor`; `rootProject.name`.
 - `gradle.properties` — AndroidX, non-transitive R class, heap, R8 flags.
 - `gradle/libs.versions.toml` — Version catalog for dependencies.
@@ -13,7 +13,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `proguard-rules.pro` — R8/ProGuard keep rules.
 - `signing.properties` — Release keystore config (local only, not committed).
 - `libs/annotation/`, `libs/annotation-processor/` — Local annotation libraries used by the app.
-- `src/main/AndroidManifest.xml` — App declaration: permissions, services, 20+ activities, FileProvider (`${applicationId}.files`, `.barcodes`), UnifiedPush, backup intents.
+- `src/main/AndroidManifest.xml` — App declaration (application theme `Theme.Penik`): permissions, services, 20+ activities, FileProvider (`${applicationId}.files`, `.barcodes`), UnifiedPush, backup intents.
 - `src/main/java/eu/siacs/conversations/Conversations.java` — Application class: global context, account supplier, Conscrypt init, emoji init.
 - `src/main/java/eu/siacs/conversations/Config.java` — Global constants: domains, timeouts, ping intervals, avatar/image sizes, feature flags.
 - `src/main/java/eu/siacs/conversations/AppSettings.java` — Typed wrapper over SharedPreferences settings.

@@ -103,7 +103,7 @@
         android:networkSecurityConfig="@xml/network_security_configuration"
         android:preserveLegacyExternalStorage="true"
         android:requestLegacyExternalStorage="true"
-        android:theme="@style/Theme.Conversations3"
+        android:theme="@style/Theme.Penik"
         tools:targetApi="tiramisu">
 
         <meta-data
@@ -192,14 +192,14 @@
         <activity
             android:name=".ui.RecordingActivity"
             android:configChanges="orientation|screenSize"
-            android:theme="@style/Theme.Conversations3.Dialog" />
+            android:theme="@style/Theme.Penik.Dialog" />
         <activity
             android:name=".ui.ShowLocationActivity"
             android:label="@string/title_activity_show_location" />
         <activity
             android:name=".ui.ConversationActivity"
             android:exported="true"
-            android:theme="@style/Theme.Conversations3.SplashScreen">
+            android:theme="@style/Theme.Penik.SplashScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -215,7 +215,7 @@
         <activity
             android:name=".ui.ScanQrCodeActivity"
             android:enableOnBackInvokedCallback="false"
-            android:theme="@style/Theme.Conversations3.FullScreen"
+            android:theme="@style/Theme.Penik.FullScreen"
             android:windowSoftInputMode="stateAlwaysHidden" />
         <activity
             android:name=".ui.YuriLauncherActivity"
@@ -421,7 +421,7 @@
         </activity>
         <activity
             android:name=".ui.ViewProfilePictureActivity"
-            android:theme="@style/Theme.Conversations3.Dark" />
+            android:theme="@style/Theme.Penik.Dark" />
         <activity
             android:name=".ui.MucUsersActivity"
             android:label="@string/group_chat_members" />

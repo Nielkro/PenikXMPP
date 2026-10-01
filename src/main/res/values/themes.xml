@@ -125,6 +125,26 @@
         <item name="preferenceTheme">@style/MaterialPreferenceThemeOverlay</item>
     </style>
 
+    <style name="Theme.Penik.FullScreen" parent="@style/Theme.Penik">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+    </style>
+
+    <style name="Theme.Penik.SplashScreen" parent="@style/Theme.Penik">
+        <item name="android:windowBackground">@drawable/background_splash_screen</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+
+    <style name="Theme.Penik.Dialog" parent="@style/Theme.Penik">
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+
     <style name="MaterialPreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
         <item name="switchPreferenceCompatStyle">@style/MaterialSwitchPreference</item>
     </style>
