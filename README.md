@@ -1,5 +1,7 @@
 <h1 align="center">Conversations</h1>
 
+> Fork of [codeberg.org/iNPUTmice/Conversations](https://codeberg.org/iNPUTmice/Conversations) for Penik (`ru.penik.xmpp`). Upstream development happens on Codeberg; this repository tracks it plus the Penik UI port (see `plan/penik-xmpp-ui-port-plan.md`).
+
 <p align="center">Conversations: the very last word in instant messaging</p>
 
 <p align="center">
