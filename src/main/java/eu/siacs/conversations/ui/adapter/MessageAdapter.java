@@ -493,17 +493,11 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     }
 
     private static boolean isCollapsibleBugReport(final Message message) {
-        if (Config.BUG_REPORTS == null) {
-            return false;
-        }
-        if (!(message.getConversation() instanceof Conversation conversation)) {
-            return false;
-        }
-        if (!conversation.getAddress().asBareJid().equals(Config.BUG_REPORTS)) {
-            return false;
-        }
         final var body = message.getBody();
-        return body != null && body.length() > BUG_REPORT_COLLAPSE_CHARS;
+        return body != null
+                && body.length() > BUG_REPORT_COLLAPSE_CHARS
+                && body.contains("Version:")
+                && body.contains("Manufacturer:");
     }
 
     private void displayCollapsedBugReport(
