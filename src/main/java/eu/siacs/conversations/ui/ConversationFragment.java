@@ -3482,7 +3482,7 @@ public class ConversationFragment extends XmppFragment
             }
             final var avatarService = service.getAvatarService();
             final float density = getResources().getDisplayMetrics().density;
-            final int size = Math.round(40 * density);
+            final int size = Math.round(36 * density);
             final boolean isMuc = c.getMode() == Conversational.MODE_MULTI;
             android.graphics.Bitmap cached;
             if (isMuc) {
@@ -3531,7 +3531,9 @@ public class ConversationFragment extends XmppFragment
                 androidx.core.graphics.drawable.RoundedBitmapDrawableFactory.create(
                         getResources(), bitmap);
         drawable.setCircular(true);
-        this.binding.toolbar.setLogo(drawable);
+        final int gap =
+                Math.round(12 * getResources().getDisplayMetrics().density);
+        this.binding.toolbar.setLogo(new android.graphics.drawable.InsetDrawable(drawable, 0, 0, gap, 0));
     }
 
     private void openConversationDetails(final Conversation conversation) {

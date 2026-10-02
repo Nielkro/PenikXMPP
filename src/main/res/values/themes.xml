@@ -195,4 +195,13 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
+    <style name="TextAppearance.Penik.ChatTitle" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.Penik.ChatSubtitle" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textSize">11sp</item>
+    </style>
 </resources>

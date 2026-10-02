@@ -18,8 +18,9 @@
                 android:layout_height="wrap_content"
                 android:minHeight="?attr/actionBarSize"
                 app:buttonGravity="center_vertical"
-                app:subtitleTextAppearance="?textAppearanceBodySmall"
+                app:subtitleTextAppearance="@style/TextAppearance.Penik.ChatSubtitle"
                 app:subtitleTextColor="?colorOnSurfaceVariant"
+                app:titleTextAppearance="@style/TextAppearance.Penik.ChatTitle"
                 app:titleMargin="0dp"
                 app:titleMarginBottom="0dp"
                 app:titleMarginTop="0dp" />
