@@ -3449,7 +3449,7 @@ public class ConversationFragment extends XmppFragment
         final var c = this.conversation;
         this.binding.toolbar.setTitle(c.getName());
         loadToolbarAvatar(c);
-        if (c.getMode() == Conversation.MODE_SINGLE && this.mShowLastUserInteraction) {
+        if (c.getMode() == Conversation.MODE_SINGLE) {
             final var contact = conversation.getContact();
             this.binding.toolbar.setSubtitle(
                     UIHelper.lastUserInteraction(
@@ -3475,31 +3475,63 @@ public class ConversationFragment extends XmppFragment
 
     private void loadToolbarAvatar(final Conversation c) {
         try {
-            final var service = requireXmppActivity().xmppConnectionService;
+            final var activity = requireXmppActivity();
+            final var service = activity.xmppConnectionService;
             if (service == null) {
                 return;
             }
             final var avatarService = service.getAvatarService();
             final float density = getResources().getDisplayMetrics().density;
             final int size = Math.round(40 * density);
-            final android.graphics.Bitmap bitmap;
-            if (c.getMode() == Conversational.MODE_MULTI) {
-                bitmap = avatarService.get(c, size, true);
+            final boolean isMuc = c.getMode() == Conversational.MODE_MULTI;
+            android.graphics.Bitmap cached;
+            if (isMuc) {
+                cached = avatarService.get(c, size, true);
             } else {
-                bitmap = avatarService.get(c.getContact(), size, true);
+                cached = avatarService.get(c.getContact(), size, true);
             }
-            if (bitmap != null) {
-                final var drawable =
-                        androidx.core.graphics.drawable.RoundedBitmapDrawableFactory.create(
-                                getResources(), bitmap);
-                drawable.setCircular(true);
-                this.binding.toolbar.setLogo(drawable);
-            } else {
-                this.binding.toolbar.setLogo(null);
+            if (cached != null) {
+                setToolbarAvatar(cached);
+                return;
             }
+            final String uuid = c.getUuid();
+            new Thread(
+                            () -> {
+                                final android.graphics.Bitmap bitmap;
+                                try {
+                                    if (isMuc) {
+                                        bitmap = avatarService.get(c, size, false);
+                                    } else {
+                                        bitmap = avatarService.get(c.getContact(), size, false);
+                                    }
+                                } catch (final Exception e) {
+                                    return;
+                                }
+                                if (bitmap == null) {
+                                    return;
+                                }
+                                activity.runOnUiThread(
+                                        () -> {
+                                            if (binding == null
+                                                    || conversation == null
+                                                    || !uuid.equals(conversation.getUuid())) {
+                                                return;
+                                            }
+                                            setToolbarAvatar(bitmap);
+                                        });
+                            })
+                    .start();
         } catch (final Exception e) {
             this.binding.toolbar.setLogo(null);
         }
+    }
+
+    private void setToolbarAvatar(final android.graphics.Bitmap bitmap) {
+        final var drawable =
+                androidx.core.graphics.drawable.RoundedBitmapDrawableFactory.create(
+                        getResources(), bitmap);
+        drawable.setCircular(true);
+        this.binding.toolbar.setLogo(drawable);
     }
 
     private void openConversationDetails(final Conversation conversation) {
