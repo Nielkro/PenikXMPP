@@ -384,21 +384,23 @@ fun PenikTicksIcon(
         modifier: Modifier = Modifier
 ) {
     val second = if (read) accent else tint
-    Canvas(modifier = modifier.size(if (double) 18.dp else 10.dp, 12.dp)) {
-        val stroke = 1.7.dp.toPx()
+    Canvas(modifier = modifier.size(if (double) 20.dp else 11.dp, 13.dp)) {
+        val stroke = (size.height * 0.15f).coerceAtLeast(1.5.dp.toPx())
         val style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        val slot = if (double) size.width * 0.62f else size.width
+        val dx = if (double) size.width * 0.38f else 0f
         fun check(offsetX: Float, color: Color) {
             val p =
                     Path().apply {
-                        moveTo(offsetX + 1f, size.height * 0.55f)
-                        lineTo(offsetX + 4f, size.height * 0.8f)
-                        lineTo(offsetX + 9.5f, size.height * 0.15f)
+                        moveTo(offsetX + slot * 0.08f, size.height * 0.52f)
+                        lineTo(offsetX + slot * 0.38f, size.height * 0.78f)
+                        lineTo(offsetX + slot * 0.96f, size.height * 0.18f)
                     }
             drawPath(p, color, style = style)
         }
         check(0f, tint)
         if (double) {
-            check(6.dp.toPx(), second)
+            check(dx, second)
         }
     }
 }
