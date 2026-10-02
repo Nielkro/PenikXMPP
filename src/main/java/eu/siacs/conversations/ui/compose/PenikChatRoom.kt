@@ -384,6 +384,7 @@ fun PenikTicksIcon(
         modifier: Modifier = Modifier
 ) {
     val second = if (read) accent else tint
+    val first = if (read && double) accent else tint
     Canvas(modifier = modifier.size(if (double) 20.dp else 11.dp, 13.dp)) {
         val stroke = (size.height * 0.15f).coerceAtLeast(1.5.dp.toPx())
         val style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round)
@@ -398,7 +399,7 @@ fun PenikTicksIcon(
                     }
             drawPath(p, color, style = style)
         }
-        check(0f, tint)
+        check(0f, first)
         if (double) {
             check(dx, second)
         }
