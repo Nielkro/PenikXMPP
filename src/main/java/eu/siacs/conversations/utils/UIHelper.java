@@ -482,7 +482,7 @@ public class UIHelper {
 
     public static String getMessageHint(final Context context, final Conversation conversation) {
         return switch (conversation.getNextEncryption()) {
-            case Message.ENCRYPTION_NONE -> context.getString(R.string.send_unencrypted_message);
+            case Message.ENCRYPTION_NONE -> context.getString(R.string.send_message);
             case Message.ENCRYPTION_AXOLOTL -> {
                 final AxolotlService axolotlService = conversation.getAccount().getAxolotlService();
                 if (axolotlService != null && axolotlService.trustedSessionVerified(conversation)) {

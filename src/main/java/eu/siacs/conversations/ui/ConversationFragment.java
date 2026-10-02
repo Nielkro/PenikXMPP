@@ -676,7 +676,7 @@ public class ConversationFragment extends XmppFragment
                     final MenuItem menuInviteContact = menu.findItem(R.id.action_invite);
                     final MenuItem menuMute = menu.findItem(R.id.action_mute);
                     final MenuItem menuUnmute = menu.findItem(R.id.action_unmute);
-                    final MenuItem menuCall = menu.findItem(R.id.action_call);
+                    final MenuItem menuAudioCall = menu.findItem(R.id.action_audio_call);
                     final MenuItem menuOngoingCall = menu.findItem(R.id.action_ongoing_call);
                     final MenuItem menuVideoCall = menu.findItem(R.id.action_video_call);
                     final MenuItem menuTogglePinned = menu.findItem(R.id.action_toggle_pinned);
@@ -686,7 +686,7 @@ public class ConversationFragment extends XmppFragment
                     }
                     if (c.getMode() == Conversation.MODE_MULTI) {
                         menuInviteContact.setVisible(c.getMucOptions().canInvite());
-                        menuCall.setVisible(false);
+                        menuAudioCall.setVisible(false);
                         menuOngoingCall.setVisible(false);
                     } else {
                         final var manager =
@@ -698,7 +698,7 @@ public class ConversationFragment extends XmppFragment
                                         : manager.getOngoingRtpConnection(c.getContact());
                         if (ongoingRtpSession.isPresent()) {
                             menuOngoingCall.setVisible(true);
-                            menuCall.setVisible(false);
+                            menuAudioCall.setVisible(false);
                         } else {
                             menuOngoingCall.setVisible(false);
                             // use RtpCapability.check(conversation.getContact()); to check if
@@ -706,7 +706,7 @@ public class ConversationFragment extends XmppFragment
                             // actually has support
                             final boolean cameraAvailable =
                                     requireXmppActivity().isCameraFeatureAvailable();
-                            menuCall.setVisible(true);
+                            menuAudioCall.setVisible(true);
                             menuVideoCall.setVisible(cameraAvailable);
                         }
                         final var connection = c.getAccount().getXmppConnection();
@@ -3438,6 +3438,7 @@ public class ConversationFragment extends XmppFragment
         this.binding.toolbar.setTitleCentered(isTabletView);
         final var c = this.conversation;
         this.binding.toolbar.setTitle(c.getName());
+        loadToolbarAvatar(c);
         if (c.getMode() == Conversation.MODE_SINGLE && this.mShowLastUserInteraction) {
             final var contact = conversation.getContact();
             this.binding.toolbar.setSubtitle(
@@ -3460,6 +3461,35 @@ public class ConversationFragment extends XmppFragment
                 this.binding.toolbar, v -> openConversationDetails(c));
         ToolbarUtils.adjustToolbarHeight(this.binding.toolbar, isTabletView);
         this.binding.toolbar.invalidateMenu();
+    }
+
+    private void loadToolbarAvatar(final Conversation c) {
+        try {
+            final var service = requireXmppActivity().xmppConnectionService;
+            if (service == null) {
+                return;
+            }
+            final var avatarService = service.getAvatarService();
+            final float density = getResources().getDisplayMetrics().density;
+            final int size = Math.round(40 * density);
+            final android.graphics.Bitmap bitmap;
+            if (c.getMode() == Conversational.MODE_MULTI) {
+                bitmap = avatarService.get(c, size, true);
+            } else {
+                bitmap = avatarService.get(c.getContact(), size, true);
+            }
+            if (bitmap != null) {
+                final var drawable =
+                        androidx.core.graphics.drawable.RoundedBitmapDrawableFactory.create(
+                                getResources(), bitmap);
+                drawable.setCircular(true);
+                this.binding.toolbar.setLogo(drawable);
+            } else {
+                this.binding.toolbar.setLogo(null);
+            }
+        } catch (final Exception e) {
+            this.binding.toolbar.setLogo(null);
+        }
     }
 
     private void openConversationDetails(final Conversation conversation) {

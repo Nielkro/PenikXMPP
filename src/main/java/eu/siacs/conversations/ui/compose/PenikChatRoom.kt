@@ -5,6 +5,7 @@ import android.util.Patterns
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,6 +64,12 @@ import eu.siacs.conversations.R
 import eu.siacs.conversations.entities.Conversation
 import eu.siacs.conversations.entities.Conversational
 import eu.siacs.conversations.entities.Message
+import eu.siacs.conversations.entities.RtpSessionStatus
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.runtime.DisposableEffect
+import java.io.File
+import kotlinx.coroutines.delay
 import eu.siacs.conversations.ui.XmppActivity
 import eu.siacs.conversations.ui.adapter.MessageAdapter
 import eu.siacs.conversations.utils.UIHelper
@@ -253,7 +260,14 @@ fun PenikChatRoom(
                             contentColor = colorResource(R.color.penik_text_primary),
                             modifier = Modifier.size(44.dp)
                     ) {
-                        Text(text = "↓", fontSize = 20.sp)
+                        Icon(
+                                painter =
+                                        painterResource(
+                                                R.drawable.ic_keyboard_double_arrow_down_24dp
+                                        ),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
             }
@@ -311,7 +325,11 @@ fun PenikMessageRow(
         isMuc: Boolean,
         listener: PenikChatListener
 ) {
-    if (message.type == Message.TYPE_STATUS || message.type == Message.TYPE_RTP_SESSION) {
+    if (message.type == Message.TYPE_RTP_SESSION) {
+        PenikCallCard(message = message, activity = activity, listener = listener)
+        return
+    }
+    if (message.type == Message.TYPE_STATUS) {
         PenikStatusRow(text = message.body ?: "")
         return
     }
@@ -339,6 +357,48 @@ fun PenikMessageRow(
             isMuc = isMuc,
             listener = listener
     )
+}
+
+fun splitPenikQuote(text: String): Pair<String?, String> {
+    val lines = text.lines()
+    val quoted = ArrayList<String>()
+    var i = 0
+    while (i < lines.size) {
+        val trimmed = lines[i].trimStart()
+        if (trimmed.startsWith(">") || trimmed.startsWith("»")) {
+            quoted.add(trimmed.trimStart('>', '»', ' ').trimEnd())
+            i++
+        } else {
+            break
+        }
+    }
+    if (quoted.isEmpty()) {
+        return null to text
+    }
+    return quoted.joinToString("\n") to lines.drop(i).joinToString("\n").trimStart('\n')
+}
+
+@Composable
+fun PenikQuoteBlock(quote: String, barColor: Color, textColor: Color) {
+    Row(modifier = Modifier.padding(bottom = 4.dp)) {
+        Box(
+                modifier =
+                        Modifier.width(3.dp)
+                                .height(androidx.compose.foundation.layout.IntrinsicSize.Max)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(barColor)
+        ) {
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+                text = quote,
+                color = textColor,
+                fontSize = 13.sp,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -474,15 +534,27 @@ fun PenikTextBubble(
                                 fontSize = 13.sp
                         )
                     } else {
-                        ClickableText(
-                                text = penikLinkified(rawBody, linkColor),
-                                style =
-                                        androidx.compose.ui.text.TextStyle(
-                                                color = fgColor,
-                                                fontSize = 15.sp
-                                        ),
-                                onClick = { /* links handled by annotation; tap = collapse if bug */ }
-                        )
+                        val (quote, rest) =
+                                remember(rawBody) { splitPenikQuote(rawBody) }
+                        if (quote != null) {
+                            PenikQuoteBlock(
+                                    quote = quote,
+                                    barColor = accent,
+                                    textColor = textMuted
+                            )
+                        }
+                        val mainText = if (quote != null) rest else rawBody
+                        if (mainText.isNotEmpty()) {
+                            ClickableText(
+                                    text = penikLinkified(mainText, linkColor),
+                                    style =
+                                            androidx.compose.ui.text.TextStyle(
+                                                    color = fgColor,
+                                                    fontSize = 15.sp
+                                            ),
+                                    onClick = { /* links handled by annotation */ }
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(2.dp))
                     Row(
@@ -574,6 +646,97 @@ fun PenikMetaRow(
 }
 
 @Composable
+fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatListener) {
+    val context = LocalContext.current
+    val sentBg = colorResource(R.color.penik_sent_message_bg)
+    val recvBg = colorResource(R.color.penik_recv_message_bg)
+    val textPrimary = colorResource(R.color.penik_text_primary)
+    val textMuted = colorResource(R.color.penik_text_muted)
+    val sentText = colorResource(R.color.penik_sent_message_text)
+    val accent = colorResource(R.color.penik_accent)
+    val danger = colorResource(R.color.penik_danger)
+    val isSentByMe = message.status != Message.STATUS_RECEIVED
+    val status = RtpSessionStatus.of(message.body)
+    val received = message.status <= Message.STATUS_RECEIVED
+    val missed = !status.successful
+    val title =
+            when {
+                received && status.duration > 0 -> context.getString(R.string.incoming_call)
+                received && status.successful -> context.getString(R.string.incoming_call)
+                received -> context.getString(R.string.missed_call)
+                else -> context.getString(R.string.outgoing_call)
+            }
+    val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
+    val timeText =
+            if (message.timeSent > 0) {
+                timeFormat.format(java.util.Date(message.timeSent))
+            } else {
+                ""
+            }
+    val durationText =
+            if (status.duration > 0) {
+                eu.siacs.conversations.utils.TimeFrameUtils.resolve(context, status.duration)
+                        .toString()
+            } else {
+                ""
+            }
+    val bgColor = if (isSentByMe) sentBg else recvBg
+    val fgColor = if (isSentByMe) sentText else textPrimary
+    val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
+    Box(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+            contentAlignment = boxAlignment
+    ) {
+        Row(
+                modifier =
+                        Modifier.padding(horizontal = 12.dp)
+                                .widthIn(max = 300.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(bgColor)
+                                .clickable { listener.onMessageAction(PenikChatActions.OPEN, message) }
+                                .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                    modifier =
+                            Modifier.size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(accent.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                        painter =
+                                painterResource(
+                                        RtpSessionStatus.getDrawable(received, status.successful)
+                                ),
+                        contentDescription = null,
+                        tint = if (missed) danger else accent,
+                        modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                        text = title,
+                        color = if (missed && !isSentByMe) danger else fgColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                )
+                if (durationText.isNotEmpty()) {
+                    Text(text = durationText, color = textMuted, fontSize = 13.sp)
+                }
+            }
+            if (timeText.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = timeText, color = textMuted, fontSize = 11.sp)
+            }
+        }
+    }
+}
+
+@Composable
 fun PenikStatusRow(text: String) {
     if (text.isBlank()) {
         return
@@ -638,6 +801,186 @@ fun PenikMessageMenu(
     }
 }
 
+object PenikVoicePlayer {
+    private var player: android.media.MediaPlayer? = null
+    var currentUuid by mutableStateOf<String?>(null)
+        private set
+    var isPlaying by mutableStateOf(false)
+        private set
+    var progressMs by mutableStateOf(0)
+    var durationMs by mutableStateOf(0)
+        private set
+
+    fun position(): Int {
+        return try {
+            player?.currentPosition ?: progressMs
+        } catch (e: Exception) {
+            progressMs
+        }
+    }
+
+    fun toggle(context: android.content.Context, file: File, uuid: String, fallbackDurationMs: Int) {
+        if (currentUuid == uuid && player != null) {
+            try {
+                if (isPlaying) {
+                    player?.pause()
+                    isPlaying = false
+                    progressMs = position()
+                } else {
+                    player?.start()
+                    isPlaying = true
+                }
+            } catch (e: Exception) {
+                stop()
+            }
+            return
+        }
+        stop()
+        try {
+            val p = android.media.MediaPlayer()
+            p.setDataSource(file.absolutePath)
+            p.prepare()
+            durationMs = p.duration.takeIf { it > 0 } ?: fallbackDurationMs
+            p.setOnCompletionListener { stop() }
+            p.start()
+            player = p
+            currentUuid = uuid
+            isPlaying = true
+            progressMs = 0
+        } catch (e: Exception) {
+            stop()
+            android.widget.Toast.makeText(context, "Не удалось воспроизвести", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun seekTo(ms: Int) {
+        try {
+            player?.seekTo(ms)
+        } catch (e: Exception) {
+            // ignore
+        }
+        progressMs = ms
+    }
+
+    fun stop() {
+        try {
+            player?.stop()
+        } catch (e: Exception) {
+            // ignore
+        }
+        try {
+            player?.release()
+        } catch (e: Exception) {
+            // ignore
+        }
+        player = null
+        currentUuid = null
+        isPlaying = false
+        progressMs = 0
+        durationMs = 0
+    }
+}
+
+fun penikFormatVoiceTime(ms: Int): String {
+    val totalSec = ms / 1000
+    return "%d:%02d".format(totalSec / 60, totalSec % 60)
+}
+
+@Composable
+fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, textMuted: Color) {
+    val context = LocalContext.current
+    val accent = colorResource(R.color.penik_accent)
+    val service = activity.xmppConnectionService
+    val file =
+            remember(message.uuid) {
+                try {
+                    service?.fileBackend?.getFile(message)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+    if (file == null || !file.exists()) {
+        PenikFileRow(message = message, fgColor = fgColor, textMuted = textMuted)
+        return
+    }
+    val uuid = message.uuid
+    val runtimeMs =
+            remember(message.uuid) {
+                val runtime = message.fileParams?.runtime ?: 0
+                if (runtime > 0) runtime * 1000 else 0
+            }
+    val playingThis = PenikVoicePlayer.currentUuid == uuid && PenikVoicePlayer.isPlaying
+    val progress =
+            if (PenikVoicePlayer.currentUuid == uuid) {
+                PenikVoicePlayer.progressMs
+            } else {
+                0
+            }
+    val duration =
+            if (PenikVoicePlayer.currentUuid == uuid && PenikVoicePlayer.durationMs > 0) {
+                PenikVoicePlayer.durationMs
+            } else {
+                runtimeMs
+            }
+    LaunchedEffect(playingThis, uuid) {
+        while (PenikVoicePlayer.currentUuid == uuid && PenikVoicePlayer.isPlaying) {
+            delay(250)
+            PenikVoicePlayer.progressMs = PenikVoicePlayer.position()
+        }
+    }
+    DisposableEffect(uuid) {
+        onDispose {
+            if (PenikVoicePlayer.currentUuid == uuid) {
+                PenikVoicePlayer.stop()
+            }
+        }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+                modifier =
+                        Modifier.size(44.dp)
+                                .clip(CircleShape)
+                                .background(accent)
+                                .clickable {
+                                    PenikVoicePlayer.toggle(context, file, uuid, runtimeMs)
+                                },
+                contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                    painter =
+                            painterResource(
+                                    if (playingThis) R.drawable.ic_pause_24dp
+                                    else R.drawable.ic_play_arrow_24dp
+                            ),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Slider(
+                    value = progress.toFloat(),
+                    onValueChange = { PenikVoicePlayer.seekTo(it.toInt()) },
+                    valueRange = 0f..(if (duration > 0) duration.toFloat() else 1f),
+                    enabled = duration > 0,
+                    colors =
+                            SliderDefaults.colors(
+                                    thumbColor = accent,
+                                    activeTrackColor = accent,
+                                    inactiveTrackColor = textMuted.copy(alpha = 0.4f)
+                            )
+            )
+            Text(
+                    text =
+                            "${penikFormatVoiceTime(progress)} / ${penikFormatVoiceTime(duration)}",
+                    color = textMuted,
+                    fontSize = 12.sp
+            )
+        }
+    }
+}
+
 @Composable
 fun PenikAttachmentRow(
         message: Message,
@@ -695,7 +1038,14 @@ fun PenikAttachmentRow(
         ) {
             Column {
                 val mime = message.mimeType ?: ""
-                if ((message.type == Message.TYPE_IMAGE || mime.startsWith("image/")) &&
+                if (mime.startsWith("audio/")) {
+                    PenikVoiceRow(
+                            message = message,
+                            activity = activity,
+                            fgColor = fgColor,
+                            textMuted = textMuted
+                    )
+                } else if ((message.type == Message.TYPE_IMAGE || mime.startsWith("image/")) &&
                                 !message.isGeoUri
                 ) {
                     PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
