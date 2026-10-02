@@ -3267,6 +3267,16 @@ public class ConversationFragment extends XmppFragment
                     messageListAdapter.openDownloadable(message);
                 }
             }
+            case PenikChatActions.OPEN_URL -> {
+                try {
+                    startActivity(
+                            new Intent(
+                                    Intent.ACTION_VIEW,
+                                    android.net.Uri.parse(message.getBody().trim())));
+                } catch (final Exception e) {
+                    Log.d(Config.LOGTAG, "could not open url", e);
+                }
+            }
         }
     }
 
