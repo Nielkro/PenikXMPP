@@ -619,7 +619,7 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
         if (latest != null && latest.timeSent > 0) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                    text = UIHelper.readableTimeDifference(activity, latest.timeSent),
+                    text = penikRelativeTime(context, latest.timeSent),
                     color = textMuted,
                     fontSize = 12.sp
             )
@@ -786,7 +786,7 @@ fun PenikConversationRow(
                         }
                         if (timestamp > 0) {
                             Text(
-                                    text = UIHelper.readableTimeDifference(context, timestamp),
+                                    text = penikRelativeTime(context, timestamp),
                                     color = textMuted,
                                     fontSize = 12.sp
                             )
@@ -864,6 +864,23 @@ fun PenikAvatarImage(name: String, bitmap: Bitmap?) {
 }
 
 data class PenikCallEntry(val conversation: Conversation, val message: Message)
+
+fun penikRelativeTime(context: android.content.Context, time: Long): String {
+    if (time <= 0) {
+        return ""
+    }
+    val difference = (System.currentTimeMillis() - time) / 1000
+    if (difference < 60) {
+        return context.getString(R.string.just_now)
+    } else if (difference < 60 * 2) {
+        return context.getString(R.string.minute_ago)
+    } else if (difference < 60 * 60) {
+        return context.getString(R.string.minutes_ago, Math.round(difference / 60.0).toInt())
+    } else {
+        return android.text.format.DateFormat.getTimeFormat(context)
+                .format(java.util.Date(time))
+    }
+}
 
 fun penikAbsoluteTime(context: android.content.Context, millis: Long): String {
     if (millis <= 0) {
