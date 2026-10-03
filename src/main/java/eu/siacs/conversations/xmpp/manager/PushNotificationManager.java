@@ -49,15 +49,8 @@ public class PushNotificationManager extends AbstractManager {
     }
 
     public ListenableFuture<Void> registerAndEnable(
-            final Jid appServer, final String fmcToken, final String androidId) {
-        final var future = register(appServer, fmcToken, androidId);
-        return Futures.transformAsync(
-                future,
-                registration -> {
-                    Preconditions.checkNotNull(registration);
-                    return enable(registration);
-                },
-                MoreExecutors.directExecutor());
+            final Jid appServer, final String fcmToken, final String androidId) {
+        return enable(new Registration(appServer, fcmToken, null));
     }
 
     private ListenableFuture<Void> enable(final Registration registration) {
@@ -65,10 +58,12 @@ public class PushNotificationManager extends AbstractManager {
         final var enable = iq.addExtension(new Enable());
         enable.setJid(registration.address);
         enable.setNode(registration.node);
-        enable.addExtension(
-                Data.of(
-                        ImmutableMap.of("secret", registration.secret),
-                        Namespace.PUB_SUB_PUBLISH_OPTIONS));
+        if (!Strings.isNullOrEmpty(registration.secret)) {
+            enable.addExtension(
+                    Data.of(
+                            ImmutableMap.of("secret", registration.secret),
+                            Namespace.PUB_SUB_PUBLISH_OPTIONS));
+        }
         return Futures.transform(
                 connection.sendIqPacket(iq), response -> null, MoreExecutors.directExecutor());
     }
