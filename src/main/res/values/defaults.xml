@@ -3,7 +3,7 @@
     <bool name="portrait_only">true</bool>
     <bool name="enter_is_send">false</bool>
     <bool name="notifications_from_strangers">true</bool>
-    <bool name="headsup_notifications">false</bool>
+    <bool name="headsup_notifications">true</bool>
     <bool name="dnd_sync_system">false</bool>
     <bool name="dnd_include_silent_modes">false</bool>
     <bool name="confirm_messages">true</bool>
