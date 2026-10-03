@@ -969,6 +969,18 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
             } else {
                 ""
             }
+    val statusTitle =
+            if (received) {
+                if (status.successful) {
+                    context.getString(R.string.incoming_call) +
+                            (if (durationText.isNotEmpty()) " ($durationText)" else "")
+                } else {
+                    context.getString(R.string.missed_call)
+                }
+            } else {
+                context.getString(R.string.outgoing_call) +
+                        (if (durationText.isNotEmpty()) " ($durationText)" else "")
+            }
     Row(
             modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -998,7 +1010,7 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
                 Spacer(modifier = Modifier.width(6.dp))
                 val timeText = penikAbsoluteTime(context, message.timeSent)
                 Text(
-                        text = if (durationText.isNotEmpty()) "$durationText · $timeText" else timeText,
+                        text = "$statusTitle · $timeText",
                         color = if (missed) danger else textMuted,
                         fontSize = 14.sp,
                         maxLines = 1,
