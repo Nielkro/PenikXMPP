@@ -755,9 +755,10 @@ public class XmppConnectionService extends Service {
         final String androidId = pushedAccountHash == null ? null : PhoneHelper.getAndroidId(this);
         for (final Account account : accounts) {
             final boolean pushWasMeantForThisAccount =
-                    androidId != null
-                            && CryptoHelper.getAccountFingerprint(account, androidId)
-                                    .equals(pushedAccountHash);
+                    pushedAccountHash == null
+                            || (androidId != null
+                                    && CryptoHelper.getAccountFingerprint(account, androidId)
+                                            .equals(pushedAccountHash));
             if (pushWasMeantForThisAccount) {
                 final var manager =
                         account.getXmppConnection().getManager(PushNotificationManager.class);

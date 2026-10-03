@@ -32,21 +32,19 @@ public class PushMessageReceiver extends BroadcastReceiver {
     }
 
     private void onMessageReceived(final Context context, final Bundle extras) {
-        final var account = extras.getString("account");
-        if (Strings.isNullOrEmpty(account)) {
-            Log.d(Config.LOGTAG, "PushMessageReceiver received push w/o account");
-            return;
-        }
         if (!Conversations.getInstance(context.getApplicationContext()).hasEnabledAccount()) {
             Log.d(
                     Config.LOGTAG,
                     "PushMessageReceiver ignored message because no accounts are enabled");
             return;
         }
+        final var account = extras == null ? null : extras.getString("account");
         Log.d(Config.LOGTAG, "PushMessageReceiver received push notification. waking up service");
         final Intent intent = new Intent(context, XmppConnectionService.class);
         intent.setAction(XmppConnectionService.ACTION_FCM_MESSAGE_RECEIVED);
-        intent.putExtra("account", account);
+        if (!Strings.isNullOrEmpty(account)) {
+            intent.putExtra("account", account);
+        }
         Compatibility.startService(context, intent);
     }
 
