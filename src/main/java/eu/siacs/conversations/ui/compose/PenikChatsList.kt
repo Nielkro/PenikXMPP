@@ -829,6 +829,26 @@ fun PenikAvatarImage(name: String, bitmap: Bitmap?) {
 
 data class PenikCallEntry(val conversation: Conversation, val message: Message)
 
+fun penikAbsoluteTime(context: android.content.Context, millis: Long): String {
+    if (millis <= 0) {
+        return ""
+    }
+    val zone = java.time.ZoneId.systemDefault()
+    val date = java.time.Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
+    val today = java.time.LocalDate.now(zone)
+    return if (date == today) {
+        android.text.format.DateFormat.getTimeFormat(context).format(java.util.Date(millis))
+    } else {
+        val fmt =
+                if (date.year == today.year) {
+                    java.time.format.DateTimeFormatter.ofPattern("d MMM")
+                } else {
+                    java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy")
+                }
+        date.format(fmt)
+    }
+}
+
 fun penikCallDuration(rawDuration: Long, timeSentMs: Long): String {
     if (rawDuration <= 0) {
         return ""
@@ -976,7 +996,7 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
                         modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                val timeText = UIHelper.readableTimeDifference(context, message.timeSent)
+                val timeText = penikAbsoluteTime(context, message.timeSent)
                 Text(
                         text = if (durationText.isNotEmpty()) "$durationText · $timeText" else timeText,
                         color = if (missed) danger else textMuted,
