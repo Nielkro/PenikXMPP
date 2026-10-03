@@ -1,57 +1,45 @@
 package eu.siacs.conversations.receiver;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
-import com.google.common.base.Strings;
+import androidx.annotation.NonNull;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.Conversations;
-import eu.siacs.conversations.services.PushManagementService;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.utils.Compatibility;
+import java.util.Map;
 
-public class PushMessageReceiver extends BroadcastReceiver {
+public class PushMessageReceiver extends FirebaseMessagingService {
 
     @Override
-    public void onReceive(final Context context, final Intent intent) {
-        if (intent == null) {
-            Log.e(Config.LOGTAG, "PushMessageReceiver got woken up with null intent");
+    public void onMessageReceived(@NonNull final RemoteMessage message) {
+        if (!Conversations.getInstance(getApplicationContext()).hasEnabledAccount()) {
+            Log.d(
+                    Config.LOGTAG,
+                    "PushMessageReceiver ignored message because no accounts are enabled");
             return;
         }
-        final var extras = intent.getExtras();
-        Log.d(Config.LOGTAG, "PushMessageReceiver.onReceive: action=" + intent.getAction() + ", extras=" + extras);
-        switch (Strings.nullToEmpty(intent.getAction())) {
-            case PushManagementService.ACTION_REGISTRATION -> onNewToken(context, extras);
-            case PushManagementService.ACTION_RECEIVE -> onMessageReceived(context, extras);
-            default -> Log.d(Config.LOGTAG, "PushMessageReceiver unhandled action: " + intent.getAction());
-        }
-    }
-
-    private void onMessageReceived(final Context context, final Bundle extras) {
-        final var account = extras == null ? null : extras.getString("account");
-        Log.d(Config.LOGTAG, "PushMessageReceiver received push notification. waking up service (account=" + account + ")");
-        final Intent intent = new Intent(context, XmppConnectionService.class);
+        final Map<String, String> data = message.getData();
+        Log.d(Config.LOGTAG, "PushMessageReceiver.onMessageReceived data: " + data);
+        final Intent intent = new Intent(this, XmppConnectionService.class);
         intent.setAction(XmppConnectionService.ACTION_FCM_MESSAGE_RECEIVED);
-        if (!Strings.isNullOrEmpty(account)) {
-            intent.putExtra("account", account);
-        }
-        Compatibility.startService(context, intent);
+        intent.putExtra("account", data.get("account"));
+        Compatibility.startService(this, intent);
     }
 
-    private void onNewToken(final Context context, final Bundle extras) {
-        String registrationId = extras == null ? null : extras.getString("registration_id");
-        Log.d(Config.LOGTAG, "onNewToken(" + registrationId + ")");
-
-        if (!Conversations.getInstance(context.getApplicationContext()).hasEnabledAccount()) {
+    @Override
+    public void onNewToken(@NonNull final String token) {
+        Log.d(Config.LOGTAG, "PushMessageReceiver.onNewToken: " + token);
+        if (!Conversations.getInstance(getApplicationContext()).hasEnabledAccount()) {
             Log.d(
                     Config.LOGTAG,
                     "PushMessageReceiver ignored new token because no accounts are enabled");
             return;
         }
-        final Intent intent = new Intent(context, XmppConnectionService.class);
+        final Intent intent = new Intent(this, XmppConnectionService.class);
         intent.setAction(XmppConnectionService.ACTION_FCM_TOKEN_REFRESH);
-        Compatibility.startService(context, intent);
+        Compatibility.startService(this, intent);
     }
 }

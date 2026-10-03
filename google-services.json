@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "554253496237",
+    "project_id": "penik-6ceff",
+    "storage_bucket": "penik-6ceff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:554253496237:android:6179da01b32608e2253b24",
+        "android_client_info": {
+          "package_name": "niel.kro.penik"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6uoDqZMll7RpTx-3dZnIA0woiizQD_mo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:554253496237:android:e2c42264215ed2a0253b24",
+        "android_client_info": {
+          "package_name": "ru.penik.xmpp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6uoDqZMll7RpTx-3dZnIA0woiizQD_mo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
