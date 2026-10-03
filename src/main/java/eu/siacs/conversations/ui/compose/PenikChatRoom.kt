@@ -179,22 +179,41 @@ fun penikEmojiOnlyCount(text: String): Int {
 
 fun penikLinkified(text: String, linkColor: Color) =
         buildAnnotatedString {
-            val matcher = Patterns.WEB_URL.matcher(text)
+            val patterns =
+                    listOf(
+                            android.util.Patterns.EMAIL_ADDRESS to
+                                    { m: String ->
+                                        if (m.startsWith("mailto:", ignoreCase = true)) m
+                                        else "mailto:$m"
+                                    },
+                            android.util.Patterns.WEB_URL to
+                                    { m: String ->
+                                        if (m.startsWith("http", ignoreCase = true)) m
+                                        else "https://$m"
+                                    }
+                    )
+            data class Span(val start: Int, val end: Int, val url: String, val display: String)
+            val found = ArrayList<Span>()
+            for ((pattern, toUrl) in patterns) {
+                val matcher = pattern.matcher(text)
+                while (matcher.find()) {
+                    val start = matcher.start()
+                    val end = matcher.end()
+                    if (found.none { it.start < end && start < it.end }) {
+                        found.add(Span(start, end, toUrl(text.substring(start, end)), text.substring(start, end)))
+                    }
+                }
+            }
+            found.sortBy { it.start }
             var last = 0
-            while (matcher.find()) {
-                val start = matcher.start()
-                val end = matcher.end()
-                if (start > last) {
-                    append(text.substring(last, start))
+            for (span in found) {
+                if (span.start > last) {
+                    append(text.substring(last, span.start))
                 }
-                var url = text.substring(start, end)
-                if (!url.startsWith("http", ignoreCase = true)) {
-                    url = "https://$url"
-                }
-                pushLink(LinkAnnotation.Url(url))
-                withStyle(SpanStyle(color = linkColor)) { append(text.substring(start, end)) }
+                pushLink(LinkAnnotation.Url(span.url))
+                withStyle(SpanStyle(color = linkColor)) { append(span.display) }
                 pop()
-                last = end
+                last = span.end
             }
             if (last < text.length) {
                 append(text.substring(last))
@@ -804,6 +823,12 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
                 ""
             }
     val durationText = penikCallDuration(status.duration, message.timeSent)
+    val mediaText =
+            when (status.media) {
+                "video" -> context.getString(R.string.video).replaceFirstChar { it.uppercase() }
+                "audio" -> context.getString(R.string.audio).replaceFirstChar { it.uppercase() }
+                else -> ""
+            }
     val bgColor = if (isSentByMe) sentBg else recvBg
     val fgColor = if (isSentByMe) sentText else textPrimary
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
@@ -815,7 +840,7 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
                 modifier =
                         Modifier.padding(horizontal = 12.dp)
                                 .widthIn(max = 300.dp)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(PenikBubbleShape(isSentByMe = isSentByMe))
                                 .background(bgColor)
                                 .clickable { listener.onMessageAction(PenikChatActions.OPEN, message) }
                                 .padding(12.dp),
@@ -848,8 +873,10 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                 )
-                if (durationText.isNotEmpty()) {
-                    Text(text = durationText, color = textMuted, fontSize = 13.sp)
+                val details =
+                        listOf(durationText, mediaText).filter { it.isNotEmpty() }.joinToString(" ")
+                if (details.isNotEmpty()) {
+                    Text(text = details, color = textMuted, fontSize = 13.sp)
                 }
             }
             if (timeText.isNotEmpty()) {

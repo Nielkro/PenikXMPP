@@ -10,22 +10,28 @@ public class RtpSessionStatus {
 
     public final boolean successful;
     public final long duration;
+    public final String media;
 
 
     public RtpSessionStatus(boolean successful, long duration) {
+        this(successful, duration, null);
+    }
+
+    public RtpSessionStatus(boolean successful, long duration, final String media) {
         this.successful = successful;
         this.duration = duration;
+        this.media = media;
     }
 
     @Override
     public String toString() {
-        return successful + ":" + duration;
+        return successful + ":" + duration + (media == null ? "" : ":" + media);
     }
 
     public static RtpSessionStatus of(final String body) {
-        final String[] parts = Strings.nullToEmpty(body).split(":", 2);
+        final String[] parts = Strings.nullToEmpty(body).split(":", 3);
         long duration = 0;
-        if (parts.length == 2) {
+        if (parts.length >= 2) {
             try {
                 duration = Long.parseLong(parts[1]);
             } catch (NumberFormatException e) {
@@ -38,7 +44,8 @@ public class RtpSessionStatus {
         } catch (Exception e) {
             made = false;
         }
-        return new RtpSessionStatus(made, duration);
+        final String media = parts.length >= 3 && !parts[2].isEmpty() ? parts[2] : null;
+        return new RtpSessionStatus(made, duration, media);
     }
 
     public static @DrawableRes int getDrawable(final boolean received, final boolean successful) {

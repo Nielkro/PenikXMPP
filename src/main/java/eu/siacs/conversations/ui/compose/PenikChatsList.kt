@@ -1062,8 +1062,16 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 val timeText = penikAbsoluteTime(context, message.timeSent)
+                val mediaText =
+                        when (status.media) {
+                            "video" -> context.getString(R.string.video).replaceFirstChar { it.uppercase() }
+                            "audio" -> context.getString(R.string.audio).replaceFirstChar { it.uppercase() }
+                            else -> ""
+                        }
+                val details =
+                        listOf(mediaText, timeText).filter { it.isNotEmpty() }.joinToString(" · ")
                 Text(
-                        text = "$statusTitle · $timeText",
+                        text = "$statusTitle · $details",
                         color = if (missed) danger else textMuted,
                         fontSize = 14.sp,
                         maxLines = 1,

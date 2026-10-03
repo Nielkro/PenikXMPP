@@ -2921,7 +2921,11 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     private void writeLogMessageSuccess(final long duration) {
-        this.message.setBody(new RtpSessionStatus(true, duration / 1000).toString());
+        final Set<Media> media = getMedia();
+        final String mediaString =
+                media.contains(Media.VIDEO) ? Media.VIDEO.toString() : Media.AUDIO.toString();
+        this.message.setBody(
+                new RtpSessionStatus(true, duration / 1000, mediaString).toString());
         this.writeMessage();
     }
 
