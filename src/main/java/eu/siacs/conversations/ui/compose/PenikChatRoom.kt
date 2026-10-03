@@ -213,14 +213,20 @@ fun PenikChatRoom(
     val rows =
             remember(state.messages) {
                 val inOrder =
-                        state.messages.filter { m ->
-                            val body = m.body ?: ""
-                            m.type != Message.TYPE_STATUS ||
-                                    (body != MessageAdapter.BODY_DATE_SEPARATOR &&
-                                            body != MessageAdapter.BODY_LOAD_MORE &&
-                                            body != MessageAdapter.BODY_LOCAL_TIME &&
-                                            body != MessageAdapter.BODY_DND)
-                        }
+                        state.messages
+                                .sortedBy { it.timeSent }
+                                .filter { m ->
+                                    val body = m.body ?: ""
+                                    if (m.type == Message.TYPE_STATUS) {
+                                        body.isNotBlank() &&
+                                                body != MessageAdapter.BODY_DATE_SEPARATOR &&
+                                                body != MessageAdapter.BODY_LOAD_MORE &&
+                                                body != MessageAdapter.BODY_LOCAL_TIME &&
+                                                body != MessageAdapter.BODY_DND
+                                    } else {
+                                        true
+                                    }
+                                }
                 val out = ArrayList<ChatRow>()
                 var lastDay: LocalDate? = null
                 for (m in inOrder.asReversed()) {
@@ -799,7 +805,7 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
             } else {
                 ""
             }
-    val durationText = penikCallDuration(status.duration)
+    val durationText = penikCallDuration(status.duration, message.timeSent)
     val bgColor = if (isSentByMe) sentBg else recvBg
     val fgColor = if (isSentByMe) sentText else textPrimary
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart

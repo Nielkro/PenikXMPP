@@ -368,8 +368,18 @@ fun PenikMainScreen(
 fun ConnectionBanner(state: PenikConnectionState) {
     val warning = colorResource(R.color.penik_warning)
     val danger = colorResource(R.color.penik_danger)
-    val color = if (state == PenikConnectionState.CONNECTING) warning else danger
-    val text = if (state == PenikConnectionState.CONNECTING) "Подключение..." else "Нет соединения"
+    var dots by remember(state) { mutableStateOf(0) }
+    LaunchedEffect(state) {
+        if (state == PenikConnectionState.CONNECTING) {
+            while (true) {
+                kotlinx.coroutines.delay(400)
+                dots = (dots + 1) % 4
+            }
+        }
+    }
+    val isConnecting = state == PenikConnectionState.CONNECTING
+    val color = if (isConnecting) warning else danger
+    val text = if (isConnecting) "Подключение" + ".".repeat(dots) else "Нет соединения"
     Box(
             modifier = Modifier.fillMaxWidth().background(color.copy(alpha = 0.15f)).padding(vertical = 6.dp),
             contentAlignment = Alignment.Center
@@ -819,22 +829,30 @@ fun PenikAvatarImage(name: String, bitmap: Bitmap?) {
 
 data class PenikCallEntry(val conversation: Conversation, val message: Message)
 
-fun penikCallDuration(rawDuration: Long): String {
+fun penikCallDuration(rawDuration: Long, timeSentMs: Long): String {
     if (rawDuration <= 0) {
         return ""
     }
-    val seconds = if (rawDuration > 24 * 3600) rawDuration / 1000 else rawDuration
-    if (seconds <= 0 || seconds > 24 * 3600) {
+    val seconds =
+            if (timeSentMs < RTP_SECONDS_CUTOFF_MS) {
+                rawDuration / 1000
+            } else {
+                rawDuration
+            }
+    if (seconds <= 0 || seconds > 7 * 24 * 3600) {
         return ""
     }
-    val m = seconds / 60
+    val h = seconds / 3600
+    val m = (seconds % 3600) / 60
     val s = seconds % 60
-    return if (m == 0L) {
-        "$s сек"
-    } else {
-        "$m мин" + (if (s > 0) " $s сек" else "")
+    return when {
+        h > 0 -> "$h ч" + (if (m > 0) " $m мин" else "")
+        m > 0 -> "$m мин" + (if (s > 0) " $s сек" else "")
+        else -> "$s сек"
     }
 }
+
+private const val RTP_SECONDS_CUTOFF_MS = 1791010127000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -927,7 +945,7 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
     val avatarBitmap = penikAvatarBitmap(conversation, activity)
     val durationText =
             if (status.successful) {
-                penikCallDuration(status.duration)
+                penikCallDuration(status.duration, message.timeSent)
             } else {
                 ""
             }
