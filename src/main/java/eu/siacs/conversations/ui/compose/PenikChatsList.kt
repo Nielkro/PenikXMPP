@@ -572,26 +572,16 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
             modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
     ) {
-        val loadedThumb = thumb
-        if (loadedThumb != null) {
-            Image(
-                    bitmap = loadedThumb.asImageBitmap(),
+        Box(
+                modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF5FA8DF)),
+                contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                    imageVector = Icons.Default.Bookmark,
                     contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
+                    tint = Color.White,
+                    modifier = Modifier.size(26.dp)
             )
-        } else {
-            Box(
-                    modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF5FA8DF)),
-                    contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                        imageVector = Icons.Default.Bookmark,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(26.dp)
-                )
-            }
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -605,13 +595,25 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
             )
             if (latest != null) {
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                        text = UIHelper.getMessagePreview(context, latest).first.toString(),
-                        color = textMuted,
-                        fontSize = 14.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val loadedThumb = thumb
+                    if (loadedThumb != null) {
+                        Image(
+                                bitmap = loadedThumb.asImageBitmap(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text(
+                            text = UIHelper.getMessagePreview(context, latest).first.toString(),
+                            color = textMuted,
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
         if (latest != null && latest.timeSent > 0) {
