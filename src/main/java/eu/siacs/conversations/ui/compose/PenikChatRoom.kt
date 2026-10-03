@@ -227,20 +227,20 @@ fun PenikChatRoom(
                                         true
                                     }
                                 }
-                val out = ArrayList<ChatRow>()
+                val items = ArrayList<ChatRow>()
                 var lastDay: LocalDate? = null
-                for (m in inOrder.asReversed()) {
+                for (m in inOrder) {
                     val day =
                             Instant.ofEpochMilli(m.timeSent)
                                     .atZone(ZoneId.systemDefault())
                                     .toLocalDate()
                     if (day != lastDay) {
                         lastDay = day
-                        out.add(ChatRow.DateHeader(penikChatDateLabel(day), day))
+                        items.add(ChatRow.DateHeader(penikChatDateLabel(day), day))
                     }
-                    out.add(ChatRow.Msg(m))
+                    items.add(ChatRow.Msg(m))
                 }
-                out
+                items.asReversed()
             }
     val showScrollDown by remember {
         derivedStateOf {
@@ -251,20 +251,18 @@ fun PenikChatRoom(
         if (listState.firstVisibleItemIndex <= 2 && rows.isNotEmpty()) {
             listState.scrollToItem(0)
         }
-        val last = rows.lastOrNull()
-        if (last is ChatRow.Msg) {
-            listener.onBottomVisible(last.message.uuid)
+        val newest = rows.firstOrNull()
+        if (newest is ChatRow.Msg) {
+            listener.onBottomVisible(newest.message.uuid)
         }
     }
     LaunchedEffect(listState.firstVisibleItemIndex, rows.size) {
         if (rows.isNotEmpty() && listState.firstVisibleItemIndex >= rows.size - 5) {
             listener.onLoadMore()
         }
-        val last = rows.lastOrNull()
-        if (last is ChatRow.Msg &&
-                        listState.layoutInfo.visibleItemsInfo.any { it.key == last.message.uuid }
-        ) {
-            listener.onBottomVisible(last.message.uuid)
+        val newest = rows.firstOrNull()
+        if (newest is ChatRow.Msg && listState.firstVisibleItemIndex == 0) {
+            listener.onBottomVisible(newest.message.uuid)
         }
     }
     Scaffold(
