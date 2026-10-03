@@ -541,6 +541,7 @@ fun PenikConfirmDialog(
 
 @Composable
 fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () -> Unit) {
+    val context = LocalContext.current
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
     val latest = selfChat?.latestMessage
@@ -572,7 +573,7 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
             if (latest != null) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                        text = latest.body?.take(120) ?: "",
+                        text = UIHelper.getMessagePreview(context, latest).first.toString(),
                         color = textMuted,
                         fontSize = 14.sp,
                         maxLines = 1,
