@@ -246,8 +246,7 @@ public class AppSettings {
     }
 
     public boolean isKeepForegroundService() {
-        return Compatibility.twentySix()
-                || getBooleanPreference(KEEP_FOREGROUND_SERVICE, R.bool.enable_foreground_service);
+        return false;
     }
 
     public boolean isDynamicColorsDesired() {

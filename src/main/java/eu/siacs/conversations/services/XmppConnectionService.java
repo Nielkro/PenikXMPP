@@ -1318,41 +1318,46 @@ public class XmppConnectionService extends Service {
         final OngoingCall ongoing = ongoingCall.get();
         final boolean ongoingVideoTranscoding = mOngoingVideoTranscoding.get();
         final int id;
-        if (force
-                || mForceDuringOnCreate.get()
-                || ongoingVideoTranscoding
-                || ongoing != null
-                || (appSettings.isKeepForegroundService() && hasEnabledAccounts())) {
-            final Notification notification;
-            if (ongoing != null) {
-                notification = this.mNotificationService.getOngoingCallNotification(ongoing);
-                id = NotificationService.ONGOING_CALL_NOTIFICATION_ID;
-                startForegroundOrCatch(id, notification, true);
-            } else if (ongoingVideoTranscoding) {
-                notification = this.mNotificationService.getIndeterminateVideoTranscoding();
-                id = NotificationService.ONGOING_VIDEO_TRANSCODING_NOTIFICATION_ID;
-                startForegroundOrCatch(id, notification, false);
-            } else {
-                notification = this.mNotificationService.createForegroundNotification();
-                id = NotificationService.FOREGROUND_NOTIFICATION_ID;
-                startForegroundOrCatch(id, notification, false);
-            }
+        final boolean keepForeground = appSettings.isKeepForegroundService() && hasEnabledAccounts();
+        if (ongoing != null) {
+            final Notification notification = this.mNotificationService.getOngoingCallNotification(ongoing);
+            id = NotificationService.ONGOING_CALL_NOTIFICATION_ID;
+            startForegroundOrCatch(id, notification, true);
+            mNotificationService.notify(id, notification);
+            status = true;
+        } else if (ongoingVideoTranscoding) {
+            final Notification notification = this.mNotificationService.getIndeterminateVideoTranscoding();
+            id = NotificationService.ONGOING_VIDEO_TRANSCODING_NOTIFICATION_ID;
+            startForegroundOrCatch(id, notification, false);
+            mNotificationService.notify(id, notification);
+            status = true;
+        } else if (keepForeground) {
+            final Notification notification = this.mNotificationService.createForegroundNotification();
+            id = NotificationService.FOREGROUND_NOTIFICATION_ID;
+            startForegroundOrCatch(id, notification, false);
             mNotificationService.notify(id, notification);
             status = true;
         } else {
             id = 0;
+            if (force || mForceDuringOnCreate.get()) {
+                final Notification notification = this.mNotificationService.createForegroundNotification();
+                startForegroundOrCatch(NotificationService.FOREGROUND_NOTIFICATION_ID, notification, false);
+            }
             stopForeground(true);
             status = false;
         }
 
         for (final int toBeRemoved :
-                Collections2.filter(
-                        Arrays.asList(
-                                NotificationService.FOREGROUND_NOTIFICATION_ID,
-                                NotificationService.ONGOING_CALL_NOTIFICATION_ID,
-                                NotificationService.ONGOING_VIDEO_TRANSCODING_NOTIFICATION_ID),
-                        i -> i != id)) {
-            mNotificationService.cancel(toBeRemoved);
+                Arrays.asList(
+                        NotificationService.FOREGROUND_NOTIFICATION_ID,
+                        NotificationService.ONGOING_CALL_NOTIFICATION_ID,
+                        NotificationService.ONGOING_VIDEO_TRANSCODING_NOTIFICATION_ID)) {
+            if (toBeRemoved != id) {
+                mNotificationService.cancel(toBeRemoved);
+            }
+        }
+        if (!keepForeground) {
+            mNotificationService.cancel(NotificationService.FOREGROUND_NOTIFICATION_ID);
         }
         Log.d(
                 Config.LOGTAG,
