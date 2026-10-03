@@ -11,6 +11,8 @@
 
     <style name="Theme.Penik.SplashScreen" parent="@style/Theme.Penik">
         <item name="android:windowBackground">@drawable/background_splash_screen</item>
+        <item name="android:windowSplashScreenBackground">@color/penik_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

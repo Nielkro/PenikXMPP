@@ -1160,9 +1160,25 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
     }
     val uuid = message.uuid
     val runtimeMs =
-            remember(message.uuid) {
-                val runtime = message.fileParams?.runtime ?: 0
-                if (runtime > 0) runtime * 1000 else 0
+            remember(message.uuid, file) {
+                val paramsRuntime = message.fileParams?.runtime ?: 0
+                if (paramsRuntime > 0) {
+                    paramsRuntime
+                } else if (file != null && file.exists()) {
+                    try {
+                        val mmr = android.media.MediaMetadataRetriever()
+                        mmr.setDataSource(file.absolutePath)
+                        val durStr =
+                                mmr.extractMetadata(
+                                        android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
+                                )
+                        durStr?.toIntOrNull() ?: 0
+                    } catch (e: Exception) {
+                        0
+                    }
+                } else {
+                    0
+                }
             }
     val playingThis = PenikVoicePlayer.currentUuid == uuid && PenikVoicePlayer.isPlaying
     val progressMs =
