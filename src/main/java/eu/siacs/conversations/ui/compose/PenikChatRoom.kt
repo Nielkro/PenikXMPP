@@ -77,6 +77,12 @@ import eu.siacs.conversations.entities.Message
 import eu.siacs.conversations.entities.RtpSessionStatus
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.DisposableEffect
@@ -1281,6 +1287,97 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
 }
 
 @Composable
+fun PenikImageViewer(
+        model: Any?,
+        contentDescription: String? = null,
+        onDismiss: () -> Unit
+) {
+    if (model == null) return
+    var scale by remember(model) { mutableStateOf(1f) }
+    var offsetX by remember(model) { mutableStateOf(0f) }
+    var offsetY by remember(model) { mutableStateOf(0f) }
+
+    androidx.compose.ui.window.Dialog(
+            onDismissRequest = onDismiss,
+            properties = androidx.compose.ui.window.DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false
+            )
+    ) {
+        Box(
+                modifier =
+                        Modifier.fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.96f))
+                                .clickable(
+                                        indication = null,
+                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                                ) {
+                                    if (scale <= 1.05f) onDismiss()
+                                },
+                contentAlignment = Alignment.Center
+        ) {
+            coil.compose.AsyncImage(
+                    model = model,
+                    contentDescription = contentDescription,
+                    modifier =
+                            Modifier.fillMaxSize()
+                                    .pointerInput(model) {
+                                        detectTransformGestures { _, pan, zoom, _ ->
+                                            scale = (scale * zoom).coerceIn(1f, 5f)
+                                            if (scale <= 1f) {
+                                                offsetX = 0f
+                                                offsetY = 0f
+                                            } else {
+                                                offsetX += pan.x
+                                                offsetY += pan.y
+                                            }
+                                        }
+                                    }
+                                    .pointerInput(model) {
+                                        detectTapGestures(
+                                                onDoubleTap = {
+                                                    if (scale > 1f) {
+                                                        scale = 1f
+                                                        offsetX = 0f
+                                                        offsetY = 0f
+                                                    } else {
+                                                        scale = 2.5f
+                                                    }
+                                                },
+                                                onTap = {
+                                                    if (scale <= 1.05f) {
+                                                        onDismiss()
+                                                    }
+                                                }
+                                        )
+                                    }
+                                    .offset {
+                                        IntOffset(
+                                                offsetX.toInt(),
+                                                offsetY.toInt()
+                                        )
+                                    }
+                                    .scale(scale),
+                    contentScale = ContentScale.Fit
+            )
+            androidx.compose.material3.IconButton(
+                    onClick = onDismiss,
+                    modifier =
+                            Modifier.align(Alignment.TopEnd)
+                                    .statusBarsPadding()
+                                    .padding(12.dp)
+            ) {
+                Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Закрыть",
+                        tint = Color.White
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun PenikAttachmentRow(
         message: Message,
         activity: XmppActivity,
@@ -1313,6 +1410,16 @@ fun PenikAttachmentRow(
             }
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
     var showMenu by remember(message.uuid) { mutableStateOf(false) }
+    var showImageViewer by remember(message.uuid) { mutableStateOf(false) }
+    val mime = message.mimeType ?: ""
+    val isImage = (message.type == Message.TYPE_IMAGE || mime.startsWith("image/")) && !message.isGeoUri
+
+    val service = activity.xmppConnectionService
+    val imageModel = remember(message.uuid) {
+        val file = service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+        file ?: message.fileParams?.url
+    }
+
     Box(
             modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
             contentAlignment = boxAlignment
@@ -1325,13 +1432,18 @@ fun PenikAttachmentRow(
                                 .clip(bubbleShape)
                                 .background(bgColor)
                                 .combinedClickable(
-                                        onClick = { listener.onMessageAction(PenikChatActions.OPEN, message) },
+                                        onClick = {
+                                            if (isImage) {
+                                                showImageViewer = true
+                                            } else {
+                                                listener.onMessageAction(PenikChatActions.OPEN, message)
+                                            }
+                                        },
                                         onLongClick = { showMenu = true }
                                 )
                                 .padding(10.dp)
         ) {
             Column {
-                val mime = message.mimeType ?: ""
                 if (mime.startsWith("audio/")) {
                     PenikVoiceRow(
                             message = message,
@@ -1339,9 +1451,7 @@ fun PenikAttachmentRow(
                             fgColor = fgColor,
                             textMuted = textMuted
                     )
-                } else if ((message.type == Message.TYPE_IMAGE || mime.startsWith("image/")) &&
-                                !message.isGeoUri
-                ) {
+                } else if (isImage) {
                     PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
                 } else {
                     PenikFileRow(message = message, fgColor = fgColor, textMuted = textMuted)
@@ -1388,6 +1498,17 @@ fun PenikAttachmentRow(
             )
         }
     }
+
+    if (showImageViewer) {
+        val resolvedModel = remember(message.uuid) {
+            val file = service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+            file ?: message.fileParams?.url
+        }
+        PenikImageViewer(
+                model = resolvedModel,
+                onDismiss = { showImageViewer = false }
+        )
+    }
 }
 
 @Composable
@@ -1411,6 +1532,8 @@ fun PenikUrlImageRow(
             } else {
                 ""
             }
+    var showViewer by remember(message.uuid) { mutableStateOf(false) }
+
     Box(
             modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
             contentAlignment = boxAlignment
@@ -1422,12 +1545,7 @@ fun PenikUrlImageRow(
                                 .clip(PenikBubbleShape(isSentByMe = isSentByMe))
                                 .background(bgColor)
                                 .combinedClickable(
-                                        onClick = {
-                                            listener.onMessageAction(
-                                                    PenikChatActions.OPEN_URL,
-                                                    message
-                                            )
-                                        },
+                                        onClick = { showViewer = true },
                                         onLongClick = {}
                                 )
                                 .padding(4.dp)
@@ -1461,6 +1579,13 @@ fun PenikUrlImageRow(
                 }
             }
         }
+    }
+
+    if (showViewer) {
+        PenikImageViewer(
+                model = url,
+                onDismiss = { showViewer = false }
+        )
     }
 }
 
