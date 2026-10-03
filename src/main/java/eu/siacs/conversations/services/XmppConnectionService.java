@@ -753,12 +753,14 @@ public class XmppConnectionService extends Service {
                                 && ACTION_POST_CONNECTIVITY_CHANGE.equals(action));
         final HashSet<Account> pingCandidates = new HashSet<>();
         final String androidId = pushedAccountHash == null ? null : PhoneHelper.getAndroidId(this);
+        final boolean isPushAction = ACTION_FCM_MESSAGE_RECEIVED.equals(action);
         for (final Account account : accounts) {
             final boolean pushWasMeantForThisAccount =
-                    pushedAccountHash == null
-                            || (androidId != null
-                                    && CryptoHelper.getAccountFingerprint(account, androidId)
-                                            .equals(pushedAccountHash));
+                    isPushAction
+                            && (pushedAccountHash == null
+                                    || (androidId != null
+                                            && CryptoHelper.getAccountFingerprint(account, androidId)
+                                                    .equals(pushedAccountHash)));
             if (pushWasMeantForThisAccount) {
                 if (account.isOptionSet(Account.OPTION_SOFT_DISABLED)) {
                     account.setOption(Account.OPTION_SOFT_DISABLED, false);
