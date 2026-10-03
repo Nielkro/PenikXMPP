@@ -2774,9 +2774,7 @@ public class DatabaseBackend extends SQLiteOpenHelper {
         public static boolean hasEnabledAccount(final Collection<AccountWithOptions> accounts) {
             return Iterables.any(
                     accounts,
-                    a ->
-                            !Objects.requireNonNull(a).isOptionSet(Account.OPTION_DISABLED)
-                                    && !a.isOptionSet(Account.OPTION_SOFT_DISABLED));
+                    a -> !Objects.requireNonNull(a).isOptionSet(Account.OPTION_DISABLED));
         }
 
         public static Collection<Jid> getAddresses(final Collection<AccountWithOptions> accounts) {

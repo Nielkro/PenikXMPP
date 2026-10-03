@@ -760,6 +760,10 @@ public class XmppConnectionService extends Service {
                                     && CryptoHelper.getAccountFingerprint(account, androidId)
                                             .equals(pushedAccountHash));
             if (pushWasMeantForThisAccount) {
+                if (account.isOptionSet(Account.OPTION_SOFT_DISABLED)) {
+                    account.setOption(Account.OPTION_SOFT_DISABLED, false);
+                    updateAccount(account);
+                }
                 final var manager =
                         account.getXmppConnection().getManager(PushNotificationManager.class);
                 Log.d(
