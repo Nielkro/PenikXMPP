@@ -338,28 +338,28 @@ fun PenikMainScreen(
                 }
             }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            when (tab) {
-                PenikTab.CHATS ->
-                        PenikChatsTab(
-                                state = state,
-                                activity = activity,
-                                listener = listener,
-                                searchQuery = searchQuery,
-                                isArchiveOpen = isArchiveOpen,
-                                onOpenArchive = { isArchiveOpen = true }
-                        )
-                PenikTab.CALLS -> PenikCallsTab(state = state, activity = activity, listener = listener)
-                PenikTab.PROFILE ->
-                        PenikProfileTab(
-                                state = state,
-                                activity = activity,
-                                listener = listener
-                        )
-            }
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (state.connectionState != PenikConnectionState.ONLINE) {
-                Box(modifier = Modifier.align(Alignment.TopCenter)) {
-                    ConnectionBanner(state = state.connectionState)
+                ConnectionBanner(state = state.connectionState)
+            }
+            Box(modifier = Modifier.weight(1f)) {
+                when (tab) {
+                    PenikTab.CHATS ->
+                            PenikChatsTab(
+                                    state = state,
+                                    activity = activity,
+                                    listener = listener,
+                                    searchQuery = searchQuery,
+                                    isArchiveOpen = isArchiveOpen,
+                                    onOpenArchive = { isArchiveOpen = true }
+                            )
+                    PenikTab.CALLS -> PenikCallsTab(state = state, activity = activity, listener = listener)
+                    PenikTab.PROFILE ->
+                            PenikProfileTab(
+                                    state = state,
+                                    activity = activity,
+                                    listener = listener
+                            )
                 }
             }
         }
@@ -602,7 +602,7 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
                                 bitmap = loadedThumb.asImageBitmap(),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
+                                modifier = Modifier.size(18.dp).clip(RoundedCornerShape(4.dp))
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
