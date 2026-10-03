@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -1415,7 +1416,7 @@ fun PenikAttachmentRow(
     val isImage = (message.type == Message.TYPE_IMAGE || mime.startsWith("image/")) && !message.isGeoUri
 
     val service = activity.xmppConnectionService
-    val imageModel = remember(message.uuid) {
+    val resolvedModel = remember(message.uuid) {
         val file = service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
         file ?: message.fileParams?.url
     }
@@ -1424,63 +1425,104 @@ fun PenikAttachmentRow(
             modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
             contentAlignment = boxAlignment
     ) {
-        val bubbleShape = PenikBubbleShape(isSentByMe = isSentByMe)
-        Box(
-                modifier =
-                        Modifier.padding(horizontal = 12.dp)
-                                .widthIn(max = 300.dp)
-                                .clip(bubbleShape)
-                                .background(bgColor)
-                                .combinedClickable(
-                                        onClick = {
-                                            if (isImage) {
-                                                showImageViewer = true
-                                            } else {
-                                                listener.onMessageAction(PenikChatActions.OPEN, message)
-                                            }
-                                        },
-                                        onLongClick = { showMenu = true }
-                                )
-                                .padding(10.dp)
-        ) {
-            Column {
-                if (mime.startsWith("audio/")) {
-                    PenikVoiceRow(
-                            message = message,
-                            activity = activity,
-                            fgColor = fgColor,
-                            textMuted = textMuted
-                    )
-                } else if (isImage) {
-                    PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
-                } else {
-                    PenikFileRow(message = message, fgColor = fgColor, textMuted = textMuted)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                        modifier = Modifier.align(Alignment.End),
-                        verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (timeText.isNotEmpty()) {
-                        Text(text = timeText, color = textMuted, fontSize = 11.sp)
+        if (isImage) {
+            Box(
+                    modifier =
+                            Modifier.padding(horizontal = 12.dp)
+                                    .widthIn(max = 280.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0x15FFFFFF))
+                                    .combinedClickable(
+                                            onClick = { showImageViewer = true },
+                                            onLongClick = { showMenu = true }
+                                    )
+            ) {
+                PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
+                if (timeText.isNotEmpty()) {
+                    Box(
+                            modifier =
+                                    Modifier.align(Alignment.BottomEnd)
+                                            .padding(6.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color.Black.copy(alpha = 0.55f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = timeText, fontSize = 10.sp, color = Color.White)
+                            if (isSentByMe) {
+                                if (message.status == Message.STATUS_SEND_FAILED) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                            text = "!",
+                                            color = danger,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold
+                                    )
+                                } else if (ticks.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    PenikTicksIcon(
+                                            double = ticks.length > 1,
+                                            read = message.status == Message.STATUS_SEND_DISPLAYED,
+                                            tint = Color.White.copy(alpha = 0.8f),
+                                            accent = Color.White
+                                    )
+                                }
+                            }
+                        }
                     }
-                    if (isSentByMe) {
-                        if (message.status == Message.STATUS_SEND_FAILED) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                    text = "!",
-                                    color = danger,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                            )
-                        } else if (ticks.isNotEmpty()) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            PenikTicksIcon(
-                                    double = ticks.length > 1,
-                                    read = message.status == Message.STATUS_SEND_DISPLAYED,
-                                    tint = textMuted,
-                                    accent = accent
-                            )
+                }
+            }
+        } else {
+            val bubbleShape = PenikBubbleShape(isSentByMe = isSentByMe)
+            Box(
+                    modifier =
+                            Modifier.padding(horizontal = 12.dp)
+                                    .widthIn(max = 300.dp)
+                                    .clip(bubbleShape)
+                                    .background(bgColor)
+                                    .combinedClickable(
+                                            onClick = { listener.onMessageAction(PenikChatActions.OPEN, message) },
+                                            onLongClick = { showMenu = true }
+                                    )
+                                    .padding(10.dp)
+            ) {
+                Column {
+                    if (mime.startsWith("audio/")) {
+                        PenikVoiceRow(
+                                message = message,
+                                activity = activity,
+                                fgColor = fgColor,
+                                textMuted = textMuted
+                        )
+                    } else {
+                        PenikFileRow(message = message, fgColor = fgColor, textMuted = textMuted)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                            modifier = Modifier.align(Alignment.End),
+                            verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (timeText.isNotEmpty()) {
+                            Text(text = timeText, color = textMuted, fontSize = 11.sp)
+                        }
+                        if (isSentByMe) {
+                            if (message.status == Message.STATUS_SEND_FAILED) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                        text = "!",
+                                        color = danger,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                )
+                            } else if (ticks.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                PenikTicksIcon(
+                                        double = ticks.length > 1,
+                                        read = message.status == Message.STATUS_SEND_DISPLAYED,
+                                        tint = textMuted,
+                                        accent = accent
+                                )
+                            }
                         }
                     }
                 }
@@ -1500,12 +1542,9 @@ fun PenikAttachmentRow(
     }
 
     if (showImageViewer) {
-        val resolvedModel = remember(message.uuid) {
-            val file = service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
-            file ?: message.fileParams?.url
-        }
+        val fallbackModel = resolvedModel ?: runCatching { service?.fileBackend?.getThumbnail(message, 1280, false) }.getOrNull()
         PenikImageViewer(
-                model = resolvedModel,
+                model = fallbackModel,
                 onDismiss = { showImageViewer = false }
         )
     }
@@ -1519,11 +1558,6 @@ fun PenikUrlImageRow(
         listener: PenikChatListener
 ) {
     val context = LocalContext.current
-    val sentBg = colorResource(R.color.penik_sent_message_bg)
-    val recvBg = colorResource(R.color.penik_recv_message_bg)
-    val textMuted = colorResource(R.color.penik_text_muted)
-    val accent = colorResource(R.color.penik_accent)
-    val bgColor = if (isSentByMe) sentBg else recvBg
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
     val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
     val timeText =
@@ -1533,6 +1567,7 @@ fun PenikUrlImageRow(
                 ""
             }
     var showViewer by remember(message.uuid) { mutableStateOf(false) }
+    var showMenu by remember(message.uuid) { mutableStateOf(false) }
 
     Box(
             modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
@@ -1541,43 +1576,54 @@ fun PenikUrlImageRow(
         Box(
                 modifier =
                         Modifier.padding(horizontal = 12.dp)
-                                .widthIn(max = 300.dp)
-                                .clip(PenikBubbleShape(isSentByMe = isSentByMe))
-                                .background(bgColor)
+                                .widthIn(max = 280.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x15FFFFFF))
                                 .combinedClickable(
                                         onClick = { showViewer = true },
-                                        onLongClick = {}
+                                        onLongClick = { showMenu = true }
                                 )
-                                .padding(4.dp)
         ) {
-            Column {
-                coil.compose.AsyncImage(
-                        model = url,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
+            coil.compose.AsyncImage(
+                    model = url,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.width(280.dp).heightIn(min = 120.dp, max = 360.dp)
+            )
+            if (timeText.isNotEmpty()) {
+                Box(
                         modifier =
-                                Modifier.width(260.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                        modifier = Modifier.align(Alignment.End),
-                        verticalAlignment = Alignment.CenterVertically
+                                Modifier.align(Alignment.BottomEnd)
+                                        .padding(6.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color.Black.copy(alpha = 0.55f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
-                    if (timeText.isNotEmpty()) {
-                        Text(text = timeText, color = textMuted, fontSize = 11.sp)
-                    }
-                    if (isSentByMe && message.status == Message.STATUS_SEND_DISPLAYED) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        PenikTicksIcon(
-                                double = true,
-                                read = true,
-                                tint = textMuted,
-                                accent = accent
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = timeText, fontSize = 10.sp, color = Color.White)
+                        if (isSentByMe && message.status == Message.STATUS_SEND_DISPLAYED) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            PenikTicksIcon(
+                                    double = true,
+                                    read = true,
+                                    tint = Color.White.copy(alpha = 0.8f),
+                                    accent = Color.White
+                            )
+                        }
                     }
                 }
             }
+        }
+        if (showMenu) {
+            PenikMessageMenu(
+                    message = message,
+                    isSentByMe = isSentByMe,
+                    onDismiss = { showMenu = false },
+                    onAction = {
+                        showMenu = false
+                        listener.onMessageAction(it, message)
+                    }
+            )
         }
     }
 
@@ -1593,8 +1639,11 @@ fun PenikUrlImageRow(
 fun PenikImageThumb(message: Message, activity: XmppActivity, fgColor: Color) {
     val service = activity.xmppConnectionService
     var bitmap by remember(message.uuid) { mutableStateOf<Bitmap?>(null) }
+    val localFile = remember(message.uuid) {
+        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+    }
     LaunchedEffect(message.uuid) {
-        if (service == null) {
+        if (service == null || localFile != null) {
             return@LaunchedEffect
         }
         bitmap =
@@ -1614,19 +1663,33 @@ fun PenikImageThumb(message: Message, activity: XmppActivity, fgColor: Color) {
             } else {
                 0f
             }
-    if (loaded != null) {
+    val modifier =
+            if (aspect > 0f) {
+                Modifier.width(280.dp).aspectRatio(aspect)
+            } else {
+                Modifier.widthIn(max = 280.dp).heightIn(min = 120.dp, max = 360.dp)
+            }
+
+    if (localFile != null) {
+        coil.compose.AsyncImage(
+                model = localFile,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = modifier
+        )
+    } else if (loaded != null) {
         Image(
                 bitmap = loaded.asImageBitmap(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier =
-                        if (aspect > 0f) {
-                            Modifier.width(260.dp)
-                                    .aspectRatio(aspect)
-                                    .clip(RoundedCornerShape(8.dp))
-                        } else {
-                            Modifier.widthIn(max = 280.dp).clip(RoundedCornerShape(8.dp))
-                        }
+                modifier = modifier
+        )
+    } else if (params?.url != null) {
+        coil.compose.AsyncImage(
+                model = params.url,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = modifier
         )
     } else {
         PenikFileRow(
