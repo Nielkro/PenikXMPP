@@ -37,7 +37,7 @@
     <bool name="send_crash_reports">true</bool>
     <bool name="validate_hostname">false</bool>
     <bool name="scroll_to_bottom">true</bool>
-    <string name="omemo_setting_default">default_on</string>
+    <string name="omemo_setting_default">default_off</string>
     <bool name="start_searching">false</bool>
     <string name="video_compression">480</string>
     <string name="default_channel_discovery">JABBER_NETWORK</string>

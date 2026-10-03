@@ -788,6 +788,10 @@ public class Conversation extends AbstractEntity
         if (contact != null && contact.isSelf()) {
             return Message.ENCRYPTION_NONE;
         }
+        if (!eu.siacs.conversations.crypto.OmemoSetting.isAlways()
+                && eu.siacs.conversations.crypto.OmemoSetting.getEncryption() == Message.ENCRYPTION_NONE) {
+            return Message.ENCRYPTION_NONE;
+        }
         final var encryption = this.attributes.nextEncryption;
         if (encryption == null || encryption == Message.ENCRYPTION_OTR) {
             return Message.ENCRYPTION_NONE;

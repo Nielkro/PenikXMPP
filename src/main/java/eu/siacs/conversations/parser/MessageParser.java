@@ -144,6 +144,10 @@ public class MessageParser extends AbstractParser
     }
 
     private void followPeerEncryption(final Conversation conversation) {
+        if (eu.siacs.conversations.crypto.OmemoSetting.getEncryption() != Message.ENCRYPTION_AXOLOTL
+                && !eu.siacs.conversations.crypto.OmemoSetting.isAlways()) {
+            return;
+        }
         if (conversation.getNextEncryption() == Message.ENCRYPTION_AXOLOTL) {
             return;
         }

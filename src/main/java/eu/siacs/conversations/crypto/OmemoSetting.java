@@ -37,7 +37,7 @@ import eu.siacs.conversations.entities.Message;
 public class OmemoSetting {
 
     private static boolean always = false;
-    private static int encryption = Message.ENCRYPTION_AXOLOTL;
+    private static int encryption = Message.ENCRYPTION_NONE;
 
     public static boolean isAlways() {
         return always;
@@ -55,13 +55,14 @@ public class OmemoSetting {
                 always = true;
                 encryption = Message.ENCRYPTION_AXOLOTL;
                 break;
-            case "default_off":
-                always = false;
-                encryption = Message.ENCRYPTION_NONE;
-                break;
-            default:
+            case "default_on":
                 always = false;
                 encryption = Message.ENCRYPTION_AXOLOTL;
+                break;
+            case "default_off":
+            default:
+                always = false;
+                encryption = Message.ENCRYPTION_NONE;
                 break;
         }
     }
