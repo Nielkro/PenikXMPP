@@ -784,6 +784,10 @@ public class Conversation extends AbstractEntity
     }
 
     public int getNextEncryption() {
+        final var contact = getContact();
+        if (contact != null && contact.isSelf()) {
+            return Message.ENCRYPTION_NONE;
+        }
         final var encryption = this.attributes.nextEncryption;
         if (encryption == null || encryption == Message.ENCRYPTION_OTR) {
             return Message.ENCRYPTION_NONE;

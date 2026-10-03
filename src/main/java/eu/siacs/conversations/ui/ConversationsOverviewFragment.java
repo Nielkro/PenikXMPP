@@ -601,13 +601,18 @@ public class ConversationsOverviewFragment extends XmppFragment {
             if (c.getStatus() == Conversation.STATUS_ARCHIVED) {
                 archived.add(c);
             } else {
-                main.add(c);
-                if (self == null
-                        && c.getMode() == Conversation.MODE_SINGLE
-                        && c.getContact() != null
-                        && c.getContact().isSelf()) {
-                    self = c;
+                final var contact = c.getContact();
+                final boolean isSelfChat =
+                        c.getMode() == Conversation.MODE_SINGLE
+                                && contact != null
+                                && contact.isSelf();
+                if (isSelfChat) {
+                    if (self == null) {
+                        self = c;
+                    }
+                    continue;
                 }
+                main.add(c);
             }
         }
         boolean online = false;
