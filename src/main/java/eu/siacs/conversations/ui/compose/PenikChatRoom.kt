@@ -75,9 +75,13 @@ import eu.siacs.conversations.entities.Conversation
 import eu.siacs.conversations.entities.Conversational
 import eu.siacs.conversations.entities.Message
 import eu.siacs.conversations.entities.RtpSessionStatus
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import java.io.File
 import kotlinx.coroutines.delay
 import eu.siacs.conversations.ui.XmppActivity
@@ -1041,7 +1045,100 @@ object PenikVoicePlayer {
 
 fun penikFormatVoiceTime(ms: Int): String {
     val totalSec = ms / 1000
-    return "%d:%02d".format(totalSec / 60, totalSec % 60)
+    return "%02d:%02d".format(totalSec / 60, totalSec % 60)
+}
+
+fun generateVoiceWaveform(seed: String, barCount: Int = 45): List<Float> {
+    val rng = kotlin.random.Random(seed.hashCode())
+    val result = ArrayList<Float>(barCount)
+    var current = 0.25f
+    for (i in 0 until barCount) {
+        val trend = (kotlin.math.sin(i * 0.35) * 0.35 + 0.45).toFloat()
+        val noise = rng.nextFloat() * 0.4f - 0.2f
+        val peakChance = rng.nextFloat()
+        val amp = when {
+            peakChance > 0.82f -> rng.nextFloat() * 0.45f + 0.55f
+            peakChance < 0.12f -> rng.nextFloat() * 0.12f + 0.08f
+            else -> (current * 0.25f + (trend + noise) * 0.75f).coerceIn(0.12f, 0.95f)
+        }
+        current = amp
+        result.add(amp.coerceIn(0.1f, 1.0f))
+    }
+    return result
+}
+
+@Composable
+fun PenikWaveform(
+        progress: Float,
+        amplitudes: List<Float>,
+        activeColor: Color,
+        inactiveColor: Color,
+        onSeek: (Float) -> Unit,
+        modifier: Modifier = Modifier
+) {
+    val barWidthDp = 2.5.dp
+    val barGapDp = 1.5.dp
+
+    Canvas(
+            modifier =
+                    modifier
+                            .pointerInput(Unit) {
+                                detectTapGestures { offset ->
+                                    if (size.width > 0) {
+                                        onSeek((offset.x / size.width).coerceIn(0f, 1f))
+                                    }
+                                }
+                            }
+                            .pointerInput(Unit) {
+                                detectHorizontalDragGestures { change, _ ->
+                                    change.consume()
+                                    if (size.width > 0) {
+                                        onSeek((change.position.x / size.width).coerceIn(0f, 1f))
+                                    }
+                                }
+                            }
+    ) {
+        val totalWidth = size.width
+        val maxHeight = size.height
+        val minBarHeight = 3.dp.toPx()
+        val barWidthPx = barWidthDp.toPx()
+        val barGapPx = barGapDp.toPx()
+        val stepPx = barWidthPx + barGapPx
+        if (stepPx <= 0 || totalWidth <= 0) return@Canvas
+
+        val maxBars = (totalWidth / stepPx).toInt()
+        if (maxBars <= 0) return@Canvas
+
+        val progressX = progress * totalWidth
+
+        for (i in 0 until maxBars) {
+            val x = i * stepPx + barWidthPx / 2f
+            val amp =
+                    if (amplitudes.isNotEmpty()) {
+                        val idx = (i * amplitudes.size / maxBars).coerceIn(0, amplitudes.size - 1)
+                        amplitudes[idx]
+                    } else {
+                        0.25f
+                    }
+            val barHeight =
+                    (minBarHeight + amp * (maxHeight - minBarHeight)).coerceIn(
+                            minBarHeight,
+                            maxHeight
+                    )
+            val startY = (maxHeight - barHeight) / 2f
+            val endY = startY + barHeight
+
+            val color = if (x <= progressX) activeColor else inactiveColor
+
+            drawLine(
+                    color = color,
+                    start = Offset(x, startY),
+                    end = Offset(x, endY),
+                    strokeWidth = barWidthPx,
+                    cap = StrokeCap.Round
+            )
+        }
+    }
 }
 
 @Composable
@@ -1068,21 +1165,36 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
                 if (runtime > 0) runtime * 1000 else 0
             }
     val playingThis = PenikVoicePlayer.currentUuid == uuid && PenikVoicePlayer.isPlaying
-    val progress =
+    val progressMs =
             if (PenikVoicePlayer.currentUuid == uuid) {
                 PenikVoicePlayer.progressMs
             } else {
                 0
             }
-    val duration =
+    val durationMs =
             if (PenikVoicePlayer.currentUuid == uuid && PenikVoicePlayer.durationMs > 0) {
                 PenikVoicePlayer.durationMs
             } else {
                 runtimeMs
             }
+    val progressFraction =
+            if (durationMs > 0) {
+                (progressMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+            } else {
+                0f
+            }
+    val waveform = remember(message.uuid) { generateVoiceWaveform(message.uuid, 45) }
+    val fileSizeStr = remember(file) {
+        try {
+            UIHelper.filesizeToString(file.length())
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
     LaunchedEffect(playingThis, uuid) {
         while (PenikVoicePlayer.currentUuid == uuid && PenikVoicePlayer.isPlaying) {
-            delay(250)
+            delay(100)
             PenikVoicePlayer.progressMs = PenikVoicePlayer.position()
         }
     }
@@ -1093,10 +1205,13 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
             }
         }
     }
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+    ) {
         Box(
                 modifier =
-                        Modifier.size(44.dp)
+                        Modifier.size(42.dp)
                                 .clip(CircleShape)
                                 .background(accent)
                                 .clickable {
@@ -1117,23 +1232,33 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Slider(
-                    value = progress.toFloat(),
-                    onValueChange = { PenikVoicePlayer.seekTo(it.toInt()) },
-                    valueRange = 0f..(if (duration > 0) duration.toFloat() else 1f),
-                    enabled = duration > 0,
-                    colors =
-                            SliderDefaults.colors(
-                                    thumbColor = accent,
-                                    activeTrackColor = accent,
-                                    inactiveTrackColor = textMuted.copy(alpha = 0.4f)
-                            )
+            PenikWaveform(
+                    progress = progressFraction,
+                    amplitudes = waveform,
+                    activeColor = accent,
+                    inactiveColor = accent.copy(alpha = 0.35f),
+                    onSeek = { fraction ->
+                        if (durationMs > 0) {
+                            val seekMs = (fraction * durationMs).toInt()
+                            PenikVoicePlayer.seekTo(seekMs)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(26.dp)
             )
+            Spacer(modifier = Modifier.height(3.dp))
+            val displayTimeMs = if (playingThis || progressMs > 0) progressMs else durationMs
+            val timeAndSizeText = buildString {
+                append(penikFormatVoiceTime(displayTimeMs))
+                if (fileSizeStr.isNotEmpty()) {
+                    append(", ")
+                    append(fileSizeStr)
+                }
+            }
             Text(
-                    text =
-                            "${penikFormatVoiceTime(progress)} / ${penikFormatVoiceTime(duration)}",
+                    text = timeAndSizeText,
                     color = textMuted,
-                    fontSize = 12.sp
+                    fontSize = 11.sp,
+                    maxLines = 1
             )
         }
     }
