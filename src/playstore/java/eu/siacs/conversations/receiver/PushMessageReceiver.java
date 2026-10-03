@@ -21,25 +21,17 @@ public class PushMessageReceiver extends BroadcastReceiver {
             return;
         }
         final var extras = intent.getExtras();
-        if (extras == null) {
-            Log.d(Config.LOGTAG, "PushMessageReceiver got woken up without extras");
-            return;
-        }
+        Log.d(Config.LOGTAG, "PushMessageReceiver.onReceive: action=" + intent.getAction() + ", extras=" + extras);
         switch (Strings.nullToEmpty(intent.getAction())) {
             case PushManagementService.ACTION_REGISTRATION -> onNewToken(context, extras);
             case PushManagementService.ACTION_RECEIVE -> onMessageReceived(context, extras);
+            default -> Log.d(Config.LOGTAG, "PushMessageReceiver unhandled action: " + intent.getAction());
         }
     }
 
     private void onMessageReceived(final Context context, final Bundle extras) {
-        if (!Conversations.getInstance(context.getApplicationContext()).hasEnabledAccount()) {
-            Log.d(
-                    Config.LOGTAG,
-                    "PushMessageReceiver ignored message because no accounts are enabled");
-            return;
-        }
         final var account = extras == null ? null : extras.getString("account");
-        Log.d(Config.LOGTAG, "PushMessageReceiver received push notification. waking up service");
+        Log.d(Config.LOGTAG, "PushMessageReceiver received push notification. waking up service (account=" + account + ")");
         final Intent intent = new Intent(context, XmppConnectionService.class);
         intent.setAction(XmppConnectionService.ACTION_FCM_MESSAGE_RECEIVED);
         if (!Strings.isNullOrEmpty(account)) {
