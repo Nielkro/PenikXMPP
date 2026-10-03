@@ -2,6 +2,7 @@ package eu.siacs.conversations.ui.compose
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -59,6 +60,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -545,20 +547,51 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
     val latest = selfChat?.latestMessage
+    val service = activity.xmppConnectionService
+    val isImage =
+            latest != null &&
+                    (latest.type == Message.TYPE_IMAGE ||
+                            (latest.mimeType?.startsWith("image/") == true)) &&
+                    !latest.isGeoUri
+    var thumb by remember(latest?.uuid) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(latest?.uuid) {
+        if (!isImage || service == null || latest == null) {
+            thumb = null
+            return@LaunchedEffect
+        }
+        thumb =
+                withContext(Dispatchers.IO) {
+                    try {
+                        service.fileBackend.getThumbnail(latest, 256, false)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+    }
     Row(
             modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-                modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF5FA8DF)),
-                contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                    imageVector = Icons.Default.Bookmark,
+        val loadedThumb = thumb
+        if (loadedThumb != null) {
+            Image(
+                    bitmap = loadedThumb.asImageBitmap(),
                     contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
             )
+        } else {
+            Box(
+                    modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF5FA8DF)),
+                    contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                        imageVector = Icons.Default.Bookmark,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                )
+            }
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
