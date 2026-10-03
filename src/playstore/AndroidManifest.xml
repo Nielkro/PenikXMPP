@@ -19,7 +19,7 @@
     <application android:icon="@mipmap/new_launcher">
 
         <service
-            android:name=".receiver.PushMessageReceiver"
+            android:name="eu.siacs.conversations.receiver.PushMessageReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
