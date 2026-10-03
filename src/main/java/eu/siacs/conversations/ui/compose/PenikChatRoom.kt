@@ -1464,7 +1464,7 @@ fun PenikAttachmentRow(
                                             double = ticks.length > 1,
                                             read = message.status == Message.STATUS_SEND_DISPLAYED,
                                             tint = Color.White.copy(alpha = 0.8f),
-                                            accent = Color.White
+                                            accent = accent
                                     )
                                 }
                             }
@@ -1559,6 +1559,7 @@ fun PenikUrlImageRow(
 ) {
     val context = LocalContext.current
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
+    val accent = colorResource(R.color.penik_accent)
     val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
     val timeText =
             if (message.timeSent > 0) {
@@ -1607,7 +1608,7 @@ fun PenikUrlImageRow(
                                     double = true,
                                     read = true,
                                     tint = Color.White.copy(alpha = 0.8f),
-                                    accent = Color.White
+                                    accent = accent
                             )
                         }
                     }
