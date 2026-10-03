@@ -266,7 +266,12 @@ fun PenikChatRoom(
             listState.firstVisibleItemIndex > 2
         }
     }
-    LaunchedEffect(rows.size, rows.firstOrNull()) {
+    val lastVisibleIndex by remember {
+        derivedStateOf {
+            listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+        }
+    }
+    LaunchedEffect(rows.firstOrNull()) {
         if (listState.firstVisibleItemIndex <= 2 && rows.isNotEmpty()) {
             listState.scrollToItem(0)
         }
@@ -275,10 +280,12 @@ fun PenikChatRoom(
             listener.onBottomVisible(newest.message.uuid)
         }
     }
-    LaunchedEffect(listState.firstVisibleItemIndex, rows.size) {
-        if (rows.isNotEmpty() && listState.firstVisibleItemIndex >= rows.size - 5) {
+    LaunchedEffect(lastVisibleIndex, rows.size) {
+        if (rows.isNotEmpty() && lastVisibleIndex >= rows.size - 5) {
             listener.onLoadMore()
         }
+    }
+    LaunchedEffect(listState.firstVisibleItemIndex) {
         val newest = rows.firstOrNull()
         if (newest is ChatRow.Msg && listState.firstVisibleItemIndex == 0) {
             listener.onBottomVisible(newest.message.uuid)
