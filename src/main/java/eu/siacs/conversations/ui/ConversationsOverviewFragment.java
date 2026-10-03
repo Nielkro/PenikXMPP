@@ -408,6 +408,16 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     public void onEditAvatar() {
                         ConversationsOverviewFragment.this.editAvatar();
                     }
+
+                    @Override
+                    public void onLogout() {
+                        ConversationsOverviewFragment.this.logout();
+                    }
+
+                    @Override
+                    public void onPublishAvatar(final android.net.Uri uri) {
+                        ConversationsOverviewFragment.this.publishAvatar(uri);
+                    }
                 });
         return binding.getRoot();
     }
@@ -669,6 +679,33 @@ public class ConversationsOverviewFragment extends XmppFragment {
             return;
         }
         final var intent = new Intent(requireContext(), PublishProfilePictureActivity.class);
+        intent.putExtra(
+                XmppActivity.EXTRA_ACCOUNT, account.getJid().asBareJid().toString());
+        startActivity(intent);
+    }
+
+    public void logout() {
+        final var service = requireXmppActivity().xmppConnectionService;
+        final Account account = this.penikChatsState.getAccount();
+        if (service == null || account == null) {
+            return;
+        }
+        account.setOption(Account.OPTION_DISABLED, true);
+        service.updateAccount(account);
+        refresh();
+    }
+
+    public void publishAvatar(final android.net.Uri uri) {
+        final Account account = this.penikChatsState.getAccount();
+        if (account == null || uri == null) {
+            return;
+        }
+        final var intent =
+                new Intent(
+                        Intent.ACTION_ATTACH_DATA,
+                        uri,
+                        requireContext(),
+                        PublishProfilePictureActivity.class);
         intent.putExtra(
                 XmppActivity.EXTRA_ACCOUNT, account.getJid().asBareJid().toString());
         startActivity(intent);

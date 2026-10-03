@@ -29,6 +29,9 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -87,6 +90,8 @@ interface PenikChatsListener {
     fun onOpenSettings()
     fun onNewChat()
     fun onEditAvatar()
+    fun onLogout()
+    fun onPublishAvatar(uri: android.net.Uri)
 }
 
 class PenikChatsState {
@@ -156,7 +161,7 @@ fun PenikMainScreen(
     Scaffold(
             containerColor = background,
             topBar = {
-                Column {
+                if (tab == PenikTab.CHATS) {
                     TopAppBar(
                             title = {
                                 if (isSearchActive) {
@@ -194,33 +199,18 @@ fun PenikMainScreen(
                                                             unfocusedTextColor = textPrimary
                                                     )
                                     )
-                                } else if (isArchiveOpen && tab == PenikTab.CHATS) {
+                                } else if (isArchiveOpen) {
                                     Text(
                                             text = "Архив чатов",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 20.sp
                                     )
                                 } else {
-                                    Column {
-                                        Text(
-                                                text = "Penik",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 22.sp
-                                        )
-                                        if (state.connectionState == PenikConnectionState.CONNECTING) {
-                                            Text(
-                                                    text = "подключение...",
-                                                    fontSize = 12.sp,
-                                                    color = textMuted
-                                            )
-                                        } else if (state.connectionState == PenikConnectionState.OFFLINE) {
-                                            Text(
-                                                    text = "ожидание сети",
-                                                    fontSize = 12.sp,
-                                                    color = textMuted
-                                            )
-                                        }
-                                    }
+                                    Text(
+                                            text = "Penik",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 22.sp
+                                    )
                                 }
                             },
                             navigationIcon = {
@@ -237,7 +227,7 @@ fun PenikMainScreen(
                                                 tint = textPrimary
                                         )
                                     }
-                                } else if (isArchiveOpen && tab == PenikTab.CHATS) {
+                                } else if (isArchiveOpen) {
                                     IconButton(onClick = { isArchiveOpen = false }) {
                                         Icon(
                                                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -271,9 +261,6 @@ fun PenikMainScreen(
                                             titleContentColor = textPrimary
                                     )
                     )
-                    if (state.connectionState != PenikConnectionState.ONLINE) {
-                        ConnectionBanner(state = state.connectionState)
-                    }
                 }
             },
             bottomBar = {
@@ -368,6 +355,11 @@ fun PenikMainScreen(
                                 listener = listener
                         )
             }
+            if (state.connectionState != PenikConnectionState.ONLINE) {
+                Box(modifier = Modifier.align(Alignment.TopCenter)) {
+                    ConnectionBanner(state = state.connectionState)
+                }
+            }
         }
     }
 }
@@ -431,10 +423,6 @@ fun PenikChatsTab(
                                 onClick = { listener.onConversationClick(conversation) },
                                 onLongClick = { pendingUnarchive = conversation }
                         )
-                        HorizontalDivider(
-                                color = border,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                        )
                     }
                 }
             }
@@ -480,10 +468,6 @@ fun PenikChatsTab(
                                 activity = activity,
                                 onClick = { listener.onConversationClick(conversation) },
                                 onLongClick = { pendingArchive = conversation }
-                        )
-                        HorizontalDivider(
-                                color = border,
-                                modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     }
                 }
@@ -835,6 +819,24 @@ fun PenikAvatarImage(name: String, bitmap: Bitmap?) {
 
 data class PenikCallEntry(val conversation: Conversation, val message: Message)
 
+fun penikCallDuration(rawDuration: Long): String {
+    if (rawDuration <= 0) {
+        return ""
+    }
+    val seconds = if (rawDuration > 24 * 3600) rawDuration / 1000 else rawDuration
+    if (seconds <= 0 || seconds > 24 * 3600) {
+        return ""
+    }
+    val m = seconds / 60
+    val s = seconds % 60
+    return if (m == 0L) {
+        "$s сек"
+    } else {
+        "$m мин" + (if (s > 0) " $s сек" else "")
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PenikCallsTab(
         state: PenikChatsState,
@@ -874,6 +876,20 @@ fun PenikCallsTab(
         loaded = true
     }
     Column(modifier = Modifier.fillMaxSize().background(background)) {
+        TopAppBar(
+                title = {
+                    Text(
+                            text = "Звонки",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 22.sp
+                    )
+                },
+                colors =
+                        TopAppBarDefaults.topAppBarColors(
+                                containerColor = background,
+                                titleContentColor = colorResource(R.color.penik_text_primary)
+                        )
+        )
         if (!loaded) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(text = "Загрузка...", color = textMuted, fontSize = 16.sp)
@@ -910,10 +926,8 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
     val missed = !status.successful
     val avatarBitmap = penikAvatarBitmap(conversation, activity)
     val durationText =
-            if (status.successful && status.duration > 0) {
-                val minutes = status.duration / 60
-                val seconds = status.duration % 60
-                "%d:%02d".format(minutes, seconds)
+            if (status.successful) {
+                penikCallDuration(status.duration)
             } else {
                 ""
             }
@@ -957,15 +971,49 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: PenikChatsListener) {
     val background = colorResource(R.color.penik_background)
+    val panel = colorResource(R.color.penik_panel)
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
     val accent = colorResource(R.color.penik_accent)
+    val danger = colorResource(R.color.penik_danger)
+    val context = LocalContext.current
     val account = state.account
+    var showAvatarOptions by remember { mutableStateOf(false) }
+    var tempCameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    val galleryLauncher =
+            rememberLauncherForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts.GetContent()
+            ) { uri ->
+                if (uri != null) {
+                    listener.onPublishAvatar(uri)
+                }
+            }
+    val permissionLauncher =
+            rememberLauncherForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                if (granted) {
+                    launchPenikCamera(context) { tempCameraUri = it }
+                            ?.let { galleryLauncher.launch("") }
+                }
+            }
+    val cameraLauncher =
+            rememberLauncherForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts.TakePicture()
+            ) { success ->
+                val uri = tempCameraUri
+                if (success && uri != null) {
+                    listener.onPublishAvatar(uri)
+                }
+            }
     Column(
-            modifier = Modifier.fillMaxSize().background(background).padding(24.dp),
+            modifier =
+                    Modifier.fillMaxSize().background(background).padding(horizontal = 24.dp)
+                            .padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (account == null) {
@@ -991,48 +1039,188 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                         }
                     }
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        val loaded = bitmap
-        val avatarModifier = Modifier.size(96.dp).clip(CircleShape).clickable(onClick = { listener.onEditAvatar() })
-        if (loaded != null) {
-            androidx.compose.foundation.Image(
-                    bitmap = loaded.asImageBitmap(),
-                    contentDescription = "Сменить аватар",
-                    modifier = avatarModifier
-            )
-        } else {
-            val local = JidHelper.displayAddress(account.jid.asBareJid())
+        Spacer(modifier = Modifier.height(40.dp))
+        Box(modifier = Modifier.size(104.dp), contentAlignment = Alignment.Center) {
+            val loaded = bitmap
             Box(
-                    modifier = avatarModifier.background(penikInitialsColor(local)),
+                    modifier =
+                            Modifier.size(96.dp)
+                                    .clip(CircleShape)
+                                    .clickable { showAvatarOptions = true },
                     contentAlignment = Alignment.Center
             ) {
-                Text(
-                        text = local.firstOrNull()?.uppercase() ?: "?",
-                        color = Color.White,
-                        fontSize = 40.sp,
-                        fontWeight = FontWeight.SemiBold
+                if (loaded != null) {
+                    androidx.compose.foundation.Image(
+                            bitmap = loaded.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    val local = JidHelper.displayAddress(account.jid.asBareJid())
+                    Box(
+                            modifier =
+                                    Modifier.fillMaxSize()
+                                            .background(penikInitialsColor(local)),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                                text = local.firstOrNull()?.uppercase() ?: "?",
+                                color = Color.White,
+                                fontSize = 40.sp,
+                                fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+            Box(
+                    modifier =
+                            Modifier.align(Alignment.BottomEnd)
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(accent)
+                                    .clickable { showAvatarOptions = true },
+                    contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                        painter = painterResource(R.drawable.ic_camera_alt_24dp),
+                        contentDescription = "Сменить аватар",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
                 )
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-                text = JidHelper.displayAddress(account.jid.asBareJid()),
-                color = textPrimary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        val online = account.status == Account.State.ONLINE
-        Text(
-                text = if (online) "В сети" else "Не в сети",
-                color = if (online) accent else textMuted,
-                fontSize = 14.sp
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-                text = "Нажмите на аватар, чтобы сменить его",
-                color = textMuted,
-                fontSize = 13.sp
-        )
+        Spacer(modifier = Modifier.height(20.dp))
+        val local = JidHelper.displayAddress(account.jid.asBareJid())
+        if (local.isNotBlank()) {
+            Text(
+                    text = local,
+                    color = textPrimary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        androidx.compose.material3.Button(
+                onClick = { listener.onLogout() },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors =
+                        androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = danger.copy(alpha = 0.15f)
+                        )
+        ) {
+            Text(
+                    text = "Выйти",
+                    color = danger,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+            )
+        }
+    }
+    if (showAvatarOptions) {
+        ModalBottomSheet(
+                onDismissRequest = { showAvatarOptions = false },
+                containerColor = panel,
+                dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            Column(
+                    modifier =
+                            Modifier.fillMaxWidth()
+                                    .padding(horizontal = 24.dp)
+                                    .padding(bottom = 32.dp, top = 8.dp)
+            ) {
+                Text(
+                        text = "Фотография профиля",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                )
+                Row(
+                        modifier =
+                                Modifier.fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            showAvatarOptions = false
+                                            if (context.checkSelfPermission(
+                                                            android.Manifest.permission.CAMERA
+                                                    ) ==
+                                                    android.content.pm.PackageManager
+                                                            .PERMISSION_GRANTED
+                                            ) {
+                                                launchPenikCamera(context) { tempCameraUri = it }
+                                                        ?.let { cameraLauncher.launch(it) }
+                                            } else {
+                                                permissionLauncher.launch(
+                                                        android.Manifest.permission.CAMERA
+                                                )
+                                            }
+                                        }
+                                        .padding(vertical = 14.dp, horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                            painter = painterResource(R.drawable.ic_photo_24dp),
+                            contentDescription = null,
+                            tint = accent,
+                            modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                            text = "Сделать снимок",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = textPrimary
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                        modifier =
+                                Modifier.fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            showAvatarOptions = false
+                                            galleryLauncher.launch("image/*")
+                                        }
+                                        .padding(vertical = 14.dp, horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                            painter = painterResource(R.drawable.ic_image_24dp),
+                            contentDescription = null,
+                            tint = accent,
+                            modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                            text = "Выбрать из галереи",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = textPrimary
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun launchPenikCamera(
+        context: android.content.Context,
+        onUri: (android.net.Uri) -> Unit
+): android.net.Uri? {
+    return try {
+        val dir = java.io.File(context.cacheDir, "Camera").apply { mkdirs() }
+        val file = java.io.File(dir, "avatar_${System.currentTimeMillis()}.jpg")
+        val uri =
+                androidx.core.content.FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.files",
+                        file
+                )
+        onUri(uri)
+        uri
+    } catch (e: Exception) {
+        android.widget.Toast.makeText(context, "Не удалось открыть камеру", android.widget.Toast.LENGTH_SHORT).show()
+        null
     }
 }

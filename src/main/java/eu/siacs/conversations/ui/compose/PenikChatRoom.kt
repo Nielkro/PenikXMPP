@@ -799,13 +799,7 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
             } else {
                 ""
             }
-    val durationText =
-            if (status.duration > 0) {
-                eu.siacs.conversations.utils.TimeFrameUtils.resolve(context, status.duration)
-                        .toString()
-            } else {
-                ""
-            }
+    val durationText = penikCallDuration(status.duration)
     val bgColor = if (isSentByMe) sentBg else recvBg
     val fgColor = if (isSentByMe) sentText else textPrimary
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart

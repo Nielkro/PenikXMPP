@@ -2921,7 +2921,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     private void writeLogMessageSuccess(final long duration) {
-        this.message.setBody(new RtpSessionStatus(true, duration).toString());
+        this.message.setBody(new RtpSessionStatus(true, duration / 1000).toString());
         this.writeMessage();
     }
 
