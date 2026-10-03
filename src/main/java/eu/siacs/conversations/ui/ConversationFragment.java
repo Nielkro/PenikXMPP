@@ -3247,8 +3247,8 @@ public class ConversationFragment extends XmppFragment
         if (this.binding == null || this.conversation == null) {
             return;
         }
-        this.penikChatState.setMessages(new ArrayList<>(this.messageList));
-        this.penikChatState.setMuc(
+        this.penikChatState.update(
+                new ArrayList<>(this.messageList),
                 this.conversation.getMode() == Conversational.MODE_MULTI);
     }
 

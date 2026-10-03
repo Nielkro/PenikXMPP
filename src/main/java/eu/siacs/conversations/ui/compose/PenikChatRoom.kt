@@ -121,6 +121,13 @@ object PenikChatActions {
 class PenikChatState {
     var messages by mutableStateOf<List<Message>>(emptyList())
     var isMuc by mutableStateOf(false)
+    var revision by mutableStateOf(0L)
+
+    fun update(newMessages: List<Message>, muc: Boolean) {
+        messages = newMessages
+        isMuc = muc
+        revision++
+    }
 }
 
 object PenikChatBridge {
@@ -241,7 +248,7 @@ fun PenikChatRoom(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val rows =
-            remember(state.messages) {
+            remember(state.messages, state.revision) {
                 val inOrder =
                         state.messages
                                 .sortedBy { it.timeSent }
@@ -342,7 +349,8 @@ fun PenikChatRoom(
                                     message = row.message,
                                     activity = activity,
                                     isMuc = state.isMuc,
-                                    listener = listener
+                                    listener = listener,
+                                    revision = state.revision
                             )
                 }
             }
@@ -474,7 +482,8 @@ fun PenikMessageRow(
         message: Message,
         activity: XmppActivity,
         isMuc: Boolean,
-        listener: PenikChatListener
+        listener: PenikChatListener,
+        revision: Long = 0L
 ) {
     if (message.type == Message.TYPE_RTP_SESSION) {
         PenikCallCard(message = message, activity = activity, listener = listener)
@@ -500,7 +509,8 @@ fun PenikMessageRow(
                     url = bareUrl,
                     message = message,
                     isSentByMe = isSentByMe,
-                    listener = listener
+                    listener = listener,
+                    revision = revision
             )
             return
         }
@@ -510,7 +520,8 @@ fun PenikMessageRow(
                 message = message,
                 activity = activity,
                 isSentByMe = isSentByMe,
-                listener = listener
+                listener = listener,
+                revision = revision
         )
         return
     }
@@ -518,7 +529,8 @@ fun PenikMessageRow(
             message = message,
             activity = activity,
             isMuc = isMuc,
-            listener = listener
+            listener = listener,
+            revision = revision
     )
 }
 
@@ -570,7 +582,8 @@ fun PenikTextBubble(
         message: Message,
         activity: XmppActivity,
         isMuc: Boolean,
-        listener: PenikChatListener
+        listener: PenikChatListener,
+        revision: Long = 0L
 ) {
     val context = LocalContext.current
     val sentBg = colorResource(R.color.penik_sent_message_bg)
@@ -1383,7 +1396,8 @@ fun PenikAttachmentRow(
         message: Message,
         activity: XmppActivity,
         isSentByMe: Boolean,
-        listener: PenikChatListener
+        listener: PenikChatListener,
+        revision: Long = 0L
 ) {
     val context = LocalContext.current
     val sentBg = colorResource(R.color.penik_sent_message_bg)
@@ -1555,7 +1569,8 @@ fun PenikUrlImageRow(
         url: String,
         message: Message,
         isSentByMe: Boolean,
-        listener: PenikChatListener
+        listener: PenikChatListener,
+        revision: Long = 0L
 ) {
     val context = LocalContext.current
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
