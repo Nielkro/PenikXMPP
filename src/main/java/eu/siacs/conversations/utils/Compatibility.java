@@ -43,16 +43,21 @@ public class Compatibility {
 
     public static void startService(final Context context, final Intent intent) {
         try {
-            if (Compatibility.twentySix()) {
-                intent.putExtra(EXTRA_NEEDS_FOREGROUND_SERVICE, true);
-                ContextCompat.startForegroundService(context, intent);
+            if (new eu.siacs.conversations.AppSettings(context).isKeepForegroundService()) {
+                if (Compatibility.twentySix()) {
+                    intent.putExtra(EXTRA_NEEDS_FOREGROUND_SERVICE, true);
+                    ContextCompat.startForegroundService(context, intent);
+                } else {
+                    context.startService(intent);
+                }
             } else {
                 context.startService(intent);
             }
         } catch (final RuntimeException e) {
             Log.d(
                     Config.LOGTAG,
-                    context.getClass().getSimpleName() + " was unable to start service");
+                    context.getClass().getSimpleName() + " was unable to start service",
+                    e);
         }
     }
 
