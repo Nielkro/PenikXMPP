@@ -614,11 +614,11 @@ fun PenikTextBubble(
             }
     val ticks =
             when (message.status) {
-                Message.STATUS_SEND -> "✓"
+                Message.STATUS_UNSEND, Message.STATUS_WAITING, Message.STATUS_OFFERED, Message.STATUS_SEND -> "✓"
                 Message.STATUS_SEND_RECEIVED -> "✓✓"
                 Message.STATUS_SEND_DISPLAYED -> "✓✓"
                 Message.STATUS_SEND_FAILED -> "⚠"
-                else -> ""
+                else -> if (isSentByMe) "✓" else ""
             }
     val ticksColor =
             when (message.status) {
@@ -755,10 +755,13 @@ fun PenikTextBubble(
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                 )
-                            } else if (ticks.isNotEmpty()) {
+                            } else {
                                 Spacer(modifier = Modifier.width(4.dp))
+                                val isDouble =
+                                        message.status == Message.STATUS_SEND_RECEIVED ||
+                                                message.status == Message.STATUS_SEND_DISPLAYED
                                 PenikTicksIcon(
-                                        double = ticks.length > 1,
+                                        double = isDouble,
                                         read = message.status == Message.STATUS_SEND_DISPLAYED,
                                         tint = textMuted,
                                         accent = accent
@@ -1418,10 +1421,11 @@ fun PenikAttachmentRow(
             }
     val ticks =
             when (message.status) {
-                Message.STATUS_SEND -> "✓"
+                Message.STATUS_UNSEND, Message.STATUS_WAITING, Message.STATUS_OFFERED, Message.STATUS_SEND -> "✓"
                 Message.STATUS_SEND_RECEIVED -> "✓✓"
                 Message.STATUS_SEND_DISPLAYED -> "✓✓"
-                else -> ""
+                Message.STATUS_SEND_FAILED -> "⚠"
+                else -> if (isSentByMe) "✓" else ""
             }
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
     var showMenu by remember(message.uuid) { mutableStateOf(false) }
@@ -1472,10 +1476,13 @@ fun PenikAttachmentRow(
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold
                                     )
-                                } else if (ticks.isNotEmpty()) {
+                                } else {
                                     Spacer(modifier = Modifier.width(4.dp))
+                                    val isDouble =
+                                            message.status == Message.STATUS_SEND_RECEIVED ||
+                                                    message.status == Message.STATUS_SEND_DISPLAYED
                                     PenikTicksIcon(
-                                            double = ticks.length > 1,
+                                            double = isDouble,
                                             read = message.status == Message.STATUS_SEND_DISPLAYED,
                                             tint = Color.White.copy(alpha = 0.8f),
                                             accent = accent
@@ -1528,10 +1535,13 @@ fun PenikAttachmentRow(
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                 )
-                            } else if (ticks.isNotEmpty()) {
+                            } else {
                                 Spacer(modifier = Modifier.width(4.dp))
+                                val isDouble =
+                                        message.status == Message.STATUS_SEND_RECEIVED ||
+                                                message.status == Message.STATUS_SEND_DISPLAYED
                                 PenikTicksIcon(
-                                        double = ticks.length > 1,
+                                        double = isDouble,
                                         read = message.status == Message.STATUS_SEND_DISPLAYED,
                                         tint = textMuted,
                                         accent = accent
@@ -1575,6 +1585,7 @@ fun PenikUrlImageRow(
     val context = LocalContext.current
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
     val accent = colorResource(R.color.penik_accent)
+    val danger = colorResource(R.color.penik_danger)
     val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
     val timeText =
             if (message.timeSent > 0) {
@@ -1617,14 +1628,27 @@ fun PenikUrlImageRow(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = timeText, fontSize = 10.sp, color = Color.White)
-                        if (isSentByMe && message.status == Message.STATUS_SEND_DISPLAYED) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            PenikTicksIcon(
-                                    double = true,
-                                    read = true,
-                                    tint = Color.White.copy(alpha = 0.8f),
-                                    accent = accent
-                            )
+                        if (isSentByMe) {
+                            if (message.status == Message.STATUS_SEND_FAILED) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                        text = "!",
+                                        color = danger,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                val isDouble =
+                                        message.status == Message.STATUS_SEND_RECEIVED ||
+                                                message.status == Message.STATUS_SEND_DISPLAYED
+                                PenikTicksIcon(
+                                        double = isDouble,
+                                        read = message.status == Message.STATUS_SEND_DISPLAYED,
+                                        tint = Color.White.copy(alpha = 0.8f),
+                                        accent = accent
+                                )
+                            }
                         }
                     }
                 }

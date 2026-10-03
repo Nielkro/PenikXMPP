@@ -3322,6 +3322,13 @@ public class ConversationFragment extends XmppFragment
         }
         storeNextMessage();
         updateChatMsgHint();
+        if (this.conversation != null) {
+            synchronized (this.messageList) {
+                this.conversation.populateWithMessages(this.messageList);
+                this.messageListAdapter.notifyDataSetChanged();
+                pushPenikChatState();
+            }
+        }
         if (this.inputSettings.scrollToBottom() || scrolledToBottom()) {
             new Handler()
                     .post(

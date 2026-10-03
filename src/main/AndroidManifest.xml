@@ -211,7 +211,7 @@
         <activity
             android:name=".ui.ConversationsActivity"
             android:launchMode="singleTask"
-            android:windowSoftInputMode="stateUnchanged" />
+            android:windowSoftInputMode="stateUnchanged|adjustResize" />
         <activity
             android:name=".ui.ScanQrCodeActivity"
             android:enableOnBackInvokedCallback="false"
