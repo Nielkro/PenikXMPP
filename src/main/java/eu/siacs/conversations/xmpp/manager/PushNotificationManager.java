@@ -58,12 +58,18 @@ public class PushNotificationManager extends AbstractManager {
         final var enable = iq.addExtension(new Enable());
         enable.setJid(registration.address);
         enable.setNode(registration.node);
+        final ImmutableMap.Builder<String, Object> optionsBuilder = ImmutableMap.builder();
         if (!Strings.isNullOrEmpty(registration.secret)) {
-            enable.addExtension(
-                    Data.of(
-                            ImmutableMap.of("secret", registration.secret),
-                            Namespace.PUB_SUB_PUBLISH_OPTIONS));
+            optionsBuilder.put("secret", registration.secret);
         }
+        optionsBuilder.put("push_max_chat_states", "0");
+        optionsBuilder.put("push_notification_important", "true");
+        optionsBuilder.put("cloud_notify_max_chat_states", "0");
+        optionsBuilder.put("cloud_notify_important_only", "true");
+        enable.addExtension(
+                Data.of(
+                        optionsBuilder.build(),
+                        Namespace.PUB_SUB_PUBLISH_OPTIONS));
         return Futures.transform(
                 connection.sendIqPacket(iq), response -> null, MoreExecutors.directExecutor());
     }
