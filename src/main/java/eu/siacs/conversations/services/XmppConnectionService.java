@@ -2353,6 +2353,34 @@ public class XmppConnectionService extends Service {
         }
     }
 
+    public List<Conversation> getArchivedConversations() {
+        final Map<String, Account> accountLookupTable =
+                ImmutableMap.copyOf(Maps.uniqueIndex(this.accounts, Account::getUuid));
+        final List<Conversation> archived =
+                databaseBackend.getConversations(Conversation.STATUS_ARCHIVED);
+        for (Iterator<Conversation> iterator = archived.listIterator(); iterator.hasNext(); ) {
+            Conversation conversation = iterator.next();
+            Account account = accountLookupTable.get(conversation.getAccountUuid());
+            if (account != null && account.isEnabled()) {
+                conversation.setAccount(account);
+            } else {
+                iterator.remove();
+            }
+        }
+        return archived;
+    }
+
+    public void unarchiveConversation(Conversation conversation) {
+        conversation.setStatus(Conversation.STATUS_AVAILABLE);
+        updateConversation(conversation);
+        synchronized (this.conversations) {
+            if (!this.conversations.contains(conversation)) {
+                this.conversations.add(conversation);
+            }
+            updateConversationUi();
+        }
+    }
+
     public void stopPresenceUpdatesTo(final Contact contact) {
         Log.d(Config.LOGTAG, "Canceling presence request from " + contact.getAddress().toString());
         contact.resetOption(Contact.Options.PENDING_SUBSCRIPTION_REQUEST);

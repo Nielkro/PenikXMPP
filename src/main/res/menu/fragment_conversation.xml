@@ -27,21 +27,25 @@
         app:showAsAction="always" />
     <item
         android:id="@+id/action_toggle_pinned"
+        android:icon="@drawable/ic_push_pin_24dp"
         android:orderInCategory="40"
         android:title="@string/add_to_favorites"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_mute"
+        android:icon="@drawable/ic_notifications_off_24dp"
         android:orderInCategory="50"
         android:title="@string/disable_notifications"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_unmute"
+        android:icon="@drawable/ic_notifications_24dp"
         android:orderInCategory="51"
         android:title="@string/enable_notifications"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_archive"
+        android:icon="@drawable/ic_archive_24dp"
         android:orderInCategory="60"
         android:title="@string/action_archive_chat"
         app:showAsAction="never" />
@@ -52,6 +56,7 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/action_clear_history"
+        android:icon="@drawable/ic_delete_24dp"
         android:orderInCategory="80"
         android:title="@string/delete_chat"
         app:showAsAction="never" />

@@ -589,11 +589,13 @@ public class ConversationsOverviewFragment extends XmppFragment {
             }
         }
         final var main = new ArrayList<Conversation>();
-        final var archived = new ArrayList<Conversation>();
+        final var archived = new ArrayList<Conversation>(service.getArchivedConversations());
         Conversation self = null;
         for (final var c : this.conversations) {
             if (c.getStatus() == Conversation.STATUS_ARCHIVED) {
-                archived.add(c);
+                if (!archived.contains(c)) {
+                    archived.add(c);
+                }
             } else {
                 final var contact = c.getContact();
                 final boolean isSelfChat =
@@ -632,18 +634,12 @@ public class ConversationsOverviewFragment extends XmppFragment {
                         : connecting ? PenikConnectionState.CONNECTING : PenikConnectionState.OFFLINE);
         this.penikChatsState.setSelfChat(self);
         this.penikChatsState.setAccount(firstEnabled);
-        if (main.isEmpty()) {
-            this.binding.composeList.setVisibility(View.GONE);
-            this.binding.emptyChatHint.setVisibility(View.VISIBLE);
-        } else {
-            this.binding.emptyChatHint.setVisibility(View.GONE);
-            this.binding.composeList.setVisibility(View.VISIBLE);
-        }
+        this.binding.emptyChatHint.setVisibility(View.GONE);
+        this.binding.composeList.setVisibility(View.VISIBLE);
     }
 
     public void onUnarchiveConversation(final Conversation c) {
-        c.setStatus(Conversation.STATUS_AVAILABLE);
-        requireXmppActivity().xmppConnectionService.updateConversation(c);
+        requireXmppActivity().xmppConnectionService.unarchiveConversation(c);
         refresh();
     }
 

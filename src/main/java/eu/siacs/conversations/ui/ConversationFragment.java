@@ -670,9 +670,13 @@ public class ConversationFragment extends XmppFragment
             };
     private final MenuProvider menuProvider =
             new MenuProvider() {
+                @SuppressLint("RestrictedApi")
                 @Override
                 public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
                     menuInflater.inflate(R.menu.fragment_conversation, menu);
+                    if (menu instanceof androidx.appcompat.view.menu.MenuBuilder menuBuilder) {
+                        menuBuilder.setOptionalIconsVisible(true);
+                    }
                     final MenuItem menuInviteContact = menu.findItem(R.id.action_invite);
                     final MenuItem menuMute = menu.findItem(R.id.action_mute);
                     final MenuItem menuUnmute = menu.findItem(R.id.action_unmute);
@@ -762,6 +766,7 @@ public class ConversationFragment extends XmppFragment
                         requireXmppActivity()
                                 .xmppConnectionService
                                 .archiveConversation(conversation);
+                        requireConversationsActivity().onConversationArchived(conversation);
                         return true;
                     } else if (itemId == R.id.action_invite) {
                         startActivityForResult(
@@ -4238,7 +4243,7 @@ public class ConversationFragment extends XmppFragment
 
     private boolean findAndReInitByUuidOrArchive(@NonNull final String uuid) {
         Conversation conversation =
-                requireXmppActivity().xmppConnectionService.findConversationByUuid(uuid);
+                requireXmppActivity().xmppConnectionService.findConversationByUuidReliable(uuid);
         if (conversation == null) {
             clearPending();
             requireConversationsActivity().onConversationArchived(null);
