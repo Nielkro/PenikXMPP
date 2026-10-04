@@ -29,7 +29,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.Reply
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -673,6 +682,17 @@ fun PenikTextBubble(
                             baseColor = textMuted
                     )
                 }
+                if (showMenu) {
+                    PenikMessageMenu(
+                            message = message,
+                            isSentByMe = isSentByMe,
+                            onDismiss = { showMenu = false },
+                            onAction = {
+                                showMenu = false
+                                listener.onMessageAction(it, message)
+                            }
+                    )
+                }
             }
         } else {
             Box(
@@ -805,18 +825,18 @@ fun PenikTextBubble(
                         }
                     }
                 }
+                if (showMenu) {
+                    PenikMessageMenu(
+                            message = message,
+                            isSentByMe = isSentByMe,
+                            onDismiss = { showMenu = false },
+                            onAction = {
+                                showMenu = false
+                                listener.onMessageAction(it, message)
+                            }
+                    )
+                }
             }
-        }
-        if (showMenu) {
-            PenikMessageMenu(
-                    message = message,
-                    isSentByMe = isSentByMe,
-                    onDismiss = { showMenu = false },
-                    onAction = {
-                        showMenu = false
-                        listener.onMessageAction(it, message)
-                    }
-            )
         }
     }
 }
@@ -984,6 +1004,8 @@ fun PenikMessageMenu(
 ) {
     val panel = colorResource(R.color.penik_panel)
     val textPrimary = colorResource(R.color.penik_text_primary)
+    val textMuted = colorResource(R.color.penik_text_muted)
+    val accent = colorResource(R.color.penik_accent)
     val danger = colorResource(R.color.penik_danger)
     val mime = message.mimeType ?: ""
     val isMedia = message.isFileOrImage || mime.startsWith("image/") || mime.startsWith("audio/") || mime.startsWith("video/") || message.isGeoUri
@@ -996,50 +1018,122 @@ fun PenikMessageMenu(
             onDismissRequest = onDismiss,
             modifier = Modifier.background(panel)
     ) {
+        if (message.status == Message.STATUS_SEND_FAILED) {
+            DropdownMenuItem(
+                    text = { Text("Повторить попытку", color = accent) },
+                    leadingIcon = {
+                        Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                tint = accent,
+                                modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    onClick = { onAction(PenikChatActions.RESEND) }
+            )
+        }
         DropdownMenuItem(
                 text = { Text("Ответить", color = textPrimary) },
+                leadingIcon = {
+                    Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Reply,
+                            contentDescription = null,
+                            tint = textMuted,
+                            modifier = Modifier.size(20.dp)
+                    )
+                },
                 onClick = { onAction(PenikChatActions.QUOTE) }
         )
         if (hasText) {
             DropdownMenuItem(
                     text = { Text("Копировать текст", color = textPrimary) },
+                    leadingIcon = {
+                        Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = null,
+                                tint = textMuted,
+                                modifier = Modifier.size(20.dp)
+                        )
+                    },
                     onClick = { onAction(PenikChatActions.COPY) }
             )
         }
         if (!isMedia && isSentByMe && message.status != Message.STATUS_SEND_FAILED && message.acceptMessageCorrection()) {
             DropdownMenuItem(
                     text = { Text("Изменить", color = textPrimary) },
+                    leadingIcon = {
+                        Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = null,
+                                tint = textMuted,
+                                modifier = Modifier.size(20.dp)
+                        )
+                    },
                     onClick = { onAction(PenikChatActions.CORRECT) }
             )
         }
         DropdownMenuItem(
                 text = { Text("Поделиться", color = textPrimary) },
+                leadingIcon = {
+                    Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            tint = textMuted,
+                            modifier = Modifier.size(20.dp)
+                    )
+                },
                 onClick = { onAction(PenikChatActions.SHARE) }
         )
         if (hasUrl || message.isGeoUri) {
             DropdownMenuItem(
                     text = { Text("Копировать ссылку", color = textPrimary) },
+                    leadingIcon = {
+                        Icon(
+                                imageVector = Icons.Default.Link,
+                                contentDescription = null,
+                                tint = textMuted,
+                                modifier = Modifier.size(20.dp)
+                        )
+                    },
                     onClick = { onAction(PenikChatActions.COPY_URL) }
             )
         }
         if (isMedia) {
             DropdownMenuItem(
                     text = { Text("Сохранить", color = textPrimary) },
+                    leadingIcon = {
+                        Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = null,
+                                tint = textMuted,
+                                modifier = Modifier.size(20.dp)
+                        )
+                    },
                     onClick = { onAction(PenikChatActions.SAVE_FILE) }
             )
             DropdownMenuItem(
                     text = { Text("Открыть в приложении", color = textPrimary) },
+                    leadingIcon = {
+                        Icon(
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                                contentDescription = null,
+                                tint = textMuted,
+                                modifier = Modifier.size(20.dp)
+                        )
+                    },
                     onClick = { onAction(PenikChatActions.OPEN) }
-            )
-        }
-        if (message.status == Message.STATUS_SEND_FAILED) {
-            DropdownMenuItem(
-                    text = { Text("Отправить снова", color = textPrimary) },
-                    onClick = { onAction(PenikChatActions.RESEND) }
             )
         }
         DropdownMenuItem(
                 text = { Text("Удалить", color = danger) },
+                leadingIcon = {
+                    Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = danger,
+                            modifier = Modifier.size(20.dp)
+                    )
+                },
                 onClick = { onAction(PenikChatActions.DELETE) }
         )
     }
@@ -1555,6 +1649,17 @@ fun PenikAttachmentRow(
                         }
                     }
                 }
+                if (showMenu) {
+                    PenikMessageMenu(
+                            message = message,
+                            isSentByMe = isSentByMe,
+                            onDismiss = { showMenu = false },
+                            onAction = {
+                                showMenu = false
+                                listener.onMessageAction(it, message)
+                            }
+                    )
+                }
             }
         } else {
             val bubbleShape = PenikBubbleShape(isSentByMe = isSentByMe)
@@ -1616,18 +1721,18 @@ fun PenikAttachmentRow(
                         }
                     }
                 }
+                if (showMenu) {
+                    PenikMessageMenu(
+                            message = message,
+                            isSentByMe = isSentByMe,
+                            onDismiss = { showMenu = false },
+                            onAction = {
+                                showMenu = false
+                                listener.onMessageAction(it, message)
+                            }
+                    )
+                }
             }
-        }
-        if (showMenu) {
-            PenikMessageMenu(
-                    message = message,
-                    isSentByMe = isSentByMe,
-                    onDismiss = { showMenu = false },
-                    onAction = {
-                        showMenu = false
-                        listener.onMessageAction(it, message)
-                    }
-            )
         }
     }
 
@@ -1723,17 +1828,17 @@ fun PenikUrlImageRow(
                     }
                 }
             }
-        }
-        if (showMenu) {
-            PenikMessageMenu(
-                    message = message,
-                    isSentByMe = isSentByMe,
-                    onDismiss = { showMenu = false },
-                    onAction = {
-                        showMenu = false
-                        listener.onMessageAction(it, message)
-                    }
-            )
+            if (showMenu) {
+                PenikMessageMenu(
+                        message = message,
+                        isSentByMe = isSentByMe,
+                        onDismiss = { showMenu = false },
+                        onAction = {
+                            showMenu = false
+                            listener.onMessageAction(it, message)
+                        }
+                )
+            }
         }
     }
 
