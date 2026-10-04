@@ -438,7 +438,7 @@ fun PenikChatsTab(
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(filtered, key = { it.uuid }) { conversation ->
+                    items(filtered, key = { "${it.uuid}_${it.isPinnedOnTop}_${it.unreadCount()}_${it.latestMessage?.uuid}_${it.isMuted}" }) { conversation ->
                         PenikConversationRow(
                                 conversation = conversation,
                                 activity = activity,
@@ -520,7 +520,7 @@ fun PenikChatsTab(
                         }
                     }
                 } else {
-                    items(filtered, key = { it.uuid }) { conversation ->
+                    items(filtered, key = { "${it.uuid}_${it.isPinnedOnTop}_${it.unreadCount()}_${it.latestMessage?.uuid}_${it.isMuted}" }) { conversation ->
                         PenikConversationRow(
                                 conversation = conversation,
                                 activity = activity,
