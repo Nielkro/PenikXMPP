@@ -804,7 +804,8 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
             )
-            if (latest != null) {
+            val preview = if (latest != null) penikMessagePreviewData(context, latest) else null
+            if (preview != null) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val loadedThumb = thumb
@@ -815,10 +816,18 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.size(18.dp).clip(RoundedCornerShape(4.dp))
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                    } else if (preview.iconRes != null) {
+                        Icon(
+                                painter = painterResource(preview.iconRes),
+                                contentDescription = null,
+                                tint = textMuted,
+                                modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
                     }
                     Text(
-                            text = penikMessagePreview(context, latest),
+                            text = preview.text,
                             color = textMuted,
                             fontSize = 14.sp,
                             maxLines = 1,
@@ -914,11 +923,10 @@ fun PenikConversationRow(
             } else {
                 latest?.timeSent ?: 0L
             }
-    val previewText =
+    val preview =
             if (draft != null) {
-                "Черновик: ${draft.message()}"
+                PenikPreviewData(text = "Черновик: ${draft.message()}")
             } else if (latest != null) {
-                val preview = penikMessagePreview(context, latest)
                 val sender =
                         if (latest.status == Message.STATUS_RECEIVED &&
                                         conversation.mode == Conversational.MODE_MULTI
@@ -934,9 +942,9 @@ fun PenikConversationRow(
                         } else {
                             ""
                         }
-                sender + preview
+                penikMessagePreviewData(context, latest, sender)
             } else {
-                ""
+                null
             }
     val unreadCount = conversation.unreadCount()
     val isPinned = conversation.isPinnedOnTop
@@ -969,15 +977,34 @@ fun PenikConversationRow(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                 )
-                if (previewText.isNotEmpty()) {
+                if (preview != null && (preview.sender.isNotEmpty() || preview.text.isNotEmpty() || preview.iconRes != null)) {
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                            text = previewText,
-                            color = textMuted,
-                            fontSize = 14.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (preview.sender.isNotEmpty()) {
+                            Text(
+                                    text = preview.sender,
+                                    color = textMuted,
+                                    fontSize = 14.sp,
+                                    maxLines = 1
+                            )
+                        }
+                        if (preview.iconRes != null) {
+                            Icon(
+                                    painter = painterResource(preview.iconRes),
+                                    contentDescription = null,
+                                    tint = textMuted,
+                                    modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                        Text(
+                                text = preview.text,
+                                color = textMuted,
+                                fontSize = 14.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
             if (timestamp > 0 || unreadCount > 0 || isPinned) {
@@ -1585,33 +1612,68 @@ private fun launchPenikCamera(
     }
 }
 
-fun penikMessagePreview(context: android.content.Context, message: Message): String {
+data class PenikPreviewData(
+    val iconRes: Int? = null,
+    val text: String,
+    val sender: String = ""
+)
+
+fun penikVoiceDuration(message: Message): String? {
+    val runtime = message.fileParams?.runtime ?: 0
+    if (runtime > 0) {
+        val durSec = if (runtime > 10000) runtime / 1000 else runtime
+        return "%02d:%02d".format(durSec / 60, durSec % 60)
+    }
+    val body = message.body?.trim() ?: ""
+    val parts = body.split("|")
+    if (parts.size == 5) {
+        val r = parts[4].toIntOrNull() ?: 0
+        if (r > 0) {
+            val durSec = if (r > 10000) r / 1000 else r
+            return "%02d:%02d".format(durSec / 60, durSec % 60)
+        }
+    }
+    return null
+}
+
+fun penikMessagePreviewData(
+    context: android.content.Context,
+    message: Message,
+    sender: String = ""
+): PenikPreviewData {
     if (message.encryption == Message.ENCRYPTION_PGP) {
-        return context.getString(R.string.pgp_message)
+        return PenikPreviewData(text = context.getString(R.string.pgp_message), sender = sender)
     }
     if (message.encryption == Message.ENCRYPTION_DECRYPTION_FAILED) {
-        return context.getString(R.string.decryption_failed)
+        return PenikPreviewData(text = context.getString(R.string.decryption_failed), sender = sender)
     }
     if (message.encryption == Message.ENCRYPTION_AXOLOTL_NOT_FOR_THIS_DEVICE) {
-        return context.getString(R.string.not_encrypted_for_this_device)
+        return PenikPreviewData(text = context.getString(R.string.not_encrypted_for_this_device), sender = sender)
     }
     if (message.encryption == Message.ENCRYPTION_AXOLOTL_FAILED) {
-        return context.getString(R.string.omemo_decryption_failed)
+        return PenikPreviewData(text = context.getString(R.string.omemo_decryption_failed), sender = sender)
     }
     if (message.isFileOrImage && message.isDeleted) {
-        return context.getString(R.string.file_deleted)
+        return PenikPreviewData(text = context.getString(R.string.file_deleted), sender = sender)
     }
     if (message.isGeoUri) {
-        return "📍 Местоположение"
+        return PenikPreviewData(
+            iconRes = R.drawable.ic_location_pin_24dp,
+            text = "Местоположение",
+            sender = sender
+        )
     }
     if (message.type == Message.TYPE_RTP_SESSION) {
         val rtpSessionStatus = RtpSessionStatus.of(message.body)
         val received = message.status == Message.STATUS_RECEIVED
-        return if (!rtpSessionStatus.successful && received) {
+        val isMissed = !rtpSessionStatus.successful && received
+        val icon = if (isMissed) R.drawable.ic_call_missed_24dp else R.drawable.ic_call_24dp
+        val text = if (isMissed) {
             context.getString(R.string.missed_call)
         } else {
             context.getString(if (received) R.string.incoming_call else R.string.outgoing_call)
         }
+        return PenikPreviewData(iconRes = icon, text = text, sender = sender)
     }
 
     val rawBody = message.body?.trim() ?: ""
@@ -1637,20 +1699,41 @@ fun penikMessagePreview(context: android.content.Context, message: Message): Str
 
     if (isMediaOrDownloadable) {
         return if (message.type == Message.TYPE_IMAGE || mime.startsWith("image/") || isImageExt) {
-            "📷 Фото"
+            PenikPreviewData(iconRes = R.drawable.ic_photo_24dp, text = "Фото", sender = sender)
         } else if (mime.startsWith("audio/") || isAudioExt) {
-            "🎙 Голосовое сообщение"
+            val dur = penikVoiceDuration(message)
+            val text = if (dur != null) "Голосовое сообщение $dur" else "Голосовое сообщение"
+            PenikPreviewData(iconRes = R.drawable.ic_mic_24dp, text = text, sender = sender)
         } else if (mime.startsWith("video/") || isVideoExt) {
-            "🎬 Видео"
+            PenikPreviewData(iconRes = R.drawable.ic_videocam_24dp, text = "Видео", sender = sender)
         } else {
-            "📎 Файл"
+            PenikPreviewData(iconRes = R.drawable.ic_attach_file_24dp, text = "Файл", sender = sender)
         }
     }
 
     if (rawBody.startsWith(Message.ME_COMMAND)) {
-        return rawBody.replaceFirst(Message.ME_COMMAND, UIHelper.getMessageDisplayName(message) + " ")
+        return PenikPreviewData(
+            text = rawBody.replaceFirst(Message.ME_COMMAND, UIHelper.getMessageDisplayName(message) + " "),
+            sender = sender
+        )
     }
 
-    return UIHelper.getMessagePreview(context, message).first.toString()
+    return PenikPreviewData(
+        text = UIHelper.getMessagePreview(context, message).first.toString(),
+        sender = sender
+    )
+}
+
+fun penikMessagePreview(context: android.content.Context, message: Message): String {
+    val data = penikMessagePreviewData(context, message)
+    val prefix = when (data.iconRes) {
+        R.drawable.ic_photo_24dp -> "📷 "
+        R.drawable.ic_mic_24dp -> "🎙 "
+        R.drawable.ic_videocam_24dp -> "🎬 "
+        R.drawable.ic_attach_file_24dp -> "📎 "
+        R.drawable.ic_location_pin_24dp -> "📍 "
+        else -> ""
+    }
+    return prefix + data.text
 }
 
