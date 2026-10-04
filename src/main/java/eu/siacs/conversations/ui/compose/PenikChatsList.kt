@@ -106,6 +106,7 @@ class PenikChatsState {
     var connectionState by mutableStateOf(PenikConnectionState.OFFLINE)
     var selfChat by mutableStateOf<Conversation?>(null)
     var account by mutableStateOf<Account?>(null)
+    var isArchiveOpen by mutableStateOf(false)
 }
 
 enum class PenikConnectionState {
@@ -157,7 +158,7 @@ fun PenikMainScreen(
     var tab by remember { mutableStateOf(PenikTab.CHATS) }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
-    var isArchiveOpen by remember { mutableStateOf(false) }
+    val isArchiveOpen = state.isArchiveOpen
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(isSearchActive) {
         if (isSearchActive) {
@@ -171,7 +172,7 @@ fun PenikMainScreen(
     }
 
     BackHandler(enabled = isArchiveOpen && !isSearchActive) {
-        isArchiveOpen = false
+        state.isArchiveOpen = false
     }
 
     BackHandler(enabled = tab != PenikTab.CHATS && !isArchiveOpen && !isSearchActive) {
@@ -248,7 +249,7 @@ fun PenikMainScreen(
                                         )
                                     }
                                 } else if (isArchiveOpen) {
-                                    IconButton(onClick = { isArchiveOpen = false }) {
+                                    IconButton(onClick = { state.isArchiveOpen = false }) {
                                         Icon(
                                                 Icons.AutoMirrored.Filled.ArrowBack,
                                                 contentDescription = "Назад",
@@ -369,7 +370,7 @@ fun PenikMainScreen(
                                     listener = listener,
                                     searchQuery = searchQuery,
                                     isArchiveOpen = isArchiveOpen,
-                                    onOpenArchive = { isArchiveOpen = true }
+                                    onOpenArchive = { state.isArchiveOpen = true }
                             )
                     PenikTab.CALLS -> PenikCallsTab(state = state, activity = activity, listener = listener)
                     PenikTab.PROFILE ->

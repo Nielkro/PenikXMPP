@@ -1050,6 +1050,17 @@ public class Conversation extends AbstractEntity
         return count;
     }
 
+    public boolean isSelf() {
+        if (mode != MODE_SINGLE) {
+            return false;
+        }
+        final Contact contact = getContact();
+        if (contact != null && contact.isSelf()) {
+            return true;
+        }
+        return account != null && this.contactJid != null && account.getJid().asBareJid().equals(this.contactJid.asBareJid());
+    }
+
     public boolean isWithStranger() {
         final Contact contact = getContact();
         return mode == MODE_SINGLE

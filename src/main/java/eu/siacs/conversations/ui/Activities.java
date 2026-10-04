@@ -26,7 +26,11 @@ public final class Activities {
             final boolean isLightMode,
             final boolean raisedStatusBar) {
         final var window = activity.getWindow();
-        final var flags = view.getSystemUiVisibility();
+        final var targetView = view != null ? view : (window != null ? window.getDecorView() : null);
+        if (targetView == null) {
+            return;
+        }
+        final var flags = targetView.getSystemUiVisibility();
         // an elevation of 4 matches the MaterialToolbar elevation
         if (raisedStatusBar) {
             window.setStatusBarColor(SurfaceColors.SURFACE_5.getColor(activity));
@@ -36,13 +40,13 @@ public final class Activities {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             window.setNavigationBarColor(SurfaceColors.SURFACE_1.getColor(activity));
             if (isLightMode) {
-                view.setSystemUiVisibility(
+                targetView.setSystemUiVisibility(
                         flags
                                 | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                                 | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
             }
         } else if (isLightMode) {
-            view.setSystemUiVisibility(flags | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            targetView.setSystemUiVisibility(flags | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
     }
 
