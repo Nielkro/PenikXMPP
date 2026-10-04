@@ -1620,20 +1620,24 @@ data class PenikPreviewData(
 
 fun penikVoiceDuration(message: Message): String? {
     val runtime = message.fileParams?.runtime ?: 0
-    if (runtime > 0) {
-        val durSec = if (runtime > 10000) runtime / 1000 else runtime
-        return "%02d:%02d".format(durSec / 60, durSec % 60)
-    }
-    val body = message.body?.trim() ?: ""
-    val parts = body.split("|")
-    if (parts.size == 5) {
-        val r = parts[4].toIntOrNull() ?: 0
-        if (r > 0) {
-            val durSec = if (r > 10000) r / 1000 else r
-            return "%02d:%02d".format(durSec / 60, durSec % 60)
+    val rawRuntime = if (runtime > 0) {
+        runtime
+    } else {
+        val body = message.body?.trim() ?: ""
+        val parts = body.split("|")
+        if (parts.size == 5) {
+            parts[4].toIntOrNull() ?: 0
+        } else {
+            0
         }
     }
-    return null
+    if (rawRuntime <= 0) return null
+    val durSec = if (rawRuntime >= 1000) {
+        rawRuntime / 1000
+    } else {
+        rawRuntime
+    }
+    return "%02d:%02d".format(durSec / 60, durSec % 60)
 }
 
 fun penikMessagePreviewData(

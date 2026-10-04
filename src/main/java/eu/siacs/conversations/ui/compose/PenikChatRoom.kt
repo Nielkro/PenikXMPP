@@ -2072,7 +2072,8 @@ fun PenikFileRow(message: Message, fgColor: Color, textMuted: Color) {
                         params.getSize()
                 )
             } else if (params != null && params.runtime > 0) {
-                " · %d:%02d".format(params.runtime / 60, params.runtime % 60)
+                val runtimeSec = if (params.runtime >= 1000) params.runtime / 1000 else params.runtime
+                " · %02d:%02d".format(runtimeSec / 60, runtimeSec % 60)
             } else {
                 ""
             }
