@@ -1044,10 +1044,27 @@ public class ConversationFragment extends XmppFragment
             return;
         }
         final Editable text = this.binding.textInput.getText();
-        final String body = text == null ? "" : text.toString();
+        String body = text == null ? "" : text.toString().trim();
         final Conversation conversation = this.conversation;
         if (body.isEmpty() || conversation == null) {
             return;
+        }
+        if (this.activeReplyMessage != null) {
+            final String author;
+            if (activeReplyMessage.getStatus() == Message.STATUS_RECEIVED) {
+                if (activeReplyMessage.getConversation().getMode() == Conversational.MODE_MULTI) {
+                    author = Strings.nullToEmpty(activeReplyMessage.getCounterpart().getResource());
+                } else {
+                    author = activeReplyMessage.getContact() != null ? activeReplyMessage.getContact().getPublicDisplayName() : "";
+                }
+            } else {
+                author = UIHelper.getMessageDisplayName(activeReplyMessage);
+            }
+            final String quoteBody = MessageUtils.prepareQuote(this.activeReplyMessage);
+            if (!quoteBody.isEmpty()) {
+                body = "> " + (author.isEmpty() ? "" : author + ": ") + quoteBody.replace("\n", "\n> ") + "\n\n" + body;
+            }
+            clearActiveReply();
         }
         if (trustKeysIfNeeded(conversation, REQUEST_TRUST_KEYS_TEXT)) {
             return;
@@ -1369,6 +1386,7 @@ public class ConversationFragment extends XmppFragment
         }
         setAttachmentChoicesVisibility(false);
         binding.attachButton.setOnClickListener((v) -> toggleAttachmentChoicesVisibility());
+        binding.cancelReplyButton.setOnClickListener((v) -> clearActiveReply());
         binding.attachmentChoicesFlow.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         binding.getRoot().setOnClickListener(null); // TODO why the fuck did we do this?
         binding.toolbar.addMenuProvider(
@@ -1468,18 +1486,66 @@ public class ConversationFragment extends XmppFragment
         if (binding.textInput.isEnabled()) {
             binding.textInput.insertAsQuote(text);
             binding.textInput.requestFocus();
-            InputMethodManager inputMethodManager =
+            final InputMethodManager inputMethodManager =
                     (InputMethodManager)
                             requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (inputMethodManager != null) {
+            if (inputMethodManager != null && isResumed()) {
                 inputMethodManager.showSoftInput(
                         binding.textInput, InputMethodManager.SHOW_IMPLICIT);
             }
         }
     }
 
+    private Message activeReplyMessage = null;
+
     private void quoteMessage(Message message) {
-        quoteText(MessageUtils.prepareQuote(message));
+        if (message == null || this.binding == null) return;
+        this.activeReplyMessage = message;
+        final String author;
+        if (message.getStatus() == Message.STATUS_RECEIVED) {
+            if (message.getConversation().getMode() == Conversational.MODE_MULTI) {
+                author = Strings.nullToEmpty(message.getCounterpart().getResource());
+            } else {
+                author = message.getContact() != null ? message.getContact().getPublicDisplayName() : "";
+            }
+        } else {
+            author = UIHelper.getMessageDisplayName(message);
+        }
+        String previewText = message.getBody();
+        if (message.isFileOrImage()) {
+            final String mime = message.getMimeType() != null ? message.getMimeType() : "";
+            if (message.getType() == Message.TYPE_IMAGE || mime.startsWith("image/")) {
+                previewText = "📷 Фото";
+            } else if (mime.startsWith("audio/")) {
+                previewText = "🎙 Голосовое сообщение";
+            } else if (mime.startsWith("video/")) {
+                previewText = "🎬 Видео";
+            } else {
+                previewText = "📎 Файл";
+            }
+        } else if (previewText != null && previewText.length() > 100) {
+            previewText = previewText.substring(0, 100) + "...";
+        }
+        if (previewText == null) previewText = "";
+
+        this.binding.replyAuthor.setText(author == null || author.isEmpty() ? "Сообщение" : author);
+        this.binding.replyText.setText(previewText);
+        this.binding.replyPreviewContainer.setVisibility(View.VISIBLE);
+        this.binding.textInput.requestFocus();
+        if (isResumed()) {
+            final InputMethodManager imm =
+                    (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(this.binding.textInput, InputMethodManager.SHOW_IMPLICIT);
+            }
+        }
+    }
+
+    private void clearActiveReply() {
+        this.activeReplyMessage = null;
+        if (this.binding != null && this.binding.replyPreviewContainer != null) {
+            this.binding.replyPreviewContainer.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -2781,6 +2847,7 @@ public class ConversationFragment extends XmppFragment
         final boolean changedConversation = this.conversation != conversation;
         if (changedConversation) {
             this.saveMessageDraftStopAudioPlayer();
+            this.clearActiveReply();
         }
         this.clearPending();
         if (this.reInit(conversation, extras != null)) {
@@ -3338,6 +3405,7 @@ public class ConversationFragment extends XmppFragment
     protected void messageSent() {
         mSendingPgpMessage.set(false);
         this.binding.textInput.setText("");
+        clearActiveReply();
         if (conversation.setCorrectingMessage(null)) {
             this.binding.textInput.append(conversation.getDraftMessage());
             conversation.setDraftMessage(null);

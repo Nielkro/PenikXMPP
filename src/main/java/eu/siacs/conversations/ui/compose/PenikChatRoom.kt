@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -576,25 +578,62 @@ fun splitPenikQuote(text: String): Pair<String?, String> {
 }
 
 @Composable
-fun PenikQuoteBlock(quote: String, barColor: Color, textColor: Color) {
-    Row(modifier = Modifier.padding(bottom = 4.dp)) {
+fun PenikQuoteBlock(
+        quote: String,
+        barColor: Color,
+        textColor: Color,
+        isSentByMe: Boolean = false
+) {
+    val lines = quote.lines()
+    val firstLine = lines.firstOrNull() ?: ""
+    val hasColon = firstLine.contains(":") && !firstLine.startsWith("http://") && !firstLine.startsWith("https://")
+    val author = if (hasColon) firstLine.substringBefore(":").trim() else null
+    val content = if (hasColon) {
+        val remainder = firstLine.substringAfter(":").trim()
+        (listOf(remainder) + lines.drop(1)).joinToString("\n").trim()
+    } else {
+        quote
+    }
+
+    Row(
+            modifier =
+                    Modifier.fillMaxWidth()
+                            .padding(bottom = 6.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0x12FFFFFF))
+                            .height(androidx.compose.foundation.layout.IntrinsicSize.Max),
+            verticalAlignment = Alignment.CenterVertically
+    ) {
         Box(
                 modifier =
                         Modifier.width(3.dp)
-                                .height(androidx.compose.foundation.layout.IntrinsicSize.Max)
-                                .clip(RoundedCornerShape(2.dp))
+                                .fillMaxHeight()
                                 .background(barColor)
-        ) {
-            Spacer(modifier = Modifier.height(4.dp))
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-                text = quote,
-                color = textColor,
-                fontSize = 13.sp,
-                maxLines = 4,
-                overflow = TextOverflow.Ellipsis
         )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(
+                modifier =
+                        Modifier.weight(1f, fill = false)
+                                .padding(vertical = 5.dp, horizontal = 4.dp)
+        ) {
+            if (author != null && author.isNotEmpty()) {
+                Text(
+                        text = author,
+                        color = if (isSentByMe) Color(0xFFB8D4FF) else barColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                )
+            }
+            Text(
+                    text = content,
+                    color = textColor,
+                    fontSize = 12.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -751,7 +790,8 @@ fun PenikTextBubble(
                             PenikQuoteBlock(
                                     quote = quote,
                                     barColor = accent,
-                                    textColor = textMuted
+                                    textColor = textMuted,
+                                    isSentByMe = isSentByMe
                             )
                         }
                         val mainText = if (quote != null) rest else rawBody
