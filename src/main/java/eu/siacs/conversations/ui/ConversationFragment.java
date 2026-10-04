@@ -684,11 +684,39 @@ public class ConversationFragment extends XmppFragment
                     if (c == null) {
                         return;
                     }
-                    if (c.getMode() == Conversation.MODE_MULTI) {
+                    final MenuItem menuArchive = menu.findItem(R.id.action_archive);
+                    final boolean isSelfChat = c.getMode() == Conversation.MODE_SINGLE
+                            && c.getContact() != null
+                            && c.getContact().isSelf();
+
+                    if (isSelfChat) {
+                        menuInviteContact.setVisible(false);
+                        menuAudioCall.setVisible(false);
+                        menuOngoingCall.setVisible(false);
+                        menuVideoCall.setVisible(false);
+                        menuMute.setVisible(false);
+                        menuUnmute.setVisible(false);
+                        menuTogglePinned.setVisible(false);
+                        if (menuArchive != null) {
+                            menuArchive.setVisible(false);
+                        }
+                    } else if (c.getMode() == Conversation.MODE_MULTI) {
                         menuInviteContact.setVisible(c.getMucOptions().canInvite());
                         menuAudioCall.setVisible(false);
                         menuOngoingCall.setVisible(false);
+                        menuVideoCall.setVisible(false);
+                        if (c.isMuted()) {
+                            menuMute.setVisible(false);
+                        } else {
+                            menuUnmute.setVisible(false);
+                        }
+                        if (c.isPinnedOnTop()) {
+                            menuTogglePinned.setTitle(R.string.remove_from_favorites);
+                        } else {
+                            menuTogglePinned.setTitle(R.string.add_to_favorites);
+                        }
                     } else {
+                        menuInviteContact.setVisible(false);
                         final var manager =
                                 c.getAccount().getXmppConnection().getManager(JingleManager.class);
                         final XmppConnectionService service = getXmppConnectionService();
@@ -701,31 +729,21 @@ public class ConversationFragment extends XmppFragment
                             menuAudioCall.setVisible(false);
                         } else {
                             menuOngoingCall.setVisible(false);
-                            // use RtpCapability.check(conversation.getContact()); to check if
-                            // contact
-                            // actually has support
                             final boolean cameraAvailable =
                                     requireXmppActivity().isCameraFeatureAvailable();
                             menuAudioCall.setVisible(true);
                             menuVideoCall.setVisible(cameraAvailable);
                         }
-                        final var connection = c.getAccount().getXmppConnection();
-                        menuInviteContact.setVisible(
-                                !connection
-                                        .getManager(MultiUserChatManager.class)
-                                        .getServices()
-                                        .isEmpty());
-                        menuInviteContact.setTitle(R.string.start_group_chat);
-                    }
-                    if (c.isMuted()) {
-                        menuMute.setVisible(false);
-                    } else {
-                        menuUnmute.setVisible(false);
-                    }
-                    if (c.isPinnedOnTop()) {
-                        menuTogglePinned.setTitle(R.string.remove_from_favorites);
-                    } else {
-                        menuTogglePinned.setTitle(R.string.add_to_favorites);
+                        if (c.isMuted()) {
+                            menuMute.setVisible(false);
+                        } else {
+                            menuUnmute.setVisible(false);
+                        }
+                        if (c.isPinnedOnTop()) {
+                            menuTogglePinned.setTitle(R.string.remove_from_favorites);
+                        } else {
+                            menuTogglePinned.setTitle(R.string.add_to_favorites);
+                        }
                     }
                 }
 
@@ -2190,7 +2208,7 @@ public class ConversationFragment extends XmppFragment
     protected void clearHistoryDialog(final Conversation conversation) {
         final MaterialAlertDialogBuilder builder =
                 new MaterialAlertDialogBuilder(requireActivity());
-        builder.setTitle(R.string.clear_conversation_history);
+        builder.setTitle(R.string.delete_chat);
         final View dialogView =
                 requireActivity().getLayoutInflater().inflate(R.layout.dialog_clear_history, null);
         final CheckBox endConversationCheckBox =
@@ -2198,7 +2216,7 @@ public class ConversationFragment extends XmppFragment
         builder.setView(dialogView);
         builder.setNegativeButton(getString(R.string.cancel), null);
         builder.setPositiveButton(
-                getString(R.string.confirm),
+                getString(R.string.delete),
                 (dialog, which) -> {
                     requireXmppActivity()
                             .xmppConnectionService
@@ -2213,7 +2231,14 @@ public class ConversationFragment extends XmppFragment
                         refresh();
                     }
                 });
-        builder.create().show();
+        final var alertDialog = builder.create();
+        alertDialog.setOnShowListener(d -> {
+            final var positive = alertDialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
+            if (positive != null) {
+                positive.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.penik_danger));
+            }
+        });
+        alertDialog.show();
     }
 
     protected void muteConversationDialog(final Conversation conversation) {

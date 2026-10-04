@@ -79,8 +79,9 @@
     <string name="preparing_image">Подготовка к передаче изображения</string>
     <string name="preparing_images">Подготовка к передаче изображений</string>
     <string name="sharing_files_please_wait">Обмен файлами. Подождите…</string>
-    <string name="action_clear_history">Очистить историю</string>
-    <string name="clear_conversation_history">Очистить историю</string>
+    <string name="action_clear_history">Удалить чат</string>
+    <string name="delete_chat">Удалить чат</string>
+    <string name="clear_conversation_history">Удалить чат</string>
     <string name="clear_histor_msg">Удалить все сообщения в этой беседе? 
 \n 
 \n<b>Внимание:</b> данная операция не повлияет на сообщения, хранящиеся на других устройствах или серверах.</string>

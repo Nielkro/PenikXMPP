@@ -84,8 +84,9 @@
     <string name="preparing_image">Getting ready to send image</string>
     <string name="preparing_images">Getting ready to send images</string>
     <string name="sharing_files_please_wait">Sharing files. Please wait…</string>
-    <string name="action_clear_history">Clear history</string>
-    <string name="clear_conversation_history">Clear chat history</string>
+    <string name="action_clear_history">Delete chat</string>
+    <string name="delete_chat">Delete chat</string>
+    <string name="clear_conversation_history">Delete chat</string>
     <string name="clear_histor_msg">Do you want to delete all messages in this chat?\n\n<b>Warning:</b> This will not influence messages stored on other devices or servers.</string>
     <string name="delete_file_dialog">Delete file</string>
     <string name="delete_file_dialog_shared">This file has been shared with other chats.</string>

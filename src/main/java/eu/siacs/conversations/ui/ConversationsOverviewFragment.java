@@ -58,6 +58,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.search.SearchView;
 import com.google.android.material.snackbar.Snackbar;
+import java.time.Instant;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
@@ -211,60 +212,38 @@ public class ConversationsOverviewFragment extends XmppFragment {
     }
 
     public void onArchiveConversation(final Conversation c) {
-        pendingActionHelper.execute();
-        this.swipedConversation.push(c);
-        this.conversations.remove(c);
-        refresh();
-        requireXmppActivity().xmppConnectionService.markRead(swipedConversation.peek());
+        c.setStatus(Conversation.STATUS_ARCHIVED);
+        requireXmppActivity().xmppConnectionService.archiveConversation(c);
         if (getActivity() instanceof OnConversationArchived callback) {
-            callback.onConversationArchived(swipedConversation.peek());
+            callback.onConversationArchived(c);
         }
-        final int title;
-        if (c.getMode() == Conversational.MODE_MULTI) {
-            if (c.getMucOptions().isPrivateAndNonAnonymous()) {
-                title = R.string.title_undo_swipe_out_group_chat;
-            } else {
-                title = R.string.title_undo_swipe_out_channel;
-            }
-        } else {
-            title = R.string.title_undo_swipe_out_chat;
-        }
-
-        final Snackbar snackbar =
-                Snackbar.make(binding.composeList, title, 5000)
-                        .setAction(R.string.undo, v -> undoArchive())
-                        .addCallback(
-                                new Snackbar.Callback() {
-                                    @Override
-                                    public void onDismissed(
-                                            Snackbar transientBottomBar, int event) {
-                                        switch (event) {
-                                            case DISMISS_EVENT_SWIPE:
-                                            case DISMISS_EVENT_TIMEOUT:
-                                                pendingActionHelper.execute();
-                                                break;
-                                        }
-                                    }
-                                });
-
-        pendingActionHelper.push(
-                () -> {
-                    if (snackbar.isShownOrQueued()) {
-                        snackbar.dismiss();
-                    }
-                    final Conversation conversation = swipedConversation.pop();
-                    if (conversation == null) {
-                        return;
-                    }
-                    if (!conversation.isRead()
-                            && conversation.getMode() == Conversation.MODE_SINGLE) {
-                        return;
-                    }
-                    requireXmppActivity().xmppConnectionService.archiveConversation(c);
-                });
-        snackbar.show();
+        refresh();
     }
 
+    public void onTogglePin(final Conversation c) {
+        c.setPinnedOnTop(!c.isPinnedOnTop());
+        requireXmppActivity().xmppConnectionService.updateConversation(c);
+        refresh();
+    }
+
+    public void onToggleMute(final Conversation c) {
+        if (c.isMuted()) {
+            c.setMutedTill(null);
+        } else {
+            c.setMutedTill(Instant.MAX);
+        }
+        requireXmppActivity().xmppConnectionService.updateConversation(c);
+        refresh();
+    }
+
+    public void onDeleteConversation(final Conversation c) {
+        requireXmppActivity().xmppConnectionService.clearConversationHistory(c);
+        requireXmppActivity().xmppConnectionService.archiveConversation(c);
+        if (getActivity() instanceof OnConversationArchived callback) {
+            callback.onConversationArchived(c);
+        }
+        refresh();
+    }
     private void undoArchive() {
         pendingActionHelper.undo();
         final var c = swipedConversation.pop();
@@ -387,6 +366,21 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     @Override
                     public void onUnarchiveConversation(final Conversation conversation) {
                         ConversationsOverviewFragment.this.onUnarchiveConversation(conversation);
+                    }
+
+                    @Override
+                    public void onTogglePin(final Conversation conversation) {
+                        ConversationsOverviewFragment.this.onTogglePin(conversation);
+                    }
+
+                    @Override
+                    public void onToggleMute(final Conversation conversation) {
+                        ConversationsOverviewFragment.this.onToggleMute(conversation);
+                    }
+
+                    @Override
+                    public void onDeleteConversation(final Conversation conversation) {
+                        ConversationsOverviewFragment.this.onDeleteConversation(conversation);
                     }
 
                     @Override

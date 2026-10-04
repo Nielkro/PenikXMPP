@@ -88,6 +88,9 @@ interface PenikChatsListener {
     fun onConversationClick(conversation: Conversation)
     fun onArchiveConversation(conversation: Conversation)
     fun onUnarchiveConversation(conversation: Conversation)
+    fun onTogglePin(conversation: Conversation)
+    fun onToggleMute(conversation: Conversation)
+    fun onDeleteConversation(conversation: Conversation)
     fun onOpenSelfChat()
     fun onOpenSettings()
     fun onNewChat()
@@ -390,6 +393,7 @@ fun ConnectionBanner(state: PenikConnectionState) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PenikChatsTab(
         state: PenikChatsState,
@@ -402,8 +406,14 @@ fun PenikChatsTab(
     val background = colorResource(R.color.penik_background)
     val border = colorResource(R.color.penik_border)
     val textMuted = colorResource(R.color.penik_text_muted)
-    var pendingArchive by remember { mutableStateOf<Conversation?>(null) }
-    var pendingUnarchive by remember { mutableStateOf<Conversation?>(null) }
+    val panel = colorResource(R.color.penik_panel)
+    val textPrimary = colorResource(R.color.penik_text_primary)
+    val danger = colorResource(R.color.penik_danger)
+
+    var selectedConversation by remember { mutableStateOf<Conversation?>(null) }
+    var pendingDeleteConversation by remember { mutableStateOf<Conversation?>(null) }
+    var isArchiveHidden by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+
     val feed =
             if (isArchiveOpen) {
                 state.archived
@@ -433,13 +443,59 @@ fun PenikChatsTab(
                                 conversation = conversation,
                                 activity = activity,
                                 onClick = { listener.onConversationClick(conversation) },
-                                onLongClick = { pendingUnarchive = conversation }
+                                onLongClick = { selectedConversation = conversation }
                         )
                     }
                 }
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
+                // 1. Archive folder placed above "Избранное"
+                if (state.archived.isNotEmpty() && searchQuery.isBlank()) {
+                    if (!isArchiveHidden) {
+                        item(key = "archive_folder") {
+                            PenikArchiveRow(
+                                    count = state.archived.size,
+                                    onClick = onOpenArchive,
+                                    onLongClick = { isArchiveHidden = true }
+                            )
+                            HorizontalDivider(
+                                    color = border,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+                    } else {
+                        item(key = "archive_hidden_hint") {
+                            Row(
+                                    modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { isArchiveHidden = false }
+                                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                        painter = painterResource(R.drawable.ic_archive_24dp),
+                                        contentDescription = null,
+                                        tint = textMuted,
+                                        modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                        text = "Архив скрыт (${state.archived.size}) • Нажмите, чтобы показать",
+                                        color = textMuted,
+                                        fontSize = 13.sp
+                                )
+                            }
+                            HorizontalDivider(
+                                    color = border,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+                    }
+                }
+
+                // 2. Self Chat ("Избранное")
                 item(key = "self_chat") {
                     PenikSelfRow(
                             selfChat = state.selfChat,
@@ -448,18 +504,8 @@ fun PenikChatsTab(
                     )
                     HorizontalDivider(color = border, modifier = Modifier.padding(horizontal = 16.dp))
                 }
-                if (state.archived.isNotEmpty() && searchQuery.isBlank()) {
-                    item(key = "archive_folder") {
-                        PenikArchiveRow(
-                                count = state.archived.size,
-                                onClick = onOpenArchive
-                        )
-                        HorizontalDivider(
-                                color = border,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-                    }
-                }
+
+                // 3. Conversation rows
                 if (filtered.isEmpty()) {
                     item(key = "empty_placeholder") {
                         Box(
@@ -479,37 +525,145 @@ fun PenikChatsTab(
                                 conversation = conversation,
                                 activity = activity,
                                 onClick = { listener.onConversationClick(conversation) },
-                                onLongClick = { pendingArchive = conversation }
+                                onLongClick = { selectedConversation = conversation }
                         )
                     }
                 }
             }
         }
     }
-    val toArchive = pendingArchive
-    if (toArchive != null) {
+
+    // Modal Bottom Sheet on long-pressing a chat
+    val selected = selectedConversation
+    if (selected != null) {
+        val isPinned = selected.isPinnedOnTop
+        val isMuted = selected.isMuted
+        ModalBottomSheet(
+                onDismissRequest = { selectedConversation = null },
+                containerColor = panel,
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            Column(
+                    modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 32.dp, start = 16.dp, end = 16.dp)
+            ) {
+                Text(
+                        text = selected.name.toString(),
+                        color = textPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                )
+                HorizontalDivider(color = border, modifier = Modifier.padding(vertical = 8.dp))
+
+                // Pin / Unpin
+                PenikSheetActionItem(
+                        iconRes = R.drawable.ic_push_pin_24dp,
+                        title = if (isPinned) "Открепить" else "Закрепить",
+                        onClick = {
+                            val conv = selected
+                            selectedConversation = null
+                            listener.onTogglePin(conv)
+                        }
+                )
+
+                // Mute / Unmute
+                PenikSheetActionItem(
+                        iconRes = if (isMuted) R.drawable.ic_notifications_24dp else R.drawable.ic_notifications_off_24dp,
+                        title = if (isMuted) "Включить уведомления" else "Выключить уведомления",
+                        onClick = {
+                            val conv = selected
+                            selectedConversation = null
+                            listener.onToggleMute(conv)
+                        }
+                )
+
+                // Archive / Unarchive
+                if (isArchiveOpen) {
+                    PenikSheetActionItem(
+                            iconRes = R.drawable.ic_unarchive_24dp,
+                            title = "Вернуть из архива",
+                            onClick = {
+                                val conv = selected
+                                selectedConversation = null
+                                listener.onUnarchiveConversation(conv)
+                            }
+                    )
+                } else {
+                    PenikSheetActionItem(
+                            iconRes = R.drawable.ic_archive_24dp,
+                            title = "В архив",
+                            onClick = {
+                                val conv = selected
+                                selectedConversation = null
+                                listener.onArchiveConversation(conv)
+                            }
+                    )
+                }
+
+                // Delete chat
+                PenikSheetActionItem(
+                        iconRes = R.drawable.ic_delete_24dp,
+                        title = "Удалить чат",
+                        tint = danger,
+                        onClick = {
+                            val conv = selected
+                            selectedConversation = null
+                            pendingDeleteConversation = conv
+                        }
+                )
+            }
+        }
+    }
+
+    // Delete Chat Confirmation Dialog
+    val toDelete = pendingDeleteConversation
+    if (toDelete != null) {
         PenikConfirmDialog(
-                title = toArchive.name.toString(),
-                text = "Переместить в архив?",
-                confirm = "В архив",
+                title = "Удалить чат",
+                text = "Удалить чат с «${toDelete.name}» и всю историю сообщений?",
+                confirm = "Удалить",
+                confirmColor = danger,
                 onConfirm = {
-                    listener.onArchiveConversation(toArchive)
-                    pendingArchive = null
+                    listener.onDeleteConversation(toDelete)
+                    pendingDeleteConversation = null
                 },
-                onDismiss = { pendingArchive = null }
+                onDismiss = { pendingDeleteConversation = null }
         )
     }
-    val toUnarchive = pendingUnarchive
-    if (toUnarchive != null) {
-        PenikConfirmDialog(
-                title = toUnarchive.name.toString(),
-                text = "Вернуть из архива на главный экран?",
-                confirm = "Извлечь",
-                onConfirm = {
-                    listener.onUnarchiveConversation(toUnarchive)
-                    pendingUnarchive = null
-                },
-                onDismiss = { pendingUnarchive = null }
+}
+
+@Composable
+fun PenikSheetActionItem(
+        @androidx.annotation.DrawableRes iconRes: Int,
+        title: String,
+        tint: Color = colorResource(R.color.penik_text_primary),
+        onClick: () -> Unit
+) {
+    Row(
+            modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onClick)
+                    .padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+                text = title,
+                color = tint,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
         )
     }
 }
@@ -519,19 +673,19 @@ fun PenikConfirmDialog(
         title: String,
         text: String,
         confirm: String,
+        confirmColor: Color = colorResource(R.color.penik_accent),
         onConfirm: () -> Unit,
         onDismiss: () -> Unit
 ) {
     val panel = colorResource(R.color.penik_panel)
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
-    val accent = colorResource(R.color.penik_accent)
     AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text(text = title, color = textPrimary, fontWeight = FontWeight.Bold) },
             text = { Text(text = text, color = textMuted) },
             confirmButton = {
-                TextButton(onClick = onConfirm) { Text(text = confirm, color = accent) }
+                TextButton(onClick = onConfirm) { Text(text = confirm, color = confirmColor, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) { Text(text = "Отмена", color = textMuted) }
@@ -627,8 +781,9 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PenikArchiveRow(count: Int, onClick: () -> Unit) {
+fun PenikArchiveRow(count: Int, onClick: () -> Unit, onLongClick: (() -> Unit)? = null) {
     val panelSecondary = colorResource(R.color.penik_panel_secondary)
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
@@ -642,14 +797,22 @@ fun PenikArchiveRow(count: Int, onClick: () -> Unit) {
                 "чатов"
             }
     Row(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier =
+                    Modifier.fillMaxWidth()
+                            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
                 modifier = Modifier.size(48.dp).clip(CircleShape).background(panelSecondary),
                 contentAlignment = Alignment.Center
         ) {
-            Text("📁", fontSize = 22.sp)
+            Icon(
+                    painter = painterResource(R.drawable.ic_archive_24dp),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(24.dp)
+            )
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -719,6 +882,7 @@ fun PenikConversationRow(
                 ""
             }
     val unreadCount = conversation.unreadCount()
+    val isPinned = conversation.isPinnedOnTop
     val isMuted =
             conversation.mutedTill?.let { it == Instant.MAX || it.isAfter(Instant.now()) }
                     ?: false
@@ -759,7 +923,7 @@ fun PenikConversationRow(
                     )
                 }
             }
-            if (timestamp > 0 || unreadCount > 0) {
+            if (timestamp > 0 || unreadCount > 0 || isPinned) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(
                         horizontalAlignment = Alignment.End,
@@ -792,21 +956,36 @@ fun PenikConversationRow(
                             )
                         }
                     }
-                    if (unreadCount > 0) {
+                    if (unreadCount > 0 || isPinned) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Box(
-                                modifier =
-                                        Modifier.size(22.dp)
-                                                .clip(CircleShape)
-                                                .background(accent),
-                                contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                    text = if (unreadCount > 99) "99+" else unreadCount.toString(),
-                                    color = Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isPinned) {
+                                Icon(
+                                        painter = painterResource(R.drawable.ic_push_pin_24dp),
+                                        contentDescription = "Закреплено",
+                                        tint = textMuted,
+                                        modifier = Modifier.size(14.dp)
+                                )
+                                if (unreadCount > 0) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
+                            }
+                            if (unreadCount > 0) {
+                                Box(
+                                        modifier =
+                                                Modifier.size(22.dp)
+                                                        .clip(CircleShape)
+                                                        .background(accent),
+                                        contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                            text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                                            color = Color.White,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
                         }
                     }
                 }
