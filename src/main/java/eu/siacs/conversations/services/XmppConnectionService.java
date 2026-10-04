@@ -2390,8 +2390,8 @@ public class XmppConnectionService extends Service {
         final Map<String, Account> accountLookupTable =
                 ImmutableMap.copyOf(Maps.uniqueIndex(this.accounts, Account::getUuid));
         final List<Conversation> archived =
-                databaseBackend.getConversations(Conversation.STATUS_ARCHIVED);
-        for (Iterator<Conversation> iterator = archived.listIterator(); iterator.hasNext(); ) {
+                new ArrayList<>(databaseBackend.getConversations(Conversation.STATUS_ARCHIVED));
+        for (Iterator<Conversation> iterator = archived.iterator(); iterator.hasNext(); ) {
             Conversation conversation = iterator.next();
             Account account = accountLookupTable.get(conversation.getAccountUuid());
             if (account != null && account.isEnabled()) {

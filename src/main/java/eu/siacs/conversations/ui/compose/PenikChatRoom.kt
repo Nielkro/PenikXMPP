@@ -229,17 +229,19 @@ fun penikEmojiOnlyCount(text: String): Int {
 
 fun penikLinkified(text: String, linkColor: Color) =
         buildAnnotatedString {
+            val xmppPattern = java.util.regex.Pattern.compile("(xmpp:[^\\s\"'<>()]+)", java.util.regex.Pattern.CASE_INSENSITIVE)
             val patterns =
                     listOf(
+                            xmppPattern to { m: String -> m },
+                            android.util.Patterns.WEB_URL to
+                                    { m: String ->
+                                        if (m.startsWith("http://", ignoreCase = true) || m.startsWith("https://", ignoreCase = true)) m
+                                        else "https://$m"
+                                    },
                             android.util.Patterns.EMAIL_ADDRESS to
                                     { m: String ->
                                         if (m.startsWith("mailto:", ignoreCase = true)) m
                                         else "mailto:$m"
-                                    },
-                            android.util.Patterns.WEB_URL to
-                                    { m: String ->
-                                        if (m.startsWith("http", ignoreCase = true)) m
-                                        else "https://$m"
                                     }
                     )
             data class Span(val start: Int, val end: Int, val url: String, val display: String)

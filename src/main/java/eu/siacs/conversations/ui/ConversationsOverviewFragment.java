@@ -684,9 +684,9 @@ public class ConversationsOverviewFragment extends XmppFragment {
         if (service == null || account == null) {
             return;
         }
-        account.setOption(Account.OPTION_DISABLED, true);
-        service.updateAccount(account);
-        refresh();
+        service.deleteAccount(account);
+        WelcomeActivity.launch(requireXmppActivity());
+        requireActivity().finish();
     }
 
     public void publishAvatar(final android.net.Uri uri) {

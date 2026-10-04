@@ -1398,6 +1398,7 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                     listener.onPublishAvatar(uri)
                 }
             }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     Column(
             modifier =
                     Modifier.fillMaxSize().background(background).padding(horizontal = 24.dp)
@@ -1489,7 +1490,7 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
         }
         Spacer(modifier = Modifier.weight(1f))
         androidx.compose.material3.Button(
-                onClick = { listener.onLogout() },
+                onClick = { showLogoutDialog = true },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors =
@@ -1504,6 +1505,44 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                     fontWeight = FontWeight.Medium
             )
         }
+    }
+    if (showLogoutDialog) {
+        androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+                containerColor = panel,
+                title = {
+                    Text(
+                            text = "Выход из аккаунта",
+                            color = textPrimary,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                            text = "Вы действительно хотите выйти из своего аккаунта?",
+                            color = textMuted,
+                            fontSize = 15.sp
+                    )
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(
+                            onClick = {
+                                showLogoutDialog = false
+                                listener.onLogout()
+                            }
+                    ) {
+                        Text(text = "Выйти", color = danger, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(
+                            onClick = { showLogoutDialog = false }
+                    ) {
+                        Text(text = "Отмена", color = textMuted)
+                    }
+                }
+        )
     }
     if (showAvatarOptions) {
         ModalBottomSheet(
