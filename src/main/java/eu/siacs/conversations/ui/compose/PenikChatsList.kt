@@ -29,6 +29,8 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.BottomSheetDefaults
@@ -91,7 +93,7 @@ interface PenikChatsListener {
     fun onUnarchiveConversation(conversation: Conversation)
     fun onTogglePin(conversation: Conversation)
     fun onToggleMute(conversation: Conversation)
-    fun onDeleteConversation(conversation: Conversation)
+    fun onDeleteConversation(conversation: Conversation, deleteForEveryone: Boolean = false)
     fun onOpenSelfChat()
     fun onOpenSettings()
     fun onNewChat()
@@ -675,13 +677,41 @@ fun PenikChatsTab(
     val toDelete = pendingDeleteConversation
     if (toDelete != null) {
         val isGroup = toDelete.mode == Conversation.MODE_MULTI
+        var deleteForEveryone by remember(toDelete.uuid) { mutableStateOf(true) }
         PenikConfirmDialog(
                 title = if (isGroup) "Покинуть беседу" else "Удалить чат",
                 text = if (isGroup) "Покинуть беседу «${toDelete.name}» и удалить её с этого устройства?" else "Удалить чат с «${toDelete.name}» и всю историю сообщений?",
                 confirm = if (isGroup) "Покинуть" else "Удалить",
                 confirmColor = danger,
+                content = if (!isGroup) {
+                    {
+                        Row(
+                                modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { deleteForEveryone = !deleteForEveryone }
+                                        .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                    checked = deleteForEveryone,
+                                    onCheckedChange = { deleteForEveryone = it },
+                                    colors = CheckboxDefaults.colors(
+                                            checkedColor = colorResource(R.color.penik_accent),
+                                            checkmarkColor = colorResource(R.color.penik_panel)
+                                    )
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                    text = "Удалить также для «${toDelete.name}»",
+                                    color = colorResource(R.color.penik_text_primary),
+                                    fontSize = 14.sp
+                            )
+                        }
+                    }
+                } else null,
                 onConfirm = {
-                    listener.onDeleteConversation(toDelete)
+                    listener.onDeleteConversation(toDelete, if (isGroup) false else deleteForEveryone)
                     pendingDeleteConversation = null
                 },
                 onDismiss = { pendingDeleteConversation = null }
@@ -727,7 +757,8 @@ fun PenikConfirmDialog(
         confirm: String,
         confirmColor: Color = colorResource(R.color.penik_accent),
         onConfirm: () -> Unit,
-        onDismiss: () -> Unit
+        onDismiss: () -> Unit,
+        content: (@Composable () -> Unit)? = null
 ) {
     val panel = colorResource(R.color.penik_panel)
     val textPrimary = colorResource(R.color.penik_text_primary)
@@ -735,7 +766,15 @@ fun PenikConfirmDialog(
     AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text(text = title, color = textPrimary, fontWeight = FontWeight.Bold) },
-            text = { Text(text = text, color = textMuted) },
+            text = {
+                Column {
+                    Text(text = text, color = textMuted)
+                    if (content != null) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        content()
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = onConfirm) { Text(text = confirm, color = confirmColor, fontWeight = FontWeight.Bold) }
             },

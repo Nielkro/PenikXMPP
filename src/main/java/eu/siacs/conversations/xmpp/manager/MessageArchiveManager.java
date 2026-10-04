@@ -519,6 +519,30 @@ public class MessageArchiveManager extends AbstractManager {
         return this.currentArchivingPreferences == Preferences.Default.ALWAYS;
     }
 
+    public void purgeArchive(final Jid with) {
+        if (with == null) {
+            return;
+        }
+        try {
+            final Element purge = new Element("purge", Namespace.MESSAGE_ARCHIVE_MANAGEMENT);
+            final Element x = purge.addChild("x", "jabber:x:data");
+            x.setAttribute("type", "submit");
+            final Element formType = x.addChild("field");
+            formType.setAttribute("var", "FORM_TYPE");
+            formType.setAttribute("type", "hidden");
+            formType.addChild("value").setContent(Namespace.MESSAGE_ARCHIVE_MANAGEMENT);
+            final Element withField = x.addChild("field");
+            withField.setAttribute("var", "with");
+            withField.addChild("value").setContent(with.asBareJid().toString());
+
+            final Iq iq = new Iq(Iq.Type.SET);
+            iq.addChild(purge);
+            this.connection.sendIqPacket(iq);
+        } catch (final Exception e) {
+            Log.d(Config.LOGTAG, "could not send mam purge", e);
+        }
+    }
+
     public boolean hasFeature() {
         return getManager(DiscoManager.class)
                 .hasAccountFeature(Namespace.MESSAGE_ARCHIVE_MANAGEMENT);

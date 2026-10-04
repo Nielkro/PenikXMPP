@@ -236,12 +236,20 @@ public class ConversationsOverviewFragment extends XmppFragment {
         refresh();
     }
 
-    public void onDeleteConversation(final Conversation c) {
-        requireXmppActivity().xmppConnectionService.deleteConversation(c);
+    public void onDeleteConversation(final Conversation c, final boolean deleteForEveryone) {
+        if (deleteForEveryone && c.getMode() == Conversation.MODE_SINGLE) {
+            requireXmppActivity().xmppConnectionService.purgeConversationForEveryone(c);
+        } else {
+            requireXmppActivity().xmppConnectionService.deleteConversation(c);
+        }
         if (getActivity() instanceof OnConversationArchived callback) {
             callback.onConversationArchived(c);
         }
         refresh();
+    }
+
+    public void onDeleteConversation(final Conversation c) {
+        onDeleteConversation(c, false);
     }
     private void undoArchive() {
         pendingActionHelper.undo();
@@ -378,8 +386,8 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     }
 
                     @Override
-                    public void onDeleteConversation(final Conversation conversation) {
-                        ConversationsOverviewFragment.this.onDeleteConversation(conversation);
+                    public void onDeleteConversation(final Conversation conversation, final boolean deleteForEveryone) {
+                        ConversationsOverviewFragment.this.onDeleteConversation(conversation, deleteForEveryone);
                     }
 
                     @Override

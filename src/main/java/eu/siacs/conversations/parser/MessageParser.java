@@ -349,6 +349,23 @@ public class MessageParser extends AbstractParser
             selfAddressed = false;
         }
 
+        if (packet.findChild("purge", "ru:penik:chat:purge") != null
+                || original.findChild("purge", "ru:penik:chat:purge") != null) {
+            final var counterpartJid = counterpart != null ? counterpart.asBareJid() : null;
+            if (counterpartJid != null && !counterpartJid.equals(account.getJid().asBareJid())) {
+                final var conv = mXmppConnectionService.find(account, counterpartJid);
+                if (conv != null) {
+                    Log.d(Config.LOGTAG, "Remote purge received for conversation with: " + counterpartJid);
+                    mXmppConnectionService.deleteConversation(conv);
+                    final var connection = account.getXmppConnection();
+                    if (connection != null) {
+                        connection.getManager(MessageArchiveManager.class).purgeArchive(counterpartJid);
+                    }
+                }
+            }
+            return;
+        }
+
         if (packet.hasExtension(MucUser.class)
                 && packet.getExtension(MucUser.class)
                         .hasExtension(im.conversations.android.xmpp.model.muc.user.Invite.class)) {

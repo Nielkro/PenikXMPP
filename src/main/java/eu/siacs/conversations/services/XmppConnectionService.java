@@ -2360,6 +2360,26 @@ public class XmppConnectionService extends Service {
         }
     }
 
+    public void purgeConversationForEveryone(final Conversation conversation) {
+        final var account = conversation.getAccount();
+        final var connection = account != null ? account.getXmppConnection() : null;
+        if (connection != null && conversation.getMode() == Conversation.MODE_SINGLE) {
+            try {
+                final var packet = new im.conversations.android.xmpp.model.stanza.Message();
+                packet.setTo(conversation.getAddress().asBareJid());
+                packet.setType(im.conversations.android.xmpp.model.stanza.Message.Type.CHAT);
+                final Element purgeEl = new Element("purge", "ru:penik:chat:purge");
+                packet.addChild(purgeEl);
+                connection.sendMessagePacket(packet);
+
+                connection.getManager(MessageArchiveManager.class).purgeArchive(conversation.getAddress().asBareJid());
+            } catch (final Exception e) {
+                Log.d(Config.LOGTAG, "could not send purge request", e);
+            }
+        }
+        deleteConversation(conversation);
+    }
+
     public void deleteConversation(Conversation conversation) {
         final var account = conversation.getAccount();
         final var connection = account != null ? account.getXmppConnection() : null;
