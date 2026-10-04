@@ -1354,8 +1354,12 @@ public class ConversationFragment extends XmppFragment
         }
         final PresenceSelector.OnPresenceSelected callback =
                 () -> {
-                    for (final var i = attachments.iterator(); i.hasNext(); i.remove()) {
+                    for (final var i = attachments.iterator(); i.hasNext(); ) {
                         final var attachment = i.next();
+                        try {
+                            i.remove();
+                        } catch (UnsupportedOperationException ignored) {
+                        }
                         if (attachment.getType() == Attachment.Type.LOCATION) {
                             attachLocationToConversation(conversation, attachment.getUri());
                         } else if (attachment.getType() == Attachment.Type.IMAGE) {
@@ -2284,7 +2288,7 @@ public class ConversationFragment extends XmppFragment
         }
         if (send && inlineVoiceOutputFile != null && inlineVoiceOutputFile.exists() && durationMs >= 500) {
             final Uri uri = FileBackend.getUriForFile(requireContext(), inlineVoiceOutputFile);
-            commitAttachments(Attachment.of(requireContext(), uri, Attachment.Type.RECORDING));
+            commitAttachments(new ArrayList<>(Attachment.of(requireContext(), uri, Attachment.Type.RECORDING)));
         } else if (inlineVoiceOutputFile != null) {
             inlineVoiceOutputFile.delete();
         }
