@@ -102,7 +102,13 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.material3.Slider
@@ -110,6 +116,8 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.viewinterop.AndroidView
+import android.net.Uri
 import java.io.File
 import kotlinx.coroutines.delay
 import eu.siacs.conversations.ui.XmppActivity
@@ -487,7 +495,8 @@ fun penikBareImageUrl(text: String): String? {
     if (!eu.siacs.conversations.utils.MessageUtils.treatAsDownloadable(trimmed, false)) {
         return null
     }
-    val lower = trimmed.lowercase().substringBefore("?").substringBefore("#")
+    val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
+    val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
     return if (lower.endsWith(".jpg") ||
                     lower.endsWith(".jpeg") ||
                     lower.endsWith(".png") ||
@@ -498,6 +507,44 @@ fun penikBareImageUrl(text: String): String? {
     } else {
         null
     }
+}
+
+fun penikBareVideoUrl(text: String): String? {
+    val trimmed = text.trim()
+    if (trimmed.isEmpty() || trimmed.contains("\n") || trimmed.contains(" ")) {
+        return null
+    }
+    if (!eu.siacs.conversations.utils.MessageUtils.treatAsDownloadable(trimmed, false)) {
+        return null
+    }
+    val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
+    val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
+    return if (lower.endsWith(".mp4") ||
+                    lower.endsWith(".webm") ||
+                    lower.endsWith(".mov") ||
+                    lower.endsWith(".mkv") ||
+                    lower.endsWith(".3gp") ||
+                    lower.endsWith(".avi")
+    ) {
+        trimmed
+    } else {
+        null
+    }
+}
+
+fun penikIsVideo(message: Message): Boolean {
+    if (message.isGeoUri) return false
+    val mime = message.mimeType ?: ""
+    if (mime.startsWith("video/")) return true
+    val body = message.body ?: ""
+    val cleanUrl = (if (body.startsWith("aesgcm://", ignoreCase = true)) body.substring("aesgcm://".length) else body).substringBefore("|").trim()
+    val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
+    return lower.endsWith(".mp4") ||
+            lower.endsWith(".webm") ||
+            lower.endsWith(".mov") ||
+            lower.endsWith(".mkv") ||
+            lower.endsWith(".3gp") ||
+            lower.endsWith(".avi")
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -538,8 +585,19 @@ fun PenikMessageRow(
             )
             return
         }
+        val bareVideoUrl = remember(body) { penikBareVideoUrl(body) }
+        if (bareVideoUrl != null) {
+            PenikAttachmentRow(
+                    message = message,
+                    activity = activity,
+                    isSentByMe = isSentByMe,
+                    listener = listener,
+                    revision = revision
+            )
+            return
+        }
     }
-    if (message.isFileOrImage || message.isGeoUri) {
+    if (message.isFileOrImage || message.isGeoUri || penikIsVideo(message)) {
         PenikAttachmentRow(
                 message = message,
                 activity = activity,
@@ -1668,6 +1726,312 @@ fun PenikImageViewer(
 }
 
 @Composable
+fun PenikVideoViewer(
+        message: Message,
+        activity: XmppActivity,
+        listener: PenikChatListener? = null,
+        onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val service = activity.xmppConnectionService
+    val localFile = remember(message.uuid) {
+        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+    }
+    val rawUrl = message.fileParams?.url ?: message.body?.trim()
+    val videoUri = remember(message.uuid, localFile) {
+        if (localFile != null) {
+            Uri.fromFile(localFile)
+        } else if (rawUrl != null && (rawUrl.startsWith("http://") || rawUrl.startsWith("https://"))) {
+            Uri.parse(rawUrl)
+        } else {
+            null
+        }
+    }
+
+    var isPlaying by remember { mutableStateOf(false) }
+    var currentPositionMs by remember { mutableStateOf(0) }
+    var durationMs by remember { mutableStateOf(0) }
+    var showControls by remember { mutableStateOf(true) }
+    var isError by remember { mutableStateOf(false) }
+    var videoViewRef by remember { mutableStateOf<android.widget.VideoView?>(null) }
+
+    val senderName = remember(message) { UIHelper.getMessageDisplayName(message) }
+    val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
+    val dateFormat = remember { android.text.format.DateFormat.getMediumDateFormat(context) }
+    val timeText = remember(message) {
+        if (message.timeSent > 0) {
+            val date = java.util.Date(message.timeSent)
+            "${dateFormat.format(date)}, ${timeFormat.format(date)}"
+        } else {
+            ""
+        }
+    }
+    val hasUrl = message.fileParams?.url != null || (message.body != null && (message.body.contains("http://") || message.body.contains("https://")))
+
+    DisposableEffect(Unit) {
+        onDispose {
+            videoViewRef?.stopPlayback()
+        }
+    }
+
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            videoViewRef?.let { vv ->
+                if (vv.isPlaying) {
+                    currentPositionMs = vv.currentPosition
+                    val dur = vv.duration
+                    if (dur > 0) durationMs = dur
+                }
+            }
+            delay(250)
+        }
+    }
+
+    androidx.compose.ui.window.Dialog(
+            onDismissRequest = {
+                videoViewRef?.stopPlayback()
+                onDismiss()
+            },
+            properties = androidx.compose.ui.window.DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false
+            )
+    ) {
+        Box(
+                modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+                contentAlignment = Alignment.Center
+        ) {
+            if (videoUri != null && !isError) {
+                AndroidView(
+                        factory = { ctx ->
+                            android.widget.VideoView(ctx).apply {
+                                setVideoURI(videoUri)
+                                setOnPreparedListener { mp ->
+                                    mp.isLooping = false
+                                    durationMs = mp.duration
+                                    start()
+                                    isPlaying = true
+                                }
+                                setOnCompletionListener {
+                                    isPlaying = false
+                                    currentPositionMs = durationMs
+                                }
+                                setOnErrorListener { _, _, _ ->
+                                    isError = true
+                                    false
+                                }
+                                videoViewRef = this
+                            }
+                        },
+                        modifier = Modifier
+                                .fillMaxSize()
+                                .clickable { showControls = !showControls }
+                )
+            } else {
+                Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(24.dp)
+                ) {
+                    Text(
+                            text = if (isError) "Не удалось воспроизвести видео" else "Видео не скачано",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Button(
+                            onClick = {
+                                listener?.onMessageAction(PenikChatActions.OPEN, message)
+                                onDismiss()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                    containerColor = colorResource(R.color.penik_accent)
+                            )
+                    ) {
+                        Text(if (isError) "Открыть через внешнее приложение" else "Скачать видео")
+                    }
+                }
+            }
+
+            // Top Bar
+            AnimatedVisibility(
+                    visible = showControls,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
+            ) {
+                Box(
+                        modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                        Brush.verticalGradient(
+                                                colors = listOf(Color.Black.copy(alpha = 0.85f), Color.Transparent)
+                                        )
+                                )
+                                .statusBarsPadding()
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                ) {
+                    Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = {
+                            videoViewRef?.stopPlayback()
+                            onDismiss()
+                        }) {
+                            Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Назад",
+                                    tint = Color.White
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            if (senderName.isNotEmpty()) {
+                                Text(
+                                        text = senderName,
+                                        color = Color.White,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            if (timeText.isNotEmpty()) {
+                                Text(
+                                        text = timeText,
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        if (listener != null) {
+                            if (hasUrl) {
+                                IconButton(
+                                        onClick = {
+                                            listener.onMessageAction(PenikChatActions.COPY_URL, message)
+                                        }
+                                ) {
+                                    Icon(
+                                            imageVector = Icons.Default.Link,
+                                            contentDescription = "Копировать ссылку",
+                                            tint = Color.White
+                                    )
+                                }
+                            }
+                            IconButton(
+                                    onClick = {
+                                        listener.onMessageAction(PenikChatActions.SAVE_FILE, message)
+                                    }
+                            ) {
+                                Icon(
+                                        imageVector = Icons.Default.Download,
+                                        contentDescription = "Сохранить",
+                                        tint = Color.White
+                                )
+                            }
+                            IconButton(
+                                    onClick = {
+                                        listener.onMessageAction(PenikChatActions.SHARE, message)
+                                    }
+                            ) {
+                                Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = "Поделиться",
+                                        tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Bottom Controls Bar
+            AnimatedVisibility(
+                    visible = showControls && videoUri != null && !isError,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+            ) {
+                Box(
+                        modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                        Brush.verticalGradient(
+                                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                                        )
+                                )
+                                .navigationBarsPadding()
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Column {
+                        val progress = if (durationMs > 0) (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) else 0f
+                        Slider(
+                                value = progress,
+                                onValueChange = { fraction ->
+                                    if (durationMs > 0) {
+                                        val newPos = (fraction * durationMs).toInt()
+                                        currentPositionMs = newPos
+                                        videoViewRef?.seekTo(newPos)
+                                    }
+                                },
+                                colors = SliderDefaults.colors(
+                                        thumbColor = colorResource(R.color.penik_accent),
+                                        activeTrackColor = colorResource(R.color.penik_accent),
+                                        inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                        )
+                        Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                    onClick = {
+                                        videoViewRef?.let { vv ->
+                                            if (vv.isPlaying) {
+                                                vv.pause()
+                                                isPlaying = false
+                                            } else {
+                                                if (currentPositionMs >= durationMs && durationMs > 0) {
+                                                    vv.seekTo(0)
+                                                }
+                                                vv.start()
+                                                isPlaying = true
+                                            }
+                                        }
+                                    }
+                            ) {
+                                Icon(
+                                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        contentDescription = if (isPlaying) "Пауза" else "Воспроизведение",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(32.dp)
+                                )
+                            }
+                            val curSec = (currentPositionMs / 1000).coerceAtLeast(0)
+                            val durSec = (durationMs / 1000).coerceAtLeast(0)
+                            val timeStr = "%02d:%02d / %02d:%02d".format(curSec / 60, curSec % 60, durSec / 60, durSec % 60)
+                            Text(
+                                    text = timeStr,
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun PenikAttachmentRow(
         message: Message,
         activity: XmppActivity,
@@ -1693,19 +2057,13 @@ fun PenikAttachmentRow(
             } else {
                 ""
             }
-    val ticks =
-            when (message.status) {
-                Message.STATUS_UNSEND, Message.STATUS_WAITING, Message.STATUS_OFFERED, Message.STATUS_SEND -> "✓"
-                Message.STATUS_SEND_RECEIVED -> "✓✓"
-                Message.STATUS_SEND_DISPLAYED -> "✓✓"
-                Message.STATUS_SEND_FAILED -> "⚠"
-                else -> if (isSentByMe) "✓" else ""
-            }
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
     var showMenu by remember(message.uuid) { mutableStateOf(false) }
     var showImageViewer by remember(message.uuid) { mutableStateOf(false) }
+    var showVideoViewer by remember(message.uuid) { mutableStateOf(false) }
     val mime = message.mimeType ?: ""
     val isImage = (message.type == Message.TYPE_IMAGE || mime.startsWith("image/")) && !message.isGeoUri
+    val isVideo = penikIsVideo(message)
 
     val service = activity.xmppConnectionService
     val resolvedModel = remember(message.uuid) {
@@ -1717,7 +2075,7 @@ fun PenikAttachmentRow(
             modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
             contentAlignment = boxAlignment
     ) {
-        if (isImage) {
+        if (isImage || isVideo) {
             Box(
                     modifier =
                             Modifier.padding(horizontal = 12.dp)
@@ -1725,14 +2083,24 @@ fun PenikAttachmentRow(
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color(0x15FFFFFF))
                                     .combinedClickable(
-                                            onClick = { showImageViewer = true },
+                                            onClick = {
+                                                if (isVideo) {
+                                                    showVideoViewer = true
+                                                } else {
+                                                    showImageViewer = true
+                                                }
+                                            },
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 showMenu = true
                                             }
                                     )
             ) {
-                PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
+                if (isVideo) {
+                    PenikVideoThumb(message = message, activity = activity, fgColor = fgColor)
+                } else {
+                    PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
+                }
                 if (timeText.isNotEmpty()) {
                     Box(
                             modifier =
@@ -1863,6 +2231,15 @@ fun PenikAttachmentRow(
                 message = message,
                 listener = listener,
                 onDismiss = { showImageViewer = false }
+        )
+    }
+
+    if (showVideoViewer) {
+        PenikVideoViewer(
+                message = message,
+                activity = activity,
+                listener = listener,
+                onDismiss = { showVideoViewer = false }
         )
     }
 }
@@ -2036,6 +2413,105 @@ fun PenikImageThumb(message: Message, activity: XmppActivity, fgColor: Color) {
                 fgColor = fgColor,
                 textMuted = fgColor.copy(alpha = 0.7f)
         )
+    }
+}
+
+@Composable
+fun PenikVideoThumb(message: Message, activity: XmppActivity, fgColor: Color) {
+    val service = activity.xmppConnectionService
+    var bitmap by remember(message.uuid) { mutableStateOf<Bitmap?>(null) }
+    val localFile = remember(message.uuid) {
+        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+    }
+    LaunchedEffect(message.uuid) {
+        if (service == null) return@LaunchedEffect
+        bitmap = withContext(Dispatchers.IO) {
+            try {
+                service.fileBackend.getThumbnail(message, 640, false)
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+    val loaded = bitmap
+    val params = message.fileParams
+    val aspect = if (params != null && params.width > 0 && params.height > 0) {
+        (params.width.toFloat() / params.height.toFloat()).coerceIn(0.4f, 2.5f)
+    } else {
+        0f
+    }
+    val modifier = if (aspect > 0f) {
+        Modifier.width(280.dp).aspectRatio(aspect)
+    } else {
+        Modifier.widthIn(max = 280.dp).heightIn(min = 140.dp, max = 360.dp)
+    }
+
+    Box(contentAlignment = Alignment.Center) {
+        if (loaded != null) {
+            Image(
+                    bitmap = loaded.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = modifier
+            )
+        } else if (localFile != null) {
+            coil.compose.AsyncImage(
+                    model = localFile,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = modifier
+            )
+        } else {
+            Box(
+                    modifier = modifier
+                            .background(Color(0xFF1E232B)),
+                    contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                        imageVector = Icons.Default.PlayCircle,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(54.dp)
+                )
+            }
+        }
+
+        // Center play circle
+        Box(
+                modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.55f)),
+                contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Воспроизвести",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+            )
+        }
+
+        // Duration badge (bottom-left)
+        if (params != null && params.runtime > 0) {
+            val runtimeSec = if (params.runtime >= 1000) params.runtime / 1000 else params.runtime
+            val durText = "%02d:%02d".format(runtimeSec / 60, runtimeSec % 60)
+            Box(
+                    modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(6.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color.Black.copy(alpha = 0.6f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                        text = durText,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                )
+            }
+        }
     }
 }
 

@@ -1053,9 +1053,6 @@ public class ConversationFragment extends XmppFragment
         if (conversation == null) {
             return;
         }
-        final Toast prepareFileToast =
-                Toast.makeText(getActivity(), getText(R.string.preparing_file), Toast.LENGTH_LONG);
-        prepareFileToast.show();
         requireXmppActivity().delegateUriPermissionsToService(uri);
         final var future =
                 requireXmppActivity()
@@ -1065,14 +1062,11 @@ public class ConversationFragment extends XmppFragment
                 future,
                 new FutureCallback<>() {
                     @Override
-                    public void onSuccess(final Void result) {
-                        prepareFileToast.cancel();
-                    }
+                    public void onSuccess(final Void result) {}
 
                     @Override
                     public void onFailure(@NonNull final Throwable t) {
                         Log.d(Config.LOGTAG, "could not attach file", t);
-                        prepareFileToast.cancel();
                         displayToastForException(t);
                     }
                 },
@@ -1090,9 +1084,6 @@ public class ConversationFragment extends XmppFragment
         if (conversation == null) {
             return;
         }
-        final Toast prepareFileToast =
-                Toast.makeText(getActivity(), getText(R.string.preparing_image), Toast.LENGTH_LONG);
-        prepareFileToast.show();
         requireXmppActivity().delegateUriPermissionsToService(uri);
         final var future =
                 requireXmppActivity()
@@ -1104,13 +1095,11 @@ public class ConversationFragment extends XmppFragment
                     @Override
                     public void onSuccess(final Void result) {
                         Log.d(Config.LOGTAG, "attachImageToConversation.onSuccess");
-                        prepareFileToast.cancel();
                     }
 
                     @Override
                     public void onFailure(final @NonNull Throwable t) {
                         Log.d(Config.LOGTAG, "could not attach image", t);
-                        prepareFileToast.cancel();
                         displayToastForException(t);
                     }
                 },
