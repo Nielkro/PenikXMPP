@@ -1085,12 +1085,6 @@ public class FileBackend {
             frame = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
             frame.eraseColor(0xff000000);
         }
-        drawOverlay(
-                frame,
-                paintOverlayBlack(frame)
-                        ? R.drawable.play_video_black
-                        : R.drawable.play_video_white,
-                0.75f);
         return frame;
     }
 
