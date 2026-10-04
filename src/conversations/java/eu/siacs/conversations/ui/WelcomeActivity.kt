@@ -16,6 +16,7 @@ import eu.siacs.conversations.R
 import eu.siacs.conversations.entities.Account
 import eu.siacs.conversations.services.XmppConnectionService
 import eu.siacs.conversations.ui.compose.PenikAuthListener
+import eu.siacs.conversations.ui.compose.PenikAuthMode
 import eu.siacs.conversations.ui.compose.PenikAuthScreen
 import eu.siacs.conversations.ui.compose.PenikAuthState
 import eu.siacs.conversations.utils.InstallReferrerUtils
@@ -30,6 +31,9 @@ class WelcomeActivity : QrCodeProcessingActivity(), PenikAuthListener, XmppConne
     private var pendingAvatarUri by mutableStateOf<Uri?>(null)
 
     companion object {
+        const val EXTRA_DOMAIN = "domain"
+        const val EXTRA_PRE_AUTH = "pre_auth"
+        const val EXTRA_USERNAME = "username"
         private const val REQUEST_IMPORT_BACKUP = 0x63fb
 
         @JvmStatic
@@ -49,10 +53,50 @@ class WelcomeActivity : QrCodeProcessingActivity(), PenikAuthListener, XmppConne
         super.onCreate(savedInstanceState)
         Activities.setStatusAndNavigationBarColors(this, window.decorView)
 
+        parseIntent(intent)
+
         setContent {
             PenikAuthScreen(
                 state = authState,
                 listener = this
+            )
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        parseIntent(intent)
+    }
+
+    private fun parseIntent(intent: Intent) {
+        var domain = intent.getStringExtra(EXTRA_DOMAIN)
+        var preAuth = intent.getStringExtra(EXTRA_PRE_AUTH)
+        var username = intent.getStringExtra(EXTRA_USERNAME)
+
+        val data = intent.data
+        if (data != null) {
+            val path = data.path
+            if (path != null && path.contains("/invite/")) {
+                val parts = path.split("/")
+                for (i in parts.indices) {
+                    if (parts[i] == "invite" && i + 1 < parts.size && parts[i + 1].isNotEmpty()) {
+                        preAuth = parts[i + 1]
+                        break
+                    }
+                }
+                if (domain == null && !data.host.isNullOrBlank()) {
+                    domain = data.host
+                }
+            }
+        }
+
+        if (domain != null || preAuth != null || username != null) {
+            authState = authState.copy(
+                initialMode = PenikAuthMode.REGISTER,
+                initialNickname = username ?: "",
+                inviteDomain = domain,
+                preAuthToken = preAuth
             )
         }
     }
@@ -153,7 +197,7 @@ class WelcomeActivity : QrCodeProcessingActivity(), PenikAuthListener, XmppConne
             authState = authState.copy(error = "Сервис инициализируется, подождите...")
             return
         }
-        val domain = Config.MAGIC_CREATE_DOMAIN ?: "snikket.penik.ru"
+        val domain = authState.inviteDomain ?: Config.MAGIC_CREATE_DOMAIN ?: "snikket.penik.ru"
         val jid: Jid
         try {
             jid = Jid.ofLocalAndDomain(nickname.trim().lowercase(), domain)
@@ -174,6 +218,10 @@ class WelcomeActivity : QrCodeProcessingActivity(), PenikAuthListener, XmppConne
             account = Account(jid, password)
             account.setOption(Account.OPTION_REGISTER, true)
             account.setOption(Account.OPTION_MAGIC_CREATE, true)
+            val token = authState.preAuthToken
+            if (!token.isNullOrBlank()) {
+                account.setPreAuthRegistrationToken(token)
+            }
             if (resolvedName.isNotBlank()) {
                 account.displayName = resolvedName
             }
@@ -182,6 +230,10 @@ class WelcomeActivity : QrCodeProcessingActivity(), PenikAuthListener, XmppConne
             account.password = password
             account.setOption(Account.OPTION_REGISTER, true)
             account.setOption(Account.OPTION_DISABLED, false)
+            val token = authState.preAuthToken
+            if (!token.isNullOrBlank()) {
+                account.setPreAuthRegistrationToken(token)
+            }
             if (resolvedName.isNotBlank()) {
                 account.displayName = resolvedName
             }

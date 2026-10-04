@@ -66,7 +66,11 @@ enum class PenikAuthMode {
 
 data class PenikAuthState(
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val initialMode: PenikAuthMode = PenikAuthMode.WELCOME,
+    val initialNickname: String = "",
+    val inviteDomain: String? = null,
+    val preAuthToken: String? = null
 )
 
 interface PenikAuthListener {
@@ -81,10 +85,12 @@ fun PenikAuthScreen(
     listener: PenikAuthListener
 ) {
     val context = LocalContext.current
-    var mode by remember { mutableStateOf(PenikAuthMode.WELCOME) }
-    var step by remember { mutableIntStateOf(0) }
+    var mode by remember(state.initialMode) { mutableStateOf(state.initialMode) }
+    var step by remember(state.initialMode, state.initialNickname) {
+        mutableIntStateOf(if (state.initialNickname.isNotBlank() && state.initialMode == PenikAuthMode.REGISTER) 1 else 0)
+    }
 
-    var nickname by remember { mutableStateOf("") }
+    var nickname by remember(state.initialNickname) { mutableStateOf(state.initialNickname) }
     var password by remember { mutableStateOf("") }
     var displayName by remember { mutableStateOf("") }
     var avatarUri by remember { mutableStateOf<Uri?>(null) }
@@ -236,6 +242,15 @@ fun PenikAuthScreen(
                                 color = textPrimary
                             )
                             Spacer(modifier = Modifier.height(8.dp))
+                            if (!state.inviteDomain.isNullOrBlank()) {
+                                Text(
+                                    text = "Приглашение на ${state.inviteDomain}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = accent
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
                             Text(
                                 text = "Уникальное имя для поиска в сети",
                                 fontSize = 13.sp,
