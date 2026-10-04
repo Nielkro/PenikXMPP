@@ -71,6 +71,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -757,6 +760,17 @@ public class ConversationFragment extends XmppFragment
                             menuArchive.setTitle(R.string.action_archive_chat);
                             menuArchive.setIcon(R.drawable.ic_archive_24dp);
                         }
+                    }
+                    final MenuItem menuClearHistory = menu.findItem(R.id.action_clear_history);
+                    if (menuClearHistory != null) {
+                        final SpannableString s = new SpannableString(getString(R.string.delete_chat));
+                        s.setSpan(
+                                new ForegroundColorSpan(
+                                        ContextCompat.getColor(requireContext(), R.color.penik_danger)),
+                                0,
+                                s.length(),
+                                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        menuClearHistory.setTitle(s);
                     }
                 }
 

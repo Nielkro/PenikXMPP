@@ -549,15 +549,49 @@ fun PenikChatsTab(
                             .fillMaxWidth()
                             .padding(bottom = 32.dp, start = 16.dp, end = 16.dp)
             ) {
-                Text(
-                        text = selected.name.toString(),
-                        color = textPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                )
+                val sheetAvatar = penikAvatarBitmap(selected, activity)
+                Row(
+                        modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PenikAvatarImage(
+                            name = selected.name.toString(),
+                            bitmap = sheetAvatar,
+                            size = 46.dp
+                    )
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                                text = selected.name.toString(),
+                                color = textPrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                        )
+                        val isSelf = selected.mode == Conversational.MODE_SINGLE && selected.contact?.isSelf == true
+                        val subtitle = if (isSelf) {
+                            "Избранное"
+                        } else if (selected.mode == Conversational.MODE_MULTI) {
+                            val count = selected.mucOptions?.userCount ?: 0
+                            if (count > 0) "$count участников" else "Групповой чат"
+                        } else {
+                            selected.account?.jid?.asBareJid()?.toString() ?: ""
+                        }
+                        if (subtitle.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                    text = subtitle,
+                                    color = textMuted,
+                                    fontSize = 13.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
                 HorizontalDivider(color = border, modifier = Modifier.padding(vertical = 8.dp))
 
                 // Pin / Unpin
@@ -955,37 +989,31 @@ fun PenikConversationRow(
                                     fontSize = 12.sp
                             )
                         }
+                        if (isPinned) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                    painter = painterResource(R.drawable.ic_push_pin_24dp),
+                                    contentDescription = "Закреплено",
+                                    tint = textMuted,
+                                    modifier = Modifier.size(13.dp)
+                            )
+                        }
                     }
-                    if (unreadCount > 0 || isPinned) {
+                    if (unreadCount > 0) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (isPinned) {
-                                Icon(
-                                        painter = painterResource(R.drawable.ic_push_pin_24dp),
-                                        contentDescription = "Закреплено",
-                                        tint = textMuted,
-                                        modifier = Modifier.size(14.dp)
-                                )
-                                if (unreadCount > 0) {
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                }
-                            }
-                            if (unreadCount > 0) {
-                                Box(
-                                        modifier =
-                                                Modifier.size(22.dp)
-                                                        .clip(CircleShape)
-                                                        .background(accent),
-                                        contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                            text = if (unreadCount > 99) "99+" else unreadCount.toString(),
-                                            color = Color.White,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
+                        Box(
+                                modifier =
+                                        Modifier.size(22.dp)
+                                                .clip(CircleShape)
+                                                .background(accent),
+                                contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                    text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -1017,25 +1045,30 @@ fun penikAvatarBitmap(conversation: Conversation, activity: XmppActivity): Bitma
 }
 
 @Composable
-fun PenikAvatarImage(name: String, bitmap: Bitmap?) {
+fun PenikAvatarImage(
+        name: String,
+        bitmap: Bitmap?,
+        size: androidx.compose.ui.unit.Dp = 48.dp
+) {
     if (bitmap != null) {
         androidx.compose.foundation.Image(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = null,
-                modifier = Modifier.size(48.dp).clip(CircleShape)
+                modifier = Modifier.size(size).clip(CircleShape)
         )
     } else {
         val panelSecondary = colorResource(R.color.penik_panel_secondary)
         val tint = if (name.isEmpty()) panelSecondary else penikInitialsColor(name)
         val initial = name.firstOrNull()?.uppercase() ?: "?"
+        val fontSize = (size.value * 0.42f).sp
         Box(
-                modifier = Modifier.size(48.dp).clip(CircleShape).background(tint),
+                modifier = Modifier.size(size).clip(CircleShape).background(tint),
                 contentAlignment = Alignment.Center
         ) {
             Text(
                     text = initial,
                     color = Color.White,
-                    fontSize = 20.sp,
+                    fontSize = fontSize,
                     fontWeight = FontWeight.SemiBold
             )
         }
@@ -1048,16 +1081,30 @@ fun penikRelativeTime(context: android.content.Context, time: Long): String {
     if (time <= 0) {
         return ""
     }
-    val difference = (System.currentTimeMillis() - time) / 1000
-    if (difference < 60) {
-        return context.getString(R.string.just_now)
-    } else if (difference < 60 * 2) {
-        return context.getString(R.string.minute_ago)
-    } else if (difference < 60 * 60) {
-        return context.getString(R.string.minutes_ago, Math.round(difference / 60.0).toInt())
-    } else {
+    val zone = java.time.ZoneId.systemDefault()
+    val msgDate = java.time.Instant.ofEpochMilli(time).atZone(zone).toLocalDate()
+    val today = java.time.LocalDate.now(zone)
+    val daysBetween = java.time.temporal.ChronoUnit.DAYS.between(msgDate, today)
+
+    if (daysBetween == 0L) {
+        val difference = (System.currentTimeMillis() - time) / 1000
+        if (difference < 60) {
+            return context.getString(R.string.just_now)
+        }
         return android.text.format.DateFormat.getTimeFormat(context)
                 .format(java.util.Date(time))
+    } else if (daysBetween == 1L) {
+        return context.getString(R.string.yesterday)
+    } else if (daysBetween in 2L..6L) {
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("EEE", java.util.Locale.getDefault())
+        val day = msgDate.format(formatter)
+        return day.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() }
+    } else if (msgDate.year == today.year) {
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.getDefault())
+        return msgDate.format(formatter)
+    } else {
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yy", java.util.Locale.getDefault())
+        return msgDate.format(formatter)
     }
 }
 
