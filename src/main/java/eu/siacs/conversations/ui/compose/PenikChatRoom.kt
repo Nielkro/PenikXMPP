@@ -1754,6 +1754,32 @@ fun PenikVideoViewer(
     var showControls by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
     var videoViewRef by remember { mutableStateOf<android.widget.VideoView?>(null) }
+    var mediaPlayerRef by remember { mutableStateOf<android.media.MediaPlayer?>(null) }
+    var volume by remember { mutableStateOf(1.0f) }
+    var isMuted by remember { mutableStateOf(false) }
+    var lastNonZeroVolume by remember { mutableStateOf(1.0f) }
+
+    val setPlayerVolume = { newVol: Float, muted: Boolean ->
+        val clamped = newVol.coerceIn(0f, 1f)
+        volume = clamped
+        isMuted = muted
+        if (!muted && clamped > 0f) {
+            lastNonZeroVolume = clamped
+        }
+        val eff = if (muted) 0f else clamped
+        try {
+            mediaPlayerRef?.setVolume(eff, eff)
+        } catch (_: Exception) {}
+    }
+
+    val toggleMute = {
+        if (isMuted || volume == 0f) {
+            val target = if (lastNonZeroVolume > 0f) lastNonZeroVolume else 1.0f
+            setPlayerVolume(target, false)
+        } else {
+            setPlayerVolume(0f, true)
+        }
+    }
 
     val senderName = remember(message) { UIHelper.getMessageDisplayName(message) }
     val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
@@ -1825,8 +1851,13 @@ fun PenikVideoViewer(
                             android.widget.VideoView(ctx).apply {
                                 setVideoURI(videoUri)
                                 setOnPreparedListener { mp ->
+                                    mediaPlayerRef = mp
                                     mp.isLooping = false
                                     durationMs = mp.duration
+                                    val eff = if (isMuted) 0f else volume
+                                    try {
+                                        mp.setVolume(eff, eff)
+                                    } catch (_: Exception) {}
                                     start()
                                     isPlaying = true
                                 }
@@ -1910,7 +1941,7 @@ fun PenikVideoViewer(
                                         Brush.verticalGradient(
                                                 colors = listOf(Color.Black.copy(alpha = 0.85f), Color.Transparent)
                                         )
-                                )
+                                    )
                                 .statusBarsPadding()
                                 .padding(horizontal = 8.dp, vertical = 6.dp)
                 ) {
@@ -1973,7 +2004,7 @@ fun PenikVideoViewer(
                                         imageVector = Icons.Default.Download,
                                         contentDescription = "Сохранить",
                                         tint = Color.White
-                                )
+                                    )
                             }
                             IconButton(
                                     onClick = {
@@ -2032,23 +2063,59 @@ fun PenikVideoViewer(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(onClick = { togglePlay() }) {
-                                Icon(
-                                        imageVector = if (isPlaying) Icons.Default.Pause else if (currentPositionMs >= durationMs - 500 && durationMs > 0) Icons.Default.Refresh else Icons.Default.PlayArrow,
-                                        contentDescription = if (isPlaying) "Пауза" else "Воспроизведение",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(32.dp)
+                            Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                IconButton(onClick = { togglePlay() }) {
+                                    Icon(
+                                            imageVector = if (isPlaying) Icons.Default.Pause else if (currentPositionMs >= durationMs - 500 && durationMs > 0) Icons.Default.Refresh else Icons.Default.PlayArrow,
+                                            contentDescription = if (isPlaying) "Пауза" else "Воспроизведение",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                val curSec = (currentPositionMs / 1000).coerceAtLeast(0)
+                                val durSec = (durationMs / 1000).coerceAtLeast(0)
+                                val timeStr = "%02d:%02d / %02d:%02d".format(curSec / 60, curSec % 60, durSec / 60, durSec % 60)
+                                Text(
+                                        text = timeStr,
+                                        color = Color.White,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium
                                 )
                             }
-                            val curSec = (currentPositionMs / 1000).coerceAtLeast(0)
-                            val durSec = (durationMs / 1000).coerceAtLeast(0)
-                            val timeStr = "%02d:%02d / %02d:%02d".format(curSec / 60, curSec % 60, durSec / 60, durSec % 60)
-                            Text(
-                                    text = timeStr,
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium
-                            )
+                            Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                IconButton(onClick = { toggleMute() }) {
+                                    Icon(
+                                            painter = painterResource(if (isMuted || volume == 0f) R.drawable.ic_volume_off_24dp else R.drawable.ic_volume_up_24dp),
+                                            contentDescription = if (isMuted || volume == 0f) "Включить звук" else "Выключить звук",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                Slider(
+                                        value = if (isMuted) 0f else volume,
+                                        onValueChange = { newVol ->
+                                            setPlayerVolume(newVol, false)
+                                        },
+                                        colors = SliderDefaults.colors(
+                                                thumbColor = Color.White,
+                                                activeTrackColor = colorResource(R.color.penik_accent),
+                                                inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                                        ),
+                                        modifier = Modifier.width(85.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                        text = "${((if (isMuted) 0f else volume) * 100).toInt()}%",
+                                        color = Color.White.copy(alpha = 0.85f),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
                 }
