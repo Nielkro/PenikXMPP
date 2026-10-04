@@ -20,16 +20,21 @@ import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
@@ -172,6 +177,7 @@ import im.conversations.android.xmpp.model.muc.Role;
 import im.conversations.android.xmpp.model.stanza.Presence;
 import im.conversations.android.xmpp.model.state.Composing;
 import im.conversations.android.xmpp.model.state.Paused;
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -182,10 +188,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import com.google.common.base.Stopwatch;
 
 public class ConversationFragment extends XmppFragment
         implements EditMessage.KeyboardListener,
@@ -318,6 +327,30 @@ public class ConversationFragment extends XmppFragment
             };
     private Toast messageLoaderToast;
     private boolean reInitRequiredOnStart = true;
+    private MediaRecorder inlineVoiceRecorder;
+    private Stopwatch inlineVoiceStopwatch;
+    private File inlineVoiceOutputFile;
+    private final Handler inlineVoiceHandler = new Handler(Looper.getMainLooper());
+    private boolean isRecordingVoice = false;
+
+    private final Runnable inlineVoiceTicker =
+            new Runnable() {
+                @Override
+                public void run() {
+                    if (!isRecordingVoice || inlineVoiceStopwatch == null) {
+                        return;
+                    }
+                    long elapsedMillis = inlineVoiceStopwatch.elapsed(TimeUnit.MILLISECONDS);
+                    int minutes = (int) (elapsedMillis / 60000);
+                    int seconds = (int) (elapsedMillis / 1000) % 60;
+                    int tenths = (int) (elapsedMillis / 100) % 10;
+                    if (binding != null) {
+                        binding.recordingTimer.setText(
+                                String.format(Locale.ENGLISH, "%02d:%02d,%d", minutes, seconds, tenths));
+                    }
+                    inlineVoiceHandler.postDelayed(this, 100);
+                }
+            };
     private final OnClickListener clickToMuc =
             new OnClickListener() {
 
@@ -636,6 +669,10 @@ public class ConversationFragment extends XmppFragment
 
                 @Override
                 public void onClick(View v) {
+                    if (isRecordingVoice) {
+                        stopVoiceRecording(true);
+                        return;
+                    }
                     Object tag = v.getTag();
                     if (tag instanceof SendButtonAction action) {
                         switch (action) {
@@ -1480,6 +1517,7 @@ public class ConversationFragment extends XmppFragment
                 });
 
         binding.textSendButton.setOnClickListener(this.mSendButtonListener);
+        binding.cancelRecordingButton.setOnClickListener(v -> stopVoiceRecording(false));
 
         binding.scrollToBottomButton.setOnClickListener(this.mScrollButtonListener);
         binding.messagesView.setOnScrollListener(mOnScrollListener);
@@ -1548,6 +1586,7 @@ public class ConversationFragment extends XmppFragment
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        stopVoiceRecording(false);
         Log.d(Config.LOGTAG, "ConversationFragment.onDestroyView()");
         getParentFragmentManager().removeOnBackStackChangedListener(backStackListener);
         messageListAdapter.setOnContactPictureClicked(null);
@@ -2059,10 +2098,11 @@ public class ConversationFragment extends XmppFragment
         if (attachmentChoice == ATTACHMENT_CHOICE_RECORD_VOICE) {
             if (!hasPermissions(
                     attachmentChoice,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     Manifest.permission.RECORD_AUDIO)) {
                 return;
             }
+            startVoiceRecording();
+            return;
         } else if (attachmentChoice == ATTACHMENT_CHOICE_TAKE_PHOTO
                 || attachmentChoice == ATTACHMENT_CHOICE_RECORD_VIDEO) {
             if (!hasPermissions(
@@ -2141,6 +2181,114 @@ public class ConversationFragment extends XmppFragment
         } else {
             invokeAttachFileIntent(attachmentChoice);
         }
+    }
+
+    public void startVoiceRecording() {
+        if (!hasPermissions(
+                ATTACHMENT_CHOICE_RECORD_VOICE,
+                Manifest.permission.RECORD_AUDIO)) {
+            return;
+        }
+        stopVoiceRecording(false);
+        final int outputFormat;
+        if (Config.USE_OPUS_VOICE_MESSAGES && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            outputFormat = MediaRecorder.OutputFormat.OGG;
+        } else {
+            outputFormat = MediaRecorder.OutputFormat.MPEG_4;
+        }
+        inlineVoiceOutputFile = new FileBackend.Cache(requireContext()).recording(outputFormat);
+        inlineVoiceRecorder = new MediaRecorder();
+        inlineVoiceStopwatch = Stopwatch.createUnstarted();
+        try {
+            inlineVoiceRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                inlineVoiceRecorder.setPrivacySensitive(true);
+            }
+            inlineVoiceRecorder.setOutputFormat(outputFormat);
+            if (outputFormat == MediaRecorder.OutputFormat.OGG) {
+                inlineVoiceRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.OPUS);
+                inlineVoiceRecorder.setAudioEncodingBitRate(32_000);
+            } else {
+                inlineVoiceRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
+                inlineVoiceRecorder.setAudioSamplingRate(24_000);
+                inlineVoiceRecorder.setAudioEncodingBitRate(28_000);
+            }
+            inlineVoiceRecorder.setOutputFile(inlineVoiceOutputFile.getAbsolutePath());
+            inlineVoiceRecorder.prepare();
+            inlineVoiceRecorder.start();
+            inlineVoiceStopwatch.start();
+            isRecordingVoice = true;
+
+            if (binding != null) {
+                binding.inputLayout.setVisibility(View.GONE);
+                binding.recordingBox.setVisibility(View.VISIBLE);
+                binding.recordingTimer.setText("00:00,0");
+
+                AlphaAnimation blink = new AlphaAnimation(1.0f, 0.2f);
+                blink.setDuration(600);
+                blink.setRepeatMode(Animation.REVERSE);
+                blink.setRepeatCount(Animation.INFINITE);
+                binding.recordingIndicator.startAnimation(blink);
+
+                binding.textSendButton.setTag(SendButtonAction.TEXT);
+                binding.textSendButton.setIconResource(R.drawable.ic_send_24dp);
+                binding.textSendButton.setIconTint(ColorStateList.valueOf(Color.WHITE));
+                binding.textSendButton.setBackgroundTintList(
+                        ColorStateList.valueOf(
+                                ContextCompat.getColor(requireContext(), R.color.penik_accent)));
+            }
+
+            inlineVoiceHandler.removeCallbacks(inlineVoiceTicker);
+            inlineVoiceHandler.post(inlineVoiceTicker);
+        } catch (Exception e) {
+            Log.e(Config.LOGTAG, "could not start inline recording", e);
+            stopVoiceRecording(false);
+            Toast.makeText(requireContext(), R.string.unable_to_start_recording, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void stopVoiceRecording(final boolean send) {
+        if (!isRecordingVoice && inlineVoiceRecorder == null) {
+            return;
+        }
+        isRecordingVoice = false;
+        inlineVoiceHandler.removeCallbacks(inlineVoiceTicker);
+        if (binding != null) {
+            binding.recordingIndicator.clearAnimation();
+            binding.recordingBox.setVisibility(View.GONE);
+            binding.inputLayout.setVisibility(View.VISIBLE);
+            binding.textSendButton.setBackgroundTintList(
+                    ColorStateList.valueOf(
+                            ContextCompat.getColor(requireContext(), R.color.penik_panel_secondary)));
+            updateSendButton();
+        }
+        if (inlineVoiceStopwatch != null && inlineVoiceStopwatch.isRunning()) {
+            inlineVoiceStopwatch.stop();
+        }
+        final long durationMs =
+                inlineVoiceStopwatch != null
+                        ? inlineVoiceStopwatch.elapsed(TimeUnit.MILLISECONDS)
+                        : 0;
+        if (inlineVoiceRecorder != null) {
+            try {
+                inlineVoiceRecorder.stop();
+            } catch (Exception e) {
+                Log.d(Config.LOGTAG, "error stopping recorder", e);
+            }
+            try {
+                inlineVoiceRecorder.release();
+            } catch (Exception e) {
+                Log.d(Config.LOGTAG, "error releasing recorder", e);
+            }
+            inlineVoiceRecorder = null;
+        }
+        if (send && inlineVoiceOutputFile != null && inlineVoiceOutputFile.exists() && durationMs >= 500) {
+            final Uri uri = FileBackend.getUriForFile(requireContext(), inlineVoiceOutputFile);
+            commitAttachments(Attachment.of(requireContext(), uri, Attachment.Type.RECORDING));
+        } else if (inlineVoiceOutputFile != null) {
+            inlineVoiceOutputFile.delete();
+        }
+        inlineVoiceOutputFile = null;
     }
 
     @Override
@@ -2431,6 +2579,7 @@ public class ConversationFragment extends XmppFragment
     @Override
     public void onPause() {
         super.onPause();
+        stopVoiceRecording(false);
         binding.textInput.setOnFocusChangeListener(null);
     }
 

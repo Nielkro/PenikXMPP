@@ -217,6 +217,60 @@
                         app:iconSize="24dp"
                         app:iconTint="?colorOnTertiaryContainer" />
 
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/recording_box"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_toStartOf="@+id/textSendButton"
+                    android:background="@drawable/background_message_bubble"
+                    android:backgroundTint="?colorTertiaryContainer"
+                    android:minHeight="48dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:id="@+id/recording_timer_container"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:id="@+id/recording_indicator"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:background="@drawable/red_recording_dot" />
+
+                        <TextView
+                            android:id="@+id/recording_timer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:fontFamily="monospace"
+                            android:text="00:00,0"
+                            android:textColor="?colorOnTertiaryContainer"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/cancel_recording_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:background="?selectableItemBackgroundBorderless"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:text="Отмена"
+                        android:textColor="@color/penik_accent"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
 
                 </RelativeLayout>
 
