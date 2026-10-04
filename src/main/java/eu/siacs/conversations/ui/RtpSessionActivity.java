@@ -583,18 +583,18 @@ public class RtpSessionActivity extends XmppActivity
     }
 
     private void setWidth(final RtpEndUserState state) {
-        setWith(state, getWith());
+        final Contact contact = getWithSafe();
+        if (contact != null) {
+            setWith(state, contact);
+        }
     }
 
     private void setWith(final RtpEndUserState state, final Contact contact) {
-        binding.with.setText(contact.getDisplayName());
-        if (Arrays.asList(RtpEndUserState.INCOMING_CALL, RtpEndUserState.ACCEPTING_CALL)
-                .contains(state)) {
-            binding.withJid.setText(JidHelper.displayAddress(contact.getAddress().asBareJid()));
-            binding.withJid.setVisibility(View.VISIBLE);
-        } else {
-            binding.withJid.setVisibility(View.GONE);
+        if (contact == null) {
+            return;
         }
+        binding.with.setText(contact.getDisplayName());
+        binding.withJid.setVisibility(View.GONE);
     }
 
     @Override
@@ -644,7 +644,7 @@ public class RtpSessionActivity extends XmppActivity
                                         return;
                                     }
                                     binding.remoteVideoWrapper.setVisibility(View.VISIBLE);
-                                    binding.contactPhoto.setVisibility(View.GONE);
+                                    binding.callInfoContainer.setVisibility(View.GONE);
                                 }));
     }
 
@@ -951,35 +951,32 @@ public class RtpSessionActivity extends XmppActivity
     }
 
     private void updateIncomingCallScreen(final RtpEndUserState state, final Contact contact) {
+        final Contact peer = contact != null ? contact : getWithSafe();
         if (state == RtpEndUserState.INCOMING_CALL || state == RtpEndUserState.ACCEPTING_CALL) {
             final boolean show = getResources().getBoolean(R.bool.is_portrait_mode);
-            if (show) {
+            if (show && peer != null) {
                 binding.contactPhoto.setVisibility(View.VISIBLE);
-                if (contact == null) {
-                    AvatarWorkerTask.loadAvatar(
-                            getWith(), binding.contactPhoto, R.dimen.publish_avatar_size);
-                } else {
-                    AvatarWorkerTask.loadAvatar(
-                            contact, binding.contactPhoto, R.dimen.publish_avatar_size);
-                }
+                AvatarWorkerTask.loadAvatar(
+                        peer, binding.contactPhoto, R.dimen.publish_avatar_size);
             } else {
                 binding.contactPhoto.setVisibility(View.GONE);
             }
-            final Account account = contact == null ? getWith().getAccount() : contact.getAccount();
-            binding.usingAccount.setVisibility(View.VISIBLE);
-            binding.usingAccount.setText(
-                    getString(
-                            R.string.using_account,
-                            JidHelper.displayAddress(account.getJid().asBareJid())));
+            final Account account = peer == null ? null : peer.getAccount();
+            if (account != null) {
+                binding.usingAccount.setVisibility(View.VISIBLE);
+                binding.usingAccount.setText(
+                        getString(
+                                R.string.using_account,
+                                JidHelper.displayAddress(account.getJid().asBareJid())));
+            } else {
+                binding.usingAccount.setVisibility(View.GONE);
+            }
         } else {
             binding.usingAccount.setVisibility(View.GONE);
-            binding.contactPhoto.setVisibility(View.VISIBLE);
-            if (contact != null) {
+            if (peer != null) {
+                binding.contactPhoto.setVisibility(View.VISIBLE);
                 AvatarWorkerTask.loadAvatar(
-                        contact, binding.contactPhoto, R.dimen.publish_avatar_size);
-            } else if (getWith() != null) {
-                AvatarWorkerTask.loadAvatar(
-                        getWith(), binding.contactPhoto, R.dimen.publish_avatar_size);
+                        peer, binding.contactPhoto, R.dimen.publish_avatar_size);
             }
         }
     }
@@ -1528,12 +1525,16 @@ public class RtpSessionActivity extends XmppActivity
     }
 
     private void showContactPhotoFallback(final RtpEndUserState state) {
+        if (binding.remoteVideoWrapper.getVisibility() == View.VISIBLE) {
+            binding.callInfoContainer.setVisibility(View.GONE);
+            return;
+        }
         binding.callInfoContainer.setVisibility(View.VISIBLE);
-        if (state == RtpEndUserState.CONNECTED
-                && getResources().getBoolean(R.bool.is_portrait_mode)) {
+        final Contact peer = getWithSafe();
+        if (peer != null) {
             binding.contactPhoto.setVisibility(View.VISIBLE);
             AvatarWorkerTask.loadAvatar(
-                    getWith(), binding.contactPhoto, R.dimen.publish_avatar_size);
+                    peer, binding.contactPhoto, R.dimen.publish_avatar_size);
         } else {
             binding.contactPhoto.setVisibility(View.VISIBLE);
         }
@@ -1629,9 +1630,32 @@ public class RtpSessionActivity extends XmppActivity
     }
 
     private Contact getWith() {
-        final AbstractJingleConnection.Id id = requireRtpConnection().getId();
-        final Account account = id.account;
-        return account.getRoster().getContact(id.with);
+        final Contact contact = getWithSafe();
+        if (contact != null) {
+            return contact;
+        }
+        throw new IllegalStateException("No contact found for RTP session");
+    }
+
+    private Contact getWithSafe() {
+        try {
+            final JingleRtpConnection connection =
+                    this.rtpConnectionReference != null ? this.rtpConnectionReference.get() : null;
+            if (connection != null) {
+                final AbstractJingleConnection.Id id = connection.getId();
+                return id.account.getRoster().getContact(id.with);
+            }
+            final Intent intent = getIntent();
+            if (intent != null && xmppConnectionService != null) {
+                final Account account = extractAccount(intent);
+                final String withExtra = intent.getStringExtra(EXTRA_WITH);
+                if (account != null && withExtra != null) {
+                    return account.getRoster().getContact(Jid.of(withExtra));
+                }
+            }
+        } catch (final Exception ignored) {
+        }
+        return null;
     }
 
     private JingleRtpConnection requireRtpConnection() {
