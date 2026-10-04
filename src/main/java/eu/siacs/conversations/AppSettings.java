@@ -23,6 +23,8 @@ import im.conversations.android.model.AttachmentChoice;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -344,8 +346,27 @@ public class AppSettings {
                 .apply();
     }
 
+    public static final String SENT_CRASH_REPORTS_SET = "sent_crash_reports_set";
+
     public boolean isSendCrashReports() {
         return getBooleanPreference(SEND_CRASH_REPORTS, R.bool.send_crash_reports);
+    }
+
+    public Set<String> getSentCrashReports() {
+        final SharedPreferences sharedPreferences =
+                PreferenceManager.getDefaultSharedPreferences(context);
+        return sharedPreferences.getStringSet(SENT_CRASH_REPORTS_SET, Collections.emptySet());
+    }
+
+    public void addSentCrashReport(String hash) {
+        final SharedPreferences sharedPreferences =
+                PreferenceManager.getDefaultSharedPreferences(context);
+        final Set<String> current =
+                new HashSet<>(
+                        sharedPreferences.getStringSet(
+                                SENT_CRASH_REPORTS_SET, Collections.emptySet()));
+        current.add(hash);
+        sharedPreferences.edit().putStringSet(SENT_CRASH_REPORTS_SET, current).apply();
     }
 
     public boolean isDisplayEnterKey() {

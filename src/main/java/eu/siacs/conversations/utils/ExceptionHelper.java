@@ -61,6 +61,11 @@ public class ExceptionHelper {
         if (file.delete()) {
             Log.d(Config.LOGTAG, "deleted crash report file");
         }
+        final String crashHash = getCrashReportHash(report);
+        if (!crashHash.isEmpty() && appSettings.getSentCrashReports().contains(crashHash)) {
+            Log.d(Config.LOGTAG, "Crash report with hash " + crashHash + " has already been sent, skipping dialog");
+            return false;
+        }
         final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
         builder.setTitle(
                 activity.getString(
@@ -76,6 +81,9 @@ public class ExceptionHelper {
                             "using account="
                                     + account.getJid().asBareJid()
                                     + " to send in stack trace");
+                    if (!crashHash.isEmpty()) {
+                        appSettings.addSentCrashReport(crashHash);
+                    }
                     Conversation conversation =
                             service.findOrCreateConversation(
                                     account, Config.BUG_REPORTS, false, true);
@@ -87,6 +95,46 @@ public class ExceptionHelper {
                 (dialog, which) -> appSettings.setSendCrashReports(false));
         builder.create().show();
         return true;
+    }
+
+    public static String getCrashReportHash(final String report) {
+        if (report == null || report.trim().isEmpty()) {
+            return "";
+        }
+        final String[] lines = report.split("\n");
+        final StringBuilder sb = new StringBuilder();
+        boolean foundException = false;
+        for (final String line : lines) {
+            final String trimmed = line.trim();
+            if (foundException) {
+                sb.append(trimmed).append("\n");
+            } else if (trimmed.contains("Exception") || trimmed.contains("Error") || trimmed.startsWith("Caused by:")) {
+                foundException = true;
+                sb.append(trimmed).append("\n");
+            }
+        }
+        if (sb.length() == 0) {
+            for (final String line : lines) {
+                if (!line.startsWith("Timestamp:")) {
+                    sb.append(line.trim()).append("\n");
+                }
+            }
+        }
+        try {
+            final java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            final byte[] hash = md.digest(sb.toString().getBytes(Charsets.UTF_8));
+            final StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                final String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            return String.valueOf(sb.toString().hashCode());
+        }
     }
 
     static void writeToStacktraceFile(final Context context, final String msg) {
