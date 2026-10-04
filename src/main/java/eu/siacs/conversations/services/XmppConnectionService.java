@@ -2144,6 +2144,12 @@ public class XmppConnectionService extends Service {
     }
 
     public boolean isConversationStillOpen(final Conversation conversation) {
+        if (conversation == null) {
+            return false;
+        }
+        if (conversation.getStatus() == Conversation.STATUS_ARCHIVED) {
+            return true;
+        }
         synchronized (this.conversations) {
             for (Conversation current : this.conversations) {
                 if (current == conversation) {
@@ -2363,6 +2369,9 @@ public class XmppConnectionService extends Service {
             Account account = accountLookupTable.get(conversation.getAccountUuid());
             if (account != null && account.isEnabled()) {
                 conversation.setAccount(account);
+                if (conversation.messagesLoaded.compareAndSet(false, true)) {
+                    conversation.addAll(0, databaseBackend.getMessages(conversation, Config.PAGE_SIZE));
+                }
             } else {
                 iterator.remove();
             }
