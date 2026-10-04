@@ -577,6 +577,26 @@ fun splitPenikQuote(text: String): Pair<String?, String> {
     return quoted.joinToString("\n") to lines.drop(i).joinToString("\n").trimStart('\n')
 }
 
+fun formatPenikQuoteContent(raw: String): String {
+    val trimmed = raw.trim()
+    val lower = trimmed.lowercase()
+    return when {
+        trimmed.startsWith("geo:") -> "📍 Местоположение"
+        lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp") || lower.endsWith(".gif") || lower.contains("/image") -> "📷 Фото"
+        lower.endsWith(".ogg") || lower.endsWith(".mp3") || lower.endsWith(".m4a") || lower.endsWith(".opus") || lower.endsWith(".wav") || lower.endsWith(".aac") || lower.contains("/audio") || lower.contains("voice") -> "🎙 Голосовое сообщение"
+        lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mov") || lower.endsWith(".mkv") || lower.contains("/video") -> "🎬 Видео"
+        trimmed.startsWith("http://") || trimmed.startsWith("https://") -> {
+            val fileName = try {
+                java.net.URL(trimmed).path.substringAfterLast("/").takeIf { it.isNotBlank() }
+            } catch (e: Exception) {
+                null
+            }
+            if (fileName != null) "📎 $fileName" else "📎 Файл"
+        }
+        else -> raw
+    }
+}
+
 @Composable
 fun PenikQuoteBlock(
         quote: String,
@@ -627,7 +647,7 @@ fun PenikQuoteBlock(
                 )
             }
             Text(
-                    text = content,
+                    text = formatPenikQuoteContent(content),
                     color = textColor,
                     fontSize = 12.sp,
                     maxLines = 2,

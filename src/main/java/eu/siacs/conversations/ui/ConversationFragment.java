@@ -1060,7 +1060,25 @@ public class ConversationFragment extends XmppFragment
             } else {
                 author = UIHelper.getMessageDisplayName(activeReplyMessage);
             }
-            final String quoteBody = MessageUtils.prepareQuote(this.activeReplyMessage);
+            final String quoteBody;
+            if (activeReplyMessage.isFileOrImage()) {
+                final String mime = activeReplyMessage.getMimeType() != null ? activeReplyMessage.getMimeType() : "";
+                if (activeReplyMessage.getType() == Message.TYPE_IMAGE || mime.startsWith("image/")) {
+                    quoteBody = "📷 Фото";
+                } else if (mime.startsWith("audio/")) {
+                    quoteBody = "🎙 Голосовое сообщение";
+                } else if (mime.startsWith("video/")) {
+                    quoteBody = "🎬 Видео";
+                } else if (activeReplyMessage.isGeoUri()) {
+                    quoteBody = "📍 Местоположение";
+                } else {
+                    quoteBody = "📎 Файл";
+                }
+            } else if (activeReplyMessage.isGeoUri()) {
+                quoteBody = "📍 Местоположение";
+            } else {
+                quoteBody = MessageUtils.prepareQuote(this.activeReplyMessage);
+            }
             if (!quoteBody.isEmpty()) {
                 body = "> " + (author.isEmpty() ? "" : author + ": ") + quoteBody.replace("\n", "\n> ") + "\n\n" + body;
             }
@@ -1523,6 +1541,8 @@ public class ConversationFragment extends XmppFragment
             } else {
                 previewText = "📎 Файл";
             }
+        } else if (message.isGeoUri()) {
+            previewText = "📍 Местоположение";
         } else if (previewText != null && previewText.length() > 100) {
             previewText = previewText.substring(0, 100) + "...";
         }
