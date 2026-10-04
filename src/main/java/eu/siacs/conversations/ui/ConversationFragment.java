@@ -3628,13 +3628,20 @@ public class ConversationFragment extends XmppFragment
                 }
             }
             case PenikChatActions.OPEN_URL -> {
-                try {
-                    startActivity(
-                            new Intent(
-                                    Intent.ACTION_VIEW,
-                                    android.net.Uri.parse(message.getBody().trim())));
-                } catch (final Exception e) {
-                    Log.d(Config.LOGTAG, "could not open url", e);
+                final String url = message.getBody() != null ? message.getBody().trim() : "";
+                if (url.toLowerCase().startsWith("xmpp:") || url.contains("/invite/")) {
+                    final Intent intent = new Intent(getActivity(), YuriLauncherActivity.class);
+                    intent.setData(android.net.Uri.parse(url));
+                    startActivity(intent);
+                } else {
+                    try {
+                        startActivity(
+                                new Intent(
+                                        Intent.ACTION_VIEW,
+                                        android.net.Uri.parse(url)));
+                    } catch (final Exception e) {
+                        Log.d(Config.LOGTAG, "could not open url", e);
+                    }
                 }
             }
         }

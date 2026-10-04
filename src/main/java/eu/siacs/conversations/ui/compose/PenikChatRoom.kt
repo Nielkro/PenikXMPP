@@ -121,6 +121,7 @@ import android.net.Uri
 import java.io.File
 import kotlinx.coroutines.delay
 import eu.siacs.conversations.ui.XmppActivity
+import eu.siacs.conversations.ui.YuriLauncherActivity
 import eu.siacs.conversations.ui.adapter.MessageAdapter
 import eu.siacs.conversations.utils.UIHelper
 import java.time.Instant
@@ -130,6 +131,27 @@ import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+fun penikHandleUrlClick(activity: XmppActivity, rawUrl: String, fallbackUriHandler: androidx.compose.ui.platform.UriHandler) {
+    val trimmed = rawUrl.trim()
+    if (trimmed.startsWith("xmpp:", ignoreCase = true) || trimmed.contains("/invite/")) {
+        try {
+            val intent = android.content.Intent(activity, YuriLauncherActivity::class.java).apply {
+                data = Uri.parse(trimmed)
+            }
+            activity.startActivity(intent)
+            return
+        } catch (ignored: Exception) {}
+    }
+    try {
+        fallbackUriHandler.openUri(trimmed)
+    } catch (e: Exception) {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(trimmed))
+            activity.startActivity(intent)
+        } catch (ignored: Exception) {}
+    }
+}
 
 interface PenikChatListener {
     fun onMessageAction(action: String, message: Message)
@@ -904,9 +926,7 @@ fun PenikTextBubble(
                                                         annotated.getLinkAnnotations(start = position, end = position)
                                                                 .firstOrNull()?.let { annotation ->
                                                                     if (annotation.item is LinkAnnotation.Url) {
-                                                                        try {
-                                                                            uriHandler.openUri((annotation.item as LinkAnnotation.Url).url)
-                                                                        } catch (ignored: Exception) {}
+                                                                        penikHandleUrlClick(activity, (annotation.item as LinkAnnotation.Url).url, uriHandler)
                                                                     }
                                                                 }
                                                     }
