@@ -2269,30 +2269,70 @@ public class ConversationFragment extends XmppFragment
         if (inlineVoiceStopwatch != null && inlineVoiceStopwatch.isRunning()) {
             inlineVoiceStopwatch.stop();
         }
-        final long durationMs =
-                inlineVoiceStopwatch != null
-                        ? inlineVoiceStopwatch.elapsed(TimeUnit.MILLISECONDS)
-                        : 0;
-        if (inlineVoiceRecorder != null) {
+        final MediaRecorder recorder = inlineVoiceRecorder;
+        final File outputFile = inlineVoiceOutputFile;
+        final Stopwatch stopwatch = inlineVoiceStopwatch;
+        inlineVoiceRecorder = null;
+        inlineVoiceOutputFile = null;
+        inlineVoiceStopwatch = null;
+
+        if (recorder == null) {
+            return;
+        }
+
+        if (!send) {
+            new Thread(() -> {
+                try {
+                    recorder.stop();
+                } catch (Exception ignored) {
+                }
+                try {
+                    recorder.release();
+                } catch (Exception ignored) {
+                }
+                if (outputFile != null) {
+                    outputFile.delete();
+                }
+            }).start();
+            return;
+        }
+
+        new Thread(() -> {
             try {
-                inlineVoiceRecorder.stop();
+                Thread.sleep(500);
+            } catch (InterruptedException ignored) {
+            }
+            try {
+                recorder.stop();
             } catch (Exception e) {
                 Log.d(Config.LOGTAG, "error stopping recorder", e);
             }
             try {
-                inlineVoiceRecorder.release();
+                recorder.release();
             } catch (Exception e) {
                 Log.d(Config.LOGTAG, "error releasing recorder", e);
             }
-            inlineVoiceRecorder = null;
-        }
-        if (send && inlineVoiceOutputFile != null && inlineVoiceOutputFile.exists() && durationMs >= 500) {
-            final Uri uri = FileBackend.getUriForFile(requireContext(), inlineVoiceOutputFile);
-            commitAttachments(new ArrayList<>(Attachment.of(requireContext(), uri, Attachment.Type.RECORDING)));
-        } else if (inlineVoiceOutputFile != null) {
-            inlineVoiceOutputFile.delete();
-        }
-        inlineVoiceOutputFile = null;
+            final long durationMs =
+                    stopwatch != null ? stopwatch.elapsed(TimeUnit.MILLISECONDS) : 0;
+            if (outputFile != null && outputFile.exists() && durationMs >= 500) {
+                final var activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(() -> {
+                        if (isAdded() && getContext() != null && outputFile.exists()) {
+                            final Uri uri = FileBackend.getUriForFile(requireContext(), outputFile);
+                            commitAttachments(
+                                    new ArrayList<>(
+                                            Attachment.of(
+                                                    requireContext(),
+                                                    uri,
+                                                    Attachment.Type.RECORDING)));
+                        }
+                    });
+                }
+            } else if (outputFile != null) {
+                outputFile.delete();
+            }
+        }).start();
     }
 
     @Override
