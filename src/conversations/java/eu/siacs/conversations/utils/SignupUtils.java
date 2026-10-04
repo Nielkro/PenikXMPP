@@ -83,7 +83,7 @@ public class SignupUtils {
 
     private static SetupState getSetupState(
             final Collection<DatabaseBackend.AccountWithOptions> accounts) {
-        if (accounts.isEmpty()) {
+        if (accounts.isEmpty() || !DatabaseBackend.AccountWithOptions.hasEnabledAccount(accounts)) {
             return new None();
         }
         final var pending =

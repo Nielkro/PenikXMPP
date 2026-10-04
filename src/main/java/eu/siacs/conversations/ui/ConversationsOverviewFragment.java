@@ -577,6 +577,11 @@ public class ConversationsOverviewFragment extends XmppFragment {
         if (service == null) {
             return;
         }
+        if (!AccountUtils.hasEnabledAccounts(service)) {
+            WelcomeActivity.launch(requireXmppActivity());
+            requireActivity().finish();
+            return;
+        }
         this.binding.searchBar.invalidateMenu();
         service.populateWithOrderedConversations(this.conversations);
         Conversation removed = this.swipedConversation.peek();

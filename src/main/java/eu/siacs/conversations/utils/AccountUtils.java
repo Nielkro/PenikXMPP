@@ -25,10 +25,16 @@ public class AccountUtils {
     }
 
     public static boolean hasEnabledAccounts(final XmppConnectionService service) {
+        if (service == null) {
+            return false;
+        }
         final List<Account> accounts = service.getAccounts();
+        if (accounts == null || accounts.isEmpty()) {
+            return false;
+        }
         for (Account account : accounts) {
-            if (account.isOptionSet(Account.OPTION_DISABLED)) {
-                return false;
+            if (account.isEnabled()) {
+                return true;
             }
         }
         return false;

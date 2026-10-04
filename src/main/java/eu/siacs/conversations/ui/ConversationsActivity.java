@@ -71,6 +71,7 @@ import eu.siacs.conversations.ui.interfaces.OnConversationSelected;
 import eu.siacs.conversations.ui.interfaces.OnConversationsListItemUpdated;
 import eu.siacs.conversations.ui.util.ActivityResult;
 import eu.siacs.conversations.ui.util.PendingItem;
+import eu.siacs.conversations.utils.AccountUtils;
 import eu.siacs.conversations.utils.ExceptionHelper;
 import eu.siacs.conversations.xmpp.OnUpdateBlocklist;
 import java.util.Arrays;
@@ -139,6 +140,11 @@ public class ConversationsActivity extends QrCodeProcessingActivity
 
     @Override
     protected void onBackendConnected() {
+        if (!AccountUtils.hasEnabledAccounts(xmppConnectionService)) {
+            WelcomeActivity.launch(this);
+            finish();
+            return;
+        }
         xmppConnectionService.getNotificationService().setIsInForeground(true);
         final Intent intent = pendingViewIntent.pop();
         if (intent != null) {
@@ -605,6 +611,11 @@ public class ConversationsActivity extends QrCodeProcessingActivity
 
     @Override
     public void onAccountUpdate() {
+        if (!AccountUtils.hasEnabledAccounts(xmppConnectionService)) {
+            WelcomeActivity.launch(this);
+            finish();
+            return;
+        }
         this.refreshUi();
     }
 
