@@ -3256,10 +3256,32 @@ public class ConversationFragment extends XmppFragment
         switch (action) {
             case PenikChatActions.COPY ->
                     ShareUtil.copyToClipboard(requireXmppActivity(), message);
+            case PenikChatActions.COPY_URL ->
+                    ShareUtil.copyUrlToClipboard(requireXmppActivity(), message);
             case PenikChatActions.QUOTE -> quoteMessage(message);
             case PenikChatActions.CORRECT -> correctMessage(message);
             case PenikChatActions.SHARE -> ShareUtil.share(requireXmppActivity(), message);
+            case PenikChatActions.SAVE_FILE -> saveFile(message);
             case PenikChatActions.RESEND -> resendMessage(message, false);
+            case PenikChatActions.DELETE -> {
+                if (message.isFileOrImage() && message.getFileParams() != null) {
+                    deleteFileDialog(message, false);
+                } else {
+                    final var builder = new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireActivity());
+                    builder.setTitle(R.string.delete_message);
+                    builder.setMessage(R.string.delete_file_dialog_confirm);
+                    builder.setNegativeButton(R.string.cancel, null);
+                    builder.setPositiveButton(
+                            R.string.delete,
+                            (dialog, which) -> {
+                                DatabaseBackend.getInstance(requireContext())
+                                        .deleteMessage(message.getUuid());
+                                requireConversationsActivity().onConversationsListItemUpdated();
+                                refresh();
+                            });
+                    builder.create().show();
+                }
+            }
             case PenikChatActions.OPEN -> {
                 if (message.isGeoUri()) {
                     GeoHelper.view(getActivity(), message);

@@ -58,6 +58,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.LinkAnnotation
@@ -110,12 +114,15 @@ interface PenikChatListener {
 
 object PenikChatActions {
     const val COPY = "copy"
+    const val COPY_URL = "copy_url"
     const val QUOTE = "quote"
     const val CORRECT = "correct"
     const val SHARE = "share"
     const val RESEND = "resend"
     const val OPEN = "open"
     const val OPEN_URL = "open_url"
+    const val SAVE_FILE = "save_file"
+    const val DELETE = "delete"
 }
 
 class PenikChatState {
@@ -586,6 +593,8 @@ fun PenikTextBubble(
         revision: Long = 0L
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val uriHandler = LocalUriHandler.current
     val sentBg = colorResource(R.color.penik_sent_message_bg)
     val sentText = colorResource(R.color.penik_sent_message_text)
     val recvBg = colorResource(R.color.penik_recv_message_bg)
@@ -646,7 +655,10 @@ fun PenikTextBubble(
                             Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                                     .combinedClickable(
                                             onClick = {},
-                                            onLongClick = { showMenu = true }
+                                            onLongClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                showMenu = true
+                                            }
                                     )
             ) {
                 Column(horizontalAlignment = if (isSentByMe) Alignment.End else Alignment.Start) {
@@ -675,7 +687,10 @@ fun PenikTextBubble(
                                                     expandedBug = true
                                                 }
                                             },
-                                            onLongClick = { showMenu = true }
+                                            onLongClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                showMenu = true
+                                            }
                                     )
                                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
@@ -715,14 +730,34 @@ fun PenikTextBubble(
                         }
                         val mainText = if (quote != null) rest else rawBody
                         if (mainText.isNotEmpty()) {
-                            ClickableText(
-                                    text = penikLinkified(mainText, linkColor),
-                                    style =
-                                            androidx.compose.ui.text.TextStyle(
-                                                    color = fgColor,
-                                                    fontSize = 15.sp
-                                            ),
-                                    onClick = { /* links handled by annotation */ }
+                            val annotated = remember(mainText, linkColor) { penikLinkified(mainText, linkColor) }
+                            var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                            Text(
+                                    text = annotated,
+                                    color = fgColor,
+                                    fontSize = 15.sp,
+                                    onTextLayout = { layoutResult = it },
+                                    modifier = Modifier.pointerInput(annotated) {
+                                        detectTapGestures(
+                                                onLongPress = {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    showMenu = true
+                                                },
+                                                onTap = { offset ->
+                                                    layoutResult?.let { textLayoutResult ->
+                                                        val position = textLayoutResult.getOffsetForPosition(offset)
+                                                        annotated.getLinkAnnotations(start = position, end = position)
+                                                                .firstOrNull()?.let { annotation ->
+                                                                    if (annotation.item is LinkAnnotation.Url) {
+                                                                        try {
+                                                                            uriHandler.openUri((annotation.item as LinkAnnotation.Url).url)
+                                                                        } catch (ignored: Exception) {}
+                                                                    }
+                                                                }
+                                                    }
+                                                }
+                                        )
+                                    }
                             )
                         }
                     }
@@ -949,28 +984,52 @@ fun PenikMessageMenu(
 ) {
     val panel = colorResource(R.color.penik_panel)
     val textPrimary = colorResource(R.color.penik_text_primary)
-    val isText = message.type == Message.TYPE_TEXT
+    val danger = colorResource(R.color.penik_danger)
+    val mime = message.mimeType ?: ""
+    val isMedia = message.isFileOrImage || mime.startsWith("image/") || mime.startsWith("audio/") || mime.startsWith("video/") || message.isGeoUri
+    val body = message.body ?: ""
+    val hasText = body.isNotBlank() && !message.isGeoUri
+    val hasUrl = message.fileParams?.url != null || (hasText && (body.contains("http://") || body.contains("https://") || body.startsWith("geo:")))
+
     DropdownMenu(
             expanded = true,
             onDismissRequest = onDismiss,
             modifier = Modifier.background(panel)
     ) {
-        if (isText) {
+        DropdownMenuItem(
+                text = { Text("Ответить", color = textPrimary) },
+                onClick = { onAction(PenikChatActions.QUOTE) }
+        )
+        if (hasText) {
             DropdownMenuItem(
-                    text = { Text("Копировать", color = textPrimary) },
+                    text = { Text("Копировать текст", color = textPrimary) },
                     onClick = { onAction(PenikChatActions.COPY) }
             )
         }
-        if (isText) {
-            DropdownMenuItem(
-                    text = { Text("Ответить", color = textPrimary) },
-                    onClick = { onAction(PenikChatActions.QUOTE) }
-            )
-        }
-        if (isText && isSentByMe && message.status != Message.STATUS_SEND_FAILED) {
+        if (!isMedia && isSentByMe && message.status != Message.STATUS_SEND_FAILED && message.acceptMessageCorrection()) {
             DropdownMenuItem(
                     text = { Text("Изменить", color = textPrimary) },
                     onClick = { onAction(PenikChatActions.CORRECT) }
+            )
+        }
+        DropdownMenuItem(
+                text = { Text("Поделиться", color = textPrimary) },
+                onClick = { onAction(PenikChatActions.SHARE) }
+        )
+        if (hasUrl || message.isGeoUri) {
+            DropdownMenuItem(
+                    text = { Text("Копировать ссылку", color = textPrimary) },
+                    onClick = { onAction(PenikChatActions.COPY_URL) }
+            )
+        }
+        if (isMedia) {
+            DropdownMenuItem(
+                    text = { Text("Сохранить", color = textPrimary) },
+                    onClick = { onAction(PenikChatActions.SAVE_FILE) }
+            )
+            DropdownMenuItem(
+                    text = { Text("Открыть в приложении", color = textPrimary) },
+                    onClick = { onAction(PenikChatActions.OPEN) }
             )
         }
         if (message.status == Message.STATUS_SEND_FAILED) {
@@ -980,8 +1039,8 @@ fun PenikMessageMenu(
             )
         }
         DropdownMenuItem(
-                text = { Text("Поделиться", color = textPrimary) },
-                onClick = { onAction(PenikChatActions.SHARE) }
+                text = { Text("Удалить", color = danger) },
+                onClick = { onAction(PenikChatActions.DELETE) }
         )
     }
 }
@@ -1403,6 +1462,7 @@ fun PenikAttachmentRow(
         revision: Long = 0L
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val sentBg = colorResource(R.color.penik_sent_message_bg)
     val sentText = colorResource(R.color.penik_sent_message_text)
     val recvBg = colorResource(R.color.penik_recv_message_bg)
@@ -1452,7 +1512,10 @@ fun PenikAttachmentRow(
                                     .background(Color(0x15FFFFFF))
                                     .combinedClickable(
                                             onClick = { showImageViewer = true },
-                                            onLongClick = { showMenu = true }
+                                            onLongClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                showMenu = true
+                                            }
                                     )
             ) {
                 PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
@@ -1503,7 +1566,10 @@ fun PenikAttachmentRow(
                                     .background(bgColor)
                                     .combinedClickable(
                                             onClick = { listener.onMessageAction(PenikChatActions.OPEN, message) },
-                                            onLongClick = { showMenu = true }
+                                            onLongClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                showMenu = true
+                                            }
                                     )
                                     .padding(10.dp)
             ) {
@@ -1583,6 +1649,7 @@ fun PenikUrlImageRow(
         revision: Long = 0L
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
     val accent = colorResource(R.color.penik_accent)
     val danger = colorResource(R.color.penik_danger)
@@ -1608,7 +1675,10 @@ fun PenikUrlImageRow(
                                 .background(Color(0x15FFFFFF))
                                 .combinedClickable(
                                         onClick = { showViewer = true },
-                                        onLongClick = { showMenu = true }
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            showMenu = true
+                                        }
                                 )
         ) {
             coil.compose.AsyncImage(
