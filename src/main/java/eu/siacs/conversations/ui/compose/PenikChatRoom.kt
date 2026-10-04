@@ -579,15 +579,17 @@ fun splitPenikQuote(text: String): Pair<String?, String> {
 
 fun formatPenikQuoteContent(raw: String): String {
     val trimmed = raw.trim()
-    val lower = trimmed.lowercase()
+    val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
+    val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
     return when {
         trimmed.startsWith("geo:") -> "📍 Местоположение"
-        lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp") || lower.endsWith(".gif") || lower.contains("/image") -> "📷 Фото"
+        lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp") || lower.endsWith(".gif") || lower.endsWith(".bmp") || lower.contains("/image") -> "📷 Фото"
         lower.endsWith(".ogg") || lower.endsWith(".mp3") || lower.endsWith(".m4a") || lower.endsWith(".opus") || lower.endsWith(".wav") || lower.endsWith(".aac") || lower.contains("/audio") || lower.contains("voice") -> "🎙 Голосовое сообщение"
         lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mov") || lower.endsWith(".mkv") || lower.contains("/video") -> "🎬 Видео"
-        trimmed.startsWith("http://") || trimmed.startsWith("https://") -> {
+        trimmed.startsWith("http://", ignoreCase = true) || trimmed.startsWith("https://", ignoreCase = true) || trimmed.startsWith("aesgcm://", ignoreCase = true) -> {
             val fileName = try {
-                java.net.URL(trimmed).path.substringAfterLast("/").takeIf { it.isNotBlank() }
+                val path = if (trimmed.startsWith("aesgcm://", ignoreCase = true)) "https://${trimmed.substring("aesgcm://".length)}" else trimmed
+                java.net.URL(path.substringBefore("#").substringBefore("|")).path.substringAfterLast("/").takeIf { it.isNotBlank() }
             } catch (e: Exception) {
                 null
             }

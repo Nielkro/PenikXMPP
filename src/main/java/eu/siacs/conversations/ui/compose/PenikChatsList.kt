@@ -751,10 +751,18 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
     val textMuted = colorResource(R.color.penik_text_muted)
     val latest = selfChat?.latestMessage
     val service = activity.xmppConnectionService
+    val rawBody = latest?.body?.trim() ?: ""
+    val isAesGcm = rawBody.startsWith("aesgcm://", ignoreCase = true)
+    val cleanUrl = (if (isAesGcm) rawBody.substring("aesgcm://".length) else rawBody).substringBefore("|").trim()
+    val lowerUrl = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
+    val isImageExt = lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") ||
+            lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp") ||
+            lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".bmp")
     val isImage =
             latest != null &&
                     (latest.type == Message.TYPE_IMAGE ||
-                            (latest.mimeType?.startsWith("image/") == true)) &&
+                            (latest.mimeType?.startsWith("image/") == true) ||
+                            isImageExt) &&
                     !latest.isGeoUri
     var thumb by remember(latest?.uuid) { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(latest?.uuid) {
@@ -810,7 +818,7 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () ->
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                     Text(
-                            text = UIHelper.getMessagePreview(context, latest).first.toString(),
+                            text = penikMessagePreview(context, latest),
                             color = textMuted,
                             fontSize = 14.sp,
                             maxLines = 1,
@@ -910,7 +918,7 @@ fun PenikConversationRow(
             if (draft != null) {
                 "Черновик: ${draft.message()}"
             } else if (latest != null) {
-                val preview = UIHelper.getMessagePreview(context, latest).first.toString()
+                val preview = penikMessagePreview(context, latest)
                 val sender =
                         if (latest.status == Message.STATUS_RECEIVED &&
                                         conversation.mode == Conversational.MODE_MULTI
@@ -1576,3 +1584,73 @@ private fun launchPenikCamera(
         null
     }
 }
+
+fun penikMessagePreview(context: android.content.Context, message: Message): String {
+    if (message.encryption == Message.ENCRYPTION_PGP) {
+        return context.getString(R.string.pgp_message)
+    }
+    if (message.encryption == Message.ENCRYPTION_DECRYPTION_FAILED) {
+        return context.getString(R.string.decryption_failed)
+    }
+    if (message.encryption == Message.ENCRYPTION_AXOLOTL_NOT_FOR_THIS_DEVICE) {
+        return context.getString(R.string.not_encrypted_for_this_device)
+    }
+    if (message.encryption == Message.ENCRYPTION_AXOLOTL_FAILED) {
+        return context.getString(R.string.omemo_decryption_failed)
+    }
+    if (message.isFileOrImage && message.isDeleted) {
+        return context.getString(R.string.file_deleted)
+    }
+    if (message.isGeoUri) {
+        return "📍 Местоположение"
+    }
+    if (message.type == Message.TYPE_RTP_SESSION) {
+        val rtpSessionStatus = RtpSessionStatus.of(message.body)
+        val received = message.status == Message.STATUS_RECEIVED
+        return if (!rtpSessionStatus.successful && received) {
+            context.getString(R.string.missed_call)
+        } else {
+            context.getString(if (received) R.string.incoming_call else R.string.outgoing_call)
+        }
+    }
+
+    val rawBody = message.body?.trim() ?: ""
+    val mime = message.mimeType ?: ""
+    val isAesGcm = rawBody.startsWith("aesgcm://", ignoreCase = true)
+    val isHttp = rawBody.startsWith("http://", ignoreCase = true) || rawBody.startsWith("https://", ignoreCase = true)
+    val cleanUrl = (if (isAesGcm) rawBody.substring("aesgcm://".length) else rawBody).substringBefore("|").trim()
+    val lowerUrl = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
+
+    val isImageExt = lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") ||
+            lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp") ||
+            lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".bmp")
+    val isAudioExt = lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".opus") ||
+            lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") ||
+            lowerUrl.endsWith(".aac") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".flac")
+    val isVideoExt = lowerUrl.endsWith(".mp4") || lowerUrl.endsWith(".mov") ||
+            lowerUrl.endsWith(".mkv") || lowerUrl.endsWith(".webm") || lowerUrl.endsWith(".3gp")
+
+    val isMediaOrDownloadable = message.isFileOrImage ||
+            message.treatAsDownloadable() ||
+            isAesGcm ||
+            (isHttp && (mime.isNotEmpty() || isImageExt || isAudioExt || isVideoExt || lowerUrl.matches(Regex(".*\\.(pdf|apk|zip|rar|tar|gz|doc|docx|xls|xlsx|ppt|pptx|txt)(\\?.*)?"))))
+
+    if (isMediaOrDownloadable) {
+        return if (message.type == Message.TYPE_IMAGE || mime.startsWith("image/") || isImageExt) {
+            "📷 Фото"
+        } else if (mime.startsWith("audio/") || isAudioExt) {
+            "🎙 Голосовое сообщение"
+        } else if (mime.startsWith("video/") || isVideoExt) {
+            "🎬 Видео"
+        } else {
+            "📎 Файл"
+        }
+    }
+
+    if (rawBody.startsWith(Message.ME_COMMAND)) {
+        return rawBody.replaceFirst(Message.ME_COMMAND, UIHelper.getMessageDisplayName(message) + " ")
+    }
+
+    return UIHelper.getMessagePreview(context, message).first.toString()
+}
+
