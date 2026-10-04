@@ -1097,6 +1097,12 @@
     <string name="call_is_using_speaker">Call is using speaker.</string>
     <string name="call_is_using_bluetooth">Call is using bluetooth.</string>
     <string name="flip_camera">Flip camera</string>
+    <string name="microphone">Microphone</string>
+    <string name="speaker">Speaker</string>
+    <string name="earpiece">Phone</string>
+    <string name="headset">Headset</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="camera">Camera</string>
     <string name="video_is_enabled_tap_to_disable">Video is enabled. Tap to disable.</string>
     <string name="video_is_disabled_tap_to_enable">Video is disabled. Tap to enable.</string>
     <string name="server_info_login_mechanism">Login mechanism</string>

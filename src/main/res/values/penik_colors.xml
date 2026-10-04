@@ -18,4 +18,10 @@
     <color name="penik_danger">#FFD83B3B</color>
     <color name="penik_success">#FF2EA55C</color>
     <color name="penik_warning">#FFD98A10</color>
+    <color name="penik_call_background">#FF101418</color>
+    <color name="penik_call_accept">#FF2ECC71</color>
+    <color name="penik_call_hangup">#FFE74C3C</color>
+    <color name="penik_call_button_bg">#26FFFFFF</color>
+    <color name="penik_call_button_active_bg">#FFFFFFFF</color>
+    <color name="penik_call_button_active_tint">#FF101418</color>
 </resources>

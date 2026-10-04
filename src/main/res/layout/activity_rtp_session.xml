@@ -6,8 +6,10 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/penik_call_background"
         android:fitsSystemWindows="true">
 
+        <!-- PiP Placeholder when entering PiP before stream connects -->
         <LinearLayout
             android:id="@+id/pip_placeholder"
             android:layout_width="match_parent"
@@ -35,260 +37,463 @@
                 app:tint="@android:color/white" />
         </LinearLayout>
 
-        <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/app_bar_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="visible">
-
-            <com.google.android.material.appbar.MaterialToolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize" />
-
-            <TextView
-                android:id="@+id/with"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:textAppearance="?textAppearanceDisplayLarge"
-                tools:text="Juliet Capulet" />
-
-            <TextView
-                android:id="@+id/with_jid"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginRight="16dp"
-                android:textAppearance="?textAppearanceBodyMedium"
-                android:visibility="visible"
-                tools:text="jcapulet@example.com" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="32dp" />
-
-
-        </com.google.android.material.appbar.AppBarLayout>
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/button_row"
-            android:layout_below="@id/app_bar_layout">
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/support_warning"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_marginHorizontal="24dp"
-                android:layout_marginTop="@dimen/rtp_session_duration_top_margin"
-                android:visibility="gone"
-                app:cardBackgroundColor="?colorErrorContainer">
-
-                <RelativeLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="12dp">
-
-                    <ImageView
-                        android:id="@+id/no_support_av_icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:src="@drawable/ic_warning_48dp"
-                        app:tint="?colorOnErrorContainer" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="16dp"
-                        android:layout_toEndOf="@+id/no_support_av_icon"
-                        android:text="@string/clients_may_not_support_av"
-                        android:textAppearance="?textAppearanceBodyLarge"
-                        android:textColor="?colorOnErrorContainer" />
-                </RelativeLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <TextView
-                android:id="@+id/duration"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_marginTop="@dimen/rtp_session_duration_top_margin"
-                android:fontFamily="monospace"
-                android:textAppearance="?textAppearanceTitleLarge"
-                tools:text="01:23" />
-
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/contact_photo"
-                android:layout_width="@dimen/publish_avatar_size"
-                android:layout_height="@dimen/publish_avatar_size"
-                android:layout_centerInParent="true"
-                app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
-
-        </RelativeLayout>
-
-
-        <LinearLayout
+        <!-- Remote Video (Full Screen) -->
+        <FrameLayout
             android:id="@+id/remote_video_wrapper"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@+id/app_bar_layout"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentBottom="true"
             android:background="@android:color/black"
-            android:gravity="center"
             android:visibility="gone">
 
             <eu.siacs.conversations.ui.widget.SurfaceViewRenderer
                 android:id="@+id/remote_video"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:soundEffectsEnabled="false" />
+        </FrameLayout>
+
+        <!-- Local Video PiP Preview -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/local_video_card"
+            android:layout_width="108dp"
+            android:layout_height="160dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="72dp"
+            android:layout_marginEnd="16dp"
+            app:cardBackgroundColor="@android:color/black"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="8dp"
+            android:visibility="gone">
+
+            <eu.siacs.conversations.ui.widget.SurfaceViewRenderer
+                android:id="@+id/local_video"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:soundEffectsEnabled="false" />
+        </androidx.cardview.widget.CardView>
+
+        <!-- Minimalist Transparent Top App Bar -->
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/app_bar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            app:elevation="0dp">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="@android:color/transparent"
+                app:navigationIconTint="@android:color/white"
+                app:titleTextColor="@android:color/white" />
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <!-- Center Call Profile & Info Container -->
+        <LinearLayout
+            android:id="@+id/call_info_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp">
+
+            <!-- Support Warning Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/support_warning"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:soundEffectsEnabled="false" />
+                android:layout_marginBottom="24dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="#3D1D1D"
+                app:cardCornerRadius="12dp"
+                app:strokeColor="#5C2626"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:id="@+id/no_support_av_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_warning_24dp"
+                        app:tint="#F05A5A" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/clients_may_not_support_av"
+                        android:textColor="#F05A5A"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Big Circular Avatar (112dp) -->
+            <FrameLayout
+                android:layout_width="112dp"
+                android:layout_height="112dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/contact_photo"
+                    android:layout_width="112dp"
+                    android:layout_height="112dp"
+                    android:scaleType="centerCrop"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular"
+                    tools:src="@drawable/ic_account_circle_24dp" />
+            </FrameLayout>
+
+            <!-- Peer Display Name -->
+            <TextView
+                android:id="@+id/with"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:textSize="24sp"
+                tools:text="Пользователь" />
+
+            <!-- Peer JID (when relevant) -->
+            <TextView
+                android:id="@+id/with_jid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:textColor="#80FFFFFF"
+                android:textSize="13sp"
+                android:visibility="gone"
+                tools:text="user@example.com" />
+
+            <!-- Call State / Subtitle -->
+            <TextView
+                android:id="@+id/call_state_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:textColor="#B3FFFFFF"
+                android:textSize="15sp"
+                tools:text="Входящий звонок" />
+
+            <!-- Call Duration Timer -->
+            <TextView
+                android:id="@+id/duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:textColor="#B3FFFFFF"
+                android:textSize="15sp"
+                android:visibility="gone"
+                tools:text="01:23" />
+
+            <!-- E2EE Pill Badge -->
+            <LinearLayout
+                android:id="@+id/verified_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/penik_call_pill_bg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="5dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/verified"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_lock_24dp"
+                    app:tint="@color/penik_call_accept" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="E2EE Зашифровано"
+                    android:textColor="@color/penik_call_accept"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Using Account Notice -->
+            <TextView
+                android:id="@+id/using_account"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:textColor="#66FFFFFF"
+                android:textSize="12sp"
+                android:visibility="gone"
+                tools:text="Используется аккаунт me@penik.ru" />
+
         </LinearLayout>
 
-        <eu.siacs.conversations.ui.widget.SurfaceViewRenderer
-            android:id="@+id/local_video"
-            android:layout_width="@dimen/local_video_preview_width"
-            android:layout_height="@dimen/local_video_preview_height"
-            android:layout_below="@+id/app_bar_layout"
-            android:layout_alignParentEnd="true"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="24dp"
-            android:soundEffectsEnabled="false"
-            android:visibility="gone"
-            app:elevation="4dp" />
-
-        <ImageView
-            android:id="@+id/verified"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_below="@+id/app_bar_layout"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="@dimen/rtp_session_duration_top_margin"
-            android:alpha="0.7"
-            android:src="@drawable/ic_verified_user_24dp"
-            app:tint="@color/light_green_600" />
-
+        <!-- Floating PiP Indicator when muted -->
         <ImageView
             android:id="@+id/pip_local_mic_off_indicator"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
-            android:layout_margin="8dp"
-            android:alpha="0.7"
+            android:layout_margin="16dp"
+            android:alpha="0.8"
             android:src="@drawable/ic_mic_off_24dp"
             android:visibility="gone"
             app:tint="@android:color/white" />
 
-        <RelativeLayout
+        <!-- Bottom Controls Area -->
+        <LinearLayout
             android:id="@+id/button_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="36dp"
+            android:gravity="center"
+            android:orientation="vertical">
 
-            <RelativeLayout
-                android:layout_width="288dp"
+            <!-- Incoming / Terminal Call Action Row (Reject / Accept / Retry / Exit) -->
+            <LinearLayout
+                android:id="@+id/incoming_actions_row"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:background="@android:color/transparent">
+                android:gravity="center"
+                android:orientation="horizontal">
 
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/reject_call"
+                <!-- Reject / Cancel / Exit Button Column -->
+                <LinearLayout
+                    android:id="@+id/reject_call_container"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_margin="16dp"
-                    android:src="@drawable/ic_call_end_24dp"
+                    android:layout_marginHorizontal="28dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
                     android:visibility="gone"
-                    app:backgroundTint="?colorError"
-                    app:elevation="4dp"
-                    app:fabCustomSize="72dp"
-                    app:maxImageSize="36dp"
-                    app:tint="?colorOnError"
-                    tools:visibility="visible" />
+                    tools:visibility="visible">
 
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/accept_call"
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/reject_call"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/dismiss_call"
+                        android:src="@drawable/ic_call_end_24dp"
+                        app:backgroundTint="@color/penik_call_hangup"
+                        app:borderWidth="0dp"
+                        app:elevation="4dp"
+                        app:fabCustomSize="64dp"
+                        app:maxImageSize="30dp"
+                        app:rippleColor="#40FFFFFF"
+                        app:tint="@android:color/white" />
+
+                    <TextView
+                        android:id="@+id/reject_call_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/dismiss_call"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Accept / Retry Button Column -->
+                <LinearLayout
+                    android:id="@+id/accept_call_container"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_margin="16dp"
-                    android:src="@drawable/ic_call_24dp"
+                    android:layout_marginHorizontal="28dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
                     android:visibility="gone"
-                    app:backgroundTint="?colorPrimary"
-                    app:elevation="4dp"
-                    app:fabCustomSize="72dp"
-                    app:maxImageSize="36dp"
-                    app:tint="?colorOnPrimary"
-                    tools:visibility="visible" />
+                    tools:visibility="visible">
 
-            </RelativeLayout>
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/accept_call"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/answer_call"
+                        android:src="@drawable/ic_call_24dp"
+                        app:backgroundTint="@color/penik_call_accept"
+                        app:borderWidth="0dp"
+                        app:elevation="4dp"
+                        app:fabCustomSize="64dp"
+                        app:maxImageSize="30dp"
+                        app:rippleColor="#40FFFFFF"
+                        app:tint="@android:color/white" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/in_call_action_left"
-                style="?attr/floatingActionButtonSmallSurfaceStyle"
+                    <TextView
+                        android:id="@+id/accept_call_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/answer_call"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Connected / In-Call Action Row (Mic, Speaker/Video, Hangup, Flip) -->
+            <LinearLayout
+                android:id="@+id/in_call_actions_row"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_margin="@dimen/in_call_fab_margin"
-                android:layout_toStartOf="@+id/end_call"
-                android:visibility="gone" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/end_call"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_margin="@dimen/in_call_fab_margin_center"
-                android:src="@drawable/ic_call_end_24dp"
-                android:visibility="visible"
-                app:backgroundTint="?colorError"
-                app:elevation="4dp"
-                app:fabCustomSize="72dp"
-                app:maxImageSize="36dp"
-                app:tint="?colorOnError" />
+                <!-- Left Action: Mic (Mute/Unmute) -->
+                <LinearLayout
+                    android:id="@+id/in_call_action_left_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/in_call_action_right"
-                style="?attr/floatingActionButtonSmallSurfaceStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_margin="@dimen/in_call_fab_margin"
-                android:layout_toEndOf="@+id/end_call"
-                android:visibility="gone" />
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/in_call_action_left"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_mic_24dp"
+                        app:backgroundTint="@color/penik_call_button_bg"
+                        app:borderWidth="0dp"
+                        app:elevation="0dp"
+                        app:fabCustomSize="56dp"
+                        app:maxImageSize="26dp"
+                        app:rippleColor="#40FFFFFF"
+                        app:tint="@android:color/white" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/in_call_action_far_right"
-                style="?attr/floatingActionButtonSmallSurfaceStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_margin="@dimen/in_call_fab_margin"
-                android:layout_toEndOf="@+id/in_call_action_right"
-                android:visibility="gone" />
-        </RelativeLayout>
+                    <TextView
+                        android:id="@+id/in_call_action_left_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Микрофон"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="11sp" />
+                </LinearLayout>
 
-        <TextView
-            android:id="@+id/using_account"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="8dp"
-            android:text="@string/using_account"
-            android:textAppearance="?textAppearanceLabelMedium" />
+                <!-- Middle Left Action: Speaker or Video Toggle -->
+                <LinearLayout
+                    android:id="@+id/in_call_action_right_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/in_call_action_right"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_volume_up_24dp"
+                        app:backgroundTint="@color/penik_call_button_bg"
+                        app:borderWidth="0dp"
+                        app:elevation="0dp"
+                        app:fabCustomSize="56dp"
+                        app:maxImageSize="26dp"
+                        app:rippleColor="#40FFFFFF"
+                        app:tint="@android:color/white" />
+
+                    <TextView
+                        android:id="@+id/in_call_action_right_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Динамик"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <!-- Far Right Action: Flip Camera -->
+                <LinearLayout
+                    android:id="@+id/in_call_action_far_right_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="gone">
+
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/in_call_action_far_right"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_flip_camera_android_24dp"
+                        app:backgroundTint="@color/penik_call_button_bg"
+                        app:borderWidth="0dp"
+                        app:elevation="0dp"
+                        app:fabCustomSize="56dp"
+                        app:maxImageSize="26dp"
+                        app:rippleColor="#40FFFFFF"
+                        app:tint="@android:color/white" />
+
+                    <TextView
+                        android:id="@+id/in_call_action_far_right_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Поворот"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <!-- End Call Button Column -->
+                <LinearLayout
+                    android:id="@+id/end_call_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/end_call"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/hang_up"
+                        android:src="@drawable/ic_call_end_24dp"
+                        app:backgroundTint="@color/penik_call_hangup"
+                        app:borderWidth="0dp"
+                        app:elevation="4dp"
+                        app:fabCustomSize="64dp"
+                        app:maxImageSize="30dp"
+                        app:rippleColor="#40FFFFFF"
+                        app:tint="@android:color/white" />
+
+                    <TextView
+                        android:id="@+id/end_call_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Завершить"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
 
     </RelativeLayout>
 </layout>

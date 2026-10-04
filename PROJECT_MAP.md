@@ -151,7 +151,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `src/main/java/eu/siacs/conversations/ui/ConferenceDetailsActivity.java` — MUC details, subject, members, config.
 - `src/main/java/eu/siacs/conversations/ui/ContactDetailsActivity.java` — 1:1 details, keys, presence.
 - `src/main/java/eu/siacs/conversations/ui/EditAccountActivity.java` — XMPP account add/edit (login/register).
-- `src/main/java/eu/siacs/conversations/ui/RtpSessionActivity.java` — Audio/video call screen (Jingle/WebRTC).
+- `src/main/java/eu/siacs/conversations/ui/RtpSessionActivity.java` — Audio/video call screen (Jingle/WebRTC) modernized with Penik dark theme, big avatar, E2EE badge, and circular call controls.
 - `src/main/java/eu/siacs/conversations/ui/activity/SettingsActivity.java` — Preferences host.
 - `src/main/java/eu/siacs/conversations/ui/SearchActivity.java` — Full-text message search.
 - `src/main/java/eu/siacs/conversations/ui/TrustKeysActivity.java` — OMEMO fingerprint verification.
