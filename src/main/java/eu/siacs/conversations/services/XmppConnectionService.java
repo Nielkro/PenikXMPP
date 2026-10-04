@@ -2280,7 +2280,8 @@ public class XmppConnectionService extends Service {
     private boolean restoreFromArchive(final Conversation conversation) {
         conversation.setStatus(Conversation.STATUS_AVAILABLE);
         databaseBackend.updateConversation(conversation);
-        return conversation.messagesLoaded.compareAndSet(true, false);
+        conversation.messagesLoaded.set(false);
+        return true;
     }
 
     private void postProcessConversation(
@@ -2369,9 +2370,7 @@ public class XmppConnectionService extends Service {
             Account account = accountLookupTable.get(conversation.getAccountUuid());
             if (account != null && account.isEnabled()) {
                 conversation.setAccount(account);
-                if (conversation.messagesLoaded.compareAndSet(false, true)) {
-                    conversation.addAll(0, databaseBackend.getMessages(conversation, Config.PAGE_SIZE));
-                }
+                conversation.addAll(0, databaseBackend.getMessages(conversation, Config.PAGE_SIZE));
             } else {
                 iterator.remove();
             }

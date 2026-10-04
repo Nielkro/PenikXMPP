@@ -2959,6 +2959,14 @@ public class ConversationFragment extends XmppFragment
             this.conversation.trim();
         }
 
+        if (this.conversation.countMessages() == 0 && requireXmppActivity().xmppConnectionService != null) {
+            final var messages = requireXmppActivity()
+                    .xmppConnectionService
+                    .databaseBackend
+                    .getMessages(this.conversation, Config.PAGE_SIZE);
+            this.conversation.addAll(0, messages);
+        }
+
         final boolean scrolledToBottomAndNoPending =
                 this.scrolledToBottom() && pendingScrollState.peek() == null;
 
