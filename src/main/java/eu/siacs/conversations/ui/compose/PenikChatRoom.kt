@@ -1787,6 +1787,22 @@ fun PenikVideoViewer(
         }
     }
 
+    val togglePlay = {
+        videoViewRef?.let { vv ->
+            if (vv.isPlaying) {
+                vv.pause()
+                isPlaying = false
+            } else {
+                if (currentPositionMs >= durationMs - 500 && durationMs > 0) {
+                    vv.seekTo(0)
+                    currentPositionMs = 0
+                }
+                vv.start()
+                isPlaying = true
+            }
+        }
+    }
+
     androidx.compose.ui.window.Dialog(
             onDismissRequest = {
                 videoViewRef?.stopPlayback()
@@ -1817,6 +1833,7 @@ fun PenikVideoViewer(
                                 setOnCompletionListener {
                                     isPlaying = false
                                     currentPositionMs = durationMs
+                                    showControls = true
                                 }
                                 setOnErrorListener { _, _, _ ->
                                     isError = true
@@ -1827,8 +1844,32 @@ fun PenikVideoViewer(
                         },
                         modifier = Modifier
                                 .fillMaxSize()
-                                .clickable { showControls = !showControls }
+                                .clickable {
+                                    if (currentPositionMs >= durationMs - 500 && durationMs > 0) {
+                                        togglePlay()
+                                    } else {
+                                        showControls = !showControls
+                                    }
+                                }
                 )
+
+                if (!isPlaying) {
+                    Box(
+                            modifier = Modifier
+                                    .size(72.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.6f))
+                                    .clickable { togglePlay() },
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                                imageVector = if (currentPositionMs >= durationMs - 500 && durationMs > 0) Icons.Default.Refresh else Icons.Default.PlayArrow,
+                                contentDescription = "Воспроизвести",
+                                tint = Color.White,
+                                modifier = Modifier.size(40.dp)
+                        )
+                    }
+                }
             } else {
                 Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1991,24 +2032,9 @@ fun PenikVideoViewer(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(
-                                    onClick = {
-                                        videoViewRef?.let { vv ->
-                                            if (vv.isPlaying) {
-                                                vv.pause()
-                                                isPlaying = false
-                                            } else {
-                                                if (currentPositionMs >= durationMs && durationMs > 0) {
-                                                    vv.seekTo(0)
-                                                }
-                                                vv.start()
-                                                isPlaying = true
-                                            }
-                                        }
-                                    }
-                            ) {
+                            IconButton(onClick = { togglePlay() }) {
                                 Icon(
-                                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        imageVector = if (isPlaying) Icons.Default.Pause else if (currentPositionMs >= durationMs - 500 && durationMs > 0) Icons.Default.Refresh else Icons.Default.PlayArrow,
                                         contentDescription = if (isPlaying) "Пауза" else "Воспроизведение",
                                         tint = Color.White,
                                         modifier = Modifier.size(32.dp)
