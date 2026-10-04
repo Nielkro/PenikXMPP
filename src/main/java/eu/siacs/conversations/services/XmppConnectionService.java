@@ -2109,8 +2109,6 @@ public class XmppConnectionService extends Service {
                             if (query != null) {
                                 query.setCallback(callback);
                                 callback.informUser(R.string.fetching_history_from_server);
-                            } else {
-                                callback.informUser(R.string.not_fetching_history_retention_period);
                             }
                         }
                     }

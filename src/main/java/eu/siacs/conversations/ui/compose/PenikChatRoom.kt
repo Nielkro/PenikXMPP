@@ -53,6 +53,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -132,9 +133,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-fun penikHandleUrlClick(activity: XmppActivity, rawUrl: String, fallbackUriHandler: androidx.compose.ui.platform.UriHandler) {
+fun penikHandleUrlClick(activity: XmppActivity, rawUrl: String, fallbackUriHandler: androidx.compose.ui.platform.UriHandler? = null) {
     val trimmed = rawUrl.trim()
-    if (trimmed.startsWith("xmpp:", ignoreCase = true) || trimmed.contains("/invite/")) {
+    val lower = trimmed.lowercase()
+    if (lower.startsWith("xmpp:") || trimmed.contains("/invite/") || lower.startsWith("https://snikket.penik.ru") || lower.startsWith("http://snikket.penik.ru") || lower.startsWith("https://penik.ru") || lower.startsWith("http://penik.ru")) {
         try {
             val intent = android.content.Intent(activity, YuriLauncherActivity::class.java).apply {
                 data = Uri.parse(trimmed)
@@ -144,7 +146,12 @@ fun penikHandleUrlClick(activity: XmppActivity, rawUrl: String, fallbackUriHandl
         } catch (ignored: Exception) {}
     }
     try {
-        fallbackUriHandler.openUri(trimmed)
+        if (fallbackUriHandler != null) {
+            fallbackUriHandler.openUri(trimmed)
+        } else {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(trimmed))
+            activity.startActivity(intent)
+        }
     } catch (e: Exception) {
         try {
             val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(trimmed))
@@ -249,7 +256,7 @@ fun penikEmojiOnlyCount(text: String): Int {
     return (base + 1) / 2
 }
 
-fun penikLinkified(text: String, linkColor: Color) =
+fun penikLinkified(text: String, linkColor: Color, onLinkClick: ((String) -> Unit)? = null) =
         buildAnnotatedString {
             val xmppPattern = java.util.regex.Pattern.compile("(xmpp:[^\\s\"'<>()]+)", java.util.regex.Pattern.CASE_INSENSITIVE)
             val patterns =
@@ -284,7 +291,17 @@ fun penikLinkified(text: String, linkColor: Color) =
                 if (span.start > last) {
                     append(text.substring(last, span.start))
                 }
-                pushLink(LinkAnnotation.Url(span.url))
+                pushLink(
+                    LinkAnnotation.Url(
+                        url = span.url,
+                        linkInteractionListener = onLinkClick?.let { listener ->
+                            { link ->
+                                val clickedUrl = (link as? LinkAnnotation.Url)?.url ?: span.url
+                                listener(clickedUrl)
+                            }
+                        }
+                    )
+                )
                 withStyle(SpanStyle(color = linkColor)) { append(span.display) }
                 pop()
                 last = span.end
@@ -372,49 +389,59 @@ fun PenikChatRoom(
             }
         }
     }
-    Scaffold(
-            containerColor = background,
-            floatingActionButton = {
-                if (showScrollDown) {
-                    FloatingActionButton(
-                            onClick = { scope.launch { listState.animateScrollToItem(0) } },
-                            containerColor = colorResource(R.color.penik_panel_secondary),
-                            contentColor = colorResource(R.color.penik_text_primary),
-                            modifier = Modifier.size(44.dp)
-                    ) {
-                        Icon(
-                                painter =
-                                        painterResource(
-                                                R.drawable.ic_keyboard_double_arrow_down_24dp
-                                        ),
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp)
-                        )
+    val defaultUriHandler = LocalUriHandler.current
+    val customUriHandler = remember(activity, defaultUriHandler) {
+        object : androidx.compose.ui.platform.UriHandler {
+            override fun openUri(uri: String) {
+                penikHandleUrlClick(activity, uri, defaultUriHandler)
+            }
+        }
+    }
+    CompositionLocalProvider(LocalUriHandler provides customUriHandler) {
+        Scaffold(
+                containerColor = background,
+                floatingActionButton = {
+                    if (showScrollDown) {
+                        FloatingActionButton(
+                                onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                                containerColor = colorResource(R.color.penik_panel_secondary),
+                                contentColor = colorResource(R.color.penik_text_primary),
+                                modifier = Modifier.size(44.dp)
+                        ) {
+                            Icon(
+                                    painter =
+                                            painterResource(
+                                                    R.drawable.ic_keyboard_double_arrow_down_24dp
+                                            ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
-            }
-    ) { padding ->
-        LazyColumn(
-                state = listState,
-                reverseLayout = true,
-                modifier = Modifier.fillMaxSize()
-        ) {
-            items(rows, key = { row ->
-                when (row) {
-                    is ChatRow.DateHeader -> "date-${row.key}"
-                    is ChatRow.Msg -> "msg-${row.message.uuid ?: row.message.hashCode()}"
-                }
-            }) { row ->
-                when (row) {
-                    is ChatRow.DateHeader -> PenikDateHeader(label = row.label)
-                    is ChatRow.Msg ->
-                            PenikMessageRow(
-                                    message = row.message,
-                                    activity = activity,
-                                    isMuc = state.isMuc,
-                                    listener = listener,
-                                    revision = state.revision
-                            )
+        ) { padding ->
+            LazyColumn(
+                    state = listState,
+                    reverseLayout = true,
+                    modifier = Modifier.fillMaxSize()
+            ) {
+                items(rows, key = { row ->
+                    when (row) {
+                        is ChatRow.DateHeader -> "date-${row.key}"
+                        is ChatRow.Msg -> "msg-${row.message.uuid ?: row.message.hashCode()}"
+                    }
+                }) { row ->
+                    when (row) {
+                        is ChatRow.DateHeader -> PenikDateHeader(label = row.label)
+                        is ChatRow.Msg ->
+                                PenikMessageRow(
+                                        message = row.message,
+                                        activity = activity,
+                                        isMuc = state.isMuc,
+                                        listener = listener,
+                                        revision = state.revision
+                                )
+                    }
                 }
             }
         }
@@ -907,7 +934,11 @@ fun PenikTextBubble(
                         }
                         val mainText = if (quote != null) rest else rawBody
                         if (mainText.isNotEmpty()) {
-                            val annotated = remember(mainText, linkColor) { penikLinkified(mainText, linkColor) }
+                            val annotated = remember(mainText, linkColor, activity) {
+                                penikLinkified(mainText, linkColor) { url ->
+                                    penikHandleUrlClick(activity, url, uriHandler)
+                                }
+                            }
                             var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
                             Text(
                                     text = annotated,

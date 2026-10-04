@@ -813,12 +813,6 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         if (query != null) {
             Toast.makeText(activity, R.string.fetching_history_from_server, Toast.LENGTH_LONG)
                     .show();
-        } else {
-            Toast.makeText(
-                            activity,
-                            R.string.not_fetching_history_retention_period,
-                            Toast.LENGTH_SHORT)
-                    .show();
         }
     }
 
