@@ -749,6 +749,15 @@ public class ConversationFragment extends XmppFragment
                             menuTogglePinned.setTitle(R.string.add_to_favorites);
                         }
                     }
+                    if (menuArchive != null && !isSelfChat) {
+                        if (c.getStatus() == Conversation.STATUS_ARCHIVED) {
+                            menuArchive.setTitle(R.string.action_unarchive_chat);
+                            menuArchive.setIcon(R.drawable.ic_unarchive_24dp);
+                        } else {
+                            menuArchive.setTitle(R.string.action_archive_chat);
+                            menuArchive.setIcon(R.drawable.ic_archive_24dp);
+                        }
+                    }
                 }
 
                 @Override
@@ -763,10 +772,18 @@ public class ConversationFragment extends XmppFragment
                         startSearch();
                         return true;
                     } else if (itemId == R.id.action_archive) {
-                        requireXmppActivity()
-                                .xmppConnectionService
-                                .archiveConversation(conversation);
-                        requireConversationsActivity().onConversationArchived(conversation);
+                        if (conversation.getStatus() == Conversation.STATUS_ARCHIVED) {
+                            requireXmppActivity()
+                                    .xmppConnectionService
+                                    .unarchiveConversation(conversation);
+                            requireConversationsActivity().onConversationsListItemUpdated();
+                            ConversationFragment.this.binding.toolbar.invalidateMenu();
+                        } else {
+                            requireXmppActivity()
+                                    .xmppConnectionService
+                                    .archiveConversation(conversation);
+                            requireConversationsActivity().onConversationArchived(conversation);
+                        }
                         return true;
                     } else if (itemId == R.id.action_invite) {
                         startActivityForResult(
