@@ -655,10 +655,11 @@ fun PenikChatsTab(
                     )
                 }
 
-                // Delete chat
+                // Delete chat / Leave conversation
+                val isGroup = selected?.mode == Conversation.MODE_MULTI
                 PenikSheetActionItem(
-                        iconRes = R.drawable.ic_delete_24dp,
-                        title = "Удалить чат",
+                        iconRes = if (isGroup) R.drawable.ic_logout_24dp else R.drawable.ic_delete_24dp,
+                        title = if (isGroup) "Покинуть беседу" else "Удалить чат",
                         tint = danger,
                         onClick = {
                             val conv = selected
@@ -673,10 +674,11 @@ fun PenikChatsTab(
     // Delete Chat Confirmation Dialog
     val toDelete = pendingDeleteConversation
     if (toDelete != null) {
+        val isGroup = toDelete.mode == Conversation.MODE_MULTI
         PenikConfirmDialog(
-                title = "Удалить чат",
-                text = "Удалить чат с «${toDelete.name}» и всю историю сообщений?",
-                confirm = "Удалить",
+                title = if (isGroup) "Покинуть беседу" else "Удалить чат",
+                text = if (isGroup) "Покинуть беседу «${toDelete.name}» и удалить её с этого устройства?" else "Удалить чат с «${toDelete.name}» и всю историю сообщений?",
+                confirm = if (isGroup) "Покинуть" else "Удалить",
                 confirmColor = danger,
                 onConfirm = {
                     listener.onDeleteConversation(toDelete)
