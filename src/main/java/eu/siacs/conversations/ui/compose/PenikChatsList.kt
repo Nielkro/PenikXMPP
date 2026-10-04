@@ -32,6 +32,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.BottomSheetDefaults
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -163,6 +164,20 @@ fun PenikMainScreen(
             focusRequester.requestFocus()
         }
     }
+
+    BackHandler(enabled = isSearchActive) {
+        isSearchActive = false
+        searchQuery = ""
+    }
+
+    BackHandler(enabled = isArchiveOpen && !isSearchActive) {
+        isArchiveOpen = false
+    }
+
+    BackHandler(enabled = tab != PenikTab.CHATS && !isArchiveOpen && !isSearchActive) {
+        tab = PenikTab.CHATS
+    }
+
     Scaffold(
             containerColor = background,
             topBar = {
