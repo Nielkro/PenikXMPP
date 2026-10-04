@@ -28,7 +28,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.filled.ContentCopy
@@ -43,6 +47,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +61,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
@@ -1084,46 +1090,6 @@ fun PenikMessageMenu(
                 },
                 onClick = { onAction(PenikChatActions.SHARE) }
         )
-        if (hasUrl || message.isGeoUri) {
-            DropdownMenuItem(
-                    text = { Text("Копировать ссылку", color = textPrimary) },
-                    leadingIcon = {
-                        Icon(
-                                imageVector = Icons.Default.Link,
-                                contentDescription = null,
-                                tint = textMuted,
-                                modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    onClick = { onAction(PenikChatActions.COPY_URL) }
-            )
-        }
-        if (isMedia) {
-            DropdownMenuItem(
-                    text = { Text("Сохранить", color = textPrimary) },
-                    leadingIcon = {
-                        Icon(
-                                imageVector = Icons.Default.Download,
-                                contentDescription = null,
-                                tint = textMuted,
-                                modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    onClick = { onAction(PenikChatActions.SAVE_FILE) }
-            )
-            DropdownMenuItem(
-                    text = { Text("Открыть в приложении", color = textPrimary) },
-                    leadingIcon = {
-                        Icon(
-                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                contentDescription = null,
-                                tint = textMuted,
-                                modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    onClick = { onAction(PenikChatActions.OPEN) }
-            )
-        }
         DropdownMenuItem(
                 text = { Text("Удалить", color = danger) },
                 leadingIcon = {
@@ -1459,13 +1425,35 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
 @Composable
 fun PenikImageViewer(
         model: Any?,
-        contentDescription: String? = null,
+        message: Message? = null,
+        listener: PenikChatListener? = null,
         onDismiss: () -> Unit
 ) {
     if (model == null) return
     var scale by remember(model) { mutableStateOf(1f) }
     var offsetX by remember(model) { mutableStateOf(0f) }
     var offsetY by remember(model) { mutableStateOf(0f) }
+    var showControls by remember(model) { mutableStateOf(true) }
+
+    val context = LocalContext.current
+    val senderName = remember(message) {
+        if (message != null) {
+            UIHelper.getMessageDisplayName(message)
+        } else {
+            ""
+        }
+    }
+    val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
+    val dateFormat = remember { android.text.format.DateFormat.getMediumDateFormat(context) }
+    val timeText = remember(message) {
+        if (message != null && message.timeSent > 0) {
+            val date = java.util.Date(message.timeSent)
+            "${dateFormat.format(date)}, ${timeFormat.format(date)}"
+        } else {
+            ""
+        }
+    }
+    val hasUrl = message?.fileParams?.url != null || (message?.body != null && (message.body.contains("http://") || message.body.contains("https://")))
 
     androidx.compose.ui.window.Dialog(
             onDismissRequest = onDismiss,
@@ -1478,17 +1466,27 @@ fun PenikImageViewer(
                 modifier =
                         Modifier.fillMaxSize()
                                 .background(Color.Black.copy(alpha = 0.96f))
-                                .clickable(
-                                        indication = null,
-                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-                                ) {
-                                    if (scale <= 1.05f) onDismiss()
+                                .pointerInput(model) {
+                                    detectTapGestures(
+                                            onDoubleTap = {
+                                                if (scale > 1f) {
+                                                    scale = 1f
+                                                    offsetX = 0f
+                                                    offsetY = 0f
+                                                } else {
+                                                    scale = 2.5f
+                                                }
+                                            },
+                                            onTap = {
+                                                showControls = !showControls
+                                            }
+                                    )
                                 },
                 contentAlignment = Alignment.Center
         ) {
             coil.compose.AsyncImage(
                     model = model,
-                    contentDescription = contentDescription,
+                    contentDescription = null,
                     modifier =
                             Modifier.fillMaxSize()
                                     .pointerInput(model) {
@@ -1503,24 +1501,6 @@ fun PenikImageViewer(
                                             }
                                         }
                                     }
-                                    .pointerInput(model) {
-                                        detectTapGestures(
-                                                onDoubleTap = {
-                                                    if (scale > 1f) {
-                                                        scale = 1f
-                                                        offsetX = 0f
-                                                        offsetY = 0f
-                                                    } else {
-                                                        scale = 2.5f
-                                                    }
-                                                },
-                                                onTap = {
-                                                    if (scale <= 1.05f) {
-                                                        onDismiss()
-                                                    }
-                                                }
-                                        )
-                                    }
                                     .offset {
                                         IntOffset(
                                                 offsetX.toInt(),
@@ -1530,18 +1510,96 @@ fun PenikImageViewer(
                                     .scale(scale),
                     contentScale = ContentScale.Fit
             )
-            androidx.compose.material3.IconButton(
-                    onClick = onDismiss,
-                    modifier =
-                            Modifier.align(Alignment.TopEnd)
-                                    .statusBarsPadding()
-                                    .padding(12.dp)
+
+            AnimatedVisibility(
+                    visible = showControls,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
             ) {
-                Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Закрыть",
-                        tint = Color.White
-                )
+                Box(
+                        modifier =
+                                Modifier.fillMaxWidth()
+                                        .background(
+                                                Brush.verticalGradient(
+                                                        colors = listOf(Color.Black.copy(alpha = 0.85f), Color.Transparent)
+                                                )
+                                        )
+                                        .statusBarsPadding()
+                                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                ) {
+                    Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onDismiss) {
+                            Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Назад",
+                                    tint = Color.White
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            if (senderName.isNotEmpty()) {
+                                Text(
+                                        text = senderName,
+                                        color = Color.White,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            if (timeText.isNotEmpty()) {
+                                Text(
+                                        text = timeText,
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        if (message != null && listener != null) {
+                            if (hasUrl) {
+                                IconButton(
+                                        onClick = {
+                                            listener.onMessageAction(PenikChatActions.COPY_URL, message)
+                                        }
+                                ) {
+                                    Icon(
+                                            imageVector = Icons.Default.Link,
+                                            contentDescription = "Копировать ссылку",
+                                            tint = Color.White
+                                    )
+                                }
+                            }
+                            IconButton(
+                                    onClick = {
+                                        listener.onMessageAction(PenikChatActions.SAVE_FILE, message)
+                                    }
+                            ) {
+                                Icon(
+                                        imageVector = Icons.Default.Download,
+                                        contentDescription = "Сохранить",
+                                        tint = Color.White
+                                )
+                            }
+                            IconButton(
+                                    onClick = {
+                                        listener.onMessageAction(PenikChatActions.SHARE, message)
+                                    }
+                            ) {
+                                Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = "Поделиться",
+                                        tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -1740,6 +1798,8 @@ fun PenikAttachmentRow(
         val fallbackModel = resolvedModel ?: runCatching { service?.fileBackend?.getThumbnail(message, 1280, false) }.getOrNull()
         PenikImageViewer(
                 model = fallbackModel,
+                message = message,
+                listener = listener,
                 onDismiss = { showImageViewer = false }
         )
     }
@@ -1845,6 +1905,8 @@ fun PenikUrlImageRow(
     if (showViewer) {
         PenikImageViewer(
                 model = url,
+                message = message,
+                listener = listener,
                 onDismiss = { showViewer = false }
         )
     }
