@@ -1,5 +1,6 @@
 package eu.siacs.conversations.xmpp.manager;
 
+import android.os.SystemClock;
 import android.util.Log;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.ImmutableClassToInstanceMap;
@@ -32,10 +33,13 @@ public class ChatStateManager extends AbstractManager {
                     .put(Paused.class, new Paused())
                     .build();
 
+    private static final long COMPOSING_THROTTLE_MS = 8000L;
+
     private final XmppConnectionService service;
     private final AppSettings appSettings;
     private final HashMap<Jid, Class<? extends ChatStateNotification>> incoming = new HashMap<>();
     private final HashMap<Jid, Class<? extends ChatStateNotification>> outgoing = new HashMap<>();
+    private final HashMap<Jid, Long> lastComposingSent = new HashMap<>();
 
     public ChatStateManager(final XmppConnectionService service, final XmppConnection connection) {
         super(service.getApplicationContext(), connection);
@@ -101,6 +105,9 @@ public class ChatStateManager extends AbstractManager {
         synchronized (this.incoming) {
             this.incoming.clear();
         }
+        synchronized (this.lastComposingSent) {
+            this.lastComposingSent.clear();
+        }
     }
 
     public void sendChatState(
@@ -119,6 +126,17 @@ public class ChatStateManager extends AbstractManager {
         final var address = conversation.getAddress().asBareJid();
 
         final var extension = getOutgoingChatStateExtension(address);
+
+        if (extension instanceof Composing) {
+            final long now = SystemClock.elapsedRealtime();
+            synchronized (this.lastComposingSent) {
+                final Long last = this.lastComposingSent.get(address);
+                if (last != null && (now - last) < COMPOSING_THROTTLE_MS) {
+                    return;
+                }
+                this.lastComposingSent.put(address, now);
+            }
+        }
 
         final var packet = new Message();
         packet.setType(

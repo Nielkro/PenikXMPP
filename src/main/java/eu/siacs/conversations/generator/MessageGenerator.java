@@ -2,7 +2,6 @@ package eu.siacs.conversations.generator;
 
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.crypto.axolotl.XmppAxolotlMessage;
-import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.entities.Message;
@@ -28,7 +27,6 @@ public class MessageGenerator extends AbstractGenerator {
     private im.conversations.android.xmpp.model.stanza.Message preparePacket(
             final Message message) {
         Conversation conversation = (Conversation) message.getConversation();
-        Account account = conversation.getAccount();
         im.conversations.android.xmpp.model.stanza.Message packet =
                 new im.conversations.android.xmpp.model.stanza.Message();
         final boolean isWithSelf = conversation.getContact().isSelf();
@@ -50,7 +48,6 @@ public class MessageGenerator extends AbstractGenerator {
         if (conversation.isSingleOrPrivateAndNonAnonymous() && !message.isPrivateMessage()) {
             packet.addExtension(new Markable());
         }
-        packet.setFrom(account.getJid());
         packet.setId(message.getUuid());
         if (conversation.getMode() == Conversational.MODE_MULTI
                 && !message.isPrivateMessage()

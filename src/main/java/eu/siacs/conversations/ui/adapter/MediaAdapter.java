@@ -38,7 +38,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -108,7 +107,7 @@ public class MediaAdapter extends ListAdapter<Attachment, MediaAdapter.MediaView
                     "application/x-tar");
     public static final List<String> CODE_MIMES = Arrays.asList("text/html", "text/xml");
 
-    private final Set<UUID> selectedAttachments = new HashSet<>();
+    private final Set<String> selectedAttachments = new HashSet<>();
 
     private final XmppActivity activity;
 
@@ -373,7 +372,7 @@ public class MediaAdapter extends ListAdapter<Attachment, MediaAdapter.MediaView
                                         Objects.requireNonNull(a).getUuid())));
     }
 
-    public void setSelection(final Collection<UUID> selection) {
+    public void setSelection(final Collection<String> selection) {
         this.selectedAttachments.clear();
         this.selectedAttachments.addAll(selection);
     }

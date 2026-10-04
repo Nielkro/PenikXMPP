@@ -60,7 +60,7 @@ public final class Config {
 
     public static final int MESSAGE_MERGE_WINDOW = 90_000;
 
-    public static final int PAGE_SIZE = 50;
+    public static final int PAGE_SIZE = 20;
     public static final int MAX_NUM_PAGES = 3;
     public static final int MAX_SEARCH_RESULTS = 300;
 

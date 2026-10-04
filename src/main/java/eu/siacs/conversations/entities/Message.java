@@ -25,6 +25,7 @@ import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.Emoticons;
 import eu.siacs.conversations.utils.MessageUtils;
 import eu.siacs.conversations.utils.MimeUtils;
+import eu.siacs.conversations.utils.Random;
 import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.json.Services;
@@ -149,7 +150,7 @@ public class Message extends AbstractEntity
             final int status) {
         this(
                 conversation,
-                java.util.UUID.randomUUID().toString(),
+                Random.shortId(),
                 conversation.getUuid(),
                 conversation.getAddress() == null ? null : conversation.getAddress().asBareJid(),
                 null,
@@ -182,7 +183,7 @@ public class Message extends AbstractEntity
             final String remoteMsgId) {
         this(
                 conversation,
-                java.util.UUID.randomUUID().toString(),
+                Random.shortId(),
                 conversation.getUuid(),
                 conversation.getAddress() == null ? null : conversation.getAddress().asBareJid(),
                 null,
@@ -560,12 +561,12 @@ public class Message extends AbstractEntity
     }
 
     public void putEdited(final BodyVersion body) {
-        final var uuid = java.util.UUID.randomUUID();
-        if (!putEdited(uuid.toString(), null, Instant.now(), body)) {
+        final var uuid = Random.shortId();
+        if (!putEdited(uuid, null, Instant.now(), body)) {
             throw new IllegalStateException("Could not store edit");
         }
         this.remoteMsgId = Objects.requireNonNull(Iterables.getFirst(this.edits, null)).id();
-        this.uuid = uuid.toString();
+        this.uuid = uuid;
     }
 
     private boolean putEdited(

@@ -249,6 +249,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `.woodpecker.yml` — CI pipeline.
 - `.gitmodules` — `libs/Penik` submodule (read-only UI donor, branch `feat/cloud-chats`).
 - `plan/penik-xmpp-ui-port-plan.md` — Plan to port Penik UI and rebrand to `ru.penik.xmpp`.
+- `plan/xmpp-stanza-diet-plan.md` — Plan to cut XMPP stanza overhead (245 → 193 bytes): omit outbound `from` per RFC 6120, short 12-char ids, chat-state composing throttle (8s), MAM page 20, preserving Monal/Dino interoperability (markable/request receipts).
 - `PROJECT_MAP.md` — This index.
 
 ## Note on `libs/Penik` (Excluded)

@@ -51,7 +51,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -181,7 +180,7 @@ public class MediaBrowserActivity extends XmppActivity implements OnMediaLoaded 
             final String[] selection = savedInstanceState.getStringArray(EXTRA_SELECTION);
             final String[] filters = savedInstanceState.getStringArray(EXTRA_APPLIED_FILTER);
             if (selection != null) {
-                final var uuids = Lists.transform(Arrays.asList(selection), UUID::fromString);
+                final var uuids = Arrays.asList(selection);
                 this.mMediaAdapter.setSelection(uuids);
                 if (!uuids.isEmpty()) {
                     startSupportActionMode(this.actionModeCallBack);
@@ -413,7 +412,7 @@ public class MediaBrowserActivity extends XmppActivity implements OnMediaLoaded 
                                                         this, Objects.requireNonNull(a).getUri())
                                                 .buildUpon()
                                                 .appendQueryParameter(
-                                                        "uuid", a.getUuid().toString())
+                                                        "uuid", a.getUuid())
                                                 .build()));
         final var intent = new Intent(Intent.ACTION_SEND_MULTIPLE);
         if (mimes.size() == 1) {
@@ -431,7 +430,7 @@ public class MediaBrowserActivity extends XmppActivity implements OnMediaLoaded 
                 EXTRA_SELECTION,
                 Lists.transform(
                                 this.mMediaAdapter.getSelectedAttachments(),
-                                a -> Objects.requireNonNull(a).getUuid().toString())
+                                a -> Objects.requireNonNull(a).getUuid())
                         .toArray(new String[0]));
         bundle.putStringArray(
                 EXTRA_APPLIED_FILTER,

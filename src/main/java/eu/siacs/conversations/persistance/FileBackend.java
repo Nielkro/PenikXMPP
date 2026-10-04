@@ -400,7 +400,7 @@ public class FileBackend {
     }
 
     public Bitmap getPreviewForUri(Attachment attachment, int size, boolean cacheOnly) {
-        final String key = "attachment_" + attachment.getUuid().toString() + "_" + size;
+        final String key = "attachment_" + attachment.getUuid() + "_" + size;
         final LruCache<String, Bitmap> cache = mXmppConnectionService.getBitmapCache();
         final Bitmap cached = cache.get(key);
         if (cached != null || cacheOnly) {

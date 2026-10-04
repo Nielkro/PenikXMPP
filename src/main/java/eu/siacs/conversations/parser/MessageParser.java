@@ -18,6 +18,7 @@ import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.http.HttpConnectionManager;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.utils.CryptoHelper;
+import eu.siacs.conversations.utils.Random;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.LocalizedContent;
 import eu.siacs.conversations.xml.Namespace;
@@ -58,7 +59,6 @@ import im.conversations.android.xmpp.model.oob.OutOfBandData;
 import im.conversations.android.xmpp.model.pubsub.event.Event;
 import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.retraction.Retract;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 public class MessageParser extends AbstractParser
@@ -594,7 +594,7 @@ public class MessageParser extends AbstractParser
                             return;
                         }
                         final String uuid = replacedMessage.getUuid();
-                        replacedMessage.setUuid(UUID.randomUUID().toString());
+                        replacedMessage.setUuid(Random.shortId());
                         replacedMessage.setEncryption(message.getEncryption());
                         if (replacedMessage.getStatus() == Message.STATUS_RECEIVED) {
                             replacedMessage.markUnread();

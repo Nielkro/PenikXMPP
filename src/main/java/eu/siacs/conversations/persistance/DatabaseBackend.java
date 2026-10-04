@@ -1691,11 +1691,11 @@ public class DatabaseBackend extends SQLiteOpenHelper {
     }
 
     public static class FilePath {
-        public final UUID uuid;
+        public final String uuid;
         public final String path;
 
         private FilePath(String uuid, String path) {
-            this.uuid = UUID.fromString(uuid);
+            this.uuid = uuid;
             this.path = path;
         }
     }

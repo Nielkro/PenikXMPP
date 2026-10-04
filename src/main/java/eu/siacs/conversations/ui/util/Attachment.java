@@ -40,27 +40,27 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.utils.MimeUtils;
+import eu.siacs.conversations.utils.Random;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 public final class Attachment implements Parcelable {
 
     private final Uri uri;
     private final Type type;
-    private final UUID uuid;
+    private final String uuid;
     private final String mime;
 
     Attachment(final Parcel in) {
         this.uri = in.readParcelable(Uri.class.getClassLoader());
         this.mime = in.readString();
-        this.uuid = UUID.fromString(in.readString());
+        this.uuid = in.readString();
         this.type = Type.valueOf(in.readString());
     }
 
-    private Attachment(final UUID uuid, final Uri uri, final Type type, final String mime) {
+    private Attachment(final String uuid, final Uri uri, final Type type, final String mime) {
         this.uri = uri;
         this.type = type;
         this.mime = mime;
@@ -68,14 +68,14 @@ public final class Attachment implements Parcelable {
     }
 
     private Attachment(final Uri uri, final Type type, final String mime) {
-        this(UUID.randomUUID(), uri, type, mime);
+        this(Random.shortId(), uri, type, mime);
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeParcelable(uri, flags);
         dest.writeString(mime);
-        dest.writeString(uuid.toString());
+        dest.writeString(uuid);
         dest.writeString(type.toString());
     }
 
@@ -153,7 +153,7 @@ public final class Attachment implements Parcelable {
     }
 
     public static Attachment of(final Message message) {
-        final UUID uuid = UUID.fromString(message.getUuid());
+        final String uuid = message.getUuid();
         if (message.isGeoUri()) {
             return new Attachment(uuid, Uri.EMPTY, Type.LOCATION, null);
         }
@@ -185,7 +185,7 @@ public final class Attachment implements Parcelable {
         return attachments;
     }
 
-    public static Attachment of(UUID uuid, final File file, String mime) {
+    public static Attachment of(String uuid, final File file, String mime) {
         return new Attachment(
                 uuid,
                 Uri.fromFile(file),
@@ -196,7 +196,7 @@ public final class Attachment implements Parcelable {
     }
 
     public static List<Attachment> of(final Uri uri, final String mime) {
-        return Collections.singletonList(new Attachment(UUID.randomUUID(), uri, Type.FILE, mime));
+        return Collections.singletonList(new Attachment(Random.shortId(), uri, Type.FILE, mime));
     }
 
     public static List<Attachment> extractAttachments(
@@ -237,7 +237,7 @@ public final class Attachment implements Parcelable {
         return uri;
     }
 
-    public UUID getUuid() {
+    public String getUuid() {
         return uuid;
     }
 
