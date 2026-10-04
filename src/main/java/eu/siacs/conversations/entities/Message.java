@@ -137,6 +137,11 @@ public class Message extends AbstractEntity
 
     protected Message(final Conversational conversation) {
         this.conversation = conversation;
+        this.uuid = Random.shortId();
+        this.timeSent = System.currentTimeMillis();
+        if (conversation != null) {
+            this.conversationUuid = conversation.getUuid();
+        }
     }
 
     public Message(final Conversational conversation, final String body, final int encryption) {
@@ -236,12 +241,12 @@ public class Message extends AbstractEntity
             final String occupantId,
             @NonNull final Collection<Reaction> reactions) {
         this.conversation = conversation;
-        this.uuid = uuid;
+        this.uuid = (uuid == null || uuid.trim().isEmpty()) ? Random.shortId() : uuid;
         this.conversationUuid = conversationUUid;
         this.counterpart = counterpart;
         this.trueCounterpart = trueCounterpart;
         this.body = body == null ? "" : body;
-        this.timeSent = timeSent;
+        this.timeSent = timeSent <= 0 ? System.currentTimeMillis() : timeSent;
         this.encryption = encryption;
         this.status = status;
         this.type = type;
@@ -323,6 +328,7 @@ public class Message extends AbstractEntity
         message.setType(Message.TYPE_STATUS);
         message.setStatus(Message.STATUS_RECEIVED);
         message.body = body;
+        message.timeSent = System.currentTimeMillis();
         return message;
     }
 

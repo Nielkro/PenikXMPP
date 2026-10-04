@@ -237,8 +237,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
     }
 
     public void onDeleteConversation(final Conversation c) {
-        requireXmppActivity().xmppConnectionService.clearConversationHistory(c);
-        requireXmppActivity().xmppConnectionService.archiveConversation(c);
+        requireXmppActivity().xmppConnectionService.deleteConversation(c);
         if (getActivity() instanceof OnConversationArchived callback) {
             callback.onConversationArchived(c);
         }

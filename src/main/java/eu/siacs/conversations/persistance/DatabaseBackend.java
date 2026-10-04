@@ -1883,6 +1883,13 @@ public class DatabaseBackend extends SQLiteOpenHelper {
         return rows == 1;
     }
 
+    public boolean deleteConversation(final Conversation conversation) {
+        final var db = this.getWritableDatabase();
+        final String[] args = {conversation.getUuid()};
+        final int rows = db.delete(Conversation.TABLENAME, Conversation.UUID + "=?", args);
+        return rows > 0;
+    }
+
     public Map<Jid, Contact> readRoster(final Account account) {
         final var builder = new ImmutableMap.Builder<Jid, Contact>();
         final SQLiteDatabase db = this.getReadableDatabase();

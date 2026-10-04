@@ -9,6 +9,9 @@ public abstract class AbstractEntity {
 	protected String uuid;
 
 	public String getUuid() {
+		if (this.uuid == null) {
+			this.uuid = eu.siacs.conversations.utils.Random.shortId();
+		}
 		return this.uuid;
 	}
 

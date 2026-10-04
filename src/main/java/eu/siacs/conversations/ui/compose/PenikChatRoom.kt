@@ -283,7 +283,6 @@ fun PenikChatRoom(
             remember(state.messages, state.revision) {
                 val inOrder =
                         state.messages
-                                .sortedBy { it.timeSent }
                                 .filter { m ->
                                     val body = m.body ?: ""
                                     if (m.type == Message.TYPE_STATUS) {
@@ -299,13 +298,15 @@ fun PenikChatRoom(
                 val items = ArrayList<ChatRow>()
                 var lastDay: LocalDate? = null
                 for (m in inOrder) {
-                    val day =
-                            Instant.ofEpochMilli(m.timeSent)
-                                    .atZone(ZoneId.systemDefault())
-                                    .toLocalDate()
-                    if (day != lastDay) {
-                        lastDay = day
-                        items.add(ChatRow.DateHeader(penikChatDateLabel(day), day))
+                    if (m.type != Message.TYPE_STATUS && m.timeSent > 0) {
+                        val day =
+                                Instant.ofEpochMilli(m.timeSent)
+                                        .atZone(ZoneId.systemDefault())
+                                        .toLocalDate()
+                        if (day != lastDay) {
+                            lastDay = day
+                            items.add(ChatRow.DateHeader(penikChatDateLabel(day), day))
+                        }
                     }
                     items.add(ChatRow.Msg(m))
                 }
@@ -327,7 +328,10 @@ fun PenikChatRoom(
         }
         val newest = rows.firstOrNull()
         if (newest is ChatRow.Msg) {
-            listener.onBottomVisible(newest.message.uuid)
+            val uuid = newest.message.uuid
+            if (!uuid.isNullOrBlank()) {
+                listener.onBottomVisible(uuid)
+            }
         }
     }
     LaunchedEffect(lastVisibleIndex, rows.size) {
@@ -338,7 +342,10 @@ fun PenikChatRoom(
     LaunchedEffect(listState.firstVisibleItemIndex) {
         val newest = rows.firstOrNull()
         if (newest is ChatRow.Msg && listState.firstVisibleItemIndex == 0) {
-            listener.onBottomVisible(newest.message.uuid)
+            val uuid = newest.message.uuid
+            if (!uuid.isNullOrBlank()) {
+                listener.onBottomVisible(uuid)
+            }
         }
     }
     Scaffold(
@@ -371,7 +378,7 @@ fun PenikChatRoom(
             items(rows, key = { row ->
                 when (row) {
                     is ChatRow.DateHeader -> "date-${row.key}"
-                    is ChatRow.Msg -> "msg-${row.message.uuid}"
+                    is ChatRow.Msg -> "msg-${row.message.uuid ?: row.message.hashCode()}"
                 }
             }) { row ->
                 when (row) {

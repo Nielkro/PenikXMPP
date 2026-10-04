@@ -30,6 +30,7 @@ import eu.siacs.conversations.utils.StringUtils;
 import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.XmppConnection;
+import im.conversations.android.model.Bookmark;
 import im.conversations.android.model.DynamicTag;
 import im.conversations.android.model.ImmutableBookmark;
 import im.conversations.android.xmpp.Entity;
@@ -536,8 +537,18 @@ public class MultiUserChatManager extends AbstractManager {
                 }
             } else if (codes.contains(MucUser.STATUS_CODE_KICKED)) {
                 mucOptions.setError(MucOptions.Error.KICKED);
+                final Bookmark bookmark = getManager(BookmarkManager.class).getBookmark(conversation.getAddress().asBareJid());
+                if (bookmark != null) {
+                    getManager(BookmarkManager.class).delete(bookmark);
+                }
+                service.deleteConversation(conversation);
             } else if (codes.contains(MucUser.STATUS_CODE_BANNED)) {
                 mucOptions.setError(MucOptions.Error.BANNED);
+                final Bookmark bookmark = getManager(BookmarkManager.class).getBookmark(conversation.getAddress().asBareJid());
+                if (bookmark != null) {
+                    getManager(BookmarkManager.class).delete(bookmark);
+                }
+                service.deleteConversation(conversation);
             } else if (codes.contains(MucUser.STATUS_CODE_LOST_MEMBERSHIP)) {
                 mucOptions.setError(MucOptions.Error.MEMBERS_ONLY);
             } else if (codes.contains(MucUser.STATUS_CODE_AFFILIATION_CHANGE)) {

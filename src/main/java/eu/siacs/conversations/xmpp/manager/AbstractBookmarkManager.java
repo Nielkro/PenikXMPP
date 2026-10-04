@@ -56,7 +56,7 @@ public class AbstractBookmarkManager extends AbstractManager {
         }
         Log.d(
                 Config.LOGTAG,
-                getAccount().getJid().asBareJid() + ": archiving MUC " + jid + " after PEP update");
-        this.service.archiveConversation(conversation, false);
+                getAccount().getJid().asBareJid() + ": deleting MUC " + jid + " after PEP update");
+        this.service.deleteConversation(conversation);
     }
 }

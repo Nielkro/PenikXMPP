@@ -22,7 +22,10 @@ import eu.siacs.conversations.ui.compose.PenikAuthState
 import eu.siacs.conversations.utils.InstallReferrerUtils
 import eu.siacs.conversations.xmpp.Jid
 
-class WelcomeActivity : QrCodeProcessingActivity(), PenikAuthListener, XmppConnectionService.OnAccountCreated {
+class WelcomeActivity : QrCodeProcessingActivity(),
+    PenikAuthListener,
+    XmppConnectionService.OnAccountCreated,
+    XmppConnectionService.OnAccountUpdate {
 
     private var authState by mutableStateOf(PenikAuthState())
     private var currentTargetAccountJid by mutableStateOf<Jid?>(null)
@@ -111,11 +114,39 @@ class WelcomeActivity : QrCodeProcessingActivity(), PenikAuthListener, XmppConne
     }
 
     override fun refreshUiReal() {
+        if (currentTargetAccountJid == null) {
+            if (checkAlreadyLoggedIn()) return
+        }
         checkAccountStatus()
     }
 
     override fun onBackendConnected() {
+        if (currentTargetAccountJid == null) {
+            if (checkAlreadyLoggedIn()) return
+        }
         checkAccountStatus()
+    }
+
+    private fun checkAlreadyLoggedIn(): Boolean {
+        if (isRegistering || authState.isLoading) {
+            return false
+        }
+        val service = xmppConnectionService ?: return false
+        val accounts = service.accounts
+        if (accounts != null && accounts.any { it.isEnabled && (it.isOnlineAndConnected || it.isOptionSet(Account.OPTION_LOGGED_IN_SUCCESSFULLY)) }) {
+            Toast.makeText(this, "Вы уже вошли в аккаунт. Регистрация не требуется.", Toast.LENGTH_LONG).show()
+            val intent = Intent(this, ConversationsActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            finish()
+            return true
+        }
+        return false
+    }
+
+    override fun onAccountUpdate() {
+        refreshUi()
     }
 
     private fun checkAccountStatus() {

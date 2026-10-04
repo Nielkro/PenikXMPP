@@ -2082,8 +2082,10 @@ public class XmppConnectionService extends Service {
                     if (messages.size() > 0) {
                         conversation.addAll(0, messages);
                         callback.onMoreMessagesLoaded(messages.size(), conversation);
-                    } else if (conversation.hasMessagesLeftOnServer()
+                    } else if (conversation.getStatus() != Conversation.STATUS_ARCHIVED
+                            && conversation.hasMessagesLeftOnServer()
                             && account.isOnlineAndConnected()
+                            && (conversation.getMode() != Conversation.MODE_MULTI || conversation.getMucOptions().online())
                             && (lastClear == null || lastClear.timestamp() == 0)) {
                         final boolean mamAvailable;
                         if (conversation.getMode() == Conversation.MODE_SINGLE) {
@@ -2356,6 +2358,30 @@ public class XmppConnectionService extends Service {
             }
             updateConversation(conversation);
             this.conversations.remove(conversation);
+            updateConversationUi();
+        }
+    }
+
+    public void deleteConversation(Conversation conversation) {
+        final var account = conversation.getAccount();
+        final var connection = account != null ? account.getXmppConnection() : null;
+        getNotificationService().clear(conversation);
+        clearConversationHistory(conversation);
+        synchronized (this.conversations) {
+            if (connection != null) {
+                connection.getManager(MessageArchiveManager.class).kill(conversation);
+                if (conversation.getMode() == Conversation.MODE_MULTI) {
+                    if (account.getStatus() == Account.State.ONLINE) {
+                        final Bookmark existing = conversation.getBookmark();
+                        if (existing != null) {
+                            deleteBookmark(account, existing);
+                        }
+                    }
+                    connection.getManager(MultiUserChatManager.class).leave(conversation);
+                }
+            }
+            this.conversations.remove(conversation);
+            mDatabaseWriterExecutor.execute(() -> databaseBackend.deleteConversation(conversation));
             updateConversationUi();
         }
     }

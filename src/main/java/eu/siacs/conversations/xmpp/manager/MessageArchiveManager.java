@@ -139,6 +139,14 @@ public class MessageArchiveManager extends AbstractManager {
 
     public Query query(
             Conversation conversation, MamReference start, long end, boolean allowCatchup) {
+        if (conversation.getStatus() == Conversation.STATUS_ARCHIVED) {
+            return null;
+        }
+        if (conversation.getMode() == Conversation.MODE_MULTI) {
+            if (conversation.getMucOptions().getError() != null || !conversation.getMucOptions().online()) {
+                return null;
+            }
+        }
         synchronized (this.queries) {
             final var deletion =
                     new AppSettings(mXmppConnectionService).getAutomaticMessageDeletionInstant();
@@ -199,7 +207,8 @@ public class MessageArchiveManager extends AbstractManager {
     private void execute(final Query query) {
         final Conversation conversation = query.getConversation();
         if (conversation != null && conversation.getStatus() == Conversation.STATUS_ARCHIVED) {
-            throw new IllegalStateException("Attempted to run MAM query for archived conversation");
+            Log.w(Config.LOGTAG, "Attempted to run MAM query for archived conversation, skipping");
+            return;
         }
 
         Log.d(

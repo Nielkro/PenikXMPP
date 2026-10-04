@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import de.gultsch.common.MiniUri;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
+import eu.siacs.conversations.Conversations;
+import eu.siacs.conversations.persistance.DatabaseBackend;
 import eu.siacs.conversations.utils.SignupUtils;
 import eu.siacs.conversations.utils.XmppUriLauncher;
 import eu.siacs.conversations.xmpp.Jid;
@@ -36,6 +38,15 @@ public class YuriLauncherActivity extends AppCompatActivity {
                 }
             }
             if (token != null) {
+                final var accounts = Conversations.getInstance(this).getAccounts();
+                if (DatabaseBackend.AccountWithOptions.hasEnabledAccount(accounts)) {
+                    Toast.makeText(this, "Вы уже вошли в аккаунт. Регистрация не требуется.", Toast.LENGTH_LONG).show();
+                    final Intent mainIntent = new Intent(this, ConversationsActivity.class);
+                    mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(mainIntent);
+                    finish();
+                    return;
+                }
                 final String domain = data.getHost() != null ? data.getHost() : (Config.MAGIC_CREATE_DOMAIN != null ? Config.MAGIC_CREATE_DOMAIN : "snikket.penik.ru");
                 final Intent regIntent = SignupUtils.getTokenRegistrationIntent(this, Jid.of(domain), token);
                 regIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
