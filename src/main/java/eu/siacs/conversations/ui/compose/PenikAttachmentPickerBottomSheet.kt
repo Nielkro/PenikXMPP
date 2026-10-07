@@ -73,7 +73,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.decode.VideoFrameDecoder
+import coil.request.ImageRequest
+import coil.request.videoFrameMillis
 import eu.siacs.conversations.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -107,6 +111,15 @@ fun PenikAttachmentPickerBottomSheet(
     var isLoadingMedia by remember { mutableStateOf(false) }
     val selectedUris = remember { mutableStateListOf<Uri>() }
     var sheetHeightPx by remember { mutableFloatStateOf(0f) }
+
+    val imageLoader = remember(context) {
+        ImageLoader.Builder(context)
+            .components {
+                add(VideoFrameDecoder.Factory())
+            }
+            .crossfade(true)
+            .build()
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -260,6 +273,7 @@ fun PenikAttachmentPickerBottomSheet(
                                     isSelected = isSelected,
                                     selectedNumber = selectedIndex,
                                     accentColor = accentColor,
+                                    imageLoader = imageLoader,
                                     onToggleSelect = {
                                         if (isSelected) {
                                             selectedUris.remove(item.uri)
@@ -525,8 +539,23 @@ private fun TelegramMediaGridTile(
     isSelected: Boolean,
     selectedNumber: Int,
     accentColor: Color,
+    imageLoader: ImageLoader,
     onToggleSelect: () -> Unit
 ) {
+    val context = LocalContext.current
+    val imageRequest = remember(item.uri, item.isVideo) {
+        ImageRequest.Builder(context)
+            .data(item.uri)
+            .apply {
+                if (item.isVideo) {
+                    decoderFactory(VideoFrameDecoder.Factory())
+                    videoFrameMillis(1000)
+                }
+            }
+            .crossfade(true)
+            .build()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -534,7 +563,8 @@ private fun TelegramMediaGridTile(
             .clickable(onClick = onToggleSelect)
     ) {
         AsyncImage(
-            model = item.uri,
+            model = imageRequest,
+            imageLoader = imageLoader,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
