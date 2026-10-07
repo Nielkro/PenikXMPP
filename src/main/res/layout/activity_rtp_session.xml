@@ -198,16 +198,18 @@
                 android:visibility="gone"
                 tools:text="01:23" />
 
-            <!-- E2EE Pill Badge -->
+            <!-- E2EE Safety Words Pill (Collapsed) -->
             <LinearLayout
-                android:id="@+id/verified_badge"
+                android:id="@+id/safety_words_pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="14dp"
                 android:background="@drawable/penik_call_pill_bg"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="12dp"
+                android:paddingHorizontal="10dp"
                 android:paddingVertical="5dp"
                 android:visibility="gone"
                 tools:visibility="visible">
@@ -219,14 +221,199 @@
                     android:src="@drawable/ic_lock_24dp"
                     app:tint="@color/penik_call_accept" />
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:fontFamily="sans-serif-medium"
-                    android:text="E2EE Зашифровано"
-                    android:textColor="@color/penik_call_accept"
-                    android:textSize="12sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/safety_word_1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="2dp"
+                        android:background="@drawable/penik_call_word_badge"
+                        android:fontFamily="sans-serif-medium"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        tools:text="алмаз" />
+
+                    <TextView
+                        android:id="@+id/safety_word_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="2dp"
+                        android:background="@drawable/penik_call_word_badge"
+                        android:fontFamily="sans-serif-medium"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        tools:text="волна" />
+
+                    <TextView
+                        android:id="@+id/safety_word_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="2dp"
+                        android:background="@drawable/penik_call_word_badge"
+                        android:fontFamily="sans-serif-medium"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        tools:text="гвардия" />
+
+                    <TextView
+                        android:id="@+id/safety_word_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="2dp"
+                        android:background="@drawable/penik_call_word_badge"
+                        android:fontFamily="sans-serif-medium"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        tools:text="маяк" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- E2EE Safety Words Card (Expanded) -->
+            <LinearLayout
+                android:id="@+id/safety_words_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="gone">
+
+                <!-- Hide Words Pill Button -->
+                <LinearLayout
+                    android:id="@+id/safety_hide_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/penik_call_pill_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="5dp">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_keyboard_arrow_up_24dp"
+                        app:tint="#E6FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="@string/penik_call_safety_hide_words"
+                        android:textColor="#E6FFFFFF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Full Info Box -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/penik_call_safety_card_bg"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp">
+
+                    <!-- 4 Large Badges -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/card_safety_word_1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="3dp"
+                            android:background="@drawable/penik_call_word_badge"
+                            android:fontFamily="sans-serif-medium"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:textColor="@android:color/white"
+                            android:textSize="13sp"
+                            tools:text="алмаз" />
+
+                        <TextView
+                            android:id="@+id/card_safety_word_2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="3dp"
+                            android:background="@drawable/penik_call_word_badge"
+                            android:fontFamily="sans-serif-medium"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:textColor="@android:color/white"
+                            android:textSize="13sp"
+                            tools:text="волна" />
+
+                        <TextView
+                            android:id="@+id/card_safety_word_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="3dp"
+                            android:background="@drawable/penik_call_word_badge"
+                            android:fontFamily="sans-serif-medium"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:textColor="@android:color/white"
+                            android:textSize="13sp"
+                            tools:text="гвардия" />
+
+                        <TextView
+                            android:id="@+id/card_safety_word_4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="3dp"
+                            android:background="@drawable/penik_call_word_badge"
+                            android:fontFamily="sans-serif-medium"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:textColor="@android:color/white"
+                            android:textSize="13sp"
+                            tools:text="маяк" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:gravity="center"
+                        android:text="@string/penik_call_safety_card_title"
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/safety_card_description"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center"
+                        android:lineSpacingExtra="2dp"
+                        android:textColor="#D9FFFFFF"
+                        android:textSize="12sp"
+                        tools:text="Если Собеседник видит те же слова, что и Вы, звонок на 100% защищён." />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- Using Account Notice -->

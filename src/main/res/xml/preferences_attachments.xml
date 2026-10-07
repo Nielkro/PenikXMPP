@@ -5,7 +5,6 @@
         android:defaultValue="@bool/use_shared_storage"
         android:icon="@drawable/ic_save_24dp"
         android:key="use_shared_storage"
-        android:summary="@string/pref_save_to_gallery_summary"
         android:title="@string/pref_save_to_gallery" />
     <PreferenceCategory android:title="@string/pref_category_receiving">
         <ListPreference

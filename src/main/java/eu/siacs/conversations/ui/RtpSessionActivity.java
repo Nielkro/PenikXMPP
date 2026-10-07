@@ -41,6 +41,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
+import eu.siacs.conversations.crypto.SafetyWords;
 import eu.siacs.conversations.databinding.ActivityRtpSessionBinding;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Contact;
@@ -144,6 +145,7 @@ public class RtpSessionActivity extends XmppActivity
                 }
             };
     private boolean buttonsHiddenAfterTimeout = false;
+    private boolean isSafetyCardExpanded = false;
     private final Runnable mVisibilityToggleExecutor = this::updateButtonInVideoCallVisibility;
 
     public static Set<Media> actionToMedia(final String action) {
@@ -183,6 +185,8 @@ public class RtpSessionActivity extends XmppActivity
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_rtp_session);
         this.binding.remoteVideo.setOnClickListener(this::onVideoScreenClick);
         this.binding.localVideo.setOnClickListener(this::onVideoScreenClick);
+        this.binding.safetyWordsPill.setOnClickListener(v -> toggleSafetyWordsCard(true));
+        this.binding.safetyHideButton.setOnClickListener(v -> toggleSafetyWordsCard(false));
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -645,6 +649,7 @@ public class RtpSessionActivity extends XmppActivity
                                     }
                                     binding.remoteVideoWrapper.setVisibility(View.VISIBLE);
                                     binding.callInfoContainer.setVisibility(View.GONE);
+                                    updateSafetyWordsViews();
                                 }));
     }
 
@@ -827,6 +832,7 @@ public class RtpSessionActivity extends XmppActivity
         updateVideoViews(currentState);
         updateStateDisplay(currentState, media, contentAddition);
         updateVerifiedShield(verified && STATES_SHOWING_SWITCH_TO_CHAT.contains(currentState));
+        updateSafetyWordsViews();
         updateButtonConfiguration(currentState, media, contentAddition);
         updateIncomingCallScreen(currentState);
         invalidateOptionsMenu();
@@ -849,6 +855,7 @@ public class RtpSessionActivity extends XmppActivity
         updateIncomingCallScreen(state);
         updateCallDuration();
         updateVerifiedShield(false);
+        updateSafetyWordsViews();
         invalidateOptionsMenu();
         final var contact = account.getRoster().getContact(with);
         setWith(state, contact);
@@ -939,11 +946,84 @@ public class RtpSessionActivity extends XmppActivity
     }
 
     private void updateVerifiedShield(final boolean verified) {
-        if (isPictureInPicture()) {
-            this.binding.verifiedBadge.setVisibility(View.GONE);
+        updateSafetyWordsViews();
+    }
+
+    private void toggleSafetyWordsCard(final boolean expand) {
+        this.isSafetyCardExpanded = expand;
+        updateSafetyWordsViews();
+    }
+
+    private void updateSafetyWordsViews() {
+        if (isPictureInPicture() || binding.remoteVideoWrapper.getVisibility() == View.VISIBLE) {
+            binding.safetyWordsPill.setVisibility(View.GONE);
+            binding.safetyWordsCard.setVisibility(View.GONE);
             return;
         }
-        this.binding.verifiedBadge.setVisibility(verified ? View.VISIBLE : View.GONE);
+        final JingleRtpConnection connection =
+                this.rtpConnectionReference != null ? this.rtpConnectionReference.get() : null;
+        if (connection == null) {
+            binding.safetyWordsPill.setVisibility(View.GONE);
+            binding.safetyWordsCard.setVisibility(View.GONE);
+            return;
+        }
+        final RtpEndUserState state = connection.getEndUserState();
+        final boolean isCallOngoing =
+                state == RtpEndUserState.CONNECTED || state == RtpEndUserState.RECONNECTING;
+        if (!isCallOngoing) {
+            binding.safetyWordsPill.setVisibility(View.GONE);
+            binding.safetyWordsCard.setVisibility(View.GONE);
+            return;
+        }
+
+        final List<String> words = getSafetyWordsForSession(connection);
+        if (words == null || words.size() < 4) {
+            binding.safetyWordsPill.setVisibility(View.GONE);
+            binding.safetyWordsCard.setVisibility(View.GONE);
+            return;
+        }
+
+        binding.safetyWord1.setText(words.get(0));
+        binding.safetyWord2.setText(words.get(1));
+        binding.safetyWord3.setText(words.get(2));
+        binding.safetyWord4.setText(words.get(3));
+
+        binding.cardSafetyWord1.setText(words.get(0));
+        binding.cardSafetyWord2.setText(words.get(1));
+        binding.cardSafetyWord3.setText(words.get(2));
+        binding.cardSafetyWord4.setText(words.get(3));
+
+        final Contact contact = getWithSafe();
+        final String displayName =
+                contact != null
+                        ? contact.getDisplayName()
+                        : (connection.getId() != null
+                                ? connection.getId().with.asBareJid().toString()
+                                : "");
+        binding.safetyCardDescription.setText(
+                getString(R.string.penik_call_safety_card_description, displayName));
+
+        if (this.isSafetyCardExpanded) {
+            binding.safetyWordsPill.setVisibility(View.GONE);
+            binding.safetyWordsCard.setVisibility(View.VISIBLE);
+        } else {
+            binding.safetyWordsPill.setVisibility(View.VISIBLE);
+            binding.safetyWordsCard.setVisibility(View.GONE);
+        }
+    }
+
+    private List<String> getSafetyWordsForSession(final JingleRtpConnection connection) {
+        if (connection == null) {
+            return Collections.emptyList();
+        }
+        final AbstractJingleConnection.Id id = connection.getId();
+        if (id == null) {
+            return Collections.emptyList();
+        }
+        final String localJid = id.account != null ? id.account.getJid().asBareJid().toString() : "";
+        final String remoteJid = id.with != null ? id.with.asBareJid().toString() : "";
+        final String sessionId = id.sessionId != null ? id.sessionId : "";
+        return SafetyWords.compute(localJid, remoteJid, sessionId);
     }
 
     private void updateIncomingCallScreen(final RtpEndUserState state) {
@@ -1733,6 +1813,7 @@ public class RtpSessionActivity extends XmppActivity
                         updateStateDisplay(state, media, contentAddition);
                         updateVerifiedShield(
                                 verified && STATES_SHOWING_SWITCH_TO_CHAT.contains(state));
+                        updateSafetyWordsViews();
                         updateButtonConfiguration(state, media, contentAddition);
                         updateVideoViews(state);
                         updateIncomingCallScreen(state, contact);
@@ -1808,6 +1889,7 @@ public class RtpSessionActivity extends XmppActivity
             runOnUiThread(
                     () -> {
                         updateVerifiedShield(false);
+                        updateSafetyWordsViews();
                         updateStateDisplay(state);
                         updateButtonConfiguration(state, media, null);
                         updateIncomingCallScreen(state);

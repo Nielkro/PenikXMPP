@@ -1216,4 +1216,10 @@
     <string name="show_attachment_options">Show attachment options</string>
     <string name="collapsed">Collapsed</string>
     <string name="expanded">Expanded</string>
+    <string name="penik_call_safety_card_description">Если %s видит те же слова, что и Вы, звонок на 100%% защищён.</string>
+    <string name="penik_call_safety_card_title">Звонок защищён оконечным шифрованием</string>
+    <string name="penik_call_safety_hide_words">Скрыть слова</string>
+    <string name="file_size_small">Small (512 KiB)</string>
+    <string name="file_size_medium">Medium (2 MiB)</string>
+    <string name="file_size_large">Large (10 MiB)</string>
 </resources>

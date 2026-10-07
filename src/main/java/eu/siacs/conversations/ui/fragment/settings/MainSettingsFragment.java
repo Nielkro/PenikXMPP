@@ -17,9 +17,8 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         setPreferencesFromResource(R.xml.preferences_main, rootKey);
         final var about = findPreference("about");
-        final var connection = findPreference("connection");
         final var up = findPreference("up");
-        if (about == null || connection == null || up == null) {
+        if (about == null || up == null) {
             throw new IllegalStateException(
                     "The preference resource file is missing some preferences");
         }
@@ -33,9 +32,6 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
                         Strings.nullToEmpty(Build.MANUFACTURER),
                         Strings.nullToEmpty(Build.DEVICE),
                         Strings.nullToEmpty(Build.VERSION.RELEASE)));
-        if (ConnectionSettingsFragment.hideChannelDiscovery()) {
-            connection.setSummary(R.string.pref_connection_summary);
-        }
         up.setVisible(!Strings.isNullOrEmpty(getString(R.string.default_push_server)));
     }
 

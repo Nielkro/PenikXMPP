@@ -7,21 +7,6 @@
         app:summary="@string/pref_summary_appearance"
         app:title="@string/pref_title_interface" />
     <Preference
-        android:icon="@drawable/ic_security_24dp"
-        app:fragment="eu.siacs.conversations.ui.fragment.settings.SecuritySettingsFragment"
-        app:summary="@string/pref_summary_security"
-        app:title="@string/pref_title_security" />
-    <Preference
-        android:icon="@drawable/ic_privacy_tip_24dp"
-        app:fragment="eu.siacs.conversations.ui.fragment.settings.PrivacySettingsFragment"
-        app:summary="@string/pref_privacy_summary"
-        app:title="@string/pref_privacy" />
-    <Preference
-        android:icon="@drawable/ic_lightbulb_24dp"
-        android:summary="@string/pref_presence_settings_summary"
-        android:title="@string/pref_presence_settings"
-        app:fragment="eu.siacs.conversations.ui.fragment.settings.AvailabilitySettingsFragment" />
-    <Preference
         android:icon="@drawable/ic_notifications_24dp"
         android:summary="@string/pref_notifications_summary"
         android:title="@string/notifications"
@@ -31,12 +16,6 @@
         android:summary="@string/pref_attachments_summary"
         android:title="@string/pref_attachments"
         app:fragment="eu.siacs.conversations.ui.fragment.settings.AttachmentsSettingsFragment" />
-    <Preference
-        android:icon="@drawable/ic_settings_ethernet_24dp"
-        android:key="connection"
-        app:fragment="eu.siacs.conversations.ui.fragment.settings.ConnectionSettingsFragment"
-        app:summary="@string/pref_connection_summary_w_cd"
-        app:title="@string/pref_connection_options" />
     <Preference
         android:icon="@drawable/ic_archive_24dp"
         android:key="backup"

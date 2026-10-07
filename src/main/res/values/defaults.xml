@@ -39,7 +39,7 @@
     <bool name="scroll_to_bottom">true</bool>
     <string name="omemo_setting_default">default_off</string>
     <bool name="start_searching">false</bool>
-    <string name="video_compression">480</string>
+    <string name="video_compression">720</string>
     <string name="default_channel_discovery">JABBER_NETWORK</string>
     <bool name="allow_screenshots">true</bool>
     <string name="default_push_server">up.conversations.im</string>

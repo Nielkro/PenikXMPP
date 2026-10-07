@@ -349,7 +349,7 @@ public class AppSettings {
     public static final String SENT_CRASH_REPORTS_SET = "sent_crash_reports_set";
 
     public boolean isSendCrashReports() {
-        return getBooleanPreference(SEND_CRASH_REPORTS, R.bool.send_crash_reports);
+        return true;
     }
 
     public Set<String> getSentCrashReports() {
