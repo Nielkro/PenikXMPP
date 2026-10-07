@@ -17,8 +17,7 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         setPreferencesFromResource(R.xml.preferences_main, rootKey);
         final var about = findPreference("about");
-        final var up = findPreference("up");
-        if (about == null || up == null) {
+        if (about == null) {
             throw new IllegalStateException(
                     "The preference resource file is missing some preferences");
         }
@@ -32,7 +31,6 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
                         Strings.nullToEmpty(Build.MANUFACTURER),
                         Strings.nullToEmpty(Build.DEVICE),
                         Strings.nullToEmpty(Build.VERSION.RELEASE)));
-        up.setVisible(!Strings.isNullOrEmpty(getString(R.string.default_push_server)));
     }
 
     @Override

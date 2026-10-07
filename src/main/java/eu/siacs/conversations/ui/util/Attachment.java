@@ -214,12 +214,20 @@ public final class Attachment implements Parcelable {
                     final Uri uri = clipData.getItemAt(i).getUri();
                     final String mime =
                             MimeUtils.guessMimeTypeFromUriAndMime(context, uri, contentType);
-                    uris.add(new Attachment(uri, type, mime));
+                    final Type resolvedType =
+                            (type == Type.IMAGE && mime != null && mime.startsWith("video/"))
+                                    ? Type.FILE
+                                    : type;
+                    uris.add(new Attachment(uri, resolvedType, mime));
                 }
             }
         } else {
             final String mime = MimeUtils.guessMimeTypeFromUriAndMime(context, data, contentType);
-            uris.add(new Attachment(data, type, mime));
+            final Type resolvedType =
+                    (type == Type.IMAGE && mime != null && mime.startsWith("video/"))
+                            ? Type.FILE
+                            : type;
+            uris.add(new Attachment(data, resolvedType, mime));
         }
         return uris;
     }

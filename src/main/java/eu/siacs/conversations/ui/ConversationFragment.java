@@ -1487,7 +1487,11 @@ public class ConversationFragment extends XmppFragment
             viewIdBuilder.add(id);
         }
         setAttachmentChoicesVisibility(false);
-        binding.attachButton.setOnClickListener((v) -> toggleAttachmentChoicesVisibility());
+        binding.attachButton.setOnClickListener((v) -> {
+            hideSoftKeyboard(this.binding.textInput);
+            setAttachmentChoicesVisibility(false);
+            this.penikChatState.setShowAttachmentPicker(true);
+        });
         binding.cancelReplyButton.setOnClickListener((v) -> clearActiveReply());
         binding.attachmentChoicesFlow.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         binding.getRoot().setOnClickListener(null); // TODO why the fuck did we do this?
@@ -1541,6 +1545,26 @@ public class ConversationFragment extends XmppFragment
                     @Override
                     public void onBottomVisible(final String uuid) {
                         ConversationFragment.this.onPenikBottomVisible(uuid);
+                    }
+
+                    @Override
+                    public void onPickPhotoOrVideo() {
+                        ConversationFragment.this.attachFile(ATTACHMENT_CHOICE_CHOOSE_IMAGE);
+                    }
+
+                    @Override
+                    public void onPickDocument() {
+                        ConversationFragment.this.attachFile(ATTACHMENT_CHOICE_CHOOSE_FILE);
+                    }
+
+                    @Override
+                    public void onTakePhoto() {
+                        ConversationFragment.this.attachFile(ATTACHMENT_CHOICE_TAKE_PHOTO);
+                    }
+
+                    @Override
+                    public void onSendRecentMedias(final List<Uri> uris) {
+                        ConversationFragment.this.onSendRecentMedias(uris);
                     }
                 });
 
@@ -2534,7 +2558,10 @@ public class ConversationFragment extends XmppFragment
                         {
                             final var intent = new Intent(Intent.ACTION_GET_CONTENT);
                             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                            intent.setType("image/*");
+                            intent.setType("*/*");
+                            intent.putExtra(
+                                    Intent.EXTRA_MIME_TYPES,
+                                    new String[] {"image/*", "video/*"});
                             yield Intent.createChooser(
                                     intent, getString(R.string.perform_action_with));
                         }
@@ -3681,6 +3708,14 @@ public class ConversationFragment extends XmppFragment
         if (getActivity() instanceof ConversationsActivity ca) {
             ca.onConversationRead(c, uuid);
         }
+    }
+
+    public void onSendRecentMedias(final List<Uri> uris) {
+        if (uris == null || uris.isEmpty() || this.conversation == null) {
+            return;
+        }
+        final List<Attachment> attachments = Attachment.of(requireContext(), uris, null);
+        commitAttachments(attachments);
     }
 
     protected void messageSent() {

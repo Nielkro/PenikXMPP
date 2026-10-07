@@ -23,12 +23,6 @@
         android:title="@string/backup_and_restore"
         app:fragment="eu.siacs.conversations.ui.fragment.settings.BackupSettingsFragment" />
     <Preference
-        android:icon="@drawable/ic_cloud_sync_24dp"
-        android:key="up"
-        app:fragment="eu.siacs.conversations.ui.fragment.settings.UpSettingsFragment"
-        app:summary="@string/unified_push_summary"
-        app:title="@string/unified_push_distributor" />
-    <Preference
         android:key="about"
         android:title="@string/title_activity_about_x">
         <intent

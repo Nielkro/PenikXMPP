@@ -164,6 +164,10 @@ interface PenikChatListener {
     fun onMessageAction(action: String, message: Message)
     fun onLoadMore()
     fun onBottomVisible(uuid: String)
+    fun onPickPhotoOrVideo() {}
+    fun onPickDocument() {}
+    fun onTakePhoto() {}
+    fun onSendRecentMedias(uris: @JvmSuppressWildcards List<Uri>) {}
 }
 
 object PenikChatActions {
@@ -183,6 +187,7 @@ class PenikChatState {
     var messages by mutableStateOf<List<Message>>(emptyList())
     var isMuc by mutableStateOf(false)
     var showAvatars11 by mutableStateOf(true)
+    var showAttachmentPicker by mutableStateOf(false)
     var revision by mutableStateOf(0L)
 
     fun update(newMessages: List<Message>, muc: Boolean, avatars11: Boolean = true) {
@@ -448,6 +453,28 @@ fun PenikChatRoom(
                 }
             }
         }
+    }
+
+    if (state.showAttachmentPicker) {
+        PenikAttachmentPickerBottomSheet(
+            onDismiss = { state.showAttachmentPicker = false },
+            onPickPhotoOrVideo = {
+                state.showAttachmentPicker = false
+                listener.onPickPhotoOrVideo()
+            },
+            onPickDocument = {
+                state.showAttachmentPicker = false
+                listener.onPickDocument()
+            },
+            onTakePhoto = {
+                state.showAttachmentPicker = false
+                listener.onTakePhoto()
+            },
+            onSendRecentMedias = { uris ->
+                state.showAttachmentPicker = false
+                listener.onSendRecentMedias(uris)
+            }
+        )
     }
 }
 
