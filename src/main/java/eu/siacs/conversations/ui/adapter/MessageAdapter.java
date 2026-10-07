@@ -922,7 +922,9 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         final var mergeIntoBottom = mergeIntoBottom(position, message);
         final boolean showAvatar;
         if (viewHolder instanceof StartBubbleMessageItemViewHolder) {
-            showAvatar = message.getConversation().getMode() == Conversation.MODE_MULTI;
+            showAvatar =
+                    bubbleDesign.showAvatars11
+                            || message.getConversation().getMode() == Conversation.MODE_MULTI;
         } else if (viewHolder instanceof EndBubbleMessageItemViewHolder) {
             showAvatar = false;
         } else {

@@ -22,9 +22,9 @@ public class AttachmentsSettingsFragment extends XmppPreferenceFragment {
                 value -> {
                     if (value <= 0) {
                         return getString(R.string.never);
-                    } else if (value <= 524288) {
-                        return getString(R.string.file_size_small);
                     } else if (value <= 2097152) {
+                        return getString(R.string.file_size_small);
+                    } else if (value <= 10485760) {
                         return getString(R.string.file_size_medium);
                     } else {
                         return getString(R.string.file_size_large);

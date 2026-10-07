@@ -182,11 +182,13 @@ object PenikChatActions {
 class PenikChatState {
     var messages by mutableStateOf<List<Message>>(emptyList())
     var isMuc by mutableStateOf(false)
+    var showAvatars11 by mutableStateOf(true)
     var revision by mutableStateOf(0L)
 
-    fun update(newMessages: List<Message>, muc: Boolean) {
+    fun update(newMessages: List<Message>, muc: Boolean, avatars11: Boolean = true) {
         messages = newMessages
         isMuc = muc
+        showAvatars11 = avatars11
         revision++
     }
 }
@@ -438,6 +440,7 @@ fun PenikChatRoom(
                                         message = row.message,
                                         activity = activity,
                                         isMuc = state.isMuc,
+                                        showAvatars11 = state.showAvatars11,
                                         listener = listener,
                                         revision = state.revision
                                 )
@@ -611,6 +614,7 @@ fun PenikMessageRow(
         message: Message,
         activity: XmppActivity,
         isMuc: Boolean,
+        showAvatars11: Boolean,
         listener: PenikChatListener,
         revision: Long = 0L
 ) {
@@ -631,47 +635,83 @@ fun PenikMessageRow(
         return
     }
     val isSentByMe = message.status != Message.STATUS_RECEIVED
-    if (message.type == Message.TYPE_TEXT) {
-        val bareUrl = remember(body) { penikBareImageUrl(body) }
-        if (bareUrl != null) {
-            PenikUrlImageRow(
-                    url = bareUrl,
-                    message = message,
-                    isSentByMe = isSentByMe,
-                    listener = listener,
-                    revision = revision
+    val showAvatar = !isSentByMe && (isMuc || showAvatars11)
+
+    Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 1.dp),
+            horizontalArrangement = if (isSentByMe) Arrangement.End else Arrangement.Start,
+            verticalAlignment = Alignment.Bottom
+    ) {
+        if (showAvatar) {
+            val context = LocalContext.current
+            val avatarBitmap = remember(message.uuid, revision) {
+                try {
+                    activity.avatarService()?.get(message, (28 * context.resources.displayMetrics.density).toInt(), false)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            PenikAvatarImage(
+                    name = UIHelper.getMessageDisplayName(message),
+                    bitmap = avatarBitmap,
+                    size = 28.dp
             )
-            return
+            Spacer(modifier = Modifier.width(4.dp))
         }
-        val bareVideoUrl = remember(body) { penikBareVideoUrl(body) }
-        if (bareVideoUrl != null) {
-            PenikAttachmentRow(
-                    message = message,
-                    activity = activity,
-                    isSentByMe = isSentByMe,
-                    listener = listener,
-                    revision = revision
-            )
-            return
+
+        Box(
+                modifier = Modifier.weight(1f, fill = false),
+                contentAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
+        ) {
+            if (message.type == Message.TYPE_TEXT) {
+                val bareUrl = remember(body) { penikBareImageUrl(body) }
+                if (bareUrl != null) {
+                    PenikUrlImageRow(
+                            url = bareUrl,
+                            message = message,
+                            isSentByMe = isSentByMe,
+                            listener = listener,
+                            revision = revision
+                    )
+                } else {
+                    val bareVideoUrl = remember(body) { penikBareVideoUrl(body) }
+                    if (bareVideoUrl != null) {
+                        PenikAttachmentRow(
+                                message = message,
+                                activity = activity,
+                                isSentByMe = isSentByMe,
+                                listener = listener,
+                                revision = revision
+                        )
+                    } else {
+                        PenikTextBubble(
+                                message = message,
+                                activity = activity,
+                                isMuc = isMuc,
+                                listener = listener,
+                                revision = revision
+                        )
+                    }
+                }
+            } else if (message.isFileOrImage || message.isGeoUri || penikIsVideo(message)) {
+                PenikAttachmentRow(
+                        message = message,
+                        activity = activity,
+                        isSentByMe = isSentByMe,
+                        listener = listener,
+                        revision = revision
+                )
+            } else {
+                PenikTextBubble(
+                        message = message,
+                        activity = activity,
+                        isMuc = isMuc,
+                        listener = listener,
+                        revision = revision
+                )
+            }
         }
     }
-    if (message.isFileOrImage || message.isGeoUri || penikIsVideo(message)) {
-        PenikAttachmentRow(
-                message = message,
-                activity = activity,
-                isSentByMe = isSentByMe,
-                listener = listener,
-                revision = revision
-        )
-        return
-    }
-    PenikTextBubble(
-            message = message,
-            activity = activity,
-            isMuc = isMuc,
-            listener = listener,
-            revision = revision
-    )
 }
 
 fun splitPenikQuote(text: String): Pair<String?, String> {

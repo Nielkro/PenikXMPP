@@ -1278,7 +1278,7 @@
     <string name="show_attachment_options">Показать параметры вложений</string>
     <string name="collapsed">Свёрнуто</string>
     <string name="expanded">Развёрнуто</string>
-    <string name="file_size_small">Маленькие (до 512 КБ)</string>
-    <string name="file_size_medium">Средние (до 2 МБ)</string>
-    <string name="file_size_large">Большие (до 10 МБ)</string>
+    <string name="file_size_small">Маленькие (до 2 МБ)</string>
+    <string name="file_size_medium">Средние (до 10 МБ)</string>
+    <string name="file_size_large">Большие (до 50 МБ)</string>
 </resources>

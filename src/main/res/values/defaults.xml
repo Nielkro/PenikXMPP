@@ -14,7 +14,7 @@
     <string name="notification_ringtone">content://settings/system/notification_sound</string>
     <string name="incoming_call_ringtone">content://settings/system/ringtone</string>
     <integer name="grace_period">0</integer>
-    <integer name="auto_accept_filesize">524288</integer>
+    <integer name="auto_accept_filesize">2097152</integer>
     <string name="picture_compression">auto</string>
     <bool name="use_green_background">true</bool>
     <bool name="large_font">false</bool>

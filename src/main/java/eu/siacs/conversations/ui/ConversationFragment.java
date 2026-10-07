@@ -3585,9 +3585,12 @@ public class ConversationFragment extends XmppFragment
         if (this.binding == null || this.conversation == null) {
             return;
         }
+        final boolean isMuc = this.conversation.getMode() == Conversational.MODE_MULTI;
+        final boolean showAvatars11 = new AppSettings(requireContext()).isShowAvatars11();
         this.penikChatState.update(
                 new ArrayList<>(this.messageList),
-                this.conversation.getMode() == Conversational.MODE_MULTI);
+                isMuc,
+                showAvatars11);
     }
 
     public void onPenikMessageAction(final String action, final Message message) {
