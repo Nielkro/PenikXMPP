@@ -9,11 +9,6 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -56,6 +52,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,9 +64,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -82,6 +83,7 @@ import eu.siacs.conversations.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 
 data class LocalGalleryMedia(
     val id: Long,
@@ -102,13 +104,16 @@ fun PenikAttachmentPickerBottomSheet(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val accentColor = colorResource(R.color.penik_accent)
+    val density = LocalDensity.current
+    val screenHeightPx = with(density) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
 
     var hasPermission by remember { mutableStateOf(hasGalleryPermission(context)) }
     val recentMedias = remember { mutableStateListOf<LocalGalleryMedia>() }
     var isLoadingMedia by remember { mutableStateOf(false) }
     val selectedUris = remember { mutableStateListOf<Uri>() }
+    var sheetHeightPx by remember { mutableFloatStateOf(0f) }
 
     val imageLoader = remember(context) {
         ImageLoader.Builder(context)
@@ -155,8 +160,11 @@ fun PenikAttachmentPickerBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.85f)
+                .onGloballyPositioned { coords ->
+                    sheetHeightPx = coords.size.height.toFloat()
+                }
         ) {
-            // Top action bar
+            // Top action bar: clearly visible in BOTH partially expanded and fully expanded states
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -352,7 +360,7 @@ fun PenikAttachmentPickerBottomSheet(
                     }
                 }
 
-                // Floating Send FAB when photos are selected (visible in all states)
+                // Floating Send FAB when photos are selected: automatically adjusts offset to stay visible in BOTH partially expanded and fully expanded states
                 if (selectedUris.isNotEmpty()) {
                     FloatingActionButton(
                         onClick = {
@@ -366,6 +374,16 @@ fun PenikAttachmentPickerBottomSheet(
                         elevation = FloatingActionButtonDefaults.elevation(6.dp),
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
+                            .offset {
+                                val sheetTopInWindow = try {
+                                    sheetState.requireOffset()
+                                } catch (_: Exception) {
+                                    0f
+                                }
+                                val contentBottomInWindow = sheetTopInWindow + sheetHeightPx
+                                val overflow = (contentBottomInWindow - screenHeightPx).coerceAtLeast(0f)
+                                IntOffset(0, -overflow.roundToInt())
+                            }
                             .padding(20.dp)
                             .navigationBarsPadding()
                             .size(56.dp)
