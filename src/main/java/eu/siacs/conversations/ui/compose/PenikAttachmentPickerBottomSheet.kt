@@ -39,8 +39,6 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -65,9 +63,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -106,8 +102,7 @@ fun PenikAttachmentPickerBottomSheet(
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val accentColor = colorResource(R.color.penik_accent)
-    val density = LocalDensity.current
-    val screenHeightPx = with(density) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
+    val windowHeightPx = context.resources.displayMetrics.heightPixels.toFloat()
 
     var hasPermission by remember { mutableStateOf(hasGalleryPermission(context)) }
     val recentMedias = remember { mutableStateListOf<LocalGalleryMedia>() }
@@ -164,62 +159,33 @@ fun PenikAttachmentPickerBottomSheet(
                     sheetHeightPx = coords.size.height.toFloat()
                 }
         ) {
-            // Top action bar: clearly visible in BOTH partially expanded and fully expanded states
+            // Clean Top Header (Only Title / Count and Reset)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (selectedUris.isNotEmpty()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Text(
+                        text = "Выбрано: ${selectedUris.size}",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.12f))
+                            .clickable { selectedUris.clear() }
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
                         Text(
-                            text = "Выбрано: ${selectedUris.size}",
-                            fontSize = 16.sp,
+                            text = "Сбросить",
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color.White.copy(alpha = 0.1f))
-                                .clickable { selectedUris.clear() }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "Сбросить",
-                                fontSize = 12.sp,
-                                color = accentColor
-                            )
-                        }
-                    }
-                    Button(
-                        onClick = {
-                            val toSend = selectedUris.toList()
-                            onDismiss()
-                            onSendRecentMedias(toSend)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = accentColor,
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Отправить (${selectedUris.size})",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
+                            color = accentColor
                         )
                     }
                 } else {
@@ -254,7 +220,7 @@ fun PenikAttachmentPickerBottomSheet(
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(3),
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(bottom = 80.dp),
+                            contentPadding = PaddingValues(bottom = 90.dp),
                             horizontalArrangement = Arrangement.spacedBy(1.5.dp),
                             verticalArrangement = Arrangement.spacedBy(1.5.dp)
                         ) {
@@ -360,7 +326,7 @@ fun PenikAttachmentPickerBottomSheet(
                     }
                 }
 
-                // Floating Send FAB when photos are selected: automatically adjusts offset to stay visible in BOTH partially expanded and fully expanded states
+                // Sole Floating Send FAB: dynamically positioned to ALWAYS be completely visible on-screen in both half and full states
                 if (selectedUris.isNotEmpty()) {
                     FloatingActionButton(
                         onClick = {
@@ -381,7 +347,7 @@ fun PenikAttachmentPickerBottomSheet(
                                     0f
                                 }
                                 val contentBottomInWindow = sheetTopInWindow + sheetHeightPx
-                                val overflow = (contentBottomInWindow - screenHeightPx).coerceAtLeast(0f)
+                                val overflow = (contentBottomInWindow - windowHeightPx).coerceAtLeast(0f)
                                 IntOffset(0, -overflow.roundToInt())
                             }
                             .padding(20.dp)
