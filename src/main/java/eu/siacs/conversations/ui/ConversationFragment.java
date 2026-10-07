@@ -1487,11 +1487,7 @@ public class ConversationFragment extends XmppFragment
             viewIdBuilder.add(id);
         }
         setAttachmentChoicesVisibility(false);
-        binding.attachButton.setOnClickListener((v) -> {
-            hideSoftKeyboard(this.binding.textInput);
-            setAttachmentChoicesVisibility(false);
-            this.penikChatState.setShowAttachmentPicker(true);
-        });
+        binding.attachButton.setOnClickListener((v) -> toggleAttachmentChoicesVisibility());
         binding.cancelReplyButton.setOnClickListener((v) -> clearActiveReply());
         binding.attachmentChoicesFlow.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         binding.getRoot().setOnClickListener(null); // TODO why the fuck did we do this?
@@ -2098,6 +2094,12 @@ public class ConversationFragment extends XmppFragment
     }
 
     private void handleAttachmentChoice(final AttachmentChoice.Type choice) {
+        setAttachmentChoicesVisibility(false);
+        if (choice == AttachmentChoice.Type.PICTURE) {
+            hideSoftKeyboard(this.binding.textInput);
+            this.penikChatState.setShowAttachmentPicker(true);
+            return;
+        }
         attachFile(
                 switch (choice) {
                     case CAMERA -> ATTACHMENT_CHOICE_TAKE_PHOTO;
@@ -2108,7 +2110,6 @@ public class ConversationFragment extends XmppFragment
                     case VIDEO -> ATTACHMENT_CHOICE_RECORD_VIDEO;
                     case CONTACT -> ATTACHMENT_CHOICE_CONTACT;
                 });
-        setAttachmentChoicesVisibility(false);
     }
 
     public void attachFile(final int attachmentChoice) {
