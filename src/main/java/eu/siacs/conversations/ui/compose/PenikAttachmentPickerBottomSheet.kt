@@ -9,6 +9,11 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,7 +29,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,7 +38,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -53,7 +56,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,11 +67,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -82,7 +82,6 @@ import eu.siacs.conversations.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.roundToInt
 
 data class LocalGalleryMedia(
     val id: Long,
@@ -96,21 +95,20 @@ data class LocalGalleryMedia(
 @Composable
 fun PenikAttachmentPickerBottomSheet(
     onDismiss: () -> Unit,
-    onPickPhotoOrVideo: () -> Unit,
-    onPickDocument: () -> Unit,
+    onPickPhotoOrVideo: () -> Unit = {},
+    onPickDocument: () -> Unit = {},
     onTakePhoto: () -> Unit,
     onSendRecentMedias: (List<Uri>) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val accentColor = colorResource(R.color.penik_accent)
 
     var hasPermission by remember { mutableStateOf(hasGalleryPermission(context)) }
     val recentMedias = remember { mutableStateListOf<LocalGalleryMedia>() }
     var isLoadingMedia by remember { mutableStateOf(false) }
     val selectedUris = remember { mutableStateListOf<Uri>() }
-    var sheetHeightPx by remember { mutableFloatStateOf(0f) }
 
     val imageLoader = remember(context) {
         ImageLoader.Builder(context)
@@ -157,9 +155,6 @@ fun PenikAttachmentPickerBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.85f)
-                .onGloballyPositioned { coords ->
-                    sheetHeightPx = coords.size.height.toFloat()
-                }
         ) {
             // Top action bar
             Row(
@@ -251,7 +246,7 @@ fun PenikAttachmentPickerBottomSheet(
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(3),
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(bottom = 96.dp),
+                            contentPadding = PaddingValues(bottom = 80.dp),
                             horizontalArrangement = Arrangement.spacedBy(1.5.dp),
                             verticalArrangement = Arrangement.spacedBy(1.5.dp)
                         ) {
@@ -357,135 +352,45 @@ fun PenikAttachmentPickerBottomSheet(
                     }
                 }
 
-                val windowHeightPx = context.resources.displayMetrics.heightPixels.toFloat()
-
-                // Bottom Floating Navigation Pill & Send Button
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .offset {
-                            val sheetTopInWindow = try {
-                                sheetState.requireOffset()
-                            } catch (_: Exception) {
-                                0f
-                            }
-                            val contentBottomInWindow = sheetTopInWindow + sheetHeightPx
-                            val overflow = (contentBottomInWindow - windowHeightPx).coerceAtLeast(0f)
-                            IntOffset(0, -overflow.roundToInt())
-                        }
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
-                        .navigationBarsPadding()
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = if (selectedUris.isNotEmpty()) Arrangement.SpaceBetween else Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                // Floating Send FAB when photos are selected (visible in all states)
+                if (selectedUris.isNotEmpty()) {
+                    FloatingActionButton(
+                        onClick = {
+                            val toSend = selectedUris.toList()
+                            onDismiss()
+                            onSendRecentMedias(toSend)
+                        },
+                        containerColor = accentColor,
+                        contentColor = Color.White,
+                        shape = CircleShape,
+                        elevation = FloatingActionButtonDefaults.elevation(6.dp),
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(20.dp)
+                            .navigationBarsPadding()
+                            .size(56.dp)
                     ) {
-                        // Floating Bottom Capsule with "Галерея" and "Файл"
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(32.dp))
-                                .background(Color(0xE61E1E28))
-                                .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(32.dp))
-                                .padding(horizontal = 14.dp, vertical = 6.dp)
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // "Галерея" Tab/Button
-                                Row(
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Отправить",
+                                modifier = Modifier.size(24.dp)
+                            )
+                            if (selectedUris.size > 1) {
+                                Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(Color(0xFF2B3A60))
-                                        .clickable {
-                                            onDismiss()
-                                            onPickPhotoOrVideo()
-                                        }
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                        .align(Alignment.TopEnd)
+                                        .size(18.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PhotoLibrary,
-                                        contentDescription = "Галерея",
-                                        tint = Color(0xFF64B5F6),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Галерея",
-                                        color = Color(0xFF64B5F6),
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.SemiBold
+                                        text = "${selectedUris.size}",
+                                        color = accentColor,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
                                     )
-                                }
-
-                                // "Файл" Tab/Button
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .clickable {
-                                            onDismiss()
-                                            onPickDocument()
-                                        }
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
-                                        contentDescription = "Файл",
-                                        tint = Color(0xFFEEEEEE),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "Файл",
-                                        color = Color(0xFFEEEEEE),
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
-
-                        // Floating Send FAB when photos are selected
-                        if (selectedUris.isNotEmpty()) {
-                            FloatingActionButton(
-                                onClick = {
-                                    val toSend = selectedUris.toList()
-                                    onDismiss()
-                                    onSendRecentMedias(toSend)
-                                },
-                                containerColor = accentColor,
-                                contentColor = Color.White,
-                                shape = CircleShape,
-                                elevation = FloatingActionButtonDefaults.elevation(6.dp),
-                                modifier = Modifier.size(52.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.Send,
-                                        contentDescription = "Отправить",
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                    if (selectedUris.size > 1) {
-                                        Box(
-                                            modifier = Modifier
-                                                .align(Alignment.TopEnd)
-                                                .size(18.dp)
-                                                .clip(CircleShape)
-                                                .background(Color.White),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "${selectedUris.size}",
-                                                color = accentColor,
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
                                 }
                             }
                         }
