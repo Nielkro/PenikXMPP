@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Penik Messenger — свой мессенджер без лишнего</title>
 <meta name="description" content="Penik Messenger — простой и быстрый мессенджер: лички и группы, мультидевайсинг, звонки и бинарный WebSocket на MessagePack. Без сквозного шифрования — сервер хранит историю открыто.">
-<link rel="icon" href="https://web.penik.ru/assets/favicon-BYBt5M59.ico">
+<link rel="icon" href="logo_fixed.webp">
 <style>
 :root{
   --bg:#0b0f16;
@@ -336,7 +336,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <nav id="nav">
   <div class="container nav-inner">
     <a class="brand" href="#top">
-      <img src="https://web.penik.ru/assets/favicon-BYBt5M59.ico" alt="Penik Messenger">
+      <img src="logo_fixed.webp" alt="Penik Messenger">
       <span>Penik&nbsp;<em>Messenger</em></span>
     </a>
     <div class="nav-links" id="navLinks">
@@ -348,8 +348,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
       <a href="#faq">FAQ</a>
     </div>
     <div class="nav-cta">
-      <a class="btn btn-outline btn-sm" href="https://web.penik.ru" target="_blank" rel="noopener">Веб-версия</a>
-      <a class="btn btn-primary btn-sm" href="https://github.com/Nielkro/Penik/releases/download/android-latest/app-debug.apk" download>Скачать APK</a>
+      <span class="btn btn-disabled btn-sm">Скачать APK</span>
     </div>
     <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button>
   </div>
@@ -365,8 +364,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
       <p><b>Penik</b> — простой и быстрый чат: лички, группы, звонки. Сообщения лежат на сервере открыто, без сквозного шифрования. Зато всё летает и ничего не слетает.</p>
       <span class="hand-note">честно про минус — ниже, в разделе «как устроено»</span>
       <div class="hero-btns">
-        <a class="btn btn-primary btn-lg" href="https://github.com/Nielkro/Penik/releases/download/android-latest/app-debug.apk" download>Скачать APK (latest)&nbsp;↓</a>
-        <a class="btn btn-outline btn-lg" href="https://web.penik.ru" target="_blank" rel="noopener">Открыть веб-версию&nbsp;→</a>
+        <span class="btn btn-disabled btn-lg">Скачать APK</span>
       </div>
       <div class="hero-meta">Android 8.0+ · v1.3.7 · бесплатно и без рекламы</div>
     </div>
@@ -380,7 +378,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
         <div class="screen">
           <div class="chat-head">
             <span class="chat-back">←</span>
-            <img class="chat-ava" src="https://web.penik.ru/assets/favicon-BYBt5M59.ico" alt="">
+            <img class="chat-ava" src="logo_fixed.webp" alt="">
             <div>
               <b>Кирилл</b>
               <span class="chat-status"><i class="dot"></i> в сети</span>
@@ -415,7 +413,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <!-- ================= VERSIONS ================= -->
 <section class="section" id="versions" style="background:var(--bg2);border-block:1px solid var(--border)">
   <div class="container">
-    <div class="sec-head reveal">
+    <div class="sec-head center reveal">
       <span class="tag">Версии</span>
       <h2>Две версии Penik: v1 и v2</h2>
       <p>Старая версия v1 на своём протоколе заброшена — вся разработка идёт в новом поколении v2 на открытом стандарте XMPP.</p>
@@ -438,7 +436,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <!-- ================= FEATURES ================= -->
 <section class="section" id="features">
   <div class="container">
-    <div class="sec-head reveal">
+    <div class="sec-head center reveal">
       <span class="tag">Возможности</span>
       <h2>Что умеет Penik</h2>
       <p>Ничего лишнего. Только то, что должен уметь нормальный мессенджер в 2026 году — и то, чего не умеют остальные.</p>
@@ -487,7 +485,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <!-- ================= SECURITY ================= -->
 <section class="section" id="security" style="background:var(--bg2);border-block:1px solid var(--border)">
   <div class="container">
-    <div class="sec-head reveal">
+    <div class="sec-head center reveal">
       <span class="tag">Как устроено</span>
       <h2>Как это работает — честно</h2>
       <p>Без магии. Сообщения идут на XMPP-сервер (Prosody) и лежат в его внутреннем хранилище открыто. Защита только по пути — TLS.</p>
@@ -608,7 +606,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <!-- ================= ECOSYSTEM ================= -->
 <section class="section" id="ecosystem">
   <div class="container">
-    <div class="sec-head reveal">
+    <div class="sec-head center reveal">
       <span class="tag">Экосистема Penik</span>
       <h2>Мессенджер — только начало. Есть еще VPN</h2>
       <p>Мессенджер — для общения и звонков. А PenikVPN защищает соединение: VLESS Reality, пересобранный MTProxy и обход ТСПУ. Вместе — удобная связь и скрытый от провайдера трафик.</p>
@@ -631,24 +629,17 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <!-- ================= DOWNLOAD ================= -->
 <section class="section" id="download" style="background:var(--bg2);border-block:1px solid var(--border)">
   <div class="container">
-    <div class="sec-head reveal">
+    <div class="sec-head center reveal">
       <span class="tag">Установка</span>
       <h2>Попробуй сам</h2>
-      <p>Два способа попасть в Penik: поставить APK на Android или открыть веб-версию прямо в браузере.</p>
+      <p>Единственный способ попасть в Penik — поставить APK на Android.</p>
     </div>
-    <div class="dl-wrap">
+    <div class="dl-wrap" style="grid-template-columns:1fr;max-width:640px">
       <div class="dl-card reveal" style="--d:.05s">
         <div class="dl-icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg></div>
         <h3>Android · APK</h3>
         <p class="dl-desc">Полноценный клиент: фоновые уведомления, облачная история, работа на любом интернете.</p>
-        <a class="btn btn-primary btn-lg" href="https://github.com/Nielkro/Penik/releases/download/android-latest/app-debug.apk" download style="width:100%">Скачать APK (latest)&nbsp;↓</a>
-        <div style="margin-top:14px;font-size:13px;color:var(--muted);"><a id="stableDownloadLink" href="https://github.com/Nielkro/Penik/releases/download/android-v1.0.4/app-debug.apk" download style="text-decoration:underline;color:var(--acc);">Стабильная версия (v1.0.4)</a> · <a href="https://github.com/Nielkro/Penik/releases/tag/android-latest" target="_blank" rel="noopener" style="text-decoration:underline;color:var(--muted);">Ночнушка (rolling)</a></div>
-      </div>
-      <div class="dl-card web reveal" style="--d:.14s">
-        <div class="dl-icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-        <h3>Веб-версия</h3>
-        <p class="dl-desc">Ничего устанавливать не нужно. Открывается в любом браузере, история подтягивается сама.</p>
-        <a class="btn btn-outline btn-lg" href="https://web.penik.ru" target="_blank" rel="noopener">Открыть веб-версию&nbsp;→</a>
+        <span class="btn btn-disabled btn-lg" style="width:100%">Скачать APK</span>
       </div>
     </div>
   </div>
@@ -657,7 +648,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <!-- ================= FAQ ================= -->
 <section class="section" id="faq">
   <div class="container">
-    <div class="sec-head reveal">
+    <div class="sec-head center reveal">
       <span class="tag">FAQ</span>
       <h2>Вопросы, которые нам задают</h2>
       <p>Отвечаем честно, как умеем.</p>
@@ -677,7 +668,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
       </div>
       <div class="faq-item reveal" style="--d:.2s">
         <button class="faq-q" type="button">А iOS будет? <span class="plus">+</span></button>
-        <div class="faq-a"><p>Нет, нативного приложения для iOS <b>не будет и не планируется</b>. Но вы всегда можете пользоваться <b>веб-версией</b>, которая отлично работает на iPhone через любой браузер.</p></div>
+        <div class="faq-a"><p>Нет, нативного приложения для iOS <b>не будет и не планируется</b>. Penik доступен только на Android.</p></div>
       </div>
       <div class="faq-item reveal" style="--d:.25s">
         <button class="faq-q" type="button">Как работает мультидевайсинг? <span class="plus">+</span></button>
@@ -709,15 +700,13 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
     <div class="foot-grid">
       <div class="foot-brand">
         <a class="brand" href="#top">
-          <img src="https://web.penik.ru/assets/favicon-BYBt5M59.ico" alt="Penik Messenger">
+          <img src="logo_fixed.webp" alt="Penik Messenger">
           <span>Penik&nbsp;<em>Messenger</em></span>
         </a>
         <p>Свой мессенджер со своими правилами. Честно: без E2EE сервер видит переписку — зато всё просто и быстро.</p>
       </div>
       <div class="foot-col">
         <h4>Продукт</h4>
-        <a href="https://github.com/Nielkro/Penik/releases/download/android-latest/app-debug.apk">Скачать APK</a>
-        <a href="https://web.penik.ru" target="_blank" rel="noopener">Веб-версия</a>
         <a href="#features">Возможности</a>
         <a href="https://github.com/Nielkro/Penik" target="_blank" rel="noopener">GitHub</a>
       </div>
