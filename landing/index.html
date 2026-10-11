@@ -340,6 +340,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
       <span>Penik&nbsp;<em>Messenger</em></span>
     </a>
     <div class="nav-links" id="navLinks">
+      <a href="#versions">Версии</a>
       <a href="#features">Возможности</a>
       <a href="#security">Как устроено</a>
       <a href="#compare">Сравнение</a>
@@ -411,6 +412,29 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
   </div>
 </div>
 
+<!-- ================= VERSIONS ================= -->
+<section class="section" id="versions" style="background:var(--bg2);border-block:1px solid var(--border)">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="tag">Версии</span>
+      <h2>Две версии Penik: v1 и v2</h2>
+      <p>Старая версия v1 на своём протоколе заброшена — вся разработка идёт в новом поколении v2 на открытом стандарте XMPP.</p>
+    </div>
+    <div class="dl-wrap">
+      <div class="dl-card reveal" style="--d:.05s">
+        <h3>v1 — на своём протоколе (заброшен)</h3>
+        <p class="dl-desc">Первое поколение: собственный бинарный протокол (MessagePack поверх WebSocket). Проект заброшен и работал нестабильно; новые функции добавлялись медленно — каждую фичу приходилось пилить с нуля.</p>
+        <div class="feat-tags"><span>Свой протокол</span><span>Заброшен</span><span>Фичи медленно</span></div>
+      </div>
+      <div class="dl-card reveal" style="--d:.14s">
+        <h3>v2 — на основе XMPP</h3>
+        <p class="dl-desc">Новое поколение на открытом стандарте XMPP: готовые XEP-расширения, звонки и совместимость с другими клиентами. Функции выходят быстрее — не изобретаем велосипед.</p>
+        <div class="feat-tags"><span>XMPP</span><span>Открытый стандарт</span><span>Фичи быстрее</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ================= FEATURES ================= -->
 <section class="section" id="features">
   <div class="container">
@@ -440,15 +464,15 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
       </div>
       <div class="feat reveal" style="--d:.05s">
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span>
-        <h3>Бинарный WebSocket</h3>
-        <p>MessagePack поверх бинарных веб-сокетов: пакеты крошечные, соединение стабильное. Потянет даже на интернете как у Кирилла.</p>
-        <div class="feat-tags"><span>MessagePack</span><span>Binary WS</span></div>
+        <h3>Открытый протокол XMPP (v2)</h3>
+        <p>Транспорт нового поколения: открытый стандарт XMPP с готовыми XEP-расширениями. Чаты, звонки и совместимость с другими клиентами из коробки. Потянет даже на интернете как у Кирилла.</p>
+        <div class="feat-tags"><span>XMPP</span><span>XEP</span><span>v2</span></div>
       </div>
       <div class="feat reveal" style="--d:.12s">
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-        <h3>Аудио и видеозвонки</h3>
-        <p>Вызовы 1:1 в высоком качестве через WebRTC / LiveKit с быстрой сигнализацией через WebSocket и поддержкой демонстрации экрана.</p>
-        <div class="feat-tags"><span>LiveKit SFU</span><span>WebRTC</span><span>HD видео</span></div>
+        <h3>Аудио и видеозвонки (v2)</h3>
+        <p>Вызовы 1:1 через XMPP Jingle — штатный механизм XMPP, без отдельных сервисов и костылей.</p>
+        <div class="feat-tags"><span>Jingle</span><span>1:1</span><span>v2</span></div>
       </div>
       <div class="feat reveal" style="--d:.19s">
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
@@ -466,30 +490,30 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
     <div class="sec-head reveal">
       <span class="tag">Как устроено</span>
       <h2>Как это работает — честно</h2>
-      <p>Без магии. Сообщения идут на сервер и лежат там открыто. Защита только по пути — TLS.</p>
+      <p>Без магии. Сообщения идут на XMPP-сервер (Prosody) и лежат в его внутреннем хранилище открыто. Защита только по пути — TLS.</p>
     </div>
     <div class="steps">
       <div class="step reveal" style="--d:.05s">
         <span class="step-num">ШАГ 01</span>
         <h3>Отправка</h3>
-        <p>Клиент отправляет сообщение на сервер через <code>REST / WebSocket</code>. Никаких ключей сверять не нужно.</p>
+        <p>Клиент отправляет сообщение на XMPP-сервер (Prosody) обычной <code>message</code>-станзой по TLS. Никаких ключей сверять не нужно.</p>
       </div>
       <div class="step reveal" style="--d:.12s">
         <span class="step-num">ШАГ 02</span>
         <h3>Хранение — минус</h3>
-        <p>Сервер кладёт текст в <code>SQLite</code> как есть. Это и есть главный минус: любой, у кого есть доступ к серверу, видит переписку.</p>
+        <p>Prosody складывает историю во <code>internal storage</code> (архив <code>MAM, XEP-0313</code>). Это и есть главный минус: любой, у кого есть доступ к серверу, видит переписку.</p>
       </div>
       <div class="step reveal" style="--d:.19s">
         <span class="step-num">ШАГ 03</span>
         <h3>Доставка</h3>
-        <p>История пакуется в <code>MessagePack</code> и летит по бинарному WebSocket. Компактно, быстро и стабильно даже на очень грустном интернете.</p>
+        <p>Сервер рассылает сообщение на все устройства аккаунта (<code>carbons, XEP-0280</code>), пропущенное подтягивается из архива (<code>MAM</code>). Зашёл с нового телефона — история уже там.</p>
       </div>
     </div>
 
     <div class="server-panel reveal">
       <div class="term-head">
         <span class="tdot r"></span><span class="tdot y"></span><span class="tdot g"></span>
-        <span class="term-title">penik-server — что видит сервер</span>
+        <span class="term-title">prosody — что видит сервер</span>
       </div>
       <div class="term-body" id="termBody"></div>
       <div class="term-caption">Сервер видит текст сообщений. <b>Это осознанный минус, а не баг.</b></div>
@@ -640,6 +664,10 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
     </div>
     <div class="faq-wrap">
       <div class="faq-item reveal" style="--d:.05s">
+        <button class="faq-q" type="button">Чем v1 отличается от v2? <span class="plus">+</span></button>
+        <div class="faq-a"><p><b>v1</b> — старое поколение на собственном протоколе (MessagePack поверх WebSocket). Проект <b>заброшен</b>, работал нестабильно, а новые функции там появлялись <b>медленно</b>. <b>v2</b> — новое поколение на основе открытого стандарта <b>XMPP</b>: готовые расширения, звонки и совместимость с другими клиентами — поэтому функции в ней выходят <b>быстрее</b>.</p></div>
+      </div>
+      <div class="faq-item reveal" style="--d:.05s">
         <button class="faq-q" type="button">Это вообще безопасно? <span class="plus">+</span></button>
         <div class="faq-a"><p>Честно — <b>нет, если речь про приватность от сервера</b>. Сквозного шифрования (E2EE) здесь нет: сервер хранит переписку открыто и теоретически может её читать. Защита есть только по пути (TLS) и за счёт доступа к аккаунту. Для чувствительных тем это главный минус.</p></div>
       </div>
@@ -773,13 +801,6 @@ setTimeout(pushMessage, 700);
 
 /* ---------- SERVER TERMINAL ---------- */
 const termBody = document.getElementById('termBody');
-function randId() { return (1000 + ((Math.random() * 9000) | 0)); }
-function uuid() { return crypto.randomUUID().slice(0, 8) + '…'; }
-function hexBytes(count) {
-  let out = [];
-  for (let i = 0; i < count; i++) out.push(((Math.random() * 256) | 0).toString(16).padStart(2, '0'));
-  return out.join(' ');
-}
 
 function addTermLine(dir, name, fields) {
   const lineEl = document.createElement('div');
@@ -797,31 +818,19 @@ function addTermLine(dir, name, fields) {
   termBody.scrollTop = termBody.scrollHeight;
 }
 
-const u = () => uuid();
-const h = () => hexBytes(16);
-
 const termScript = [
-  { delay: 500,  dir: '→', name: 'MSG_SEND',         f: `to_user_id=7234 text="привет!" msg_id=${u()}` },
-  { delay: 350,  dir: '←', name: 'MSG_RECV',         f: `from=4821 text="привет!" msg_id=${u()}` },
-  { delay: 300,  dir: '→', name: 'MSG_DELIVERED',    f: `msg_id=${u()}` },
-  { delay: 250,  dir: '←', name: 'MSG_ACK',          f: `msg_id=${u()} id=4821` },
-  { delay: 400,  dir: '←', name: 'MSG_RECV',         f: `from=7234 text="как дела?"` },
-  { delay: 300,  dir: '→', name: 'MSG_SEND',         f: `to_user_id=7234 text="норм, а у тебя?"` },
-  { delay: 350,  dir: '→', name: 'MSG_READ',         f: `msg_id=${u()}` },
-  { delay: 250,  dir: '←', name: 'MSG_RECV',         f: `from=7234 text="тоже норм"` },
-  { delay: 400,  dir: '→', name: 'MSG_SEND',         f: `to_user_id=7234 text="созвон в 8?"` },
-  { delay: 300,  dir: '←', name: 'MSG_ACK',          f: `msg_id=${u()} id=7234` },
-
-  { delay: 500,  dir: '←', name: 'GROUP_MEMBER_CHG', f: `group_id=9001 user=4821 action=invited` },
-  { delay: 400,  dir: '→', name: 'GROUP_MSG_SEND',   f: `group_id=9001 text="всем привет"` },
-  { delay: 350,  dir: '←', name: 'GROUP_MSG_RECV',   f: `group=9001 from=7234 text="привет!"` },
-  { delay: 300,  dir: '←', name: 'GROUP_MEMBER_CHG', f: `group_id=9001 user=4821 accepted` },
-  { delay: 400,  dir: '←', name: 'GROUP_HIST_READY', f: `group_id=9001 messages=42` },
-
-  { delay: 350,  dir: '→', name: 'GROUP_MSG_SEND',   f: `group_id=9001 text="кидаю файл"` },
-  { delay: 300,  dir: '←', name: 'GROUP_MSG_RECV',   f: `group=9001 from=7234 text="принял"` },
-  { delay: 350,  dir: '←', name: 'GROUP_MSG_ACK',    f: `group=9001 msg_id=${u()}` },
-  { delay: 250,  dir: '←', name: 'GROUP_MSG_RECV',   f: `group=9001 from=2055 text="+1"` },
+  { delay: 500,  dir: '→', name: '<message>',       f: 'to=kiril@penik.ru type=chat id=q7x2' },
+  { delay: 350,  dir: '←', name: '<message>',       f: 'from=kiril@penik.ru body="привет!"' },
+  { delay: 300,  dir: '→', name: '<iq/> mam',       f: 'query archive max=20 (XEP-0313)' },
+  { delay: 350,  dir: '←', name: '<iq/> mam',       f: '20 msgs from internal storage' },
+  { delay: 400,  dir: '→', name: '<presence>',      f: 'show=chat status="в сети"' },
+  { delay: 300,  dir: '←', name: '<iq/> roster',    f: 'push subscription=both' },
+  { delay: 350,  dir: '→', name: '<iq/> carbons',   f: 'enable (XEP-0280)' },
+  { delay: 300,  dir: '←', name: '<message>',       f: 'carbon copy from second device' },
+  { delay: 350,  dir: '→', name: '<iq/> upload',    f: 'slot request photo.jpg (XEP-0363)' },
+  { delay: 300,  dir: '←', name: '<iq/> upload',    f: 'slot put https://...' },
+  { delay: 350,  dir: '→', name: '<iq/> ping',      f: 'xmpp ping (XEP-0199)' },
+  { delay: 250,  dir: '←', name: '<iq/> pong',      f: 'still alive' },
 ];
 
 let scriptIdx = 0;
