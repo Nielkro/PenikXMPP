@@ -193,6 +193,8 @@ public class XmppConnection implements Runnable {
     private boolean inSmacksSession = false;
     private boolean quickStartInProgress = false;
     private boolean isBound = false;
+    private boolean postBindWaitForDisco = false;
+    private boolean postBindNegotiatedCarbons = false;
     private boolean offlineMessagesRetrieved = false;
     private im.conversations.android.xmpp.model.streams.Features streamFeatures;
     private im.conversations.android.xmpp.model.streams.Features boundStreamFeatures;
@@ -335,6 +337,8 @@ public class XmppConnection implements Runnable {
         this.inSmacksSession = false;
         this.quickStartInProgress = false;
         this.isBound = false;
+        this.postBindWaitForDisco = false;
+        this.postBindNegotiatedCarbons = false;
         this.attempt++;
         this.currentResolverResult = null;
         // will be set if user entered hostname is being used or hostname was verified with dnssec
@@ -952,7 +956,13 @@ public class XmppConnection implements Runnable {
                 } else {
                     negotiatedCarbons = false;
                 }
-                sendPostBindInitialization(waitForDisco, negotiatedCarbons);
+                if (this.streamFeatures != null && this.streamFeatures.funxmpp()) {
+                    this.postBindWaitForDisco = waitForDisco;
+                    this.postBindNegotiatedCarbons = negotiatedCarbons;
+                    sendFunXmppEnable();
+                } else {
+                    sendPostBindInitialization(waitForDisco, negotiatedCarbons);
+                }
             }
             final HashedToken.Mechanism tokenMechanism;
             if (SaslMechanism.hashedToken(currentSaslMechanism)) {
@@ -2122,11 +2132,15 @@ public class XmppConnection implements Runnable {
                         }
                         if (streamFeatures.session()) {
                             sendStartSession();
-                        } else if (streamFeatures.funxmpp()) {
-                            sendFunXmppEnable();
                         } else {
                             final boolean waitForDisco = enableStreamManagement();
-                            sendPostBindInitialization(waitForDisco, false);
+                            if (streamFeatures.funxmpp()) {
+                                postBindWaitForDisco = waitForDisco;
+                                postBindNegotiatedCarbons = false;
+                                sendFunXmppEnable();
+                            } else {
+                                sendPostBindInitialization(waitForDisco, false);
+                            }
                         }
                     }
 
@@ -2212,10 +2226,12 @@ public class XmppConnection implements Runnable {
                 new FutureCallback<>() {
                     @Override
                     public void onSuccess(Iq result) {
+                        final boolean waitForDisco = enableStreamManagement();
                         if (streamFeatures.funxmpp()) {
+                            postBindWaitForDisco = waitForDisco;
+                            postBindNegotiatedCarbons = false;
                             sendFunXmppEnable();
                         } else {
-                            final boolean waitForDisco = enableStreamManagement();
                             sendPostBindInitialization(waitForDisco, false);
                         }
                     }
@@ -2246,8 +2262,7 @@ public class XmppConnection implements Runnable {
         } catch (IOException e) {
             Log.e(Config.LOGTAG, account.getJid().asBareJid() + ": failed to initialize FunXMPP streams", e);
         }
-        final boolean waitForDisco = enableStreamManagement();
-        sendPostBindInitialization(waitForDisco, false);
+        sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
     }
 
     private boolean enableStreamManagement() {
