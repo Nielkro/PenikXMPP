@@ -766,6 +766,9 @@ public class XmppConnection implements Runnable {
                 processMessage(startTag);
             } else if (startTag.is(Presence.class)) {
                 processPresence(startTag);
+            } else if (startTag.is(im.conversations.android.xmpp.model.fun.Enabled.class)) {
+                tagReader.readElement(startTag, im.conversations.android.xmpp.model.fun.Enabled.class);
+                processFunEnabled();
             } else if (startTag.is(Enabled.class)) {
                 final var enabled = tagReader.readElement(startTag, Enabled.class);
                 processEnabled(enabled);
@@ -2119,6 +2122,8 @@ public class XmppConnection implements Runnable {
                         }
                         if (streamFeatures.session()) {
                             sendStartSession();
+                        } else if (streamFeatures.funxmpp()) {
+                            sendFunXmppEnable();
                         } else {
                             final boolean waitForDisco = enableStreamManagement();
                             sendPostBindInitialization(waitForDisco, false);
@@ -2207,8 +2212,12 @@ public class XmppConnection implements Runnable {
                 new FutureCallback<>() {
                     @Override
                     public void onSuccess(Iq result) {
-                        final boolean waitForDisco = enableStreamManagement();
-                        sendPostBindInitialization(waitForDisco, false);
+                        if (streamFeatures.funxmpp()) {
+                            sendFunXmppEnable();
+                        } else {
+                            final boolean waitForDisco = enableStreamManagement();
+                            sendPostBindInitialization(waitForDisco, false);
+                        }
                     }
 
                     @Override
@@ -2221,6 +2230,24 @@ public class XmppConnection implements Runnable {
                     }
                 },
                 MoreExecutors.directExecutor());
+    }
+
+    private void sendFunXmppEnable() {
+        Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": requesting FunXMPP binary protocol");
+        final var enable = new im.conversations.android.xmpp.model.fun.Enable();
+        tagWriter.writeStanzaAsync(enable);
+    }
+
+    private void processFunEnabled() {
+        Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": FunXMPP binary protocol activated!");
+        try {
+            this.tagWriter.setFunWriter(new eu.siacs.conversations.xmpp.fun.FunWriter(socket.getOutputStream()));
+            this.tagReader.setFunReader(new eu.siacs.conversations.xmpp.fun.FunReader(socket.getInputStream()));
+        } catch (IOException e) {
+            Log.e(Config.LOGTAG, account.getJid().asBareJid() + ": failed to initialize FunXMPP streams", e);
+        }
+        final boolean waitForDisco = enableStreamManagement();
+        sendPostBindInitialization(waitForDisco, false);
     }
 
     private boolean enableStreamManagement() {

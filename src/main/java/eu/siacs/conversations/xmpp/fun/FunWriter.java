@@ -31,7 +31,10 @@ public class FunWriter {
         writeTokenOrString(data, element.getName());
 
         // 2. Attributes
-        final Map<String, String> attrs = element.getAttributes();
+        final Map<String, String> attrs = new java.util.HashMap<>(element.getAttributes());
+        if (element.getNamespace() != null && !attrs.containsKey("xmlns")) {
+            attrs.put("xmlns", element.getNamespace());
+        }
         data.writeByte(attrs.size());
         for (final Map.Entry<String, String> entry : attrs.entrySet()) {
             writeTokenOrString(data, entry.getKey());

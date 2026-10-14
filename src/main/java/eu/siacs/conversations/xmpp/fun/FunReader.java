@@ -28,26 +28,34 @@ public class FunReader {
         in.readFully(nodeData);
 
         final DataInputStream nodeStream = new DataInputStream(new ByteArrayInputStream(nodeData));
-        return decodeNode(nodeStream);
+        return decodeNode(nodeStream, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT);
     }
 
-    private static Element decodeNode(final DataInputStream stream) throws IOException {
+    public static Element decodeNode(final DataInputStream stream, final String parentNamespace) throws IOException {
         final String tagName = readTokenOrString(stream);
         if (tagName == null) {
             return null;
         }
 
-        final Element element = new Element(tagName);
-
         // Attributes
         final int attrCount = stream.readUnsignedByte();
+        final java.util.Map<String, String> attrs = new java.util.HashMap<>(attrCount * 2);
         for (int i = 0; i < attrCount; i++) {
             final String key = readTokenOrString(stream);
             final String val = readTokenOrString(stream);
             if (key != null && val != null) {
-                element.setAttribute(key, val);
+                attrs.put(key, val);
             }
         }
+
+        String ns = attrs.get("xmlns");
+        if (ns == null) {
+            ns = parentNamespace;
+        }
+
+        final Element element = im.conversations.android.xmpp.ExtensionFactory.create(
+                new im.conversations.android.xmpp.ExtensionFactory.Id(tagName, ns));
+        element.setAttributes(attrs);
 
         // Content: Children vs Text vs Empty
         final int contentType = stream.readUnsignedByte();
@@ -58,7 +66,7 @@ public class FunReader {
                 final byte[] childBytes = new byte[childLen];
                 stream.readFully(childBytes);
                 final DataInputStream childStream = new DataInputStream(new ByteArrayInputStream(childBytes));
-                final Element child = decodeNode(childStream);
+                final Element child = decodeNode(childStream, ns);
                 if (child != null) {
                     element.addChild(child);
                 }

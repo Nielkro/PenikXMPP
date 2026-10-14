@@ -20,6 +20,13 @@ public class XmlReader implements Closeable {
     private static final int XML_ELEMENT_MAX_DEPTH = 128;
 
     private ParserInputStream parserInputStream;
+    private eu.siacs.conversations.xmpp.fun.FunReader funReader;
+    private Element pendingFunElement;
+
+    public void setFunReader(final eu.siacs.conversations.xmpp.fun.FunReader funReader) {
+        this.funReader = funReader;
+        this.pendingFunElement = null;
+    }
 
     private static ParserInputStream of(final InputStream inputStream) throws IOException {
         final var parser = Xml.newPullParser();
@@ -37,6 +44,7 @@ public class XmlReader implements Closeable {
     }
 
     public void reset() throws IOException {
+        this.pendingFunElement = null;
         final var current = this.parserInputStream;
         if (current == null) {
             throw new IOException("Unable to reset. No current parser");
@@ -46,6 +54,8 @@ public class XmlReader implements Closeable {
 
     @Override
     public void close() {
+        this.funReader = null;
+        this.pendingFunElement = null;
         final var current = this.parserInputStream;
         if (current != null) {
             this.parserInputStream = null;
@@ -54,6 +64,16 @@ public class XmlReader implements Closeable {
     }
 
     public @NonNull Tag readTag() throws IOException {
+        if (funReader != null) {
+            final Element element = funReader.readElement();
+            if (element == null) {
+                throw new EOFException();
+            }
+            this.pendingFunElement = element;
+            final ExtensionFactory.Id id =
+                    new ExtensionFactory.Id(element.getName(), element.getNamespace());
+            return new Tag.Start(id, element.getAttributes());
+        }
         try {
             while (parserInputStream != null
                     && parserInputStream.parser.next() != XmlPullParser.END_DOCUMENT) {
@@ -102,6 +122,15 @@ public class XmlReader implements Closeable {
 
     public <T extends StreamElement> T readElement(final Tag.Start current, final Class<T> clazz)
             throws IOException {
+        if (funReader != null && pendingFunElement != null) {
+            final Element element = pendingFunElement;
+            pendingFunElement = null;
+            if (clazz.isInstance(element)) {
+                return clazz.cast(element);
+            }
+            throw new IOException(
+                    String.format("Read unexpected {%s}%s", element.getNamespace(), element.getName()));
+        }
         final var element = readElement(current);
         if (clazz.isInstance(element)) {
             return clazz.cast(element);
@@ -111,6 +140,11 @@ public class XmlReader implements Closeable {
     }
 
     public Element readElement(final Tag.Start currentTag) throws IOException {
+        if (funReader != null && pendingFunElement != null) {
+            final Element element = pendingFunElement;
+            pendingFunElement = null;
+            return element;
+        }
         return readElement(currentTag, 0);
     }
 

@@ -164,6 +164,86 @@ local function encode_stanza(stanza)
     return string.char(len_hi, len_lo) .. body_str;
 end
 
+-- Decode FunXMPP binary node to Prosody Stanza
+local function decode_node(data, pos, parent_ns)
+    if pos > #data then return nil, pos end
+
+    local tag_name;
+    tag_name, pos = read_token_or_string(data, pos);
+    if not tag_name then return nil, pos end
+
+    local attr_count = data:byte(pos) or 0;
+    pos = pos + 1;
+    local attr = {};
+    for _ = 1, attr_count do
+        local k, v;
+        k, pos = read_token_or_string(data, pos);
+        v, pos = read_token_or_string(data, pos);
+        if k and v then
+            attr[k] = v;
+        end
+    end
+
+    local ns = attr.xmlns or parent_ns;
+    local stanza = st.stanza(tag_name, attr);
+
+    local content_type = data:byte(pos) or 0;
+    pos = pos + 1;
+
+    if content_type == CONTENT_CHILDREN then
+        if pos + 1 <= #data then
+            local count = data:byte(pos) * 256 + data:byte(pos + 1);
+            pos = pos + 2;
+            for _ = 1, count do
+                if pos + 1 > #data then break end
+                local child_len = data:byte(pos) * 256 + data:byte(pos + 1);
+                pos = pos + 2;
+                local child_data = data:sub(pos, pos + child_len - 1);
+                pos = pos + child_len;
+                local child_stanza = decode_node(child_data, 1, ns);
+                if child_stanza then
+                    stanza:add_child(child_stanza);
+                end
+            end
+        end
+    elseif content_type == CONTENT_TEXT then
+        if pos + 1 <= #data then
+            local text_len = data:byte(pos) * 256 + data:byte(pos + 1);
+            pos = pos + 2;
+            local text = data:sub(pos, pos + text_len - 1);
+            pos = pos + text_len;
+            stanza:text(text);
+        end
+    end
+
+    return stanza, pos;
+end
+
+-- Incoming byte filter for FunXMPP frames
+local function funxmpp_bytes_in(data, session)
+    if not session.funxmpp_enabled then
+        return data;
+    end
+    session.funxmpp_in_buf = (session.funxmpp_in_buf or "") .. data;
+    local xml_chunks = {};
+    while #session.funxmpp_in_buf >= 2 do
+        local len = session.funxmpp_in_buf:byte(1) * 256 + session.funxmpp_in_buf:byte(2);
+        if #session.funxmpp_in_buf < 2 + len then
+            break;
+        end
+        local frame = session.funxmpp_in_buf:sub(3, 2 + len);
+        session.funxmpp_in_buf = session.funxmpp_in_buf:sub(3 + len);
+        local stanza = decode_node(frame, 1, "jabber:client");
+        if stanza then
+            table.insert(xml_chunks, tostring(stanza));
+        end
+    end
+    if #xml_chunks > 0 then
+        return table.concat(xml_chunks);
+    end
+    return "";
+end
+
 -- Hook: Stream features
 module:hook("stream-features", function(event)
     local origin, features = event.origin, event.features;
@@ -173,12 +253,28 @@ module:hook("stream-features", function(event)
 end);
 
 -- Hook: Stanza negotiation
-module:hook("stanza/" .. FUN_NS .. ":enable", function(event)
+local filters = require "util.filters";
+
+local function handle_enable(event)
     local session = event.origin;
     module:log("info", "Client requested FunXMPP binary protocol: %s", session.full_jid or session.ip);
-    session.funxmpp_enabled = true;
     session.send(st.stanza("enabled", { xmlns = FUN_NS }));
+    session.funxmpp_enabled = true;
+    filters.add_filter(session, "bytes/in", funxmpp_bytes_in, 100);
+
+    local orig_send = session.send;
+    session.send = function (stanza)
+        if session.funxmpp_enabled and type(stanza) == "table" and stanza.name then
+            local bin = encode_stanza(stanza);
+            return session.conn:write(bin);
+        else
+            return orig_send(stanza);
+        end
+    end
     return true;
-end);
+end
+
+module:hook_tag(FUN_NS, "enable", handle_enable);
+module:hook("stanza/" .. FUN_NS .. ":enable", handle_enable);
 
 module:log("info", "mod_funxmpp initialized for high-performance mobile binary framing");

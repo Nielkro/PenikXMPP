@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class TagWriter {
 
     private StreamElementWriter outputStream;
+    private eu.siacs.conversations.xmpp.fun.FunWriter funWriter;
     private boolean finished = false;
 
     private final LinkedBlockingQueue<StreamElement> writeQueue = new LinkedBlockingQueue<>();
@@ -30,9 +31,15 @@ public class TagWriter {
                         }
                         try {
                             final var output = writeQueue.take();
-                            outputStream.write(output);
-                            if (writeQueue.isEmpty()) {
-                                outputStream.flush();
+                            synchronized (TagWriter.this) {
+                                if (funWriter != null) {
+                                    funWriter.writeElement(output);
+                                } else if (outputStream != null) {
+                                    outputStream.write(output);
+                                    if (writeQueue.isEmpty()) {
+                                        outputStream.flush();
+                                    }
+                                }
                             }
                         } catch (Exception e) {
                             break;
@@ -72,7 +79,15 @@ public class TagWriter {
         }
     }
 
+    public synchronized void setFunWriter(final eu.siacs.conversations.xmpp.fun.FunWriter funWriter) {
+        this.funWriter = funWriter;
+    }
+
     public synchronized void writeElement(final StreamElement element) throws IOException {
+        if (funWriter != null) {
+            funWriter.writeElement(element);
+            return;
+        }
         if (outputStream == null) {
             throw new IOException("output stream was null");
         }
@@ -108,7 +123,7 @@ public class TagWriter {
     }
 
     public boolean isActive() {
-        return outputStream != null;
+        return outputStream != null || funWriter != null;
     }
 
     public synchronized void forceClose() {
@@ -121,5 +136,6 @@ public class TagWriter {
             }
         }
         outputStream = null;
+        funWriter = null;
     }
 }
