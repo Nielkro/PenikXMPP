@@ -473,9 +473,20 @@ module:hook("stream-features", function(event)
 end);
 
 -- Hook: Stanza negotiation
-local function handle_enable(event)
-    local session = event.origin;
-    module:log("info", "Client requested FunXMPP binary protocol: %s", session.full_jid or session.ip);
+local function handle_enable(origin, stanza, event)
+    local session = origin;
+    if not session or not session.send then
+        if type(origin) == "table" and origin.origin then
+            session = origin.origin;
+        elseif type(event) == "table" and event.origin then
+            session = event.origin;
+        end
+    end
+    if not session or not session.send then
+        module:log("warn", "handle_enable called without valid session");
+        return;
+    end
+    module:log("info", "Client requested FunXMPP binary protocol: %s", session.full_jid or session.ip or "unknown");
     -- Send XML acknowledgment first
     session.send(st.stanza("enabled", { xmlns = FUN_NS }));
     session.funxmpp_enabled = true;
