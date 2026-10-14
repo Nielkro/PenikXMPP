@@ -11,6 +11,8 @@ local FUN_NS = "penik:protocol:funxmpp";
 local LITERAL_STRING_8 = 0xFA;
 local LITERAL_STRING_16 = 0xFB;
 local LITERAL_STRING_32 = 0xFC;
+local JID_BARE = 0xFD;
+local JID_FULL = 0xFE;
 local CONTENT_EMPTY = 0x00;
 local CONTENT_TEXT = 0x01;
 local CONTENT_CHILDREN = 0x02;
@@ -83,6 +85,12 @@ local TOKENS = {
     [140] = "urn:xmpp:avatar:data",
     [141] = "urn:xmpp:http:upload:0",
     [142] = "penik:protocol:funxmpp",
+
+    -- Server & Component Domains (143..146)
+    [143] = "snikket.penik.ru",
+    [144] = "groups.snikket.penik.ru",
+    [145] = "share.snikket.penik.ru",
+    [146] = "push.snikket.penik.ru",
 };
 
 local TOKEN_LOOKUP = {};
@@ -96,24 +104,53 @@ local function write_token_or_string(buf, str)
     local token = TOKEN_LOOKUP[str];
     if token and token >= 0 and token < 240 then
         table.insert(buf, string.char(token));
-    else
-        local len = #str;
-        if len <= 255 then
-            table.insert(buf, string.char(LITERAL_STRING_8, len));
-            table.insert(buf, str);
-        elseif len <= 65535 then
-            local hi = math.floor(len / 256);
-            local lo = len % 256;
-            table.insert(buf, string.char(LITERAL_STRING_16, hi, lo));
-            table.insert(buf, str);
+        return;
+    end
+
+    local at_pos = str:find("@", 1, true);
+    if at_pos and at_pos > 1 then
+        local slash_pos = str:find("/", at_pos + 1, true);
+        if not slash_pos then
+            local user = str:sub(1, at_pos - 1);
+            local domain = str:sub(at_pos + 1);
+            local domain_token = TOKEN_LOOKUP[domain];
+            if domain_token and domain_token >= 0 and domain_token < 240 then
+                table.insert(buf, string.char(JID_BARE));
+                write_token_or_string(buf, user);
+                table.insert(buf, string.char(domain_token));
+                return;
+            end
         else
-            local b1 = math.floor(len / 16777216) % 256;
-            local b2 = math.floor(len / 65536) % 256;
-            local b3 = math.floor(len / 256) % 256;
-            local b4 = len % 256;
-            table.insert(buf, string.char(LITERAL_STRING_32, b1, b2, b3, b4));
-            table.insert(buf, str);
+            local user = str:sub(1, at_pos - 1);
+            local domain = str:sub(at_pos + 1, slash_pos - 1);
+            local domain_token = TOKEN_LOOKUP[domain];
+            if domain_token and domain_token >= 0 and domain_token < 240 then
+                local resource = str:sub(slash_pos + 1);
+                table.insert(buf, string.char(JID_FULL));
+                write_token_or_string(buf, user);
+                table.insert(buf, string.char(domain_token));
+                write_token_or_string(buf, resource);
+                return;
+            end
         end
+    end
+
+    local len = #str;
+    if len <= 255 then
+        table.insert(buf, string.char(LITERAL_STRING_8, len));
+        table.insert(buf, str);
+    elseif len <= 65535 then
+        local hi = math.floor(len / 256);
+        local lo = len % 256;
+        table.insert(buf, string.char(LITERAL_STRING_16, hi, lo));
+        table.insert(buf, str);
+    else
+        local b1 = math.floor(len / 16777216) % 256;
+        local b2 = math.floor(len / 65536) % 256;
+        local b3 = math.floor(len / 256) % 256;
+        local b4 = len % 256;
+        table.insert(buf, string.char(LITERAL_STRING_32, b1, b2, b3, b4));
+        table.insert(buf, str);
     end
 end
 
@@ -143,6 +180,24 @@ local function read_token_or_string(data, pos)
         pos = pos + 4;
         local s = data:sub(pos, pos + len - 1);
         return s, pos + len;
+    elseif b == JID_BARE then
+        local user;
+        user, pos = read_token_or_string(data, pos);
+        if pos > #data then return (user or "") .. "@unknown", pos end
+        local domain_token = data:byte(pos);
+        pos = pos + 1;
+        local domain = TOKENS[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
+        return (user or "") .. "@" .. domain, pos;
+    elseif b == JID_FULL then
+        local user;
+        user, pos = read_token_or_string(data, pos);
+        if pos > #data then return (user or "") .. "@unknown", pos end
+        local domain_token = data:byte(pos);
+        pos = pos + 1;
+        local domain = TOKENS[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
+        local resource;
+        resource, pos = read_token_or_string(data, pos);
+        return (user or "") .. "@" .. domain .. "/" .. (resource or ""), pos;
     else
         local token = TOKENS[b];
         if token then

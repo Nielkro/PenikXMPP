@@ -9,6 +9,8 @@ public final class FunTokens {
     public static final byte LITERAL_STRING_8 = (byte) 0xFA;
     public static final byte LITERAL_STRING_16 = (byte) 0xFB;
     public static final byte LITERAL_STRING_32 = (byte) 0xFC;
+    public static final byte JID_BARE = (byte) 0xFD;
+    public static final byte JID_FULL = (byte) 0xFE;
     public static final byte CONTENT_EMPTY = 0x00;
     public static final byte CONTENT_TEXT = 0x01;
     public static final byte CONTENT_CHILDREN = 0x02;
@@ -69,7 +71,13 @@ public final class FunTokens {
         "urn:xmpp:avatar:metadata",
         "urn:xmpp:avatar:data",
         "urn:xmpp:http:upload:0",
-        "penik:protocol:funxmpp"
+        "penik:protocol:funxmpp",
+
+        // Server & Component Domains (143..146)
+        "snikket.penik.ru",
+        "groups.snikket.penik.ru",
+        "share.snikket.penik.ru",
+        "push.snikket.penik.ru"
     };
 
     private static final Map<String, Integer> TOKEN_LOOKUP;

@@ -34,7 +34,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `src/main/java/eu/siacs/conversations/xmpp/OnKeyStatusUpdated.java` — Callback for OMEMO key status changes.
 - `src/main/java/eu/siacs/conversations/xmpp/OnAdvancedStreamFeaturesLoaded.java` — Callback after disco features are known.
 - `src/main/java/eu/siacs/conversations/xmpp/PreconditionNotMetException.java` — Stream precondition errors.
-- `src/main/java/eu/siacs/conversations/xmpp/fun/` — FunXMPP binary tokenized protocol: FunTokens (dictionary), FunWriter (TLV encoder), FunReader (safe TLV decoder).
+- `src/main/java/eu/siacs/conversations/xmpp/fun/` — FunXMPP binary tokenized protocol: FunTokens (dictionary + domain tokens 143..146), FunWriter (TLV encoder with JID_BARE/JID_FULL tokenization), FunReader (safe TLV decoder).
 
 ### Stanza Managers (`xmpp/manager/`)
 
@@ -255,7 +255,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `plan/penik-xmpp-ui-port-plan.md` — Plan to port Penik UI and rebrand to `ru.penik.xmpp`.
 - `plan/xmpp-stanza-diet-plan.md` — Plan to cut XMPP stanza overhead (245 → 193 bytes): omit outbound `from` per RFC 6120, short 12-char ids, chat-state composing throttle (8s), MAM page 20, preserving Monal/Dino interoperability (markable/request receipts).
 - `landing/` — Static landing page: `index.html` (hero, features, protocol terminal demo, comparison, FAQ, download links), `logo_fixed.svg` / `logo_fixed.webp`; note `landing/penik.apk` stays untracked via the `*.apk` gitignore rule.
-- `server/mod_funxmpp.lua` — FunXMPP binary tokenized protocol plugin for Snikket/Prosody.
+- `server/mod_funxmpp.lua` — FunXMPP binary tokenized protocol plugin for Snikket/Prosody (symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks).
 - `PROJECT_MAP.md` — This index.
 
 ## Note on `libs/Penik` (Excluded)

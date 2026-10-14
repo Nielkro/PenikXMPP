@@ -130,6 +130,17 @@ public class FunReader {
             final byte[] bytes = new byte[len];
             stream.readFully(bytes);
             return new String(bytes, StandardCharsets.UTF_8);
+        } else if (tokenByte == (FunTokens.JID_BARE & 0xFF)) {
+            final String user = readTokenOrString(stream);
+            final int domainToken = stream.readUnsignedByte();
+            final String domain = FunTokens.getString(domainToken);
+            return (user != null ? user : "") + "@" + (domain != null ? domain : "unknown_0x" + Integer.toHexString(domainToken));
+        } else if (tokenByte == (FunTokens.JID_FULL & 0xFF)) {
+            final String user = readTokenOrString(stream);
+            final int domainToken = stream.readUnsignedByte();
+            final String domain = FunTokens.getString(domainToken);
+            final String resource = readTokenOrString(stream);
+            return (user != null ? user : "") + "@" + (domain != null ? domain : "unknown_0x" + Integer.toHexString(domainToken)) + "/" + (resource != null ? resource : "");
         } else {
             final String resolved = FunTokens.getString(tokenByte);
             if (resolved != null) {

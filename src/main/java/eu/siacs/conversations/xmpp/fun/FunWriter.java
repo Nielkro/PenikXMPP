@@ -126,21 +126,45 @@ public class FunWriter {
         final Integer token = FunTokens.getToken(str);
         if (token != null && token >= 0 && token < 240) {
             data.writeByte(token);
-        } else {
-            final byte[] utf8 = str.getBytes(StandardCharsets.UTF_8);
-            if (utf8.length <= 255) {
-                data.writeByte(FunTokens.LITERAL_STRING_8);
-                data.writeByte(utf8.length);
-                data.write(utf8);
-            } else if (utf8.length <= 65535) {
-                data.writeByte(FunTokens.LITERAL_STRING_16);
-                data.writeShort(utf8.length);
-                data.write(utf8);
-            } else {
-                data.writeByte(FunTokens.LITERAL_STRING_32);
-                data.writeInt(utf8.length);
-                data.write(utf8);
+            return;
+        }
+
+        final int atPos = str.indexOf('@');
+        if (atPos > 0) {
+            final int slashPos = str.indexOf('/', atPos + 1);
+            final String user = str.substring(0, atPos);
+            final String domain = slashPos == -1 ? str.substring(atPos + 1) : str.substring(atPos + 1, slashPos);
+            final Integer domainToken = FunTokens.getToken(domain);
+            if (domainToken != null && domainToken >= 0 && domainToken < 240) {
+                if (slashPos == -1) {
+                    data.writeByte(FunTokens.JID_BARE);
+                    writeTokenOrString(data, user);
+                    data.writeByte(domainToken);
+                    return;
+                } else {
+                    final String resource = str.substring(slashPos + 1);
+                    data.writeByte(FunTokens.JID_FULL);
+                    writeTokenOrString(data, user);
+                    data.writeByte(domainToken);
+                    writeTokenOrString(data, resource);
+                    return;
+                }
             }
+        }
+
+        final byte[] utf8 = str.getBytes(StandardCharsets.UTF_8);
+        if (utf8.length <= 255) {
+            data.writeByte(FunTokens.LITERAL_STRING_8);
+            data.writeByte(utf8.length);
+            data.write(utf8);
+        } else if (utf8.length <= 65535) {
+            data.writeByte(FunTokens.LITERAL_STRING_16);
+            data.writeShort(utf8.length);
+            data.write(utf8);
+        } else {
+            data.writeByte(FunTokens.LITERAL_STRING_32);
+            data.writeInt(utf8.length);
+            data.write(utf8);
         }
     }
 
