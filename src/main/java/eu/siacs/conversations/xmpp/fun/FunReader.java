@@ -17,11 +17,14 @@ public class FunReader {
     }
 
     public Element readElement() throws IOException {
-        final int nodeLength;
+        int nodeLength;
         try {
             nodeLength = in.readUnsignedShort();
         } catch (EOFException e) {
             return null;
+        }
+        if (nodeLength == 0xFFFF) {
+            nodeLength = in.readInt();
         }
 
         final byte[] nodeData = new byte[nodeLength];
@@ -57,28 +60,45 @@ public class FunReader {
                 new im.conversations.android.xmpp.ExtensionFactory.Id(tagName, ns));
         element.setAttributes(attrs);
 
-        // Content: Children vs Text vs Empty
+        // Content: Children vs Text vs Mixed vs Empty
         final int contentType = stream.readUnsignedByte();
         if (contentType == FunTokens.CONTENT_CHILDREN) {
-            final int childrenCount = stream.readUnsignedShort();
-            for (int i = 0; i < childrenCount; i++) {
-                final int childLen = stream.readUnsignedShort();
-                final byte[] childBytes = new byte[childLen];
-                stream.readFully(childBytes);
-                final DataInputStream childStream = new DataInputStream(new ByteArrayInputStream(childBytes));
-                final Element child = decodeNode(childStream, ns);
-                if (child != null) {
-                    element.addChild(child);
-                }
-            }
+            readChildren(stream, element, ns);
         } else if (contentType == FunTokens.CONTENT_TEXT) {
-            final int textLen = stream.readUnsignedShort();
-            final byte[] textBytes = new byte[textLen];
-            stream.readFully(textBytes);
-            element.setContent(new String(textBytes, StandardCharsets.UTF_8));
+            readText(stream, element);
+        } else if (contentType == FunTokens.CONTENT_MIXED) {
+            readText(stream, element);
+            readChildren(stream, element, ns);
         }
 
         return element;
+    }
+
+    private static void readChildren(final DataInputStream stream, final Element element, final String ns) throws IOException {
+        final int childrenCount = stream.readUnsignedShort();
+        for (int i = 0; i < childrenCount; i++) {
+            int childLen = stream.readUnsignedShort();
+            if (childLen == 0xFFFF) {
+                childLen = stream.readInt();
+            }
+            final byte[] childBytes = new byte[childLen];
+            stream.readFully(childBytes);
+            final DataInputStream childStream = new DataInputStream(new ByteArrayInputStream(childBytes));
+            final Element child = decodeNode(childStream, ns);
+            if (child != null) {
+                element.addChild(child);
+            }
+        }
+    }
+
+    private static void readText(final DataInputStream stream, final Element element) throws IOException {
+        int textLen = stream.readUnsignedShort();
+        if (textLen == 0xFFFF) {
+            textLen = stream.readInt();
+        }
+        final byte[] textBytes = new byte[textLen];
+        stream.readFully(textBytes);
+        element.setContent(new String(textBytes, StandardCharsets.UTF_8));
     }
 
     public static String readTokenOrString(final DataInputStream stream) throws IOException {
@@ -90,6 +110,11 @@ public class FunReader {
             return new String(bytes, StandardCharsets.UTF_8);
         } else if (tokenByte == (FunTokens.LITERAL_STRING_16 & 0xFF)) {
             final int len = stream.readUnsignedShort();
+            final byte[] bytes = new byte[len];
+            stream.readFully(bytes);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } else if (tokenByte == (FunTokens.LITERAL_STRING_32 & 0xFF)) {
+            final int len = stream.readInt();
             final byte[] bytes = new byte[len];
             stream.readFully(bytes);
             return new String(bytes, StandardCharsets.UTF_8);

@@ -8,9 +8,11 @@ public final class FunTokens {
 
     public static final byte LITERAL_STRING_8 = (byte) 0xFA;
     public static final byte LITERAL_STRING_16 = (byte) 0xFB;
+    public static final byte LITERAL_STRING_32 = (byte) 0xFC;
     public static final byte CONTENT_EMPTY = 0x00;
     public static final byte CONTENT_TEXT = 0x01;
     public static final byte CONTENT_CHILDREN = 0x02;
+    public static final byte CONTENT_MIXED = 0x03;
 
     public static final String[] TOKENS = {
         // Core Stanzas & Elements (0..19)
@@ -32,7 +34,7 @@ public final class FunTokens {
         // Common Attribute Values (80..109)
         "chat", "groupchat", "normal", "headline", "get", "set", "unavailable", "subscribe", "subscribed", "unsubscribe",
         "unsubscribed", "probe", "available", "away", "dnd", "xa", "both", "none", "owner", "admin",
-        "member", "participant", "visitor", "outcast", "moderator", "participant", "cancel", "continue", "modify", "auth",
+        "member", "participant", "visitor", "outcast", "moderator", "wait", "cancel", "continue", "modify", "auth",
 
         // Namespaces (110..149)
         "jabber:client",

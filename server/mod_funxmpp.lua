@@ -2,17 +2,19 @@
 -- FunXMPP binary tokenized protocol for Snikket / Prosody
 -- Provides TLV-safe binary stanza exchange with PenikXMPP clients
 
-module:set_global();
-
 local st = require "util.stanza";
+local filters = require "util.filters";
+local core_process_stanza = prosody.core_process_stanza;
 
 local FUN_NS = "penik:protocol:funxmpp";
 
 local LITERAL_STRING_8 = 0xFA;
 local LITERAL_STRING_16 = 0xFB;
+local LITERAL_STRING_32 = 0xFC;
 local CONTENT_EMPTY = 0x00;
 local CONTENT_TEXT = 0x01;
 local CONTENT_CHILDREN = 0x02;
+local CONTENT_MIXED = 0x03;
 
 local TOKENS = {
     -- Core Stanzas & Elements (0..19)
@@ -45,7 +47,7 @@ local TOKENS = {
     [90] = "unsubscribed", [91] = "probe", [92] = "available", [93] = "away", [94] = "dnd",
     [95] = "xa", [96] = "both", [97] = "none", [98] = "owner", [99] = "admin",
     [100] = "member", [101] = "participant", [102] = "visitor", [103] = "outcast", [104] = "moderator",
-    [105] = "participant", [106] = "cancel", [107] = "continue", [108] = "modify", [109] = "auth",
+    [105] = "wait", [106] = "cancel", [107] = "continue", [108] = "modify", [109] = "auth",
 
     -- Namespaces (110..149)
     [110] = "jabber:client",
@@ -88,7 +90,7 @@ for id, str in pairs(TOKENS) do
     TOKEN_LOOKUP[str] = id;
 end
 
--- Helper: encode string or token
+-- Helper: encode string or token with 8/16/32-bit length
 local function write_token_or_string(buf, str)
     str = str or "";
     local token = TOKEN_LOOKUP[str];
@@ -99,58 +101,146 @@ local function write_token_or_string(buf, str)
         if len <= 255 then
             table.insert(buf, string.char(LITERAL_STRING_8, len));
             table.insert(buf, str);
-        else
+        elseif len <= 65535 then
             local hi = math.floor(len / 256);
             local lo = len % 256;
             table.insert(buf, string.char(LITERAL_STRING_16, hi, lo));
+            table.insert(buf, str);
+        else
+            local b1 = math.floor(len / 16777216) % 256;
+            local b2 = math.floor(len / 65536) % 256;
+            local b3 = math.floor(len / 256) % 256;
+            local b4 = len % 256;
+            table.insert(buf, string.char(LITERAL_STRING_32, b1, b2, b3, b4));
             table.insert(buf, str);
         end
     end
 end
 
+-- Helper: read token or string with 8/16/32-bit length
+local function read_token_or_string(data, pos)
+    if pos > #data then return nil, pos end
+    local b = data:byte(pos);
+    pos = pos + 1;
+    if b == LITERAL_STRING_8 then
+        if pos > #data then return "", pos end
+        local len = data:byte(pos);
+        pos = pos + 1;
+        local s = data:sub(pos, pos + len - 1);
+        return s, pos + len;
+    elseif b == LITERAL_STRING_16 then
+        if pos + 1 > #data then return "", pos end
+        local hi = data:byte(pos);
+        local lo = data:byte(pos + 1);
+        local len = hi * 256 + lo;
+        pos = pos + 2;
+        local s = data:sub(pos, pos + len - 1);
+        return s, pos + len;
+    elseif b == LITERAL_STRING_32 then
+        if pos + 3 > #data then return "", pos end
+        local b1, b2, b3, b4 = data:byte(pos, pos + 3);
+        local len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
+        pos = pos + 4;
+        local s = data:sub(pos, pos + len - 1);
+        return s, pos + len;
+    else
+        local token = TOKENS[b];
+        if token then
+            return token, pos;
+        else
+            return "unknown_0x" .. string.format("%x", b), pos;
+        end
+    end
+end
+
 -- Encode Stanza to FunXMPP binary node
-local function encode_stanza(stanza)
+local function encode_stanza(stanza, parent_ns)
     local body_buf = {};
 
     -- 1. Tag name
     write_token_or_string(body_buf, stanza.name);
 
-    -- 2. Attributes
+    -- Current namespace resolution
+    local current_ns = stanza.attr.xmlns or parent_ns or "jabber:client";
+
+    -- 2. Attributes (sorted deterministically)
     local attr_list = {};
     for k, v in pairs(stanza.attr) do
-        table.insert(attr_list, { k, tostring(v) });
+        if k == "xmlns" then
+            if v ~= parent_ns then
+                table.insert(attr_list, { k, tostring(v) });
+            end
+        else
+            table.insert(attr_list, { k, tostring(v) });
+        end
     end
+    table.sort(attr_list, function(a, b) return a[1] < b[1] end);
+
     table.insert(body_buf, string.char(#attr_list));
     for _, attr in ipairs(attr_list) do
         write_token_or_string(body_buf, attr[1]);
         write_token_or_string(body_buf, attr[2]);
     end
 
-    -- 3. Content: children vs text vs empty
+    -- 3. Content: Children vs Text vs Mixed vs Empty
     local child_tags = {};
     local text_parts = {};
     for _, child in ipairs(stanza) do
         if type(child) == "table" and child.name then
             table.insert(child_tags, child);
-        elseif type(child) == "string" then
+        elseif type(child) == "string" and child ~= "" then
             table.insert(text_parts, child);
         end
     end
 
-    if #child_tags > 0 then
+    local has_children = #child_tags > 0;
+    local has_text = #text_parts > 0;
+
+    if has_children and has_text then
+        table.insert(body_buf, string.char(CONTENT_MIXED));
+        local full_text = table.concat(text_parts);
+        local tlen = #full_text;
+        if tlen < 0xFFFF then
+            local hi = math.floor(tlen / 256);
+            local lo = tlen % 256;
+            table.insert(body_buf, string.char(hi, lo));
+        else
+            local b1 = math.floor(tlen / 16777216) % 256;
+            local b2 = math.floor(tlen / 65536) % 256;
+            local b3 = math.floor(tlen / 256) % 256;
+            local b4 = tlen % 256;
+            table.insert(body_buf, string.char(0xFF, 0xFF, b1, b2, b3, b4));
+        end
+        table.insert(body_buf, full_text);
+
+        local hi = math.floor(#child_tags / 256);
+        local lo = #child_tags % 256;
+        table.insert(body_buf, string.char(hi, lo));
+        for _, child in ipairs(child_tags) do
+            table.insert(body_buf, encode_stanza(child, current_ns));
+        end
+    elseif has_children then
         table.insert(body_buf, string.char(CONTENT_CHILDREN));
         local hi = math.floor(#child_tags / 256);
         local lo = #child_tags % 256;
         table.insert(body_buf, string.char(hi, lo));
         for _, child in ipairs(child_tags) do
-            table.insert(body_buf, encode_stanza(child));
+            table.insert(body_buf, encode_stanza(child, current_ns));
         end
-    elseif #text_parts > 0 then
+    elseif has_text then
         local full_text = table.concat(text_parts);
-        local len = #full_text;
-        local hi = math.floor(len / 256);
-        local lo = len % 256;
-        table.insert(body_buf, string.char(CONTENT_TEXT, hi, lo));
+        local tlen = #full_text;
+        if tlen < 0xFFFF then
+            local hi = math.floor(tlen / 256);
+            local lo = tlen % 256;
+            table.insert(body_buf, string.char(CONTENT_TEXT, hi, lo));
+        else
+            local b1 = math.floor(tlen / 16777216) % 256;
+            local b2 = math.floor(tlen / 65536) % 256;
+            local b3 = math.floor(tlen / 256) % 256;
+            local b4 = tlen % 256;
+            table.insert(body_buf, string.char(CONTENT_TEXT, 0xFF, 0xFF, b1, b2, b3, b4));
+        end
         table.insert(body_buf, full_text);
     else
         table.insert(body_buf, string.char(CONTENT_EMPTY));
@@ -158,10 +248,18 @@ local function encode_stanza(stanza)
 
     local body_str = table.concat(body_buf);
     local body_len = #body_str;
-    local len_hi = math.floor(body_len / 256);
-    local len_lo = body_len % 256;
 
-    return string.char(len_hi, len_lo) .. body_str;
+    if body_len < 0xFFFF then
+        local len_hi = math.floor(body_len / 256);
+        local len_lo = body_len % 256;
+        return string.char(len_hi, len_lo) .. body_str;
+    else
+        local b1 = math.floor(body_len / 16777216) % 256;
+        local b2 = math.floor(body_len / 65536) % 256;
+        local b3 = math.floor(body_len / 256) % 256;
+        local b4 = body_len % 256;
+        return string.char(0xFF, 0xFF, b1, b2, b3, b4) .. body_str;
+    end
 end
 
 -- Decode FunXMPP binary node to Prosody Stanza
@@ -184,36 +282,57 @@ local function decode_node(data, pos, parent_ns)
         end
     end
 
-    local ns = attr.xmlns or parent_ns;
+    local ns = attr.xmlns or parent_ns or "jabber:client";
     local stanza = st.stanza(tag_name, attr);
 
     local content_type = data:byte(pos) or 0;
     pos = pos + 1;
 
-    if content_type == CONTENT_CHILDREN then
-        if pos + 1 <= #data then
-            local count = data:byte(pos) * 256 + data:byte(pos + 1);
+    local function read_child_nodes()
+        if pos + 1 > #data then return end
+        local count = data:byte(pos) * 256 + data:byte(pos + 1);
+        pos = pos + 2;
+        for _ = 1, count do
+            if pos + 1 > #data then break end
+            local child_len = data:byte(pos) * 256 + data:byte(pos + 1);
             pos = pos + 2;
-            for _ = 1, count do
-                if pos + 1 > #data then break end
-                local child_len = data:byte(pos) * 256 + data:byte(pos + 1);
-                pos = pos + 2;
-                local child_data = data:sub(pos, pos + child_len - 1);
-                pos = pos + child_len;
-                local child_stanza = decode_node(child_data, 1, ns);
-                if child_stanza then
-                    stanza:add_child(child_stanza);
-                end
+            if child_len == 0xFFFF then
+                if pos + 3 > #data then break end
+                local b1, b2, b3, b4 = data:byte(pos, pos + 3);
+                child_len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
+                pos = pos + 4;
+            end
+            local child_data = data:sub(pos, pos + child_len - 1);
+            pos = pos + child_len;
+            local child_stanza = decode_node(child_data, 1, ns);
+            if child_stanza then
+                stanza:add_child(child_stanza);
             end
         end
-    elseif content_type == CONTENT_TEXT then
-        if pos + 1 <= #data then
-            local text_len = data:byte(pos) * 256 + data:byte(pos + 1);
-            pos = pos + 2;
-            local text = data:sub(pos, pos + text_len - 1);
-            pos = pos + text_len;
-            stanza:text(text);
+    end
+
+    local function read_text_content()
+        if pos + 1 > #data then return end
+        local text_len = data:byte(pos) * 256 + data:byte(pos + 1);
+        pos = pos + 2;
+        if text_len == 0xFFFF then
+            if pos + 3 > #data then return end
+            local b1, b2, b3, b4 = data:byte(pos, pos + 3);
+            text_len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
+            pos = pos + 4;
         end
+        local text = data:sub(pos, pos + text_len - 1);
+        pos = pos + text_len;
+        stanza:text(text);
+    end
+
+    if content_type == CONTENT_CHILDREN then
+        read_child_nodes();
+    elseif content_type == CONTENT_TEXT then
+        read_text_content();
+    elseif content_type == CONTENT_MIXED then
+        read_text_content();
+        read_child_nodes();
     end
 
     return stanza, pos;
@@ -225,23 +344,47 @@ local function funxmpp_bytes_in(data, session)
         return data;
     end
     session.funxmpp_in_buf = (session.funxmpp_in_buf or "") .. data;
-    local xml_chunks = {};
     while #session.funxmpp_in_buf >= 2 do
         local len = session.funxmpp_in_buf:byte(1) * 256 + session.funxmpp_in_buf:byte(2);
-        if #session.funxmpp_in_buf < 2 + len then
+        local header_size = 2;
+        if len == 0xFFFF then
+            if #session.funxmpp_in_buf < 6 then break end
+            local b1, b2, b3, b4 = session.funxmpp_in_buf:byte(3, 6);
+            len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
+            header_size = 6;
+        end
+        if #session.funxmpp_in_buf < header_size + len then
             break;
         end
-        local frame = session.funxmpp_in_buf:sub(3, 2 + len);
-        session.funxmpp_in_buf = session.funxmpp_in_buf:sub(3 + len);
+        local frame = session.funxmpp_in_buf:sub(header_size + 1, header_size + len);
+        session.funxmpp_in_buf = session.funxmpp_in_buf:sub(header_size + len + 1);
+
         local stanza = decode_node(frame, 1, "jabber:client");
         if stanza then
-            table.insert(xml_chunks, tostring(stanza));
+            -- Run through incoming stanza filters (mod_smacks counts stanzas here!)
+            local filtered = stanza;
+            if session.filter then
+                filtered = session.filter("stanzas/in", stanza);
+            end
+            if filtered then
+                core_process_stanza(session, filtered);
+            end
         end
     end
-    if #xml_chunks > 0 then
-        return table.concat(xml_chunks);
+    return ""; -- Swallow binary bytes so Expat parser receives nothing
+end
+
+-- Outgoing stanza filter: runs at priority -100 after mod_smacks, CSI, and carbons
+local function funxmpp_stanzas_out(stanza, session)
+    if not session.funxmpp_enabled or type(stanza) ~= "table" or not stanza.name then
+        return stanza;
     end
-    return "";
+    local binary_payload = encode_stanza(stanza);
+    return setmetatable({ name = stanza.name, attr = stanza.attr }, {
+        __tostring = function()
+            return binary_payload;
+        end
+    });
 end
 
 -- Hook: Stream features
@@ -253,28 +396,19 @@ module:hook("stream-features", function(event)
 end);
 
 -- Hook: Stanza negotiation
-local filters = require "util.filters";
-
 local function handle_enable(event)
     local session = event.origin;
     module:log("info", "Client requested FunXMPP binary protocol: %s", session.full_jid or session.ip);
+    -- Send XML acknowledgment first
     session.send(st.stanza("enabled", { xmlns = FUN_NS }));
     session.funxmpp_enabled = true;
-    filters.add_filter(session, "bytes/in", funxmpp_bytes_in, 100);
 
-    local orig_send = session.send;
-    session.send = function (stanza)
-        if session.funxmpp_enabled and type(stanza) == "table" and stanza.name then
-            local bin = encode_stanza(stanza);
-            return session.conn:write(bin);
-        else
-            return orig_send(stanza);
-        end
-    end
+    -- Register symmetric stream filters without overriding session.send
+    filters.add_filter(session, "bytes/in", funxmpp_bytes_in, 100);
+    filters.add_filter(session, "stanzas/out", funxmpp_stanzas_out, -100);
     return true;
 end
 
 module:hook_tag(FUN_NS, "enable", handle_enable);
-module:hook("stanza/" .. FUN_NS .. ":enable", handle_enable);
 
 module:log("info", "mod_funxmpp initialized for high-performance mobile binary framing");
