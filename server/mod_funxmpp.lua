@@ -465,8 +465,10 @@ end
 -- Hook: Stream features
 module:hook("stream-features", function(event)
     local origin, features = event.origin, event.features;
-    if not origin.funxmpp_enabled and origin.type == "c2s" then
-        features:tag("funxmpp", { xmlns = FUN_NS, version = "1" }):up();
+    if origin and not origin.funxmpp_enabled and (origin.type == "c2s" or origin.type == "c2s_unauthed") then
+        if not features:get_child("funxmpp", FUN_NS) then
+            features:tag("funxmpp", { xmlns = FUN_NS, version = "1" }):up();
+        end
     end
 end);
 
