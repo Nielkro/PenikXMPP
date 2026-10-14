@@ -22,7 +22,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 
 ### Connection & Stream
 
-- `src/main/java/eu/siacs/conversations/xmpp/XmppConnection.java` — Low-level XMPP stream: connect, TLS, SASL, bind, stanza read/write loop.
+- `src/main/java/eu/siacs/conversations/xmpp/XmppConnection.java` — Low-level XMPP stream: connect, TLS, SASL, bind, XEP-0138 zlib stream compression, stanza read/write loop.
 - `src/main/java/eu/siacs/conversations/xmpp/Managers.java` — Aggregator giving access to all stanza managers for a connection.
 - `src/main/java/eu/siacs/conversations/xmpp/Jid.java` — JID parsing, validation, bare/full/domain helpers.
 - `src/main/java/eu/siacs/conversations/xmpp/OnStatusChanged.java` — Callback for account connection state changes.
@@ -99,7 +99,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `src/main/java/im/conversations/android/xmpp/EntityCapabilities2.java` — New caps hashing (XEP-0390).
 - `src/main/java/im/conversations/android/xmpp/ExtensionFactory.java` — Extension element factory.
 - `src/main/java/im/conversations/android/xmpp/StreamElementWriter.java` — Stream open/close writer.
-- `src/main/java/im/conversations/android/xmpp/model/` — Stanza models (message, presence, iq, error, bind, carbons, receipts).
+- `src/main/java/im/conversations/android/xmpp/model/` — Stanza models (message, presence, iq, error, bind, carbons, receipts, compress).
 - `src/main/java/im/conversations/android/xmpp/processor/` — Stream processors (bind, ack, account state).
 
 ## Crypto

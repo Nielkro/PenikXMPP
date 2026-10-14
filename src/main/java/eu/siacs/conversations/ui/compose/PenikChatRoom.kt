@@ -27,13 +27,18 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Reply
@@ -132,6 +137,8 @@ import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import androidx.compose.ui.res.stringResource
 
 fun penikHandleUrlClick(activity: XmppActivity, rawUrl: String, fallbackUriHandler: androidx.compose.ui.platform.UriHandler? = null) {
     val trimmed = rawUrl.trim()
@@ -1664,6 +1671,81 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
                     color = textMuted,
                     fontSize = 11.sp,
                     maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+fun PenikMediaOverflowMenu(
+        message: Message,
+        listener: PenikChatListener,
+        hasUrl: Boolean
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val panel = colorResource(R.color.penik_panel)
+    val textPrimary = colorResource(R.color.penik_text_primary)
+    val textMuted = colorResource(R.color.penik_text_muted)
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.more_options),
+                    tint = Color.White
+            )
+        }
+        DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(panel)
+        ) {
+            if (hasUrl) {
+                DropdownMenuItem(
+                        text = { Text(stringResource(R.string.copy_link), color = textPrimary) },
+                        leadingIcon = {
+                            Icon(
+                                    imageVector = Icons.Default.Link,
+                                    contentDescription = null,
+                                    tint = textMuted,
+                                    modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            listener.onMessageAction(PenikChatActions.COPY_URL, message)
+                        }
+                )
+            }
+            DropdownMenuItem(
+                    text = { Text(stringResource(R.string.save), color = textPrimary) },
+                    leadingIcon = {
+                        Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = null,
+                                tint = textMuted,
+                                modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        listener.onMessageAction(PenikChatActions.SAVE_FILE, message)
+                    }
+            )
+            DropdownMenuItem(
+                    text = { Text(stringResource(R.string.share), color = textPrimary) },
+                    leadingIcon = {
+                        Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = null,
+                                tint = textMuted,
+                                modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        listener.onMessageAction(PenikChatActions.SHARE, message)
+                    }
             )
         }
     }

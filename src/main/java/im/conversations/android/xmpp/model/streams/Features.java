@@ -60,4 +60,8 @@ public class Features extends StreamElement implements EntityCapabilities {
     public boolean bind() {
         return hasExtension(Bind.class);
     }
+
+    public boolean compression() {
+        return hasStreamFeature(im.conversations.android.xmpp.model.compress.Compression.class);
+    }
 }
