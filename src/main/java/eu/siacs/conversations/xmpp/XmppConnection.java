@@ -123,9 +123,6 @@ import im.conversations.android.xmpp.model.streams.Features;
 import im.conversations.android.xmpp.model.streams.Stream;
 import im.conversations.android.xmpp.model.streams.StreamError;
 import im.conversations.android.xmpp.model.streams.StreamErrorCondition;
-import im.conversations.android.xmpp.model.compress.Compress;
-import im.conversations.android.xmpp.model.compress.Compressed;
-import im.conversations.android.xmpp.model.compress.Compression;
 import im.conversations.android.xmpp.model.tls.Proceed;
 import im.conversations.android.xmpp.model.tls.StartTls;
 import im.conversations.android.xmpp.processor.AccountStateProcessor;
@@ -164,10 +161,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
@@ -200,7 +193,6 @@ public class XmppConnection implements Runnable {
     private boolean inSmacksSession = false;
     private boolean quickStartInProgress = false;
     private boolean isBound = false;
-    private boolean compressed = false;
     private boolean offlineMessagesRetrieved = false;
     private im.conversations.android.xmpp.model.streams.Features streamFeatures;
     private im.conversations.android.xmpp.model.streams.Features boundStreamFeatures;
@@ -343,7 +335,6 @@ public class XmppConnection implements Runnable {
         this.inSmacksSession = false;
         this.quickStartInProgress = false;
         this.isBound = false;
-        this.compressed = false;
         this.attempt++;
         this.currentResolverResult = null;
         // will be set if user entered hostname is being used or hostname was verified with dnssec
@@ -722,13 +713,6 @@ public class XmppConnection implements Runnable {
                 switchOverToTls(startTag);
             } else if (startTag.is(im.conversations.android.xmpp.model.tls.Failure.class)) {
                 throw new StateChangingException(Account.State.TLS_ERROR);
-            } else if (startTag.is(Compressed.class)) {
-                switchOverToCompression(startTag);
-                return;
-            } else if (startTag.is(im.conversations.android.xmpp.model.compress.Failure.class)) {
-                tagReader.readElement(startTag, im.conversations.android.xmpp.model.compress.Failure.class);
-                Log.w(Config.LOGTAG, account.getJid().asBareJid() + ": stream compression failed, continuing uncompressed");
-                this.compressed = true;
             } else if (!isSecure()) {
                 throw new StateChangingException(Account.State.INCOMPATIBLE_SERVER);
             } else if (account.isOptionSet(Account.OPTION_REGISTER) && startTag.is(Iq.class)) {
@@ -1534,40 +1518,6 @@ public class XmppConnection implements Runnable {
         sslSocket.close();
     }
 
-    private void sendCompressionRequest() throws IOException {
-        Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": requesting zlib stream compression");
-        tagWriter.writeElement(new Compress("zlib"));
-    }
-
-    private void switchOverToCompression(final Tag.Start currentTag)
-            throws XmlPullParserException, IOException {
-        tagReader.readElement(currentTag, Compressed.class);
-        Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": enabling zlib stream compression");
-
-        final Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION);
-        final DeflaterOutputStream compressedOut =
-                new DeflaterOutputStream(socket.getOutputStream(), deflater, true);
-
-        final Inflater inflater = new Inflater();
-        final InflaterInputStream compressedIn =
-                new InflaterInputStream(socket.getInputStream(), inflater);
-
-        this.tagWriter.setOutputStream(compressedOut);
-        this.tagReader.setInputStream(compressedIn);
-        this.compressed = true;
-
-        this.tagWriter.beginDocument();
-        sendStartStream(true, true);
-
-        final Tag tag = tagReader.readTag();
-        if (tag instanceof Tag.Start startTag && startTag.is(Stream.class)) {
-            Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": zlib compressed stream opened");
-            processStream();
-        } else {
-            throw new StateChangingException(Account.State.STREAM_OPENING_ERROR);
-        }
-    }
-
     private SSLSocket upgradeSocketToTls(final Socket socket) throws IOException {
         final SSLSocketFactory sslSocketFactory;
         try {
@@ -1681,12 +1631,6 @@ public class XmppConnection implements Runnable {
                 this.register();
             } else {
                 throw new StateChangingException(Account.State.REGISTRATION_NOT_SUPPORTED);
-            }
-        } else if (!this.compressed && streamFeatures.compression()) {
-            final var compression = streamFeatures.getExtension(Compression.class);
-            if (compression != null && compression.supportsMethod("zlib")) {
-                sendCompressionRequest();
-                return;
             }
         } else if (streamFeatures.hasStreamFeature(Authentication.class)
                 && shouldAuthenticate
@@ -2781,7 +2725,6 @@ public class XmppConnection implements Runnable {
     }
 
     private void forceCloseSocket() {
-        this.compressed = false;
         FileBackend.close(this.socket);
         FileBackend.close(this.tagReader);
     }

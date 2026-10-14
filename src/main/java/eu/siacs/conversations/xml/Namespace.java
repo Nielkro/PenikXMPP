@@ -51,8 +51,8 @@ public final class Namespace {
     public static final String FAST = "urn:xmpp:fast:0";
     public static final String TIME = "urn:xmpp:time";
     public static final String TLS = "urn:ietf:params:xml:ns:xmpp-tls";
-    public static final String COMPRESS = "http://jabber.org/protocol/compress";
-    public static final String COMPRESS_FEATURE = "http://jabber.org/features/compress";
+    public static final String FUNXMPP = "penik:protocol:funxmpp";
+    public static final String FUNXMPP_FEATURE = "penik:features:funxmpp";
     public static final String MUC = "http://jabber.org/protocol/muc";
     public static final String MUC_ADMIN = MUC + "#admin";
     public static final String MUC_OWNER = MUC + "#owner";

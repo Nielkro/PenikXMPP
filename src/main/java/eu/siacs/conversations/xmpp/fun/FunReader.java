@@ -1,0 +1,96 @@
+package eu.siacs.conversations.xmpp.fun;
+
+import eu.siacs.conversations.xml.Element;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+public class FunReader {
+
+    private final DataInputStream in;
+
+    public FunReader(final InputStream in) {
+        this.in = new DataInputStream(in);
+    }
+
+    public Element readElement() throws IOException {
+        final int nodeLength;
+        try {
+            nodeLength = in.readUnsignedShort();
+        } catch (EOFException e) {
+            return null;
+        }
+
+        final byte[] nodeData = new byte[nodeLength];
+        in.readFully(nodeData);
+
+        final DataInputStream nodeStream = new DataInputStream(new ByteArrayInputStream(nodeData));
+        return decodeNode(nodeStream);
+    }
+
+    private static Element decodeNode(final DataInputStream stream) throws IOException {
+        final String tagName = readTokenOrString(stream);
+        if (tagName == null) {
+            return null;
+        }
+
+        final Element element = new Element(tagName);
+
+        // Attributes
+        final int attrCount = stream.readUnsignedByte();
+        for (int i = 0; i < attrCount; i++) {
+            final String key = readTokenOrString(stream);
+            final String val = readTokenOrString(stream);
+            if (key != null && val != null) {
+                element.setAttribute(key, val);
+            }
+        }
+
+        // Content: Children vs Text vs Empty
+        final int contentType = stream.readUnsignedByte();
+        if (contentType == FunTokens.CONTENT_CHILDREN) {
+            final int childrenCount = stream.readUnsignedShort();
+            for (int i = 0; i < childrenCount; i++) {
+                final int childLen = stream.readUnsignedShort();
+                final byte[] childBytes = new byte[childLen];
+                stream.readFully(childBytes);
+                final DataInputStream childStream = new DataInputStream(new ByteArrayInputStream(childBytes));
+                final Element child = decodeNode(childStream);
+                if (child != null) {
+                    element.addChild(child);
+                }
+            }
+        } else if (contentType == FunTokens.CONTENT_TEXT) {
+            final int textLen = stream.readUnsignedShort();
+            final byte[] textBytes = new byte[textLen];
+            stream.readFully(textBytes);
+            element.setContent(new String(textBytes, StandardCharsets.UTF_8));
+        }
+
+        return element;
+    }
+
+    public static String readTokenOrString(final DataInputStream stream) throws IOException {
+        final int tokenByte = stream.readUnsignedByte();
+        if (tokenByte == (FunTokens.LITERAL_STRING_8 & 0xFF)) {
+            final int len = stream.readUnsignedByte();
+            final byte[] bytes = new byte[len];
+            stream.readFully(bytes);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } else if (tokenByte == (FunTokens.LITERAL_STRING_16 & 0xFF)) {
+            final int len = stream.readUnsignedShort();
+            final byte[] bytes = new byte[len];
+            stream.readFully(bytes);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } else {
+            final String resolved = FunTokens.getString(tokenByte);
+            if (resolved != null) {
+                return resolved;
+            }
+            return "unknown_0x" + Integer.toHexString(tokenByte);
+        }
+    }
+}
