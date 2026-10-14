@@ -62,9 +62,9 @@ public class FunReader {
             ns = parentNamespace;
         }
 
-        if (eu.siacs.conversations.xml.Namespace.JABBER_CLIENT.equals(ns)) {
+        if (ns != null && ns.equals(parentNamespace)) {
             attrs.remove("xmlns");
-        } else {
+        } else if (ns != null) {
             attrs.put("xmlns", ns);
         }
 

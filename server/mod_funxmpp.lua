@@ -285,7 +285,7 @@ local function decode_node(data, pos, parent_ns)
     end
 
     local ns = attr.xmlns or parent_ns or "jabber:client";
-    if ns == "jabber:client" then
+    if ns == (parent_ns or "jabber:client") then
         attr.xmlns = nil;
     else
         attr.xmlns = ns;
@@ -364,6 +364,8 @@ local function funxmpp_bytes_in(data, session)
         if len > MAX_FRAME_SIZE then
             module:log("warn", "FunXMPP frame size limit exceeded (%d > %d) from %s, terminating session",
                 len, MAX_FRAME_SIZE, session.full_jid or session.ip or "unknown");
+            session.funxmpp_in_buf = "";
+            session.funxmpp_enabled = false;
             session:close({
                 condition = "policy-violation",
                 text = "FunXMPP frame size exceeded maximum allowed limit"
@@ -397,15 +399,12 @@ local function funxmpp_stanzas_out(stanza, session)
     if not session.funxmpp_enabled or type(stanza) ~= "table" or not stanza.name then
         return stanza;
     end
-    local cloned = st.clone(stanza);
-    local mt = getmetatable(cloned);
-    setmetatable(cloned, {
-        __index = mt.__index or mt,
+    return setmetatable({ name = stanza.name, attr = stanza.attr }, {
+        __index = stanza,
         __tostring = function()
             return encode_stanza(stanza);
         end
     });
-    return cloned;
 end
 
 -- Hook: Stream features
