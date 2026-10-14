@@ -262,6 +262,8 @@ local function encode_stanza(stanza, parent_ns)
     end
 end
 
+local MAX_FRAME_SIZE = module:get_option_number("funxmpp_max_frame_size", 10 * 1024 * 1024); -- 10 MB limit
+
 -- Decode FunXMPP binary node to Prosody Stanza
 local function decode_node(data, pos, parent_ns)
     if pos > #data then return nil, pos end
@@ -283,6 +285,11 @@ local function decode_node(data, pos, parent_ns)
     end
 
     local ns = attr.xmlns or parent_ns or "jabber:client";
+    if ns == "jabber:client" then
+        attr.xmlns = nil;
+    else
+        attr.xmlns = ns;
+    end
     local stanza = st.stanza(tag_name, attr);
 
     local content_type = data:byte(pos) or 0;
@@ -302,12 +309,12 @@ local function decode_node(data, pos, parent_ns)
                 child_len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
                 pos = pos + 4;
             end
-            local child_data = data:sub(pos, pos + child_len - 1);
-            pos = pos + child_len;
-            local child_stanza = decode_node(child_data, 1, ns);
+            local expected_end_pos = pos + child_len;
+            local child_stanza = decode_node(data, pos, ns);
             if child_stanza then
                 stanza:add_child(child_stanza);
             end
+            pos = expected_end_pos;
         end
     end
 
@@ -353,6 +360,17 @@ local function funxmpp_bytes_in(data, session)
             len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
             header_size = 6;
         end
+
+        if len > MAX_FRAME_SIZE then
+            module:log("warn", "FunXMPP frame size limit exceeded (%d > %d) from %s, terminating session",
+                len, MAX_FRAME_SIZE, session.full_jid or session.ip or "unknown");
+            session:close({
+                condition = "policy-violation",
+                text = "FunXMPP frame size exceeded maximum allowed limit"
+            });
+            return "";
+        end
+
         if #session.funxmpp_in_buf < header_size + len then
             break;
         end
@@ -374,17 +392,20 @@ local function funxmpp_bytes_in(data, session)
     return ""; -- Swallow binary bytes so Expat parser receives nothing
 end
 
--- Outgoing stanza filter: runs at priority -100 after mod_smacks, CSI, and carbons
+-- Outgoing stanza filter: runs at priority -10000 after mod_smacks, CSI, carbons, etc.
 local function funxmpp_stanzas_out(stanza, session)
     if not session.funxmpp_enabled or type(stanza) ~= "table" or not stanza.name then
         return stanza;
     end
-    local binary_payload = encode_stanza(stanza);
-    return setmetatable({ name = stanza.name, attr = stanza.attr }, {
+    local cloned = st.clone(stanza);
+    local mt = getmetatable(cloned);
+    setmetatable(cloned, {
+        __index = mt.__index or mt,
         __tostring = function()
-            return binary_payload;
+            return encode_stanza(stanza);
         end
     });
+    return cloned;
 end
 
 -- Hook: Stream features
@@ -403,9 +424,9 @@ local function handle_enable(event)
     session.send(st.stanza("enabled", { xmlns = FUN_NS }));
     session.funxmpp_enabled = true;
 
-    -- Register symmetric stream filters without overriding session.send
+    -- Register symmetric stream filters without breaking mod_smacks queue
     filters.add_filter(session, "bytes/in", funxmpp_bytes_in, 100);
-    filters.add_filter(session, "stanzas/out", funxmpp_stanzas_out, -100);
+    filters.add_filter(session, "stanzas/out", funxmpp_stanzas_out, -10000);
     return true;
 end
 

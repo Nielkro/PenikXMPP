@@ -24,16 +24,26 @@ public class FunWriter {
     }
 
     public static byte[] encodeNode(final Element element) throws IOException {
+        return encodeNode(element, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT);
+    }
+
+    public static byte[] encodeNode(final Element element, final String parentNamespace) throws IOException {
         final ByteArrayOutputStream nodeBytes = new ByteArrayOutputStream();
         final DataOutputStream data = new DataOutputStream(nodeBytes);
 
         // 1. Tag name
         writeTokenOrString(data, element.getName());
 
+        // Current namespace resolution
+        final String elemNs = element.getNamespace();
+        final String currentNs = elemNs != null ? elemNs : parentNamespace;
+
         // 2. Attributes
         final Map<String, String> attrs = new java.util.HashMap<>(element.getAttributes());
-        if (element.getNamespace() != null && !attrs.containsKey("xmlns")) {
-            attrs.put("xmlns", element.getNamespace());
+        if (elemNs != null && !elemNs.equals(parentNamespace) && !eu.siacs.conversations.xml.Namespace.JABBER_CLIENT.equals(elemNs)) {
+            attrs.put("xmlns", elemNs);
+        } else if (eu.siacs.conversations.xml.Namespace.JABBER_CLIENT.equals(elemNs) || (parentNamespace != null && parentNamespace.equals(elemNs))) {
+            attrs.remove("xmlns");
         }
         final java.util.List<Map.Entry<String, String>> attrList = new java.util.ArrayList<>(attrs.entrySet());
         attrList.sort(Map.Entry.comparingByKey());
@@ -61,14 +71,14 @@ public class FunWriter {
             data.write(utf8);
             data.writeShort(children.size());
             for (final Element child : children) {
-                final byte[] childBytes = encodeNode(child);
+                final byte[] childBytes = encodeNode(child, currentNs);
                 data.write(childBytes);
             }
         } else if (hasChildren) {
             data.writeByte(FunTokens.CONTENT_CHILDREN);
             data.writeShort(children.size());
             for (final Element child : children) {
-                final byte[] childBytes = encodeNode(child);
+                final byte[] childBytes = encodeNode(child, currentNs);
                 data.write(childBytes);
             }
         } else if (hasText) {

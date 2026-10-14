@@ -12,6 +12,8 @@ public class FunReader {
 
     private final DataInputStream in;
 
+    public static final int MAX_FRAME_SIZE = 10 * 1024 * 1024; // 10 MB frame limit
+
     public FunReader(final InputStream in) {
         this.in = new DataInputStream(in);
     }
@@ -25,6 +27,10 @@ public class FunReader {
         }
         if (nodeLength == 0xFFFF) {
             nodeLength = in.readInt();
+        }
+
+        if (nodeLength > MAX_FRAME_SIZE || nodeLength < 0) {
+            throw new IOException("FunXMPP frame length exceeds limit: " + nodeLength);
         }
 
         final byte[] nodeData = new byte[nodeLength];
@@ -54,6 +60,12 @@ public class FunReader {
         String ns = attrs.get("xmlns");
         if (ns == null) {
             ns = parentNamespace;
+        }
+
+        if (eu.siacs.conversations.xml.Namespace.JABBER_CLIENT.equals(ns)) {
+            attrs.remove("xmlns");
+        } else {
+            attrs.put("xmlns", ns);
         }
 
         final Element element = im.conversations.android.xmpp.ExtensionFactory.create(
