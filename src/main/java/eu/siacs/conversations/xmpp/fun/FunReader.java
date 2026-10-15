@@ -12,7 +12,7 @@ public class FunReader {
 
     private final DataInputStream in;
 
-    public static final int MAX_FRAME_SIZE = 10 * 1024 * 1024; // 10 MB frame limit
+    public static final int MAX_FRAME_SIZE = 1024 * 1024; // 1 MB frame limit
 
     public FunReader(final InputStream in) {
         this.in = new DataInputStream(in);

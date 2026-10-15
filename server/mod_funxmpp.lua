@@ -317,7 +317,7 @@ local function encode_stanza(stanza, parent_ns)
     end
 end
 
-local MAX_FRAME_SIZE = module:get_option_number("funxmpp_max_frame_size", 10 * 1024 * 1024); -- 10 MB limit
+local MAX_FRAME_SIZE = module:get_option_number("funxmpp_max_frame_size", 1024 * 1024); -- 1 MB limit (guards against expansion attacks)
 
 -- Decode FunXMPP binary node to Prosody Stanza
 local function decode_node(data, pos, parent_ns)
@@ -434,6 +434,11 @@ local function funxmpp_bytes_in(data, session)
         local frame = session.funxmpp_in_buf:sub(header_size + 1, header_size + len);
         session.funxmpp_in_buf = session.funxmpp_in_buf:sub(header_size + len + 1);
 
+        if session.funxmpp_stats then
+            session.funxmpp_stats.in_bytes = session.funxmpp_stats.in_bytes + header_size + len;
+            session.funxmpp_stats.in_frames = session.funxmpp_stats.in_frames + 1;
+        end
+
         local stanza = decode_node(frame, 1, "jabber:client");
         if stanza then
             -- Run through incoming stanza filters (mod_smacks counts stanzas here!)
@@ -450,6 +455,10 @@ local function funxmpp_bytes_in(data, session)
 end
 
 -- Outgoing stanza filter: runs at priority -10000 after mod_smacks, CSI, carbons, etc.
+-- NOTE: The returned wrapper table delegates __tostring to encode_stanza(stanza), locking in
+-- the binary serialization of the original stanza table at filter execution time.
+-- Any downstream filter with priority < -10000 that attempts in-place mutation of the stanza
+-- table will NOT alter the already-serialized binary output returned by __tostring.
 local function funxmpp_stanzas_out(stanza, session)
     if not session.funxmpp_enabled or type(stanza) ~= "table" or not stanza.name then
         return stanza;
@@ -457,12 +466,19 @@ local function funxmpp_stanzas_out(stanza, session)
     return setmetatable({ name = stanza.name, attr = stanza.attr }, {
         __index = stanza,
         __tostring = function()
-            return encode_stanza(stanza);
+            local bin = encode_stanza(stanza);
+            if session.funxmpp_stats then
+                session.funxmpp_stats.out_bytes = session.funxmpp_stats.out_bytes + #bin;
+                session.funxmpp_stats.out_frames = session.funxmpp_stats.out_frames + 1;
+            end
+            return bin;
         end
     });
 end
 
 -- Hook: Stream features
+-- NOTE: Advertises version="1" with fixed TOKENS dictionary.
+-- Future protocol version upgrades (v2) should negotiate dictionary hashing or dynamic tokens.
 module:hook("stream-features", function(event)
     local origin, features = event.origin, event.features;
     if origin and not origin.funxmpp_enabled and (origin.type == "c2s" or origin.type == "c2s_unauthed") then
@@ -473,20 +489,19 @@ module:hook("stream-features", function(event)
 end);
 
 -- Hook: Stanza negotiation
-local function handle_enable(origin, stanza, event)
+local function handle_enable(origin)
     local session = origin;
     if not session or not session.send then
-        if type(origin) == "table" and origin.origin then
-            session = origin.origin;
-        elseif type(event) == "table" and event.origin then
-            session = event.origin;
-        end
-    end
-    if not session or not session.send then
-        module:log("warn", "handle_enable called without valid session");
         return;
     end
+    -- Idempotency check: prevent duplicate filter registration on repeated <enable/>
+    if session.funxmpp_enabled then
+        return true;
+    end
+
     module:log("info", "Client requested FunXMPP binary protocol: %s", session.full_jid or session.ip or "unknown");
+    session.funxmpp_stats = { in_bytes = 0, out_bytes = 0, in_frames = 0, out_frames = 0 };
+
     -- Send XML acknowledgment first
     session.send(st.stanza("enabled", { xmlns = FUN_NS }));
     session.funxmpp_enabled = true;
