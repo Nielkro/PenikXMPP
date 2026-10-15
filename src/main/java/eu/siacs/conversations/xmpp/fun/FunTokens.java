@@ -99,6 +99,22 @@ public final class FunTokens {
         return TOKEN_LOOKUP.get(string);
     }
 
+    public static final String DICTIONARY_HASH = computeDictHash();
+
+    private static String computeDictHash() {
+        int hash = 0x811c9dc5;
+        for (final String token : TOKENS) {
+            final byte[] bytes = token.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            for (final byte b : bytes) {
+                hash ^= (b & 0xff);
+                hash *= 0x01000193;
+            }
+            hash ^= 10;
+            hash *= 0x01000193;
+        }
+        return String.format(java.util.Locale.US, "%08x", hash);
+    }
+
     public static String getString(final int tokenId) {
         if (tokenId >= 0 && tokenId < TOKENS.length) {
             return TOKENS[tokenId];

@@ -64,4 +64,9 @@ public class Features extends StreamElement implements EntityCapabilities {
     public boolean funxmpp() {
         return hasStreamFeature(im.conversations.android.xmpp.model.fun.Funxmpp.class);
     }
+
+    public String funxmppDict() {
+        final var fun = getExtension(im.conversations.android.xmpp.model.fun.Funxmpp.class);
+        return fun != null ? fun.getDict() : null;
+    }
 }

@@ -9,4 +9,12 @@ public class Funxmpp extends StreamFeature {
     public Funxmpp() {
         super(Funxmpp.class);
     }
+
+    public String getDict() {
+        return this.getAttribute("dict");
+    }
+
+    public String getVersion() {
+        return this.getAttribute("version");
+    }
 }

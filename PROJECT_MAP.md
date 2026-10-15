@@ -101,7 +101,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `src/main/java/im/conversations/android/xmpp/ExtensionFactory.java` — Extension element factory.
 - `src/main/java/im/conversations/android/xmpp/StreamElementWriter.java` — Stream open/close writer.
 - `src/main/java/im/conversations/android/xmpp/model/` — Stanza models (message, presence, iq, error, bind, carbons, receipts, fun).
-- `src/main/java/im/conversations/android/xmpp/model/fun/` — FunXMPP stream models: Funxmpp (feature), Enable, Enabled.
+- `src/main/java/im/conversations/android/xmpp/model/fun/` — FunXMPP stream models: Funxmpp (feature), Enable, Enabled, Failed.
 - `src/main/java/im/conversations/android/xmpp/processor/` — Stream processors (bind, ack, account state).
 
 ## Crypto

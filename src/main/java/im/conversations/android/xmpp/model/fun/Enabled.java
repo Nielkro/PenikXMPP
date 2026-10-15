@@ -9,4 +9,15 @@ public class Enabled extends StreamElement {
     public Enabled() {
         super(Enabled.class);
     }
+
+    public Enabled(final String dict) {
+        super(Enabled.class);
+        if (dict != null) {
+            this.setAttribute("dict", dict);
+        }
+    }
+
+    public String getDict() {
+        return this.getAttribute("dict");
+    }
 }

@@ -69,6 +69,7 @@ import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xml.Tag;
 import eu.siacs.conversations.xml.TagWriter;
 import eu.siacs.conversations.xml.XmlReader;
+import eu.siacs.conversations.xmpp.fun.FunTokens;
 import eu.siacs.conversations.xmpp.manager.AbstractManager;
 import eu.siacs.conversations.xmpp.manager.BlockingManager;
 import eu.siacs.conversations.xmpp.manager.CarbonsManager;
@@ -757,6 +758,9 @@ public class XmppConnection implements Runnable {
             } else if (this.streamId != null && startTag.is(Resumed.class)) {
                 final Resumed resumed = tagReader.readElement(startTag, Resumed.class);
                 processResumed(resumed);
+            } else if (startTag.is(im.conversations.android.xmpp.model.fun.Failed.class)) {
+                tagReader.readElement(startTag, im.conversations.android.xmpp.model.fun.Failed.class);
+                processFunFailed();
             } else if (startTag.is(Failed.class)) {
                 final Failed failed = tagReader.readElement(startTag, Failed.class);
                 processFailed(failed, true);
@@ -771,8 +775,9 @@ public class XmppConnection implements Runnable {
             } else if (startTag.is(Presence.class)) {
                 processPresence(startTag);
             } else if (startTag.is(im.conversations.android.xmpp.model.fun.Enabled.class)) {
-                tagReader.readElement(startTag, im.conversations.android.xmpp.model.fun.Enabled.class);
-                processFunEnabled();
+                final var enabled =
+                        tagReader.readElement(startTag, im.conversations.android.xmpp.model.fun.Enabled.class);
+                processFunEnabled(enabled);
             } else if (startTag.is(Enabled.class)) {
                 final var enabled = tagReader.readElement(startTag, Enabled.class);
                 processEnabled(enabled);
@@ -2249,19 +2254,63 @@ public class XmppConnection implements Runnable {
     }
 
     private void sendFunXmppEnable() {
-        Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": requesting FunXMPP binary protocol");
-        final var enable = new im.conversations.android.xmpp.model.fun.Enable();
+        final String serverDict = this.streamFeatures != null ? this.streamFeatures.funxmppDict() : null;
+        if (serverDict != null && !serverDict.equals(FunTokens.DICTIONARY_HASH)) {
+            Log.w(
+                    Config.LOGTAG,
+                    account.getJid().asBareJid()
+                            + ": FunXMPP server dictionary hash mismatch (server="
+                            + serverDict
+                            + ", client="
+                            + FunTokens.DICTIONARY_HASH
+                            + "), falling back to standard XML");
+            sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+            return;
+        }
+        Log.d(
+                Config.LOGTAG,
+                account.getJid().asBareJid()
+                        + ": requesting FunXMPP binary protocol (dict="
+                        + FunTokens.DICTIONARY_HASH
+                        + ")");
+        final var enable = new im.conversations.android.xmpp.model.fun.Enable(FunTokens.DICTIONARY_HASH);
         tagWriter.writeStanzaAsync(enable);
     }
 
-    private void processFunEnabled() {
-        Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": FunXMPP binary protocol activated!");
+    private void processFunEnabled(final im.conversations.android.xmpp.model.fun.Enabled enabled) {
+        final String dict = enabled != null ? enabled.getDict() : null;
+        if (dict != null && !dict.equals(FunTokens.DICTIONARY_HASH)) {
+            Log.w(
+                    Config.LOGTAG,
+                    account.getJid().asBareJid()
+                            + ": FunXMPP server enabled with mismatched dict ("
+                            + dict
+                            + " vs "
+                            + FunTokens.DICTIONARY_HASH
+                            + "), aborting FunXMPP and falling back to standard XML");
+            sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+            return;
+        }
+        Log.d(
+                Config.LOGTAG,
+                account.getJid().asBareJid()
+                        + ": FunXMPP binary protocol activated! (dict="
+                        + (dict != null ? dict : "unspecified")
+                        + ")");
         try {
             this.tagWriter.setFunWriter(new eu.siacs.conversations.xmpp.fun.FunWriter(socket.getOutputStream()));
             this.tagReader.setFunReader(new eu.siacs.conversations.xmpp.fun.FunReader(socket.getInputStream()));
         } catch (IOException e) {
             Log.e(Config.LOGTAG, account.getJid().asBareJid() + ": failed to initialize FunXMPP streams", e);
         }
+        sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+    }
+
+    private void processFunFailed() {
+        Log.w(
+                Config.LOGTAG,
+                account.getJid().asBareJid()
+                        + ": FunXMPP negotiation failed (dictionary mismatch or error), falling back to standard XML");
         sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
     }
 

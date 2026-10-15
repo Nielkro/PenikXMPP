@@ -120,4 +120,20 @@ public class FunProtocolTest {
         final Element decodedMarkable = decoded.findChild("markable", "urn:xmpp:chat-markers:0");
         assertNotNull(decodedMarkable);
     }
+
+    @Test
+    public void testDictionaryHashDeterministic() {
+        assertEquals("68a7596d", FunTokens.DICTIONARY_HASH);
+    }
+
+    @Test
+    public void testEnableAndEnabledElementWithDict() {
+        final im.conversations.android.xmpp.model.fun.Enable enable =
+                new im.conversations.android.xmpp.model.fun.Enable(FunTokens.DICTIONARY_HASH);
+        assertEquals(FunTokens.DICTIONARY_HASH, enable.getDict());
+
+        final im.conversations.android.xmpp.model.fun.Enabled enabled =
+                new im.conversations.android.xmpp.model.fun.Enabled(FunTokens.DICTIONARY_HASH);
+        assertEquals(FunTokens.DICTIONARY_HASH, enabled.getDict());
+    }
 }

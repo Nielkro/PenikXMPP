@@ -98,6 +98,67 @@ for id, str in pairs(TOKENS) do
     TOKEN_LOOKUP[str] = id;
 end
 
+-- Deterministic 32-bit FNV-1a dictionary checksum matching client algorithm
+local function compute_dict_hash(tokens)
+    local bxor;
+    if rawget(_G, "bit") and bit.bxor then
+        bxor = bit.bxor;
+    elseif rawget(_G, "bit32") and bit32.bxor then
+        bxor = bit32.bxor;
+    else
+        local ok, b = pcall(require, "bit");
+        if ok and b.bxor then
+            bxor = b.bxor;
+        else
+            local ok2, b2 = pcall(require, "bit32");
+            if ok2 and b2.bxor then
+                bxor = b2.bxor;
+            end
+        end
+    end
+    if not bxor then
+        local ok, f = pcall(load, "return function(a, b) return (a ~ b) & 0xffffffff end");
+        if ok and f then bxor = f(); end
+    end
+    if not bxor then
+        bxor = function(a, b)
+            local r = 0;
+            local p = 1;
+            for _ = 1, 32 do
+                local bit_a = a % 2;
+                local bit_b = b % 2;
+                if bit_a ~= bit_b then
+                    r = r + p;
+                end
+                a = math.floor(a / 2);
+                b = math.floor(b / 2);
+                p = p * 2;
+            end
+            return r;
+        end
+    end
+
+    local hash = 0x811c9dc5;
+    local FNV_PRIME = 0x01000193;
+    local MOD32 = 0x100000000;
+
+    local i = 0;
+    while tokens[i] ~= nil do
+        local token = tokens[i];
+        for j = 1, #token do
+            local b = token:byte(j);
+            hash = bxor(hash, b);
+            hash = (hash * FNV_PRIME) % MOD32;
+        end
+        hash = bxor(hash, 10);
+        hash = (hash * FNV_PRIME) % MOD32;
+        i = i + 1;
+    end
+    return string.format("%08x", hash);
+end
+
+local DICTIONARY_HASH = compute_dict_hash(TOKENS);
+
 -- Helper: encode string or token with 8/16/32-bit length
 local function write_token_or_string(buf, str)
     str = str or "";
@@ -477,19 +538,18 @@ local function funxmpp_stanzas_out(stanza, session)
 end
 
 -- Hook: Stream features
--- NOTE: Advertises version="1" with fixed TOKENS dictionary.
--- Future protocol version upgrades (v2) should negotiate dictionary hashing or dynamic tokens.
+-- NOTE: Advertises version="1" with negotiated dictionary checksum (dict attribute).
 module:hook("stream-features", function(event)
     local origin, features = event.origin, event.features;
     if origin and not origin.funxmpp_enabled and (origin.type == "c2s" or origin.type == "c2s_unauthed") then
         if not features:get_child("funxmpp", FUN_NS) then
-            features:tag("funxmpp", { xmlns = FUN_NS, version = "1" }):up();
+            features:tag("funxmpp", { xmlns = FUN_NS, version = "1", dict = DICTIONARY_HASH }):up();
         end
     end
 end);
 
 -- Hook: Stanza negotiation
-local function handle_enable(origin)
+local function handle_enable(origin, stanza)
     local session = origin;
     if not session or not session.send then
         return;
@@ -499,11 +559,21 @@ local function handle_enable(origin)
         return true;
     end
 
-    module:log("info", "Client requested FunXMPP binary protocol: %s", session.full_jid or session.ip or "unknown");
+    local client_dict = stanza and stanza.attr and stanza.attr.dict;
+    if client_dict and client_dict ~= DICTIONARY_HASH then
+        module:log("warn", "FunXMPP dictionary mismatch for %s: client=%s, server=%s",
+            session.full_jid or session.ip or "unknown", client_dict, DICTIONARY_HASH);
+        session.send(st.stanza("failed", { xmlns = FUN_NS })
+            :tag("dictionary-mismatch"):up());
+        return true;
+    end
+
+    module:log("info", "Client requested FunXMPP binary protocol: %s (dict=%s)",
+        session.full_jid or session.ip or "unknown", client_dict or "unspecified");
     session.funxmpp_stats = { in_bytes = 0, out_bytes = 0, in_frames = 0, out_frames = 0 };
 
     -- Send XML acknowledgment first
-    session.send(st.stanza("enabled", { xmlns = FUN_NS }));
+    session.send(st.stanza("enabled", { xmlns = FUN_NS, dict = DICTIONARY_HASH }));
     session.funxmpp_enabled = true;
 
     -- Register symmetric stream filters without breaking mod_smacks queue
