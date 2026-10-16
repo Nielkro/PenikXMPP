@@ -258,6 +258,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `landing/` — Static landing page: `index.html` (hero, features, protocol terminal demo, comparison, FAQ, download links), `logo_fixed.svg` / `logo_fixed.webp`; note `landing/penik.apk` stays untracked via the `*.apk` gitignore rule.
 - `install_phone.sh` — Automated build and installation script for Android device over ADB (`assembleConversationsFreeDebug`, installs APK, launches `ConversationActivity`).
 - `server/mod_funxmpp.lua` — FunXMPP binary tokenized protocol plugin for Snikket/Prosody (symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks).
+- `server/test_mod_funxmpp.lua` — Standalone test suite for mod_funxmpp (smacks piggyback framing, prefix validation, safe stanza dropping).
 - `PROJECT_MAP.md` — This index.
 
 ## Note on `libs/Penik` (Excluded)

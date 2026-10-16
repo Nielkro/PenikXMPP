@@ -257,6 +257,10 @@ android {
         includeInApk = false
         includeInBundle = false
     }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 androidComponents {

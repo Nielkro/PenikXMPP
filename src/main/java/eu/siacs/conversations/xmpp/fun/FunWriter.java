@@ -1,5 +1,7 @@
 package eu.siacs.conversations.xmpp.fun;
 
+import android.util.Log;
+import eu.siacs.conversations.Config;
 import eu.siacs.conversations.xml.Element;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -18,9 +20,17 @@ public class FunWriter {
     }
 
     public synchronized void writeElement(final Element element) throws IOException {
-        final byte[] payload = encodeNode(element);
-        out.write(payload);
-        out.flush();
+        final byte[] payload;
+        try {
+            payload = encodeNode(element);
+        } catch (IllegalArgumentException e) {
+            Log.e(Config.LOGTAG, "FunXMPP: dropping malformed stanza: " + e.getMessage());
+            return;
+        }
+        if (payload != null) {
+            out.write(payload);
+            out.flush();
+        }
     }
 
     public static byte[] encodeNode(final Element element) throws IOException {

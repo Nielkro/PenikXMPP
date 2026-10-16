@@ -136,4 +136,81 @@ public class FunProtocolTest {
                 new im.conversations.android.xmpp.model.fun.Enabled(FunTokens.DICTIONARY_HASH);
         assertEquals(FunTokens.DICTIONARY_HASH, enabled.getDict());
     }
+
+    @Test
+    public void testSmacksPiggybackTwoFramesNoXmlByte() throws Exception {
+        // 1. Stashed message stanza
+        final Element message = new Element("message");
+        message.setAttribute("id", "msg-1234");
+        message.setAttribute("to", "bob@snikket.penik.ru");
+        message.addChild("body").setContent("Hello, smacks!");
+
+        // 2. Piggybacked <r xmlns='urn:xmpp:sm:3'/>
+        final Element r = new Element("r", "urn:xmpp:sm:3");
+
+        final byte[] frame1 = FunWriter.encodeNode(message);
+        final byte[] frame2 = FunWriter.encodeNode(r);
+
+        assertNotNull(frame1);
+        assertNotNull(frame2);
+
+        // Frame header must NOT be '<' (0x3C / ASCII 60)
+        assertTrue("Frame 1 must not start with '<'", frame1[0] != 0x3C);
+        assertTrue("Frame 2 must not start with '<'", frame2[0] != 0x3C);
+
+        // Concatenate both frames into a single binary stream (as sent on socket)
+        final ByteArrayOutputStream streamOut = new ByteArrayOutputStream();
+        streamOut.write(frame1);
+        streamOut.write(frame2);
+
+        final ByteArrayInputStream streamIn = new ByteArrayInputStream(streamOut.toByteArray());
+        final FunReader reader = new FunReader(streamIn);
+
+        // Read first element: message
+        final Element decoded1 = reader.readElement();
+        assertNotNull(decoded1);
+        assertEquals("message", decoded1.getName());
+        assertEquals("msg-1234", decoded1.getAttribute("id"));
+        assertEquals("Hello, smacks!", decoded1.findChildContent("body"));
+
+        // Read second element: <r xmlns='urn:xmpp:sm:3'/>
+        final Element decoded2 = reader.readElement();
+        assertNotNull(decoded2);
+        assertEquals("r", decoded2.getName());
+        assertEquals("urn:xmpp:sm:3", decoded2.getNamespace());
+
+        // Stream should now be exhausted
+        final Element decoded3 = reader.readElement();
+        org.junit.Assert.assertNull(decoded3);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEncodeNodeThrowsOnExcessiveAttributes() throws Exception {
+        final Element element = new Element("iq");
+        for (int i = 0; i < 256; i++) {
+            element.setAttribute("attr_" + i, "val_" + i);
+        }
+        FunWriter.encodeNode(element);
+    }
+
+    @Test
+    public void testWriteElementDropsExcessiveAttributesGracefullyWithoutThrowing() throws Exception {
+        final Element malformed = new Element("iq");
+        for (int i = 0; i < 256; i++) {
+            malformed.setAttribute("attr_" + i, "val_" + i);
+        }
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final FunWriter writer = new FunWriter(out);
+
+        // writeElement must not throw IllegalArgumentException, and must drop the stanza cleanly
+        writer.writeElement(malformed);
+        assertEquals("Malformed stanza with >255 attrs must be dropped with 0 bytes written", 0, out.size());
+
+        // Subsequent valid stanza must write successfully
+        final Element valid = new Element("presence");
+        valid.setAttribute("id", "pres-1");
+        writer.writeElement(valid);
+        assertTrue("Valid stanza must be written after dropped stanza", out.size() > 0);
+    }
 }
