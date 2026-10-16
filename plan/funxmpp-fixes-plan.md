@@ -1,4 +1,4 @@
-# План: разбор и фиксы FunXMPP (`server/mod_funxmpp.lua` + `xmpp/fun/`)
+# План: разбор и фиксы FunXMPP (`server/Modules/mod_funxmpp.lua` + `xmpp/fun/`)
 
 ## Контекст
 

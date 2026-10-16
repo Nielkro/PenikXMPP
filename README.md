@@ -80,7 +80,7 @@ Comprehensive specifications:
 | **XMPP & Crypto Core** | Penik XMPP Core (`im.conversations.android.xmpp`), Conscrypt TLS, OMEMO |
 | **Binary Protocol** | PXMPP / FunXMPP (`eu.siacs.conversations.xmpp.fun.*`) |
 | **Media & Calls** | Jingle WebRTC RTP engine, Exoplayer |
-| **Server Plugin** | Prosody Lua module (`server/mod_funxmpp.lua`) |
+| **Server Plugin** | Prosody Lua module (`server/Modules/mod_funxmpp.lua`) |
 | **Build System** | Gradle 9, AGP 9.2, R8 optimizer, DataBinding |
 
 ---
@@ -119,8 +119,10 @@ The resulting APK is generated in `build/outputs/apk/conversationsFree/debug/`.
 ├── docs/
 │   └── PXMPP/              # PXMPP binary protocol specifications (EN / RU)
 ├── server/
-│   ├── mod_funxmpp.lua     # Prosody / Snikket binary protocol plugin
-│   └── test_mod_funxmpp.lua# Standalone Lua test suite for mod_funxmpp
+│   ├── Modules/            # Prosody / Snikket Lua plugins
+│   │   ├── mod_funxmpp.lua # Binary protocol plugin
+│   │   └── test_mod_funxmpp.lua # Lua test suite
+│   └── MicroServices/      # Standalone backend microservices (Rust)
 ├── src/
 │   ├── main/
 │   │   ├── AndroidManifest.xml
@@ -142,7 +144,7 @@ The resulting APK is generated in `build/outputs/apk/conversationsFree/debug/`.
 
 ## Server Deployment Notes
 
-- **Server Plugin Installation:** Copy `server/mod_funxmpp.lua` into your Prosody `modules/` directory and add `"funxmpp"` to your `modules_enabled` list. Run `lua server/test_mod_funxmpp.lua` to verify compatibility.
+- **Server Plugin Installation:** Copy `server/Modules/mod_funxmpp.lua` into your Prosody `modules/` directory and add `"funxmpp"` to your `modules_enabled` list. Run `lua server/Modules/test_mod_funxmpp.lua` to verify compatibility.
 
 ---
 

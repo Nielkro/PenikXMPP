@@ -156,4 +156,4 @@ return tostring(stanza) .. tostring(st.stanza("r", { xmlns = xmlns_sm }))
 
 ### Наборы автоматических тестов
 - **Клиентские тесты (Android/JUnit):** [FunProtocolTest.java](file:///filepomorika/Mysor/RandomProjets/PenikXMPP/src/test/java/eu/siacs/conversations/xmpp/fun/FunProtocolTest.java)
-- **Серверные тесты (Lua):** [server/test_mod_funxmpp.lua](file:///filepomorika/Mysor/RandomProjets/PenikXMPP/server/test_mod_funxmpp.lua)
+- **Серверные тесты (Lua):** [server/Modules/test_mod_funxmpp.lua](file:///filepomorika/Mysor/RandomProjets/PenikXMPP/server/Modules/test_mod_funxmpp.lua)

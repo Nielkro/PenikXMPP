@@ -163,4 +163,4 @@ Memoization in the outgoing table metatable (`__tostring`) guarantees that stats
 
 ### Test Coverage
 - **Unit Tests (Android):** [FunProtocolTest.java](file:///filepomorika/Mysor/RandomProjets/PenikXMPP/src/test/java/eu/siacs/conversations/xmpp/fun/FunProtocolTest.java)
-- **Unit Tests (Prosody):** [server/test_mod_funxmpp.lua](file:///filepomorika/Mysor/RandomProjets/PenikXMPP/server/test_mod_funxmpp.lua)
+- **Unit Tests (Prosody):** [server/Modules/test_mod_funxmpp.lua](file:///filepomorika/Mysor/RandomProjets/PenikXMPP/server/Modules/test_mod_funxmpp.lua)

@@ -77,7 +77,8 @@ local mock_stanza = {
 package.loaded["util.stanza"] = mock_stanza;
 
 -- Load the module under test
-dofile("server/mod_funxmpp.lua");
+local script_dir = debug.getinfo(1, "S").source:match("@?(.*[/\\])") or "";
+dofile(script_dir .. "mod_funxmpp.lua");
 
 -- Helpers
 local function assert_eq(a, b, msg)

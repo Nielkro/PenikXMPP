@@ -123,7 +123,7 @@ flowchart TD
 
 ---
 
-## 3. Спецификация Rust-микросервиса (`server/penik-stickers-rs`)
+## 3. Спецификация Rust-микросервиса (`server/MicroServices/penik-stickers-rs`)
 
 ### 3.1. Стек и зависимости
 - Язык: Rust (2021 edition).
@@ -238,8 +238,8 @@ CREATE INDEX IF NOT EXISTS idx_user_packs ON user_sticker_packs(user_jid, sort_o
 
 ## 6. Пошаговые этапы реализации
 
-### Этап 1: Rust-микросервис (`server/penik-stickers-rs`)
-1. Инициализировать проект `cargo new --bin server/penik-stickers-rs`.
+### Этап 1: Rust-микросервис (`server/MicroServices/penik-stickers-rs`)
+1. Инициализировать проект `cargo new --bin server/MicroServices/penik-stickers-rs`.
 2. Настроить Axum, SQLite миграции (`packs`, `stickers`, `user_packs`), HMAC middleware.
 3. Реализовать клиент Telegram Bot API (`getStickerSet`, скачивание файлов через `getFile`).
 4. Реализовать вызов `ffmpeg` для однократной конвертации `.webm` видеостикеров в `Animated WebP` с сохранением альфа-канала.
@@ -262,6 +262,6 @@ CREATE INDEX IF NOT EXISTS idx_user_packs ON user_sticker_packs(user_jid, sort_o
 3. Добавить кнопку переключения на стикеры в поле ввода сообщения.
 
 ### Этап 5: Сборка, Docker и верификация
-1. Подготовить `server/penik-stickers-rs/Dockerfile` с установленным `ffmpeg` для продакшн-образа.
+1. Подготовить `server/MicroServices/penik-stickers-rs/Dockerfile` с установленным `ffmpeg` для продакшн-образа.
 2. Провести E2E-тестирование: импорт пака из Telegram (включая видеостикеры с альфой) -> скачивание бандла на Android -> отправка стикера в чат -> отображение у собеседника на прозрачном фоне.
 3. Обновить `PROJECT_MAP.md`.

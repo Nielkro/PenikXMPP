@@ -258,9 +258,8 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `plan/funxmpp-fixes-plan.md` — Plan for FunXMPP review follow-ups: P0 outgoing mod_smacks piggyback `<r/>` string bypassing binary framing, P1 `CONTENT_MIXED` child order (v2 sequence, breaking), P2 buffer/length/counter polish, plus items verified as-is (incoming SM routing, JID `@` scan).
 - `plan/stickers-rust-service-plan.md` — Implementation plan for Telegram-compatible stickers via standalone Rust microservice, XMPP stanza extensions, and Compose UI.
 - `landing/` — Static landing page: `index.html` (hero, features, protocol terminal demo, comparison, FAQ, download links), `logo_fixed.svg` / `logo_fixed.webp`; note `landing/penik.apk` stays untracked via the `*.apk` gitignore rule.
-- `install_phone.sh` — Automated build and installation script for Android device over ADB (`assembleConversationsFreeDebug`, installs APK, launches `ConversationActivity`).
-- `server/mod_funxmpp.lua` — FunXMPP binary tokenized protocol plugin for Snikket/Prosody (symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks).
-- `server/test_mod_funxmpp.lua` — Standalone test suite for mod_funxmpp (smacks piggyback framing, prefix validation, safe stanza dropping).
+- `server/Modules/` — Prosody/Snikket Lua plugins: `mod_funxmpp.lua` (FunXMPP binary tokenized protocol plugin: symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks), `test_mod_funxmpp.lua` (standalone Lua test suite).
+- `server/MicroServices/` — Standalone backend microservices (e.g. `penik-stickers-rs` sticker management service).
 - `PROJECT_MAP.md` — This index.
 
 ## Note on `libs/Penik` (Excluded)
