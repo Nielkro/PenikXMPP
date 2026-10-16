@@ -292,6 +292,9 @@ local function encode_stanza(stanza, parent_ns)
     end
     table.sort(attr_list, function(a, b) return a[1] < b[1] end);
 
+    if #attr_list > 255 then
+        error("FunXMPP: stanza has more than 255 attributes: " .. tostring(stanza.name));
+    end
     table.insert(body_buf, string.char(#attr_list));
     for _, attr in ipairs(attr_list) do
         write_token_or_string(body_buf, attr[1]);
@@ -515,26 +518,58 @@ local function funxmpp_bytes_in(data, session)
     return ""; -- Swallow binary bytes so Expat parser receives nothing
 end
 
+-- Stash original outgoing stanza table at priority -999 before mod_smacks (-1000)
+-- might convert it to a string when appending piggybacked <r/>
+local function funxmpp_stanzas_stash_out(stanza, session)
+    if session.funxmpp_enabled and type(stanza) == "table" and stanza.name then
+        session.funxmpp_last_out = stanza;
+    else
+        session.funxmpp_last_out = nil;
+    end
+    return stanza;
+end
+
 -- Outgoing stanza filter: runs at priority -10000 after mod_smacks, CSI, carbons, etc.
--- NOTE: The returned wrapper table delegates __tostring to encode_stanza(stanza), locking in
--- the binary serialization of the original stanza table at filter execution time.
--- Any downstream filter with priority < -10000 that attempts in-place mutation of the stanza
--- table will NOT alter the already-serialized binary output returned by __tostring.
+-- NOTE: The returned wrapper table delegates __tostring to encode_stanza(stanza), memoizing
+-- the binary frame so stats are not double-counted if tostring() is invoked multiple times.
+-- If mod_smacks appended a piggybacked <r/>, the incoming stanza is a string and the original
+-- stanza was saved in session.funxmpp_last_out; we encode both as binary frames.
 local function funxmpp_stanzas_out(stanza, session)
-    if not session.funxmpp_enabled or type(stanza) ~= "table" or not stanza.name then
+    if not session.funxmpp_enabled then
         return stanza;
     end
-    return setmetatable({ name = stanza.name, attr = stanza.attr }, {
-        __index = stanza,
-        __tostring = function()
-            local bin = encode_stanza(stanza);
-            if session.funxmpp_stats then
-                session.funxmpp_stats.out_bytes = session.funxmpp_stats.out_bytes + #bin;
-                session.funxmpp_stats.out_frames = session.funxmpp_stats.out_frames + 1;
+    if type(stanza) == "table" and stanza.name then
+        session.funxmpp_last_out = nil;
+        local memoized_bin = nil;
+        return setmetatable({ name = stanza.name, attr = stanza.attr }, {
+            __index = stanza,
+            __tostring = function()
+                if not memoized_bin then
+                    memoized_bin = encode_stanza(stanza);
+                    if session.funxmpp_stats then
+                        session.funxmpp_stats.out_bytes = session.funxmpp_stats.out_bytes + #memoized_bin;
+                        session.funxmpp_stats.out_frames = session.funxmpp_stats.out_frames + 1;
+                    end
+                end
+                return memoized_bin;
             end
-            return bin;
+        });
+    elseif type(stanza) == "string" and session.funxmpp_last_out then
+        local stashed = session.funxmpp_last_out;
+        session.funxmpp_last_out = nil;
+        local sm_ns = stanza:match("<r%s+xmlns=['\"](urn:xmpp:sm:[23])['\"]%s*/>%s*$");
+        if sm_ns then
+            local r_stanza = st.stanza("r", { xmlns = sm_ns });
+            local bin1 = encode_stanza(stashed);
+            local bin2 = encode_stanza(r_stanza);
+            if session.funxmpp_stats then
+                session.funxmpp_stats.out_bytes = session.funxmpp_stats.out_bytes + #bin1 + #bin2;
+                session.funxmpp_stats.out_frames = session.funxmpp_stats.out_frames + 2;
+            end
+            return bin1 .. bin2;
         end
-    });
+    end
+    return stanza;
 end
 
 -- Hook: Stream features
@@ -578,6 +613,7 @@ local function handle_enable(origin, stanza)
 
     -- Register symmetric stream filters without breaking mod_smacks queue
     filters.add_filter(session, "bytes/in", funxmpp_bytes_in, 100);
+    filters.add_filter(session, "stanzas/out", funxmpp_stanzas_stash_out, -999);
     filters.add_filter(session, "stanzas/out", funxmpp_stanzas_out, -10000);
     return true;
 end

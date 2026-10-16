@@ -47,6 +47,9 @@ public class FunWriter {
         }
         final java.util.List<Map.Entry<String, String>> attrList = new java.util.ArrayList<>(attrs.entrySet());
         attrList.sort(Map.Entry.comparingByKey());
+        if (attrList.size() > 255) {
+            throw new IllegalArgumentException("FunXMPP element has more than 255 attributes: " + element.getName());
+        }
         data.writeByte(attrList.size());
         for (final Map.Entry<String, String> entry : attrList) {
             writeTokenOrString(data, entry.getKey());
