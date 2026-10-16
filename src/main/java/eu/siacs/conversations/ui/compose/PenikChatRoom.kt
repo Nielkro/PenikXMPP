@@ -63,6 +63,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -191,7 +192,7 @@ object PenikChatActions {
 }
 
 class PenikChatState {
-    var messages by mutableStateOf<List<Message>>(emptyList())
+    var messages by mutableStateOf<List<Message>>(emptyList(), neverEqualPolicy())
     var isMuc by mutableStateOf(false)
     var showAvatars11 by mutableStateOf(true)
     var showAttachmentPicker by mutableStateOf(false)
@@ -225,7 +226,15 @@ object PenikChatBridge {
 
 private sealed interface ChatRow {
     data class DateHeader(val label: String, val key: LocalDate) : ChatRow
-    data class Msg(val message: Message) : ChatRow
+    data class Msg(
+        val message: Message,
+        val status: Int,
+        val edited: Boolean,
+        val body: String,
+        val fileUrl: String,
+        val readCount: Int,
+        val reactionsCount: Int
+    ) : ChatRow
 }
 
 fun penikChatDateLabel(date: LocalDate): String {
@@ -363,7 +372,17 @@ fun PenikChatRoom(
                             items.add(ChatRow.DateHeader(penikChatDateLabel(day), day))
                         }
                     }
-                    items.add(ChatRow.Msg(m))
+                    items.add(
+                        ChatRow.Msg(
+                            message = m,
+                            status = m.status,
+                            edited = m.edited(),
+                            body = m.body ?: "",
+                            fileUrl = m.fileParams?.url ?: "",
+                            readCount = m.readByMarkers?.size ?: 0,
+                            reactionsCount = m.reactions?.size ?: 0
+                        )
+                    )
                 }
                 items.asReversed()
             }
@@ -377,16 +396,13 @@ fun PenikChatRoom(
             listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
         }
     }
-    LaunchedEffect(rows.firstOrNull()) {
+    val newestUuid = (rows.firstOrNull() as? ChatRow.Msg)?.message?.uuid
+    LaunchedEffect(newestUuid) {
         if (listState.firstVisibleItemIndex <= 2 && rows.isNotEmpty()) {
             listState.scrollToItem(0)
         }
-        val newest = rows.firstOrNull()
-        if (newest is ChatRow.Msg) {
-            val uuid = newest.message.uuid
-            if (!uuid.isNullOrBlank()) {
-                listener.onBottomVisible(uuid)
-            }
+        if (!newestUuid.isNullOrBlank()) {
+            listener.onBottomVisible(newestUuid)
         }
     }
     LaunchedEffect(lastVisibleIndex, rows.size) {
@@ -394,7 +410,7 @@ fun PenikChatRoom(
             listener.onLoadMore()
         }
     }
-    LaunchedEffect(listState.firstVisibleItemIndex) {
+    LaunchedEffect(listState.firstVisibleItemIndex, newestUuid) {
         val newest = rows.firstOrNull()
         if (newest is ChatRow.Msg && listState.firstVisibleItemIndex == 0) {
             val uuid = newest.message.uuid
@@ -450,6 +466,8 @@ fun PenikChatRoom(
                         is ChatRow.Msg ->
                                 PenikMessageRow(
                                         message = row.message,
+                                        status = row.status,
+                                        edited = row.edited,
                                         activity = activity,
                                         isMuc = state.isMuc,
                                         showAvatars11 = state.showAvatars11,
@@ -646,6 +664,8 @@ fun penikIsVideo(message: Message): Boolean {
 @Composable
 fun PenikMessageRow(
         message: Message,
+        status: Int = message.status,
+        edited: Boolean = message.edited(),
         activity: XmppActivity,
         isMuc: Boolean,
         showAvatars11: Boolean,
@@ -668,7 +688,7 @@ fun PenikMessageRow(
     ) {
         return
     }
-    val isSentByMe = message.status != Message.STATUS_RECEIVED
+    val isSentByMe = status != Message.STATUS_RECEIVED
     val showAvatar = !isSentByMe && (isMuc || showAvatars11)
 
     Row(
@@ -703,6 +723,7 @@ fun PenikMessageRow(
                     PenikUrlImageRow(
                             url = bareUrl,
                             message = message,
+                            status = status,
                             isSentByMe = isSentByMe,
                             listener = listener,
                             revision = revision
@@ -712,6 +733,7 @@ fun PenikMessageRow(
                     if (bareVideoUrl != null) {
                         PenikAttachmentRow(
                                 message = message,
+                                status = status,
                                 activity = activity,
                                 isSentByMe = isSentByMe,
                                 listener = listener,
@@ -720,6 +742,8 @@ fun PenikMessageRow(
                     } else {
                         PenikTextBubble(
                                 message = message,
+                                status = status,
+                                edited = edited,
                                 activity = activity,
                                 isMuc = isMuc,
                                 listener = listener,
@@ -730,6 +754,7 @@ fun PenikMessageRow(
             } else if (message.isFileOrImage || message.isGeoUri || penikIsVideo(message)) {
                 PenikAttachmentRow(
                         message = message,
+                        status = status,
                         activity = activity,
                         isSentByMe = isSentByMe,
                         listener = listener,
@@ -738,6 +763,8 @@ fun PenikMessageRow(
             } else {
                 PenikTextBubble(
                         message = message,
+                        status = status,
+                        edited = edited,
                         activity = activity,
                         isMuc = isMuc,
                         listener = listener,
@@ -853,6 +880,8 @@ fun PenikQuoteBlock(
 @Composable
 fun PenikTextBubble(
         message: Message,
+        status: Int = message.status,
+        edited: Boolean = message.edited(),
         activity: XmppActivity,
         isMuc: Boolean,
         listener: PenikChatListener,
@@ -868,7 +897,7 @@ fun PenikTextBubble(
     val textMuted = colorResource(R.color.penik_text_muted)
     val accent = colorResource(R.color.penik_accent)
     val danger = colorResource(R.color.penik_danger)
-    val isSentByMe = message.status != Message.STATUS_RECEIVED
+    val isSentByMe = status != Message.STATUS_RECEIVED
     var showMenu by remember(message.uuid) { mutableStateOf(false) }
     var expandedBug by remember(message.uuid) { mutableStateOf(false) }
     val rawBody = message.body ?: ""
@@ -888,7 +917,7 @@ fun PenikTextBubble(
                 ""
             }
     val ticks =
-            when (message.status) {
+            when (status) {
                 Message.STATUS_UNSEND, Message.STATUS_WAITING, Message.STATUS_OFFERED, Message.STATUS_SEND -> "✓"
                 Message.STATUS_SEND_RECEIVED -> "✓✓"
                 Message.STATUS_SEND_DISPLAYED -> "✓✓"
@@ -896,7 +925,7 @@ fun PenikTextBubble(
                 else -> if (isSentByMe) "✓" else ""
             }
     val ticksColor =
-            when (message.status) {
+            when (status) {
                 Message.STATUS_SEND_DISPLAYED -> accent
                 Message.STATUS_SEND_FAILED -> danger
                 else -> textMuted
@@ -934,7 +963,7 @@ fun PenikTextBubble(
                             ticks = ticks,
                             ticksColor = ticksColor,
                             isEncrypted = message.encryption != Message.ENCRYPTION_NONE,
-                            edited = message.edited(),
+                            edited = edited,
                             overlayDark = false,
                             baseColor = textMuted
                     )
@@ -1046,7 +1075,7 @@ fun PenikTextBubble(
                             modifier = Modifier.align(Alignment.End),
                             verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (message.edited()) {
+                        if (edited) {
                             Text(text = "изм. ", color = textMuted, fontSize = 11.sp)
                         }
                         if (message.encryption != Message.ENCRYPTION_NONE) {
@@ -1062,7 +1091,7 @@ fun PenikTextBubble(
                             Text(text = timeText, color = textMuted, fontSize = 11.sp)
                         }
                         if (isSentByMe) {
-                            if (message.status == Message.STATUS_SEND_FAILED) {
+                            if (status == Message.STATUS_SEND_FAILED) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                         text = "!",
@@ -1073,11 +1102,11 @@ fun PenikTextBubble(
                             } else {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 val isDouble =
-                                        message.status == Message.STATUS_SEND_RECEIVED ||
-                                                message.status == Message.STATUS_SEND_DISPLAYED
+                                        status == Message.STATUS_SEND_RECEIVED ||
+                                                status == Message.STATUS_SEND_DISPLAYED
                                 PenikTicksIcon(
                                         double = isDouble,
-                                        read = message.status == Message.STATUS_SEND_DISPLAYED,
+                                        read = status == Message.STATUS_SEND_DISPLAYED,
                                         tint = textMuted,
                                         accent = accent
                                 )
@@ -2336,6 +2365,7 @@ fun PenikVideoViewer(
 @Composable
 fun PenikAttachmentRow(
         message: Message,
+        status: Int = message.status,
         activity: XmppActivity,
         isSentByMe: Boolean,
         listener: PenikChatListener,
@@ -2415,7 +2445,7 @@ fun PenikAttachmentRow(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = timeText, fontSize = 10.sp, color = Color.White)
                             if (isSentByMe) {
-                                if (message.status == Message.STATUS_SEND_FAILED) {
+                                if (status == Message.STATUS_SEND_FAILED) {
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                             text = "!",
@@ -2426,11 +2456,11 @@ fun PenikAttachmentRow(
                                 } else {
                                     Spacer(modifier = Modifier.width(4.dp))
                                     val isDouble =
-                                            message.status == Message.STATUS_SEND_RECEIVED ||
-                                                    message.status == Message.STATUS_SEND_DISPLAYED
+                                            status == Message.STATUS_SEND_RECEIVED ||
+                                                    status == Message.STATUS_SEND_DISPLAYED
                                     PenikTicksIcon(
                                             double = isDouble,
-                                            read = message.status == Message.STATUS_SEND_DISPLAYED,
+                                            read = status == Message.STATUS_SEND_DISPLAYED,
                                             tint = Color.White.copy(alpha = 0.8f),
                                             accent = accent
                                     )
@@ -2488,7 +2518,7 @@ fun PenikAttachmentRow(
                             Text(text = timeText, color = textMuted, fontSize = 11.sp)
                         }
                         if (isSentByMe) {
-                            if (message.status == Message.STATUS_SEND_FAILED) {
+                            if (status == Message.STATUS_SEND_FAILED) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                         text = "!",
@@ -2499,11 +2529,11 @@ fun PenikAttachmentRow(
                             } else {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 val isDouble =
-                                        message.status == Message.STATUS_SEND_RECEIVED ||
-                                                message.status == Message.STATUS_SEND_DISPLAYED
+                                        status == Message.STATUS_SEND_RECEIVED ||
+                                                status == Message.STATUS_SEND_DISPLAYED
                                 PenikTicksIcon(
                                         double = isDouble,
-                                        read = message.status == Message.STATUS_SEND_DISPLAYED,
+                                        read = status == Message.STATUS_SEND_DISPLAYED,
                                         tint = textMuted,
                                         accent = accent
                                 )
@@ -2550,6 +2580,7 @@ fun PenikAttachmentRow(
 fun PenikUrlImageRow(
         url: String,
         message: Message,
+        status: Int = message.status,
         isSentByMe: Boolean,
         listener: PenikChatListener,
         revision: Long = 0L
@@ -2605,7 +2636,7 @@ fun PenikUrlImageRow(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = timeText, fontSize = 10.sp, color = Color.White)
                         if (isSentByMe) {
-                            if (message.status == Message.STATUS_SEND_FAILED) {
+                            if (status == Message.STATUS_SEND_FAILED) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                         text = "!",
@@ -2616,11 +2647,11 @@ fun PenikUrlImageRow(
                             } else {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 val isDouble =
-                                        message.status == Message.STATUS_SEND_RECEIVED ||
-                                                message.status == Message.STATUS_SEND_DISPLAYED
+                                        status == Message.STATUS_SEND_RECEIVED ||
+                                                status == Message.STATUS_SEND_DISPLAYED
                                 PenikTicksIcon(
                                         double = isDouble,
-                                        read = message.status == Message.STATUS_SEND_DISPLAYED,
+                                        read = status == Message.STATUS_SEND_DISPLAYED,
                                         tint = Color.White.copy(alpha = 0.8f),
                                         accent = accent
                                 )

@@ -254,6 +254,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `.gitmodules` — `libs/Penik` submodule (read-only UI donor, branch `feat/cloud-chats`).
 - `plan/penik-xmpp-ui-port-plan.md` — Plan to port Penik UI and rebrand to `ru.penik.xmpp`.
 - `plan/xmpp-stanza-diet-plan.md` — Plan to cut XMPP stanza overhead (245 → 193 bytes): omit outbound `from` per RFC 6120, short 12-char ids, chat-state composing throttle (8s), MAM page 20, preserving Monal/Dino interoperability (markable/request receipts).
+- `plan/funxmpp-fixes-plan.md` — Plan for FunXMPP review follow-ups: P0 outgoing mod_smacks piggyback `<r/>` string bypassing binary framing, P1 `CONTENT_MIXED` child order (v2 sequence, breaking), P2 buffer/length/counter polish, plus items verified as-is (incoming SM routing, JID `@` scan).
 - `landing/` — Static landing page: `index.html` (hero, features, protocol terminal demo, comparison, FAQ, download links), `logo_fixed.svg` / `logo_fixed.webp`; note `landing/penik.apk` stays untracked via the `*.apk` gitignore rule.
 - `server/mod_funxmpp.lua` — FunXMPP binary tokenized protocol plugin for Snikket/Prosody (symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks).
 - `PROJECT_MAP.md` — This index.

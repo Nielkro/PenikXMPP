@@ -3162,6 +3162,7 @@ public class ConversationFragment extends XmppFragment
             return false;
         }
         this.conversation = conversation;
+        this.penikReadUuid = null;
         // once we set the conversation all is good and it will automatically do the right thing in
         // onStart()
         if (this.binding == null) {
