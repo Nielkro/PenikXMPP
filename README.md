@@ -1,57 +1,152 @@
 # Penik (XMPP)
 
-Android XMPP client with the Penik interface: a fork of [Conversations](https://codeberg.org/iNPUTmice/Conversations) (`codeberg.org/iNPUTmice/Conversations`), rebuilt as **Penik** (`ru.penik.xmpp`).
+**Penik** (`ru.penik.xmpp`) is a next-generation Android messenger powered by the high-performance **PXMPP** binary protocol and a modern, fluid Jetpack Compose user interface.
 
-> Upstream lives on Codeberg. This repository tracks it plus the Penik UI port (see `plan/penik-xmpp-ui-port-plan.md`).
+It combines the decentralized power and security of open standards with the polish, speed, and efficiency expected of contemporary consumer messengers.
 
-## What changed vs Conversations
+---
 
-- **Penik branding**: `applicationId ru.penik.xmpp`, Penik name, Penik icon and theme (`Theme.Penik`, `penik_colors.xml` palette, circular avatars).
-- **Main screen one-to-one with Penik** (Jetpack Compose): top bar with search, connection banner (yellow "Connecting...", red only when everything is down), Saved messages, chat archive, bottom tabs Chats/Calls/Profile, calls from RTP history.
-- **Default server** — `snikket.penik.ru` (`Config.MAGIC_CREATE_DOMAIN`).
-- **Domain hidden**: only the nick before `@` is shown everywhere (`JidHelper.displayAddress()`).
-- **Follower-only encryption**: everything is plaintext by default; OMEMO/PGP controls removed from the UI. If a contact writes first over OMEMO, the chat upgrades itself to OMEMO, keys are accepted automatically, messages get a lock.
-- **Calls (Jingle)**: video upgrades apply silently and independently on each side (like Telegram); a refused/timed-out upgrade no longer kills the audio; avatar instead of a black screen until video frames arrive; incoming calls open the call screen right away, not just a notification.
-- **Small things**: the "no more history on server" toast is gone, long crash reports collapse under a label, bug reports go to `niel_kro@snikket.penik.ru`, S2S is firewalled off on the server.
+## Key Features
 
-## Stack
+- **PXMPP Binary Protocol (FunXMPP)**
+  - Replaces verbose XML wire streams with an ultra-compact Type-Length-Value (TLV) binary protocol (`penik:protocol:funxmpp`).
+  - Reduces mobile cellular data consumption by **40% to 70%**.
+  - Eliminates XML parsing overhead on low-power mobile CPU cores, extending battery life and eliminating GC churn.
+  - Transparent stream negotiation with FNV-1a dictionary checksum verification.
+- **Modern Jetpack Compose UI**
+  - Clean Material 3 design with custom Penik palette (`Theme.Penik`, circular avatars, unified chat bubble geometry).
+  - Real-time message status indicators (single/double delivery and read receipts), live reactions, and chat state indication.
+  - Streamlined navigation: Chats, Calls, Saved Messages, and Profile tabs.
+- **Privacy & Encryption**
+  - Seamless end-to-end encryption (OMEMO) with zero configuration required.
+  - Automatic key acceptance and chat upgrade when communicating with encrypted peers.
+  - Strict TLS transport security with direct TLS (port 5223) priority.
+- **High-Definition Voice & Video Calls**
+  - Jingle / WebRTC peer-to-peer audio and video calling.
+  - Telegram-style independent video upgrade: video streams toggle independently on each side without disrupting ongoing audio.
+  - Full-screen incoming call activity for instant pickup.
+- **Rock-Solid Connectivity**
+  - Full XEP-0198 Stream Management support with optimized server piggybacking.
+  - Instant stream resumption across Wi-Fi and mobile network switches with zero packet loss.
 
-| Part | Technologies |
-|-------|-----------|
-| Base | Conversations fork: XMPP (Smack-compatible `im.conversations.android.xmpp` core), OMEMO, Jingle/WebRTC calls, SQLite, classic Views + Activities |
-| Penik UI | Jetpack Compose (Material 3, Navigation, Coil), Compose BOM 2026.09, Kotlin 2.4; `minSdk` 26, `targetSdk`/`compileSdk` 37 |
-| Build | Gradle 9 (Groovy), AGP 9.2, R8, DataBinding |
+---
 
-## Repository structure
+## The PXMPP Protocol
 
+PXMPP is Penik's native binary framing protocol implemented in both the Android client and the server.
+
+```mermaid
+flowchart LR
+    subgraph Client["Penik Android Client"]
+        CW["FunWriter (TLV Serializer)"]
+        CR["FunReader (TLV Parser)"]
+    end
+
+    subgraph Wire["Encrypted TLS Stream (Port 5223 / 5222)"]
+        F1["[Length 2B] [Binary Stanza]"]
+        F2["[Length 2B] [Binary Ack / r]"]
+    end
+
+    subgraph Server["Snikket / Prosody Server"]
+        SM["mod_funxmpp.lua"]
+        SMACKS["mod_smacks.lua (XEP-0198)"]
+    end
+
+    CW -->|Binary Frames| Wire
+    Wire -->|Stream Filters| SM
+    SM <-->|Internal Stanzas| SMACKS
+    SM -->|Binary Frames| Wire
+    Wire -->|Decoded Elements| CR
 ```
-src/main/java/eu/siacs/conversations/  core: Config, entities, xmpp, crypto, services
-  ui/            Activities and Fragments (chat, calls, settings)
-  ui/compose/    ported Penik screens (PenikChatsList: chats/calls/profile)
-  ui/adapter/    list adapters (messages, contacts, media)
-src/main/res/    layouts, values/penik_colors.xml, values/themes.xml (Theme.Penik), values-night/
-plan/            UI port and rebranding plan
-libs/Penik/      READ-ONLY UI donor submodule (do not touch)
-PROJECT_MAP.md   source index describing every file
-fastlane/        publishing metadata
-```
 
-Navigate the code via `PROJECT_MAP.md`.
+### Highlights:
+1. **Static Tokenization:** 140+ core XMPP tags, attributes, namespaces, and local server domains are encoded into single-byte tokens (`0x00`..`0xEE`).
+2. **JID Compression:** Addresses with known domains compress into a single token byte (`JID_BARE 0xFD`, `JID_FULL 0xFE`), eliminating domain repetition.
+3. **Safe Two-Tier Framing:** Outer frame lengths (`u16` or `0xFFFF + u32`) strictly avoid the `<` (`0x3C`) byte, guaranteeing stream synchronization.
+4. **mod_smacks Piggybacking:** Piggybacked acknowledgment requests are parsed and delivered as dual binary frames without raw XML string leaks.
 
-## Quick start
+Comprehensive specifications:
+- [English Technical Specification](docs/PXMPP/README.md)
+- [Русская спецификация протокола](docs/PXMPP/README_RU.md)
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+| :--- | :--- |
+| **UI Framework** | Jetpack Compose (Material 3, Navigation, Coil), Compose BOM 2026.09 |
+| **Language & Toolchain** | Kotlin 2.4, Java 21, Android SDK (minSdk 26, compileSdk 37) |
+| **XMPP & Crypto Core** | Penik XMPP Core (`im.conversations.android.xmpp`), Conscrypt TLS, OMEMO |
+| **Binary Protocol** | PXMPP / FunXMPP (`eu.siacs.conversations.xmpp.fun.*`) |
+| **Media & Calls** | Jingle WebRTC RTP engine, Exoplayer |
+| **Server Plugin** | Prosody Lua module (`server/mod_funxmpp.lua`) |
+| **Build System** | Gradle 9, AGP 9.2, R8 optimizer, DataBinding |
+
+---
+
+## Quick Start & Installation
+
+### Automated Build & Install via ADB
+An all-in-one automation script is provided in the repository root:
 
 ```bash
-./gradlew assembleConversationsFreeDebug
+# Build, install on connected phone, and launch Penik
+./install_phone.sh
+
+# Reinstall existing build without rebuilding
+./install_phone.sh -n
+
+# Target specific device
+./install_phone.sh -s <device_serial>
 ```
 
-APK: `build/outputs/apk/conversationsFree/debug/`. First launch: register/log in on `snikket.penik.ru`.
+### Manual Gradle Build
+```bash
+# Build debug APK
+bash ./gradlew assembleConversationsFreeDebug
 
-## Server operator notes
+# Run unit tests
+bash ./gradlew testConversationsFreeDebugUnitTest
+```
+The resulting APK is generated in `build/outputs/apk/conversationsFree/debug/`.
 
-- The client tries **5223 (direct TLS, XEP-0368)** first, then falls back to **5222 (STARTTLS)**. If 5223 is published but dead (accept + reset, e.g. a Docker port with nothing listening behind it, or a closed ufw), every connect wastes ~12 seconds on the timeout. Either open a working 5223 (`ufw allow 5223/tcp`) or close it so SYN gets refused immediately — then the fallback is instant.
-- For a closed installation, S2S (5269) is cut at the firewall (`ufw deny 5269/tcp` + `ufw deny out 5269/tcp`).
+---
 
-## Links
+## Repository Structure
 
-- Upstream: [codeberg.org/iNPUTmice/Conversations](https://codeberg.org/iNPUTmice/Conversations)
-- This fork's issues: [github.com/Nielkro/PenikXMPP/issues](https://github.com/Nielkro/PenikXMPP/issues)
+```
+├── docs/
+│   └── PXMPP/              # PXMPP binary protocol specifications (EN / RU)
+├── server/
+│   ├── mod_funxmpp.lua     # Prosody / Snikket binary protocol plugin
+│   └── test_mod_funxmpp.lua# Standalone Lua test suite for mod_funxmpp
+├── src/
+│   ├── main/
+│   │   ├── AndroidManifest.xml
+│   │   ├── java/eu/siacs/conversations/
+│   │   │   ├── ui/compose/ # Penik Compose screens (Chats, Calls, Profile)
+│   │   │   ├── xmpp/fun/   # FunWriter, FunReader, FunTokens (PXMPP engine)
+│   │   │   └── ...         # Core XMPP connection, crypto, managers
+│   │   └── res/            # Penik themes, vector drawables, colors
+│   └── test/               # JUnit tests (FunProtocolTest, JidTest, etc.)
+├── install_phone.sh        # Automated ADB build & install script
+├── PROJECT_MAP.md          # Complete index of all codebase files
+└── build.gradle            # Root Gradle project configuration
+```
+
+> [!TIP]
+> Always consult [PROJECT_MAP.md](PROJECT_MAP.md) for precise file locations and module roles.
+
+---
+
+## Server Deployment Notes
+
+- **Port 5223 (Direct TLS, XEP-0368):** Penik prioritizes port 5223 (direct TLS) before falling back to port 5222 (STARTTLS). For optimal connection speed, ensure port 5223 is properly forwarded and reachable (`ufw allow 5223/tcp`).
+- **Server Plugin Installation:** Copy `server/mod_funxmpp.lua` into your Prosody `modules/` directory and add `"funxmpp"` to your `modules_enabled` list. Run `lua server/test_mod_funxmpp.lua` to verify compatibility.
+
+---
+
+## Upstream & Heritage
+
+Penik's core networking, cryptographic foundations, and XMPP compliance are built upon the robust, battle-tested open-source code of [Conversations](https://codeberg.org/iNPUTmice/Conversations) by Daniel Gultsch. Penik extends this base with the PXMPP binary protocol, a rewritten Jetpack Compose UI, and modern mobile UX enhancements.

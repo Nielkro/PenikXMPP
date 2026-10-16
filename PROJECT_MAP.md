@@ -244,7 +244,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 
 ## Project Configuration & Docs
 
-- `README.md` — Penik (XMPP) overview: changes vs upstream, stack, layout, build, server operator notes (5222/5223, S2S).
+- `README.md` — Penik (XMPP) overview: PXMPP binary protocol, modern Compose UI features, stack, automated ADB installation, server deployment notes, and upstream heritage.
 - `CHANGELOG.md` — Release history.
 - `conversations.doap` — Project metadata.
 - `fastlane/metadata/` — Play Store listings and screenshots (rebrand target).
