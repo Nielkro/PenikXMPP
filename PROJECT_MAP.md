@@ -249,6 +249,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `conversations.doap` — Project metadata.
 - `fastlane/metadata/` — Play Store listings and screenshots (rebrand target).
 - `docs/` — User docs (backup, migration).
+- `docs/PXMPP/` — PenikXMPP (FunXMPP) binary protocol specification & technical docs in English (`README.md`) and Russian (`README_RU.md`).
 - `art/` — Artwork sources.
 - `.woodpecker.yml` — CI pipeline.
 - `.gitmodules` — `libs/Penik` submodule (read-only UI donor, branch `feat/cloud-chats`).
