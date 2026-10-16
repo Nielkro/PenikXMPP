@@ -16,7 +16,7 @@ flowchart TD
         RateLimit["Rate Limiter (Tower Governor)\n(3 req/min на JID)"]
         DB[(SQLite WAL\npacks, stickers, user_packs)]
         Storage[("Файловое хранилище\n/data/stickers/{pack_id}/\n(файлы + предсобранный bundle.zip)")]
-        Packager["Static Bundler\n(Однократная сборка bundle.zip при импорте)"]
+        Packager["FFmpeg Converter & Bundler\n(Конвертация WebM -> Animated WebP + сборка bundle.zip)"]
     end
 
     subgraph XMPP["Сервер Snikket / Prosody"]
@@ -27,7 +27,7 @@ flowchart TD
     subgraph Client["Penik Android Client"]
         StickerPicker["Compose Sticker Keyboard\n(Сетка, табы, недавние)"]
         StickerCache["Локальный кэш бандлов\n(cache/stickers/{pack_id}/)"]
-        ChatRenderer["Рендерер стикеров в чате\n(WebP: Coil, WebM: MediaCodec/ExoPlayer, TGS: Lottie)"]
+        ChatRenderer["Рендерер стикеров в чате\n(WebP / Animated WebP: Coil, TGS: Lottie)"]
         StickerModel["XMPP Парсер/Генератор\n(<sticker xmlns='penik:stickers:0'/>)"]
     end
 
@@ -53,30 +53,58 @@ flowchart TD
 
 ## 2. Ключевые архитектурные решения
 
-### 2.1. Отказ от транскодирования WebM в Animated WebP (Zero-Transcoding)
-- **Проблема:** WebM видеостикеры сжаты кодеком VP9 с прозрачностью (альфа-каналом). Крэйт `image` не декодирует WebM-контейнеры. Добавление `ffmpeg` разрушает идею легковесного статического Rust-бинарника. Кроме того, Animated WebP при сопоставимом качестве весит в **3–5 раз больше**, а кодирование пака из 50 стикеров полностью парализует CPU одноядерного VPS на несколько минут.
-- **Решение:**
-  - **Rust-микросервис сохраняет и отдаёт оригинальные файлы как есть:**
-    - Статические стикеры: `image/webp`.
-    - Анимированные векторные: `application/x-tgsticker` (TGS) или распакованный JSON Lottie.
-    - Видеостикеры: `video/webm` (VP9 + альфа).
-  - Никакого перекодирования на сервере — микросервис работает как сверхбыстрый асинхронный I/O диспетчер.
-  - **На Android:**
-    - Статический WebP отображается через Coil (`AsyncImage`).
-    - TGS/Lottie рендерится через `lottie-compose`.
-    - WebM видеостикеры рендерятся аппаратно через Android `MediaCodec` / легковесный SurfaceView плеер на базе Media3 ExoPlayer с аппаратным VP9 декодером. Это гарантирует 60 FPS, экономит батарею смартфона и исключает лаги в списках `LazyVerticalGrid`.
+### 2.1. Серверная однократная конвертация WebM в Animated WebP через FFmpeg
+- **Проблема с VP9 Alpha:** Стандартный Android `MediaCodec` и ExoPlayer из коробки **не декодируют альфа-канал** (прозрачность) в контейнере WebM/VP9. Прозрачность в WebM хранится во вспомогательном видеопотоке (`alpha_mode: 1` / `BlockAddID: 1`). Аппаратный декодер смартфона просто игнорирует этот слой и рисует стикер на глухом черном прямоугольнике.
+- **Особенность декодера FFmpeg (КРИТИЧНО):** Дефолтный нативный декодер VP9 в ffmpeg также игнорирует слой прозрачности и отбрасывает альфу. Чтобы ffmpeg прочитал альфа-канал из WebM, **обязательно** указывать внешний декодер `libvpx-vp9` строго перед ключом `-i`.
+- **Оптимизация разрешения, FPS и веса:**
+  - Оставлять исходные `512x512` при `30 FPS` для Animated WebP недопустимо — 3-секундная анимация раздувается до 1.5–2 МБ, а пак из 50 штук весит ~80 МБ. В чате стикеры рендерятся в размере 180–200 dp, поэтому разрешение `256x256` (Lanczos) при `20 FPS` дает идеальную четкость на экранах смартфонов при весе всего 200–350 КБ на стикер (пак ~12–15 МБ).
+  - Наряду с анимацией, при импорте генерируется статичный 1-кадровый превью-файл `thumb.webp` (`128x128`).
+- **Команда транскодинга (Rust микросервис):**
+  ```bash
+  # 1. Анимированный WebP с прозрачностью (256x256, 20 fps, q=65)
+  ffmpeg -y -c:v libvpx-vp9 -i input.webm \
+    -vcodec libwebp -filter:v "fps=20,scale=256:256:flags=lanczos" \
+    -lossless 0 -compression_level 6 -q:v 65 -loop 0 output.webp
+
+  # 2. Легковесный статичный кадр для сетки клавиатуры (128x128, q=70)
+  ffmpeg -y -c:v libvpx-vp9 -i input.webm -vframes 1 \
+    -vcodec libwebp -filter:v "scale=128:128:flags=lanczos" \
+    -lossless 0 -compression_level 6 -q:v 70 thumb.webp
+  ```
+- **На Android-клиенте:**
+  - В чате (`PenikChatRoom`) анимированный WebP рендерится стандартным **Coil (`AsyncImage`)** через нативный `ImageDecoder` / `coil-gif` (`AnimatedImageDecoder`) с аппаратным ускорением и нативной прозрачностью.
+  - В клавиатуре стикеров (`LazyVerticalGrid`) отображаются **статичные превью `thumb.webp`**, исключая одновременное декодирование 16+ тяжелых анимаций в память и предотвращая OOM и фризы скролла.
+  - Векторный TGS рендерится через `lottie-compose`.
+  - Полностью исключены внешние видеоплееры (ExoPlayer/Media3), NDK-библиотеки и кастомные OpenGL-шейдеры.
 
 ---
 
-### 2.2. Защита и авторизация REST API
-- **Проблема:** Передача `?jid={user_jid}` в query-параметрах открывает критическую уязвимость: любой желающий может удалять/устанавливать чужие стикерпаки и вызывать DoS сервиса через `/import/telegram`.
-- **Решение:**
-  - Все модифицирующие и персональные эндпоинты защищены заголовком `Authorization: Bearer <token>`.
-  - Токен формируется по схеме **HMAC-SHA256**:
-    `token = base64(jid + ":" + expires_at + ":" + hmac_sha256(jid + ":" + expires_at, shared_secret))`
-    где `shared_secret` известен только серверу XMPP/Snikket и Rust-микросервису.
-  - Микросервис валидирует подпись и срок жизни токена в Axum middleware, извлекая `user_jid` из проверенного контекста.
-  - На эндпоинт `/api/v1/stickers/import/telegram` накладывается Rate Limiter (`tower_governor`) с ограничением: не более 3 запросов на импорт в минуту от одного `user_jid` / IP.
+### 2.2. Защита и авторизация REST API (XMPP Token Exchange)
+- **Устранение уязвимостей Query-параметров:**
+  - Передача `?jid={user_jid}` в query-параметрах категорически **запрещена**. Никаких параметров JID в URL нет.
+  - Любой неавторизованный запрос к модифицирующим эндпоинтам (`POST/DELETE /install`, `POST /import/telegram`) моментально возвращает `401 Unauthorized`.
+- **Механизм выпуска токена через XMPP IQ:**
+  - Секретный ключ `shared_secret` известен **только серверу Prosody/Snikket и Rust-микросервису**. Клиент Android **никогда не имеет доступа к секрету**.
+  - При старте сессии или раз в 24 часа Android-клиент запрашивает временный токен у своего XMPP-сервера через IQ:
+    ```xml
+    <iq type='get' id='stk_auth_1'>
+      <stickers-auth xmlns='penik:stickers:auth:0'/>
+    </iq>
+    ```
+  - Модуль Prosody (`mod_stickers_auth.lua` или `mod_funxmpp`), зная аутентифицированный JID пользователя из активного C2S-потока, генерирует HMAC-SHA256 токен:
+    `raw_data = user_jid + ":" + expires_at`
+    `sig = hmac_sha256(raw_data, shared_secret)`
+    `token = base64(raw_data + ":" + sig)`
+  - Prosody возвращает токен клиенту:
+    ```xml
+    <iq type='result' id='stk_auth_1'>
+      <stickers-auth xmlns='penik:stickers:auth:0' token='ZXhhbXBsZUB...=' expires='1776345600'/>
+    </iq>
+    ```
+- **Валидация в Rust-микросервисе:**
+  - Клиент передает заголовок `Authorization: Bearer <token>`.
+  - Axum middleware валидирует криптографическую подпись HMAC по `shared_secret`, проверяет `expires_at > now()`, безопасно извлекает доверенный `user_jid` и помещает его в `Extension<AuthUser>`.
+  - Rate Limiter (`tower_governor`) на `/import/telegram` жестко лимитирует импорт до 3 вызовов в минуту на доверенный `user_jid`.
 
 ---
 
@@ -106,6 +134,7 @@ flowchart TD
 - HTTP-клиент: `reqwest` (TLS native-tls / rustls).
 - Архивация: `zip` (однократная упаковка при импорте).
 - Безопасность: `hmac` + `sha2`.
+- Системный транскодер: `ffmpeg` (асинхронный вызов CLI через `tokio::process::Command` для однократной конвертации WebM в Animated WebP с сохранением альфа-канала).
 
 ### 3.2. Схема базы данных (SQLite)
 ```sql
@@ -115,7 +144,7 @@ CREATE TABLE IF NOT EXISTS sticker_packs (
     title TEXT NOT NULL,
     author_jid TEXT NOT NULL DEFAULT '',
     cover_sticker_id TEXT NOT NULL DEFAULT '',
-    format TEXT NOT NULL DEFAULT 'static', -- 'static' (webp), 'animated' (tgs), 'video' (webm)
+    format TEXT NOT NULL DEFAULT 'static', -- 'static' (webp), 'animated' (tgs), 'animated_webp' (webm converted to webp)
     created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_packs_tg_name ON sticker_packs(telegram_name);
@@ -151,7 +180,7 @@ CREATE INDEX IF NOT EXISTS idx_user_packs ON user_sticker_packs(user_jid, sort_o
 | `DELETE` | `/api/v1/stickers/pack/{id}/install` | Bearer Token | Удалить пак из личной коллекции. |
 | `POST` | `/api/v1/stickers/import/telegram` | Bearer Token + RateLimit | Импорт пака по ссылке `t.me/addstickers/{name}`. |
 | `GET` | `/api/v1/stickers/pack/{id}/bundle.zip` | Публично (кэш) | Скачивание предсобранного ZIP-архива всего пака. |
-| `GET` | `/api/v1/stickers/file/{pack_id}/{file}` | Публично (кэш) | Раздача отдельного стикера (`.webp`, `.tgs`, `.webm`). |
+| `GET` | `/api/v1/stickers/file/{pack_id}/{file}` | Публично (кэш) | Раздача отдельного стикера (`.webp`, `.tgs`). |
 
 ---
 
@@ -166,11 +195,11 @@ CREATE INDEX IF NOT EXISTS idx_user_packs ON user_sticker_packs(user_jid, sort_o
            emoji='🔥'
            width='512'
            height='512'
-           format='video'
-           url='https://snikket.penik.ru/api/v1/stickers/file/tg_meme_cats/cat_fire.webm'/>
+           format='animated_webp'
+           url='https://snikket.penik.ru/api/v1/stickers/file/tg_meme_cats/cat_fire.webp'/>
   <!-- XEP-0066 Out of Band Data для сторонних клиентов -->
   <x xmlns='jabber:x:oob'>
-    <url>https://snikket.penik.ru/api/v1/stickers/file/tg_meme_cats/cat_fire.webm</url>
+    <url>https://snikket.penik.ru/api/v1/stickers/file/tg_meme_cats/cat_fire.webp</url>
   </x>
 </message>
 ```
@@ -194,15 +223,15 @@ CREATE INDEX IF NOT EXISTS idx_user_packs ON user_sticker_packs(user_jid, sort_o
   - Прозрачный фон без декоративных рамок текстового пузыря.
   - Фиксированный размер: 180–220 dp с сохранением aspect ratio.
   - В зависимости от `format`:
-    - `static`: Coil `AsyncImage`.
+    - `static` / `animated_webp`: Coil `AsyncImage` с поддержкой анимации через `ImageDecoderDecoder` (Android 9+) / `coil-gif`. Обеспечивает нативную прозрачность, аппаратный рендеринг и гладкий скролл без подвисаний.
     - `animated`: `com.airbnb.android.lottie:lottie-compose` (TGS/Lottie).
-    - `video`: Легковесный Compose-компонент поверх Media3/ExoPlayer (автоплей, бесконечный цикл, аппаратное декодирование VP9).
   - Индикатор доставки (одиночная/двойная галочка) на полупрозрачной подложке в нижнем правом углу.
 
 ### 5.3. Клавиатура стикеров (`PenikStickerPicker.kt`)
 - Вкладки установленных паков с иконками обложек (горизонтальный скролл).
 - Вкладка «Недавние» (история последних 30 отправленных стикеров).
-- Сетка стикеров (4 колонки).
+- Сетка стикеров (4 колонки): рендеринг легковесных статичных миниатюр `thumb.webp` (`128x128`) через Coil вместо тяжелых анимированных потоков, что гарантирует 60 FPS при скролле и нулевой риск OOM.
+- Предпросмотр анимации при долгом нажатии на ячейку стикера.
 - Диалог добавления пака: ввод ссылки Telegram `t.me/addstickers/...` с индикатором прогресса загрузки.
 
 ---
@@ -213,9 +242,10 @@ CREATE INDEX IF NOT EXISTS idx_user_packs ON user_sticker_packs(user_jid, sort_o
 1. Инициализировать проект `cargo new --bin server/penik-stickers-rs`.
 2. Настроить Axum, SQLite миграции (`packs`, `stickers`, `user_packs`), HMAC middleware.
 3. Реализовать клиент Telegram Bot API (`getStickerSet`, скачивание файлов через `getFile`).
-4. Реализовать сборку `bundle.zip` при импорте и сохранение на диск.
-5. Реализовать отдачу статических файлов с ETag и кэшированием.
-6. Написать юнит-тесты на проверку HMAC-авторизации, идемпотентности импорта по `telegram_name` и генерации zip.
+4. Реализовать вызов `ffmpeg` для однократной конвертации `.webm` видеостикеров в `Animated WebP` с сохранением альфа-канала.
+5. Реализовать сборку `bundle.zip` при импорте и сохранение на диск.
+6. Реализовать отдачу статических файлов с ETag и кэшированием.
+7. Написать юнит-тесты на проверку HMAC-авторизации, идемпотентности импорта по `telegram_name` и генерации zip.
 
 ### Этап 2: Интеграция с XMPP-протоколом
 1. Создать XML-модель стикера и интеграцию в `MessageParser.java` / `MessageGenerator.java`.
@@ -228,10 +258,10 @@ CREATE INDEX IF NOT EXISTS idx_user_packs ON user_sticker_packs(user_jid, sort_o
 
 ### Этап 4: Jetpack Compose UI
 1. Реализовать `PenikStickerPicker.kt` (табы паков, сетка, кнопка импорта).
-2. Реализовать `PenikStickerBubble.kt` для рендеринга в `PenikChatRoom.kt` с поддержкой WebP, TGS и WebM (ExoPlayer).
+2. Реализовать `PenikStickerBubble.kt` для рендеринга в `PenikChatRoom.kt` через Coil `AsyncImage` (WebP / Animated WebP с прозрачностью) и `lottie-compose` (TGS).
 3. Добавить кнопку переключения на стикеры в поле ввода сообщения.
 
 ### Этап 5: Сборка, Docker и верификация
-1. Подготовить `server/penik-stickers-rs/Dockerfile` для простого деплоя на сервере.
-2. Провести E2E-тестирование: импорт пака из Telegram -> скачивание бандла на Android -> отправка стикера в чат -> отображение у собеседника.
+1. Подготовить `server/penik-stickers-rs/Dockerfile` с установленным `ffmpeg` для продакшн-образа.
+2. Провести E2E-тестирование: импорт пака из Telegram (включая видеостикеры с альфой) -> скачивание бандла на Android -> отправка стикера в чат -> отображение у собеседника на прозрачном фоне.
 3. Обновить `PROJECT_MAP.md`.
