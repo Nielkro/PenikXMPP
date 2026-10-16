@@ -20,7 +20,7 @@ It combines the decentralized power and security of open standards with the poli
 - **Privacy & Encryption**
   - Seamless end-to-end encryption (OMEMO) with zero configuration required.
   - Automatic key acceptance and chat upgrade when communicating with encrypted peers.
-  - Strict TLS transport security with direct TLS (port 5223) priority.
+  - Strict TLS transport security and privacy by design.
 - **High-Definition Voice & Video Calls**
   - Jingle / WebRTC peer-to-peer audio and video calling.
   - Telegram-style independent video upgrade: video streams toggle independently on each side without disrupting ongoing audio.
@@ -42,7 +42,7 @@ flowchart LR
         CR["FunReader (TLV Parser)"]
     end
 
-    subgraph Wire["Encrypted TLS Stream (Port 5223 / 5222)"]
+    subgraph Wire["Encrypted TLS Stream"]
         F1["[Length 2B] [Binary Stanza]"]
         F2["[Length 2B] [Binary Ack / r]"]
     end
@@ -142,7 +142,6 @@ The resulting APK is generated in `build/outputs/apk/conversationsFree/debug/`.
 
 ## Server Deployment Notes
 
-- **Port 5223 (Direct TLS, XEP-0368):** Penik prioritizes port 5223 (direct TLS) before falling back to port 5222 (STARTTLS). For optimal connection speed, ensure port 5223 is properly forwarded and reachable (`ufw allow 5223/tcp`).
 - **Server Plugin Installation:** Copy `server/mod_funxmpp.lua` into your Prosody `modules/` directory and add `"funxmpp"` to your `modules_enabled` list. Run `lua server/test_mod_funxmpp.lua` to verify compatibility.
 
 ---
