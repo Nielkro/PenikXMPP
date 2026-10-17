@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Penik Messenger — свой мессенджер без лишнего</title>
-<meta name="description" content="Penik Messenger — простой и быстрый мессенджер: лички и группы, мультидевайсинг, звонки и бинарный WebSocket на MessagePack. Без сквозного шифрования — сервер хранит историю открыто.">
+<meta name="description" content="Penik Messenger — простой и быстрый мессенджер: лички и группы, мультидевайсинг, звонки и бинарный протокол PXMPP. Без сквозного шифрования — сервер хранит историю открыто.">
 <link rel="icon" href="logo_fixed.webp">
 <style>
 :root{
@@ -370,7 +370,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
     </div>
 
     <div class="hero-demo">
-      <div class="chip chip1">⚡ MessagePack</div>
+      <div class="chip chip1">⚡ PXMPP</div>
       <div class="chip chip2">📱 мультидевайс</div>
       <div class="chip chip3">💬 группы + звонки</div>
       <div class="phone">
@@ -405,8 +405,8 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <!-- ================= MARQUEE ================= -->
 <div class="marquee" aria-hidden="true">
   <div class="marquee-track" id="mqTrack">
-    <span><i>◆</i>MessagePack</span><span><i>◆</i>Binary WebSocket</span><span><i>◆</i>Мультидевайсинг</span><span><i>◆</i>Группы</span><span><i>◆</i>Звонки</span><span><i>◆</i>Свой протокол</span><span><i>◆</i>Без E2EE</span><span><i>◆</i>Открытый сервер</span>
-    <span><i>◆</i>MessagePack</span><span><i>◆</i>Binary WebSocket</span><span><i>◆</i>Мультидевайсинг</span><span><i>◆</i>Группы</span><span><i>◆</i>Звонки</span><span><i>◆</i>Свой протокол</span><span><i>◆</i>Без E2EE</span><span><i>◆</i>Открытый сервер</span>
+    <span><i>◆</i>PXMPP</span><span><i>◆</i>Direct TLS</span><span><i>◆</i>Мультидевайсинг</span><span><i>◆</i>Группы</span><span><i>◆</i>Звонки</span><span><i>◆</i>Стикеры</span><span><i>◆</i>Без E2EE</span><span><i>◆</i>Открытый сервер</span>
+    <span><i>◆</i>PXMPP</span><span><i>◆</i>Direct TLS</span><span><i>◆</i>Мультидевайсинг</span><span><i>◆</i>Группы</span><span><i>◆</i>Звонки</span><span><i>◆</i>Стикеры</span><span><i>◆</i>Без E2EE</span><span><i>◆</i>Открытый сервер</span>
   </div>
 </div>
 
@@ -750,7 +750,7 @@ const chatScript = [
   { dir: 'in',  text: 'Понятно. А группы есть?' },
   { dir: 'out', text: 'Есть. И мультидевайс есть' },
   { dir: 'in',  text: 'У меня интернет как у Кирилла, потянет?' },
-  { dir: 'out', text: 'MessagePack. Потянет даже у Кирилла 😎' },
+  { dir: 'out', text: 'PXMPP. Потянет даже у Кирилла 😎' },
   { dir: 'in',  text: 'Главный минус — сервер всё видит, да?' },
   { dir: 'out', text: 'Да. Зато зашёл с нового тела — и история уже там' }
 ];

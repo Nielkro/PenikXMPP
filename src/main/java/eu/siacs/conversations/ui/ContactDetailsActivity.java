@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import androidx.appcompat.view.menu.MenuBuilder;
 import eu.siacs.conversations.entities.Conversation;
+import eu.siacs.conversations.phone.PenikPhoneDirectoryManager;
 import eu.siacs.conversations.utils.UIHelper;
 import java.time.Instant;
 import android.widget.CompoundButton;
@@ -516,6 +517,25 @@ public class ContactDetailsActivity extends OmemoActivity
         }
     }
 
+    private void showPhoneActionDialog(String phone) {
+        if (phone == null || phone.isEmpty()) return;
+        final String formatted = PenikPhoneDirectoryManager.formatPhoneNumberHuman(phone);
+        final CharSequence[] options = new CharSequence[] {
+                "Позвонить",
+                "Скопировать номер"
+        };
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(formatted)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        dialPhoneNumber(phone);
+                    } else if (which == 1) {
+                        copyPhoneNumber(phone);
+                    }
+                })
+                .show();
+    }
+
     private void dialPhoneNumber(String phone) {
         if (phone == null || phone.isEmpty()) return;
         final Intent dialIntent = new Intent(Intent.ACTION_DIAL);
@@ -561,13 +581,14 @@ public class ContactDetailsActivity extends OmemoActivity
         binding.iconActionMute.setImageResource(
                 isMuted ? R.drawable.ic_notifications_off_24dp : R.drawable.ic_notifications_24dp);
 
-        // Phone Number in info card
+        // Phone Number in info card (E.123 formatted, click opens action dialog)
         final String cachedPhone = contact.getPhoneNumber();
         if (!Strings.isNullOrEmpty(cachedPhone)) {
-            binding.detailsContactPhone.setText(cachedPhone);
+            final String formatted = PenikPhoneDirectoryManager.formatPhoneNumberHuman(cachedPhone);
+            binding.detailsContactPhone.setText(formatted);
             binding.rowPhone.setVisibility(View.VISIBLE);
             binding.dividerPhoneUsername.setVisibility(View.VISIBLE);
-            binding.rowPhone.setOnClickListener(v -> dialPhoneNumber(cachedPhone));
+            binding.rowPhone.setOnClickListener(v -> showPhoneActionDialog(cachedPhone));
             binding.rowPhone.setOnLongClickListener(v -> {
                 copyPhoneNumber(cachedPhone);
                 return true;
@@ -589,10 +610,11 @@ public class ContactDetailsActivity extends OmemoActivity
                                 if (!Strings.isNullOrEmpty(phone)) {
                                     contact.setPhoneNumber(phone);
                                     runOnUiThread(() -> {
-                                        binding.detailsContactPhone.setText(phone);
+                                        final String formatted = PenikPhoneDirectoryManager.formatPhoneNumberHuman(phone);
+                                        binding.detailsContactPhone.setText(formatted);
                                         binding.rowPhone.setVisibility(View.VISIBLE);
                                         binding.dividerPhoneUsername.setVisibility(View.VISIBLE);
-                                        binding.rowPhone.setOnClickListener(v -> dialPhoneNumber(phone));
+                                        binding.rowPhone.setOnClickListener(v -> showPhoneActionDialog(phone));
                                         binding.rowPhone.setOnLongClickListener(v -> {
                                             copyPhoneNumber(phone);
                                             return true;

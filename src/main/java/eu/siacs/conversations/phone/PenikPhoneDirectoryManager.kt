@@ -36,12 +36,42 @@ object PenikPhoneDirectoryManager {
         .readTimeout(10, TimeUnit.SECONDS)
         .build()
 
+    @JvmStatic
     fun normalizePhoneNumber(phone: String): String {
         val digits = phone.replace(Regex("[^0-9]"), "")
         if (digits.length == 11 && (digits.startsWith("7") || digits.startsWith("8"))) {
             return "+7" + digits.substring(1)
         }
         return if (phone.startsWith("+")) "+$digits" else digits
+    }
+
+    @JvmStatic
+    fun formatPhoneNumberHuman(phone: String): String {
+        if (phone.isBlank()) return ""
+        val digits = phone.replace(Regex("[^0-9]"), "")
+        if (digits.length == 11 && (digits.startsWith("7") || digits.startsWith("8"))) {
+            return "+7 ${digits.substring(1, 4)} ${digits.substring(4, 7)} ${digits.substring(7, 9)} ${digits.substring(9, 11)}"
+        } else if (digits.length == 10) {
+            return "+7 ${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6, 8)} ${digits.substring(8, 10)}"
+        } else if (phone.startsWith("+")) {
+            return when {
+                digits.length == 12 && digits.startsWith("375") -> {
+                    "+375 ${digits.substring(3, 5)} ${digits.substring(5, 8)} ${digits.substring(8, 10)} ${digits.substring(10, 12)}"
+                }
+                digits.length == 12 && digits.startsWith("380") -> {
+                    "+380 ${digits.substring(3, 5)} ${digits.substring(5, 8)} ${digits.substring(8, 10)} ${digits.substring(10, 12)}"
+                }
+                digits.length == 11 && digits.startsWith("1") -> {
+                    "+1 ${digits.substring(1, 4)} ${digits.substring(4, 7)} ${digits.substring(7, 11)}"
+                }
+                digits.length > 7 -> {
+                    val ccLen = if (digits.length > 10) 2 else 1
+                    "+${digits.substring(0, ccLen)} ${digits.substring(ccLen).chunked(3).joinToString(" ")}"
+                }
+                else -> phone
+            }
+        }
+        return phone
     }
 
     fun uploadPhoneAsync(jid: String, phoneNumber: String, authToken: String? = null) {

@@ -1628,7 +1628,7 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (phoneNumber.isNotBlank()) phoneNumber else "Не указан",
+                        text = if (phoneNumber.isNotBlank()) PenikPhoneDirectoryManager.formatPhoneNumberHuman(phoneNumber) else "Не указан",
                         color = textPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
