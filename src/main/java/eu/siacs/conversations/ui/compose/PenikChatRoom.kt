@@ -1657,13 +1657,13 @@ fun PenikVoiceRow(
                     modifier =
                             Modifier.size(42.dp)
                                     .clip(CircleShape)
-                                    .background(if (isSentByMe) Color.White.copy(alpha = 0.25f) else accent),
+                                    .background(if (isSentByMe) fgColor.copy(alpha = 0.2f) else accent),
                     contentAlignment = Alignment.Center
             ) {
                 Icon(
                         painter = painterResource(R.drawable.ic_play_arrow_24dp),
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = if (isSentByMe) fgColor else Color.White,
                         modifier = Modifier.size(24.dp)
                 )
             }
@@ -1671,7 +1671,7 @@ fun PenikVoiceRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                         text = "Голосовое сообщение",
-                        color = if (isSentByMe) Color.White else fgColor,
+                        color = fgColor,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                 )
@@ -1748,9 +1748,9 @@ fun PenikVoiceRow(
             }
         }
     }
-    val btnBg = if (isSentByMe) Color.White.copy(alpha = 0.25f) else accent
-    val waveActive = if (isSentByMe) Color.White else accent
-    val waveInactive = if (isSentByMe) Color.White.copy(alpha = 0.4f) else accent.copy(alpha = 0.35f)
+    val btnBg = if (isSentByMe) fgColor.copy(alpha = 0.2f) else accent
+    val waveActive = if (isSentByMe) fgColor else accent
+    val waveInactive = if (isSentByMe) fgColor.copy(alpha = 0.35f) else accent.copy(alpha = 0.35f)
     Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
@@ -1772,7 +1772,7 @@ fun PenikVoiceRow(
                                     else R.drawable.ic_play_arrow_24dp
                             ),
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = if (isSentByMe) fgColor else Color.White,
                     modifier = Modifier.size(24.dp)
             )
         }
@@ -2612,10 +2612,9 @@ fun PenikAttachmentRow(
         } else {
             val bubbleShape = PenikBubbleShape(isSentByMe = isSentByMe)
             val isVoice = mime.startsWith("audio/")
-            val voiceBg = if (isSentByMe) colorResource(R.color.penik_accent) else colorResource(R.color.penik_panel_secondary)
-            val bubbleBg = if (isVoice) voiceBg else bgColor
-            val effectiveFgColor = if (isVoice && isSentByMe) Color.White else fgColor
-            val effectiveMutedColor = if (isVoice && isSentByMe) Color.White.copy(alpha = 0.75f) else textMuted
+            val bubbleBg = bgColor
+            val effectiveFgColor = fgColor
+            val effectiveMutedColor = if (isSentByMe) fgColor.copy(alpha = 0.7f) else textMuted
             val onBubbleClick: () -> Unit = if (isVoice) {
                 {
                     val file = try {
