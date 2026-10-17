@@ -64,6 +64,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -188,37 +189,6 @@ fun PenikAttachmentPickerBottomSheet(
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = accentColor
-                            )
-                        }
-                    }
-
-                    // Top Send Button: directly reachable in both half-screen and full-screen states
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(accentColor)
-                            .clickable {
-                                val toSend = selectedUris.toList()
-                                onDismiss()
-                                onSendRecentMedias(toSend)
-                            }
-                            .padding(horizontal = 14.dp, vertical = 7.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = "Отправить",
-                                tint = Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = "Отправить (${selectedUris.size})",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
                             )
                         }
                     }
@@ -362,16 +332,18 @@ fun PenikAttachmentPickerBottomSheet(
 
                 // Sole Floating Send FAB: dynamically positioned to ALWAYS be completely visible on-screen in both half and full states
                 if (selectedUris.isNotEmpty()) {
+                    val density = LocalDensity.current
+                    val extraLiftPx = with(density) { 60.dp.toPx() }
                     FloatingActionButton(
                         onClick = {
                             val toSend = selectedUris.toList()
                             onDismiss()
                             onSendRecentMedias(toSend)
                         },
-                        containerColor = accentColor,
+                        containerColor = accentColor.copy(alpha = 0.82f),
                         contentColor = Color.White,
                         shape = CircleShape,
-                        elevation = FloatingActionButtonDefaults.elevation(6.dp),
+                        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 2.dp, pressedElevation = 4.dp),
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .offset {
@@ -382,7 +354,8 @@ fun PenikAttachmentPickerBottomSheet(
                                 }
                                 val contentBottomInWindow = sheetTopInWindow + sheetHeightPx
                                 val overflow = (contentBottomInWindow - windowHeightPx).coerceAtLeast(0f)
-                                IntOffset(0, -overflow.roundToInt())
+                                val totalShift = if (overflow > 0f) overflow + extraLiftPx else 0f
+                                IntOffset(0, -totalShift.roundToInt())
                             }
                             .navigationBarsPadding()
                             .padding(end = 20.dp, bottom = 20.dp)
