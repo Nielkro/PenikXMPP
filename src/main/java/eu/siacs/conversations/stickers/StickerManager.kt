@@ -175,12 +175,12 @@ class StickerManager private constructor(private val context: Context) {
 
     fun getStickerFile(packId: String, fileName: String): File? {
         val file = File(stickersDir, "$packId/$fileName")
-        return if (file.exists()) file else null
+        return if (file.exists() && file.length() > 0L) file else null
     }
 
     fun getStickerThumbFile(packId: String, stickerId: String): File? {
         val file = File(stickersDir, "$packId/thumb_$stickerId.webp")
-        return if (file.exists()) file else null
+        return if (file.exists() && file.length() > 0L) file else null
     }
 
     suspend fun installBundle(packId: String, zipBytes: ByteArray) = withContext(Dispatchers.IO) {

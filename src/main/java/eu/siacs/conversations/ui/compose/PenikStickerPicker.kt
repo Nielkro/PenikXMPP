@@ -95,7 +95,21 @@ fun PenikStickerPickerBottomSheet(
     val recentStickers by stickerManager.recentStickers.collectAsState()
     val scope = rememberCoroutineScope()
 
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedTabIndex by remember { mutableIntStateOf(if (recentStickers.isNotEmpty()) 0 else 1) }
+
+    LaunchedEffect(Unit) {
+        stickerManager.refreshPacks()
+        stickerManager.refreshRecent()
+    }
+
+    LaunchedEffect(recentStickers.size, installedPacks.size) {
+        if (selectedTabIndex == 0 && recentStickers.isEmpty() && installedPacks.isNotEmpty()) {
+            selectedTabIndex = 1
+        } else if (selectedTabIndex > installedPacks.size) {
+            selectedTabIndex = if (installedPacks.isNotEmpty()) 1 else 0
+        }
+    }
+
     var showImportDialog by remember { mutableStateOf(false) }
     var importUrlInput by remember { mutableStateOf("") }
     var isImporting by remember { mutableStateOf(false) }
@@ -170,9 +184,18 @@ fun PenikStickerPickerBottomSheet(
                                 .clickable { selectedTabIndex = tabIndex },
                             contentAlignment = Alignment.Center
                         ) {
-                            if (coverThumb != null && coverThumb.exists()) {
+                            val cleanBase = serverBaseUrl.trimEnd('/')
+                            val coverModel = if (coverThumb != null && coverThumb.exists() && coverThumb.length() > 0L) {
+                                coverThumb
+                            } else if (cleanBase.isNotBlank() && pack.header.coverStickerId.isNotBlank()) {
+                                "$cleanBase/api/v1/stickers/file/${pack.header.id}/thumb_${pack.header.coverStickerId}.webp"
+                            } else {
+                                null
+                            }
+
+                            if (coverModel != null) {
                                 AsyncImage(
-                                    model = coverThumb,
+                                    model = coverModel,
                                     contentDescription = pack.header.title,
                                     contentScale = ContentScale.Fit,
                                     modifier = Modifier.size(32.dp)
@@ -234,6 +257,7 @@ fun PenikStickerPickerBottomSheet(
                         PenikStickerPickerCell(
                             stickerItem = stickerItem,
                             stickerManager = stickerManager,
+                            serverBaseUrl = serverBaseUrl,
                             onPick = {
                                 val sticker = Sticker(
                                     stickerItem.packId,
@@ -349,17 +373,29 @@ fun PenikStickerPickerBottomSheet(
 private fun PenikStickerPickerCell(
     stickerItem: StickerItem,
     stickerManager: StickerManager,
+    serverBaseUrl: String,
     onPick: () -> Unit
 ) {
     val context = LocalContext.current
     val isAnimatedVector = stickerItem.format == Sticker.FORMAT_ANIMATED
     val extension = if (isAnimatedVector) "tgs" else "webp"
     val fullFile = remember(stickerItem.packId, stickerItem.id, extension) {
-        stickerManager.getStickerFile(stickerItem.packId, "${stickerItem.id}.$extension")
+        val fileName = if (stickerItem.fileName.isNotBlank()) stickerItem.fileName else "${stickerItem.id}.$extension"
+        stickerManager.getStickerFile(stickerItem.packId, fileName)
     }
     val thumbFile = remember(stickerItem.packId, stickerItem.id) {
         stickerManager.getStickerThumbFile(stickerItem.packId, stickerItem.id)
     }
+
+    val cleanBase = serverBaseUrl.trimEnd('/')
+    val remoteThumbUrl = if (cleanBase.isNotBlank() && stickerItem.packId.isNotBlank()) {
+        "$cleanBase/api/v1/stickers/file/${stickerItem.packId}/thumb_${stickerItem.id}.webp"
+    } else null
+    val remoteFullUrl = if (cleanBase.isNotBlank() && stickerItem.packId.isNotBlank()) {
+        val fileName = if (stickerItem.fileName.isNotBlank()) stickerItem.fileName else "${stickerItem.id}.$extension"
+        "$cleanBase/api/v1/stickers/file/${stickerItem.packId}/$fileName"
+    } else null
+    val explicitUrl = stickerItem.url.takeIf { it.isNotBlank() }
 
     Box(
         modifier = Modifier
@@ -369,7 +405,7 @@ private fun PenikStickerPickerCell(
             .padding(4.dp),
         contentAlignment = Alignment.Center
     ) {
-        if (isAnimatedVector && fullFile != null && fullFile.exists()) {
+        if (isAnimatedVector && fullFile != null && fullFile.exists() && fullFile.length() > 0L) {
             val lottieJson = remember(fullFile.absolutePath) {
                 try {
                     GZIPInputStream(FileInputStream(fullFile)).bufferedReader().use { it.readText() }
@@ -395,7 +431,8 @@ private fun PenikStickerPickerCell(
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
-                val model = thumbFile ?: stickerItem.url
+                val validThumb = thumbFile?.takeIf { it.exists() && it.length() > 0L }
+                val model = validThumb ?: explicitUrl ?: remoteThumbUrl ?: remoteFullUrl
                 AsyncImage(
                     model = ImageRequest.Builder(context).data(model).crossfade(true).build(),
                     contentDescription = stickerItem.emoji,
@@ -405,8 +442,11 @@ private fun PenikStickerPickerCell(
             }
         } else {
             // For video/animated WebP, thumbFile was generated at 2 fps by the server.
-            // If thumbFile is absent, fall back to fullFile or URL.
-            val model = thumbFile ?: fullFile ?: stickerItem.url
+            // If thumbFile is absent or 0 bytes, fall back to fullFile or remote URL.
+            val validThumb = thumbFile?.takeIf { it.exists() && it.length() > 0L }
+            val validFull = fullFile?.takeIf { it.exists() && it.length() > 0L }
+            val model = validThumb ?: validFull ?: explicitUrl ?: remoteThumbUrl ?: remoteFullUrl
+
             val imageRequest = remember(model) {
                 val builder = ImageRequest.Builder(context)
                     .data(model)
