@@ -92,7 +92,10 @@ public class MessageGenerator extends AbstractGenerator {
         if (message.isSticker()) {
             final Sticker sticker = message.getSticker();
             if (sticker != null) {
-                final String fallbackText = "[Стикер" + (sticker.emoji().isEmpty() ? "" : ": " + sticker.emoji()) + "]";
+                final String url = sticker.url();
+                final String fallbackText = (url != null && !url.isEmpty())
+                        ? url
+                        : ("[Стикер" + (sticker.emoji().isEmpty() ? "" : ": " + sticker.emoji()) + "]");
                 packet.setBody(fallbackText);
                 packet.addChild("sticker", Namespace.PENIK_STICKERS)
                         .setAttribute("pack_id", sticker.packId())

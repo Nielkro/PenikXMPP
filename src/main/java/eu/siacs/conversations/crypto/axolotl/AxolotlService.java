@@ -1616,6 +1616,11 @@ public class AxolotlService implements OnAdvancedStreamFeaturesLoaded {
         final String content;
         if (message.hasFileOnRemoteHost()) {
             content = message.getFileParams().url;
+        } else if (message.isSticker()
+                && message.getSticker() != null
+                && message.getSticker().url() != null
+                && !message.getSticker().url().isEmpty()) {
+            content = message.getSticker().url();
         } else {
             content = message.getBody();
         }

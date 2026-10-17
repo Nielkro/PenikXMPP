@@ -585,6 +585,11 @@ public class MessageParser extends AbstractParser
                 final Sticker sticker = new Sticker(packId, stickerId, emoji, width, height, format, url);
                 message.setType(Message.TYPE_STICKER);
                 message.setBody(sticker.toJson());
+            } else if (message.getType() != Message.TYPE_STICKER && message.getBody() != null) {
+                final String trimmed = message.getBody().trim();
+                if (trimmed.startsWith("{\"pack_id\":") && trimmed.contains("\"sticker_id\":")) {
+                    message.setType(Message.TYPE_STICKER);
+                }
             }
             message.markable = packet.hasExtension(Markable.class);
             if (conversationMultiMode) {
