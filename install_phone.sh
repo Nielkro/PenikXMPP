@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # install_phone.sh
-# Builds and installs Penik (Conversations Free Debug) onto a connected Android device via ADB.
+# Builds and installs Penik (Conversations Playstore / FCM Debug by default) onto a connected Android device via ADB.
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
@@ -37,19 +37,30 @@ fi
 NO_BUILD=0
 NO_LAUNCH=0
 DEVICE_SERIAL=""
+FLAVOR="playstore" # default: playstore (with FCM notifications)
 
 usage() {
     echo "Usage: $0 [options]"
     echo "Options:"
-    echo "  -s <serial>    Target specific ADB device serial"
-    echo "  -n, --no-build Skip Gradle build and install existing APK"
-    echo "  --no-launch    Do not launch the app after installation"
-    echo "  -h, --help     Show this help message"
+    echo "  --fcm, --playstore   Build and install Playstore flavor with FCM notifications (default)"
+    echo "  --free               Build and install Free flavor with UnifiedPush notifications"
+    echo "  -s <serial>          Target specific ADB device serial"
+    echo "  -n, --no-build       Skip Gradle build and install existing APK"
+    echo "  --no-launch          Do not launch the app after installation"
+    echo "  -h, --help           Show this help message"
     exit 0
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --fcm|--playstore)
+            FLAVOR="playstore"
+            shift
+            ;;
+        --free)
+            FLAVOR="free"
+            shift
+            ;;
         -s)
             DEVICE_SERIAL="$2"
             shift 2
@@ -108,29 +119,50 @@ else
 fi
 
 MODEL=$("$ADB_BIN" -s "$TARGET_DEV" shell getprop ro.product.model 2>/dev/null | tr -d '\r' || echo "Unknown device")
-log_ok "Target device: $TARGET_DEV ($MODEL)"
+DEVICE_ABI=$("$ADB_BIN" -s "$TARGET_DEV" shell getprop ro.product.cpu.abi 2>/dev/null | tr -d '\r' || echo "")
+log_ok "Target device: $TARGET_DEV ($MODEL, ABI: ${DEVICE_ABI:-unknown})"
 
 # 3. Build APK
+if [[ "$FLAVOR" == "free" ]]; then
+    GRADLE_TASK="assembleConversationsFreeDebug"
+    APK_DIR="build/outputs/apk/conversationsFree/debug"
+    FLAVOR_TAG="free"
+    log_info "Using Free flavor (UnifiedPush)"
+else
+    GRADLE_TASK="assembleConversationsPlaystoreDebug"
+    APK_DIR="build/outputs/apk/conversationsPlaystore/debug"
+    FLAVOR_TAG="playstore"
+    log_info "Using Playstore flavor (Google Play Services / FCM push notifications)"
+fi
+
 if [[ $NO_BUILD -eq 0 ]]; then
-    log_info "Building Penik (assembleConversationsFreeDebug)..."
-    bash ./gradlew assembleConversationsFreeDebug
+    log_info "Building Penik ($GRADLE_TASK)..."
+    bash ./gradlew "$GRADLE_TASK"
     log_ok "Build finished successfully."
 else
     log_info "Skipping build (--no-build specified)."
 fi
 
-# 4. Find generated APK
-APK_PATH=$(find build/outputs/apk/conversationsFree/debug/ -type f -name "*.apk" 2>/dev/null | head -n 1 || true)
-if [[ -z "$APK_PATH" || ! -f "$APK_PATH" ]]; then
-    APK_PATH=$(find build/outputs/apk/ -type f -name "*Free-debug*.apk" 2>/dev/null | head -n 1 || true)
+# 4. Find matching APK for target device ABI
+APK_PATH=""
+if [[ -n "$DEVICE_ABI" && -d "$APK_DIR" ]]; then
+    APK_PATH=$(find "$APK_DIR" -type f -name "*${FLAVOR_TAG}*${DEVICE_ABI}*.apk" 2>/dev/null | head -n 1 || true)
 fi
 
 if [[ -z "$APK_PATH" || ! -f "$APK_PATH" ]]; then
-    log_err "Could not find built APK in build/outputs/apk/conversationsFree/debug/"
+    APK_PATH=$(find "$APK_DIR" -type f -name "*${FLAVOR_TAG}*universal*.apk" 2>/dev/null | head -n 1 || true)
+fi
+
+if [[ -z "$APK_PATH" || ! -f "$APK_PATH" ]]; then
+    APK_PATH=$(find "$APK_DIR" -type f -name "*.apk" 2>/dev/null | head -n 1 || true)
+fi
+
+if [[ -z "$APK_PATH" || ! -f "$APK_PATH" ]]; then
+    log_err "Could not find built APK in $APK_DIR"
     exit 1
 fi
 
-log_info "Found APK: $APK_PATH"
+log_info "Selected APK: $APK_PATH"
 
 # 5. Install APK
 log_info "Installing APK to $TARGET_DEV ($MODEL)..."
@@ -146,4 +178,4 @@ if [[ $NO_LAUNCH -eq 0 ]]; then
     log_ok "Application launched on device."
 fi
 
-log_ok "All done! Penik is installed and ready."
+log_ok "All done! Penik ($FLAVOR_TAG) is installed and running on $MODEL."
