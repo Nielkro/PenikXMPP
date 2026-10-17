@@ -39,6 +39,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
+import androidx.annotation.Nullable;
 import org.jspecify.annotations.NonNull;
 
 public class Message extends AbstractEntity

@@ -2,7 +2,7 @@
   <img src="landing/logo_fixed.webp" width="128" height="128" alt="Penik Logo" />
 </p>
 
-# Penik (XMPP)
+<h1 align="center">Penik (XMPP)</h1>
 
 **Penik** (`ru.penik.xmpp`) is a next-generation Android messenger powered by the high-performance **PXMPP** binary protocol and a modern, fluid Jetpack Compose user interface.
 

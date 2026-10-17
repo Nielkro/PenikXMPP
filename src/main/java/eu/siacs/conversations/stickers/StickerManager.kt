@@ -236,7 +236,7 @@ class StickerManager private constructor(private val context: Context) {
                 return@withContext Result.failure(Exception("Import failed: HTTP ${importRes.code}"))
             }
 
-            val resStr = importRes.body?.string() ?: ""
+            val resStr = importRes.body.string()
             val root = JSONObject(resStr)
             if (!root.optBoolean("ok", false)) {
                 return@withContext Result.failure(Exception(root.optString("error", "Unknown error")))
@@ -255,7 +255,7 @@ class StickerManager private constructor(private val context: Context) {
                 return@withContext Result.failure(Exception("Bundle download failed: HTTP ${bundleRes.code}"))
             }
 
-            val zipBytes = bundleRes.body?.bytes() ?: return@withContext Result.failure(Exception("Empty bundle"))
+            val zipBytes = bundleRes.body.bytes()
             installBundle(packId, zipBytes)
 
             Result.success(packId)
