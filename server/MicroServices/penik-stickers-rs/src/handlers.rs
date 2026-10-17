@@ -169,9 +169,16 @@ pub async fn import_telegram_pack(
         )
     })?;
 
-    let format_str = if tg_set.is_video {
+    let has_video = tg_set.is_video
+        || tg_set.sticker_format.as_deref() == Some("video")
+        || tg_set.stickers.iter().any(|s| s.is_video);
+    let has_animated = tg_set.is_animated
+        || tg_set.sticker_format.as_deref() == Some("animated")
+        || tg_set.stickers.iter().any(|s| s.is_animated);
+
+    let format_str = if has_video {
         "animated_webp"
-    } else if tg_set.is_animated {
+    } else if has_animated {
         "animated"
     } else {
         "static"
@@ -216,7 +223,17 @@ pub async fn import_telegram_pack(
             }
         };
 
-        let final_file_name = if tg_set.is_video {
+        let is_video = s.is_video
+            || tg_set.is_video
+            || tg_set.sticker_format.as_deref() == Some("video")
+            || file_bytes.starts_with(&[0x1A, 0x45, 0xDF, 0xA3]);
+
+        let is_animated = s.is_animated
+            || tg_set.is_animated
+            || tg_set.sticker_format.as_deref() == Some("animated")
+            || file_bytes.starts_with(&[0x1F, 0x8B]);
+
+        let final_file_name = if is_video {
             let tmp_webm = pack_dir.join(format!("{}_raw.webm", sticker_id));
             let out_webp = pack_dir.join(format!("{}.webp", sticker_id));
             let thumb_webp = pack_dir.join(format!("thumb_{}.webp", sticker_id));
@@ -235,7 +252,7 @@ pub async fn import_telegram_pack(
             let _ = generate_webm_thumbnail(&tmp_webm, &thumb_webp).await;
             let _ = tokio::fs::remove_file(&tmp_webm).await;
             format!("{}.webp", sticker_id)
-        } else if tg_set.is_animated {
+        } else if is_animated {
             let out_tgs = pack_dir.join(format!("{}.tgs", sticker_id));
             let thumb_webp = pack_dir.join(format!("thumb_{}.webp", sticker_id));
 

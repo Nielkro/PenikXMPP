@@ -16,6 +16,10 @@ pub struct TgStickerSet {
     pub is_animated: bool,
     #[serde(default)]
     pub is_video: bool,
+    #[serde(default)]
+    pub sticker_type: Option<String>,
+    #[serde(default)]
+    pub sticker_format: Option<String>,
     pub stickers: Vec<TgSticker>,
 }
 

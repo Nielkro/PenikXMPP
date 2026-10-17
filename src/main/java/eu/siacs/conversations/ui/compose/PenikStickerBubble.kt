@@ -70,7 +70,21 @@ fun PenikStickerBubble(
     val extension = if (sticker.format() == Sticker.FORMAT_ANIMATED) "tgs" else "webp"
     val fileName = "${sticker.stickerId()}.$extension"
     val localFile = remember(sticker.packId(), sticker.stickerId(), extension) {
-        stickerManager.getStickerFile(sticker.packId(), fileName)
+        val f = stickerManager.getStickerFile(sticker.packId(), fileName)
+        if (f != null && f.exists() && f.name.endsWith(".webp")) {
+            // Validate that the file is not a raw WebM video mistakenly saved as webp
+            try {
+                FileInputStream(f).use { input ->
+                    val header = ByteArray(4)
+                    val read = input.read(header)
+                    if (read == 4 && header[0] == 0x1A.toByte() && header[1] == 0x45.toByte() && header[2] == 0xDF.toByte() && header[3] == 0xA3.toByte()) {
+                        f.delete()
+                        return@remember null
+                    }
+                }
+            } catch (ignored: Exception) {}
+        }
+        f?.takeIf { it.exists() }
     }
 
     val defaultBaseUrl = "https://stickers.snikket.penik.ru"
@@ -224,6 +238,9 @@ private fun FallbackStickerImage(model: Any) {
                 }
             }
             (state.result.drawable as? Animatable)?.start()
+        },
+        onError = { state ->
+            Log.e(Config.LOGTAG, "Sticker load failed for model $model: ${state.result.throwable.message}")
         },
         modifier = Modifier.fillMaxSize()
     )
