@@ -62,7 +62,7 @@ pub async fn generate_webm_thumbnail(
             "-vcodec",
             "libwebp",
             "-filter:v",
-            "fps=2,scale=128:128:flags=lanczos",
+            "fps=20,scale=128:128:flags=lanczos",
             "-lossless",
             "0",
             "-compression_level",

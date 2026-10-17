@@ -70,6 +70,8 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import eu.siacs.conversations.R
 import eu.siacs.conversations.entities.Sticker
@@ -427,19 +429,13 @@ private fun PenikStickerPickerCell(
             }
             if (lottieJson != null) {
                 val composition by rememberLottieComposition(LottieCompositionSpec.JsonString(lottieJson))
-                var frameIndex by remember { mutableStateOf(0) }
-                LaunchedEffect(composition) {
-                    if (composition != null) {
-                        // 2 FPS: updates frame every 500ms
-                        while (true) {
-                            delay(500L)
-                            frameIndex = (frameIndex + 1) % 20
-                        }
-                    }
-                }
+                val progress by animateLottieCompositionAsState(
+                    composition = composition,
+                    iterations = LottieConstants.IterateForever
+                )
                 LottieAnimation(
                     composition = composition,
-                    progress = { (frameIndex * 0.05f) % 1f },
+                    progress = { progress },
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
@@ -453,7 +449,7 @@ private fun PenikStickerPickerCell(
                 )
             }
         } else {
-            // For video/animated WebP, thumbFile was generated at 2 fps by the server.
+            // For video/animated WebP, thumbFile was generated at 20 fps by the server.
             // If thumbFile is absent or 0 bytes, fall back to fullFile or remote URL.
             val validThumb = thumbFile?.takeIf { it.exists() && it.length() > 0L }
             val validFull = fullFile?.takeIf { it.exists() && it.length() > 0L }
