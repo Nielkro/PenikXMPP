@@ -40,6 +40,8 @@ public class XmlReader implements Closeable {
     }
 
     public void setInputStream(final InputStream inputStream) throws IOException {
+        this.funReader = null;
+        this.pendingFunElement = null;
         this.parserInputStream = of(inputStream);
     }
 

@@ -648,4 +648,24 @@ end
 
 module:hook_tag(FUN_NS, "enable", handle_enable);
 
+-- Hook: Stream Management hibernation / disconnect cleanup
+-- When a connection drops or hibernates, reset funxmpp stream state so that
+-- reconnected/resumed sessions do not attempt binary I/O on fresh un-negotiated sockets.
+local function handle_session_cleanup(event)
+    local session = event.origin or event.session;
+    if session and session.funxmpp_enabled then
+        session.funxmpp_enabled = false;
+        session.funxmpp_in_buf = nil;
+        session.funxmpp_last_out = nil;
+        pcall(filters.remove_filter, session, "bytes/in", funxmpp_bytes_in);
+        pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_stash_out);
+        pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_out);
+        module:log("debug", "FunXMPP stream state reset on disconnect/hibernation for %s",
+            session.full_jid or session.ip or "unknown");
+    end
+end
+
+module:hook("c2s-closed", handle_session_cleanup, 100);
+module:hook("smacks-hibernated", handle_session_cleanup, 100);
+
 module:log("info", "mod_funxmpp initialized for high-performance mobile binary framing");

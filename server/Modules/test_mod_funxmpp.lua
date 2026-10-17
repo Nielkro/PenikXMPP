@@ -30,6 +30,15 @@ local mock_filters = {
         if not filters_map[name] then filters_map[name] = {} end
         table.insert(filters_map[name], { fn = fn, priority = priority });
         table.sort(filters_map[name], function(a, b) return a.priority > b.priority end);
+    end,
+    remove_filter = function(session, name, fn)
+        if not filters_map[name] then return end
+        for i, entry in ipairs(filters_map[name]) do
+            if entry.fn == fn then
+                table.remove(filters_map[name], i);
+                break;
+            end
+        end
     end
 };
 
@@ -197,6 +206,22 @@ do
     -- Calling tostring on wrapper must not throw, but return empty string ""
     local bin = tostring(wrapped);
     assert_eq(bin, "", "Stanza with >255 attributes dropped safely as empty string");
+end
+ 
+-- Test 6: Session cleanup on disconnect or hibernation resets state and removes filters
+do
+    local cleanup_handler = hooks["c2s-closed"];
+    assert(type(cleanup_handler) == "function", "c2s-closed hook is registered");
+    assert(hooks["smacks-hibernated"] == cleanup_handler, "smacks-hibernated hook is registered to same handler");
+
+    session.funxmpp_enabled = true;
+    session.funxmpp_in_buf = "leftover";
+    session.funxmpp_last_out = mock_stanza.stanza("message", { id = "m6" });
+
+    cleanup_handler({ session = session });
+    assert_eq(session.funxmpp_enabled, false, "funxmpp_enabled reset to false");
+    assert_eq(session.funxmpp_in_buf, nil, "funxmpp_in_buf reset to nil");
+    assert_eq(session.funxmpp_last_out, nil, "funxmpp_last_out reset to nil");
 end
 
 print("ALL MOD_FUNXMPP TESTS PASSED SUCCESSFULLY!");

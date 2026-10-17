@@ -196,6 +196,7 @@ public class XmppConnection implements Runnable {
     private boolean isBound = false;
     private boolean postBindWaitForDisco = false;
     private boolean postBindNegotiatedCarbons = false;
+    private boolean isFunXmppResuming = false;
     private boolean offlineMessagesRetrieved = false;
     private im.conversations.android.xmpp.model.streams.Features streamFeatures;
     private im.conversations.android.xmpp.model.streams.Features boundStreamFeatures;
@@ -340,6 +341,7 @@ public class XmppConnection implements Runnable {
         this.isBound = false;
         this.postBindWaitForDisco = false;
         this.postBindNegotiatedCarbons = false;
+        this.isFunXmppResuming = false;
         this.attempt++;
         this.currentResolverResult = null;
         // will be set if user entered hostname is being used or hostname was verified with dnssec
@@ -758,6 +760,10 @@ public class XmppConnection implements Runnable {
             } else if (this.streamId != null && startTag.is(Resumed.class)) {
                 final Resumed resumed = tagReader.readElement(startTag, Resumed.class);
                 processResumed(resumed);
+            } else if (startTag.is(im.conversations.android.xmpp.model.fun.Enabled.class)) {
+                final var enabled =
+                        tagReader.readElement(startTag, im.conversations.android.xmpp.model.fun.Enabled.class);
+                processFunEnabled(enabled);
             } else if (startTag.is(im.conversations.android.xmpp.model.fun.Failed.class)) {
                 tagReader.readElement(startTag, im.conversations.android.xmpp.model.fun.Failed.class);
                 processFunFailed();
@@ -774,10 +780,6 @@ public class XmppConnection implements Runnable {
                 processMessage(startTag);
             } else if (startTag.is(Presence.class)) {
                 processPresence(startTag);
-            } else if (startTag.is(im.conversations.android.xmpp.model.fun.Enabled.class)) {
-                final var enabled =
-                        tagReader.readElement(startTag, im.conversations.android.xmpp.model.fun.Enabled.class);
-                processFunEnabled(enabled);
             } else if (startTag.is(Enabled.class)) {
                 final var enabled = tagReader.readElement(startTag, Enabled.class);
                 processEnabled(enabled);
@@ -1278,6 +1280,11 @@ public class XmppConnection implements Runnable {
                         Message.STATUS_UNSEND);
             }
             sendPacket(packet);
+        }
+        final var features = this.streamFeatures != null ? this.streamFeatures : this.boundStreamFeatures;
+        if (features != null && features.funxmpp()) {
+            this.isFunXmppResuming = true;
+            sendFunXmppEnable();
         }
         if (mWaitForDisco.get()) {
             this.lastDiscoStarted = SystemClock.elapsedRealtime();
@@ -2254,7 +2261,8 @@ public class XmppConnection implements Runnable {
     }
 
     private void sendFunXmppEnable() {
-        final String serverDict = this.streamFeatures != null ? this.streamFeatures.funxmppDict() : null;
+        final var features = this.streamFeatures != null ? this.streamFeatures : this.boundStreamFeatures;
+        final String serverDict = features != null ? features.funxmppDict() : null;
         if (serverDict != null && !serverDict.equals(FunTokens.DICTIONARY_HASH)) {
             Log.w(
                     Config.LOGTAG,
@@ -2264,7 +2272,10 @@ public class XmppConnection implements Runnable {
                             + ", client="
                             + FunTokens.DICTIONARY_HASH
                             + "), falling back to standard XML");
-            sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+            if (!this.isFunXmppResuming) {
+                sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+            }
+            this.isFunXmppResuming = false;
             return;
         }
         Log.d(
@@ -2288,7 +2299,10 @@ public class XmppConnection implements Runnable {
                             + " vs "
                             + FunTokens.DICTIONARY_HASH
                             + "), aborting FunXMPP and falling back to standard XML");
-            sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+            if (!this.isFunXmppResuming) {
+                sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+            }
+            this.isFunXmppResuming = false;
             return;
         }
         Log.d(
@@ -2303,6 +2317,13 @@ public class XmppConnection implements Runnable {
         } catch (IOException e) {
             Log.e(Config.LOGTAG, account.getJid().asBareJid() + ": failed to initialize FunXMPP streams", e);
         }
+        if (this.isFunXmppResuming) {
+            this.isFunXmppResuming = false;
+            Log.d(
+                    Config.LOGTAG,
+                    account.getJid().asBareJid() + ": FunXMPP successfully re-activated on resume");
+            return;
+        }
         sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
     }
 
@@ -2311,7 +2332,10 @@ public class XmppConnection implements Runnable {
                 Config.LOGTAG,
                 account.getJid().asBareJid()
                         + ": FunXMPP negotiation failed (dictionary mismatch or error), falling back to standard XML");
-        sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+        if (!this.isFunXmppResuming) {
+            sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+        }
+        this.isFunXmppResuming = false;
     }
 
     private boolean enableStreamManagement() {
