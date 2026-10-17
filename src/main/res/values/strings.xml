@@ -10,7 +10,7 @@
     <string name="channel_details">Channel details</string>
     <string name="action_add_account">Add account</string>
     <string name="action_edit_contact">Edit name</string>
-    <string name="action_delete_contact">Delete from roster</string>
+    <string name="action_delete_contact">Delete contact</string>
     <string name="action_block_contact">Block contact</string>
     <string name="action_unblock_contact">Unblock contact</string>
     <string name="action_block_domain">Block domain</string>

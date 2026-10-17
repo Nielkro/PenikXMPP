@@ -17,11 +17,18 @@ import android.provider.Settings;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.RelativeSizeSpan;
+import android.annotation.SuppressLint;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import androidx.appcompat.view.menu.MenuBuilder;
+import eu.siacs.conversations.entities.Conversation;
+import eu.siacs.conversations.utils.UIHelper;
+import java.time.Instant;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
@@ -253,7 +260,18 @@ public class ContactDetailsActivity extends OmemoActivity
         Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
 
         setSupportActionBar(binding.toolbar);
-        configureActionBar(getSupportActionBar());
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
+        binding.toolbar.setNavigationOnClickListener(v -> finish());
+
+        binding.btnActionChat.setOnClickListener(v -> openChat());
+        binding.btnActionMute.setOnClickListener(v -> toggleMute());
+        binding.btnActionCall.setOnClickListener(v -> startVoiceCall());
+        binding.btnActionVideo.setOnClickListener(v -> startVideoCall());
+        binding.rowUsername.setOnClickListener(v -> copyUsername());
+
         binding.showInactiveDevices.setOnClickListener(
                 v -> {
                     showInactiveOmemo = !showInactiveOmemo;
@@ -328,6 +346,9 @@ public class ContactDetailsActivity extends OmemoActivity
         if (itemId == android.R.id.home) {
             finish();
             return true;
+        } else if (itemId == R.id.action_notifications) {
+            toggleMute();
+            return true;
         } else if (itemId == R.id.action_share_http) {
             shareLink(true);
             return true;
@@ -379,51 +400,106 @@ public class ContactDetailsActivity extends OmemoActivity
         } else if (itemId == R.id.action_block || itemId == R.id.action_unblock) {
             BlockContactDialog.show(this, contact);
             return true;
-        } else if (itemId == R.id.action_custom_notifications) {
-            configureCustomNotifications(contact);
-            return true;
         } else {
             return super.onOptionsItemSelected(menuItem);
         }
     }
 
-    private void configureCustomNotifications(final Contact contact) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            return;
-        }
-        final var shortcut = xmppConnectionService.getShortcutService().getShortcutInfo(contact);
-        configureCustomNotification(shortcut);
-    }
-
+    @SuppressLint("RestrictedApi")
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         getMenuInflater().inflate(R.menu.contact_details, menu);
-        AccountUtils.showHideMenuItems(menu);
+        if (menu instanceof MenuBuilder menuBuilder) {
+            menuBuilder.setOptionalIconsVisible(true);
+        }
         final MenuItem block = menu.findItem(R.id.action_block);
         final MenuItem unblock = menu.findItem(R.id.action_unblock);
         final MenuItem edit = menu.findItem(R.id.action_edit_contact);
         final MenuItem delete = menu.findItem(R.id.action_delete_contact);
-        final MenuItem customNotifications = menu.findItem(R.id.action_custom_notifications);
-        customNotifications.setVisible(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R);
         if (contact == null) {
             return true;
         }
         final XmppConnection connection = contact.getAccount().getXmppConnection();
         if (connection != null && connection.getManager(BlockingManager.class).hasFeature()) {
             if (this.contact.isBlocked()) {
-                block.setVisible(false);
+                if (block != null) block.setVisible(false);
             } else {
-                unblock.setVisible(false);
+                if (unblock != null) unblock.setVisible(false);
             }
         } else {
-            unblock.setVisible(false);
-            block.setVisible(false);
+            if (unblock != null) unblock.setVisible(false);
+            if (block != null) block.setVisible(false);
         }
         if (!contact.showInRoster()) {
-            edit.setVisible(false);
-            delete.setVisible(false);
+            if (edit != null) edit.setVisible(false);
+            if (delete != null) delete.setVisible(false);
         }
         return super.onCreateOptionsMenu(menu);
+    }
+
+    private Conversation getConversation() {
+        if (xmppConnectionService == null || contact == null) {
+            return null;
+        }
+        return xmppConnectionService.findOrCreateConversation(
+                contact.getAccount(),
+                contact.getAddress().asBareJid(),
+                false,
+                true);
+    }
+
+    private void openChat() {
+        final Conversation c = getConversation();
+        if (c != null) {
+            switchToConversation(c);
+            finish();
+        }
+    }
+
+    private void toggleMute() {
+        final Conversation c = getConversation();
+        if (c != null) {
+            if (c.isMuted()) {
+                c.setMutedTill(null);
+                Toast.makeText(this, "Уведомления включены", Toast.LENGTH_SHORT).show();
+            } else {
+                c.setMutedTill(Instant.MAX);
+                Toast.makeText(this, "Уведомления отключены", Toast.LENGTH_SHORT).show();
+            }
+            xmppConnectionService.updateConversation(c);
+            populateView();
+        }
+    }
+
+    private void startVoiceCall() {
+        if (contact == null) return;
+        Intent intent = new Intent(this, RtpSessionActivity.class);
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.putExtra(RtpSessionActivity.EXTRA_ACCOUNT, contact.getAccount().getJid().asBareJid().toString());
+        intent.putExtra(RtpSessionActivity.EXTRA_WITH, contact.getAddress().asBareJid().toString());
+        intent.putExtra(RtpSessionActivity.EXTRA_LAST_ACTION, RtpSessionActivity.ACTION_MAKE_VOICE_CALL);
+        startActivity(intent);
+    }
+
+    private void startVideoCall() {
+        if (contact == null) return;
+        Intent intent = new Intent(this, RtpSessionActivity.class);
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.putExtra(RtpSessionActivity.EXTRA_ACCOUNT, contact.getAccount().getJid().asBareJid().toString());
+        intent.putExtra(RtpSessionActivity.EXTRA_WITH, contact.getAddress().asBareJid().toString());
+        intent.putExtra(RtpSessionActivity.EXTRA_LAST_ACTION, RtpSessionActivity.ACTION_MAKE_VIDEO_CALL);
+        startActivity(intent);
+    }
+
+    private void copyUsername() {
+        if (contact == null) return;
+        String address = contact.getAddress().toString();
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("XMPP Address", address);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(this, "Имя пользователя скопировано", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void populateView() {
@@ -431,77 +507,73 @@ public class ContactDetailsActivity extends OmemoActivity
             return;
         }
         invalidateOptionsMenu();
-        setTitle(contact.getDisplayName());
-        if (contact.showInRoster()) {
-            binding.detailsSendPresence.setVisibility(View.VISIBLE);
-            binding.detailsReceivePresence.setVisibility(View.VISIBLE);
-            binding.addContactButton.setVisibility(View.GONE);
-            binding.detailsSendPresence.setOnCheckedChangeListener(null);
-            binding.detailsReceivePresence.setOnCheckedChangeListener(null);
-
-            Collection<String> statusMessages =
-                    ImmutableSet.copyOf(
-                            Collections2.filter(
-                                    Lists.transform(contact.getPresences(), Presence::getStatus),
-                                    s -> !Strings.isNullOrEmpty(s)));
-            if (statusMessages.isEmpty()) {
-                binding.statusMessage.setVisibility(View.GONE);
-            } else if (statusMessages.size() == 1) {
-                final String message = Iterables.getOnlyElement(statusMessages);
-                binding.statusMessage.setVisibility(View.VISIBLE);
-                final Spannable span = new SpannableString(message);
-                if (Emoticons.isOnlyEmoji(message)) {
-                    span.setSpan(
-                            new RelativeSizeSpan(2.0f),
-                            0,
-                            message.length(),
-                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
-                binding.statusMessage.setText(span);
-            } else {
-                binding.statusMessage.setText(Joiner.on('\n').join(statusMessages));
-            }
-
-            if (contact.getOption(Contact.Options.FROM)) {
-                binding.detailsSendPresence.setText(R.string.send_presence_updates);
-                binding.detailsSendPresence.setChecked(true);
-            } else if (contact.getOption(Contact.Options.PENDING_SUBSCRIPTION_REQUEST)) {
-                binding.detailsSendPresence.setChecked(false);
-                binding.detailsSendPresence.setText(R.string.send_presence_updates);
-            } else {
-                binding.detailsSendPresence.setText(R.string.preemptively_grant);
-                binding.detailsSendPresence.setChecked(
-                        contact.getOption(Contact.Options.PREEMPTIVE_GRANT));
-            }
-            if (contact.getOption(Contact.Options.TO)) {
-                binding.detailsReceivePresence.setText(R.string.receive_presence_updates);
-                binding.detailsReceivePresence.setChecked(true);
-            } else {
-                binding.detailsReceivePresence.setText(R.string.ask_for_presence_updates);
-                binding.detailsReceivePresence.setChecked(
-                        contact.getOption(Contact.Options.ASKING));
-            }
-            if (contact.getAccount().isOnlineAndConnected()) {
-                binding.detailsReceivePresence.setEnabled(true);
-                binding.detailsSendPresence.setEnabled(true);
-            } else {
-                binding.detailsReceivePresence.setEnabled(false);
-                binding.detailsSendPresence.setEnabled(false);
-            }
-            binding.detailsSendPresence.setOnCheckedChangeListener(this.mOnSendCheckedChange);
-            binding.detailsReceivePresence.setOnCheckedChangeListener(this.mOnReceiveCheckedChange);
-        } else {
-            binding.addContactButton.setVisibility(View.VISIBLE);
-            binding.detailsSendPresence.setVisibility(View.GONE);
-            binding.detailsReceivePresence.setVisibility(View.GONE);
-            binding.statusMessage.setVisibility(View.GONE);
+        setTitle("");
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("");
         }
-        binding.detailsContactXmppAddress.setText(
-                IrregularUnicodeDetector.style(this, contact.getAddress(), true));
-        final String account =
-                JidHelper.displayAddress(contact.getAccount().getJid().asBareJid());
-        binding.detailsAccount.setOnClickListener(this::onDetailsAccountClicked);
-        binding.detailsAccount.setText(getString(R.string.using_account, account));
+        binding.toolbar.setTitle("");
+        binding.detailsContactName.setText(contact.getDisplayName());
+
+        // Status / Last seen under avatar
+        final String lastSeen = UIHelper.lastUserInteraction(this, contact.getLastUserInteraction());
+        if (lastSeen != null && !lastSeen.isEmpty()) {
+            binding.detailsLastSeen.setText(lastSeen);
+            binding.detailsLastSeen.setVisibility(View.VISIBLE);
+            if (getString(R.string.presence_online).equalsIgnoreCase(lastSeen)) {
+                binding.detailsLastSeen.setTextColor(getColor(R.color.penik_accent));
+            } else {
+                binding.detailsLastSeen.setTextColor(getColor(R.color.penik_text_muted));
+            }
+        } else {
+            binding.detailsLastSeen.setText("был(а) недавно");
+            binding.detailsLastSeen.setVisibility(View.VISIBLE);
+            binding.detailsLastSeen.setTextColor(getColor(R.color.penik_text_muted));
+        }
+
+        // Mute state
+        final Conversation conversation = getConversation();
+        final boolean isMuted = conversation != null && conversation.isMuted();
+        binding.iconActionMute.setImageResource(
+                isMuted ? R.drawable.ic_notifications_off_24dp : R.drawable.ic_notifications_24dp);
+
+        // Username / Address in info card
+        final String addressStr = JidHelper.displayAddress(contact.getAddress());
+        final String usernameDisplay = addressStr.startsWith("@") ? addressStr : "@" + addressStr;
+        binding.detailsContactXmppAddress.setText(usernameDisplay);
+
+        // Status message / Bio
+        Collection<String> statusMessages =
+                ImmutableSet.copyOf(
+                        Collections2.filter(
+                                Lists.transform(contact.getPresences(), Presence::getStatus),
+                                s -> !Strings.isNullOrEmpty(s)));
+        if (statusMessages.isEmpty()) {
+            binding.statusMessageSubscriptionBox.setVisibility(View.GONE);
+        } else if (statusMessages.size() == 1) {
+            final String message = Iterables.getOnlyElement(statusMessages);
+            binding.statusMessageSubscriptionBox.setVisibility(View.VISIBLE);
+            final Spannable span = new SpannableString(message);
+            if (Emoticons.isOnlyEmoji(message)) {
+                span.setSpan(
+                        new RelativeSizeSpan(2.0f),
+                        0,
+                        message.length(),
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            binding.statusMessage.setText(span);
+        } else {
+            binding.statusMessageSubscriptionBox.setVisibility(View.VISIBLE);
+            binding.statusMessage.setText(Joiner.on('\n').join(statusMessages));
+        }
+
+        // Contact roster / add button
+        if (contact.showInRoster()) {
+            binding.buttonBox.setVisibility(View.GONE);
+        } else {
+            binding.buttonBox.setVisibility(View.VISIBLE);
+            binding.addContactButton.setVisibility(View.VISIBLE);
+        }
+
         AvatarWorkerTask.loadAvatar(contact, binding.detailsAvatar, R.dimen.publish_avatar_size);
         binding.detailsAvatar.setOnClickListener(this::onAvatarClicked);
         if (QuickConversationsService.isContactListIntegration(this)) {

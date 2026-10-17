@@ -6,259 +6,519 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/penik_background"
         android:fitsSystemWindows="true"
         android:orientation="vertical">
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            app:elevation="0dp">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="?attr/actionBarSize" />
+                android:background="@android:color/transparent"
+                android:minHeight="?attr/actionBarSize"
+                app:navigationIcon="@drawable/ic_arrow_back_24dp"
+                app:navigationIconTint="@color/penik_text_primary"
+                app:title="" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
         <ScrollView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:id="@+id/details_main_layout"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingBottom="32dp">
 
-                <com.google.android.material.card.MaterialCardView
+                <!-- Centered Profile Header (Avatar, Name, Status) -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginRight="@dimen/activity_horizontal_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin">
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="20dp">
 
-                    <RelativeLayout
-                        android:layout_width="match_parent"
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/details_avatar"
+                        android:layout_width="110dp"
+                        android:layout_height="110dp"
+                        android:scaleType="centerCrop"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular"
+                        tools:src="@drawable/person" />
+
+                    <TextView
+                        android:id="@+id/details_contact_name"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:padding="@dimen/card_padding_regular">
+                        android:layout_marginTop="14dp"
+                        android:layout_marginHorizontal="24dp"
+                        android:gravity="center_horizontal"
+                        android:textColor="@color/penik_text_primary"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        tools:text="Артур" />
 
-                        <com.google.android.material.imageview.ShapeableImageView
-                            android:id="@+id/details_avatar"
-                            android:layout_width="@dimen/publish_avatar_size"
-                            android:layout_height="@dimen/publish_avatar_size"
-                            android:layout_alignParentTop="true"
-                            android:layout_centerHorizontal="true"
-                            android:scaleType="centerCrop"
-                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
+                    <TextView
+                        android:id="@+id/details_last_seen"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center_horizontal"
+                        android:textColor="@color/penik_text_muted"
+                        android:textSize="13sp"
+                        tools:text="был(а) вчера в 23:11:44" />
 
-                        <TextView
-                            android:id="@+id/details_contact_xmpp_address"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_below="@+id/details_avatar"
-                            android:layout_centerHorizontal="true"
-                            android:layout_marginTop="16sp"
-                            android:gravity="center_horizontal"
-                            android:minWidth="288dp"
-                            android:text="@string/account_settings_example_jabber_id"
-                            android:textAppearance="?textAppearanceTitleLarge" />
+                </LinearLayout>
 
+                <!-- 4 Action Buttons Row: Чат | Звук | Звонок | Видео -->
+                <LinearLayout
+                    android:id="@+id/action_buttons_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="16dp">
 
-
-                        <LinearLayout
-                            android:id="@+id/button_box"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_below="@+id/details_contact_xmpp_address"
-                            android:layout_centerHorizontal="true"
-                            android:layout_marginTop="16dp"
-                            android:orientation="horizontal">
-
-                            <Button
-                                android:id="@+id/add_contact_button"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginHorizontal="8dp"
-                                android:text="@string/add_contact" />
-
-                            <Button
-                                android:id="@+id/add_address_book"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginHorizontal="8dp"
-                                android:text="@string/save_to_contact"
-                                app:icon="@drawable/ic_contacts_24dp" />
-                        </LinearLayout>
-
-
-                        <androidx.constraintlayout.widget.ConstraintLayout
-                            android:id="@+id/tags"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_below="@+id/button_box"
-                            android:layout_centerHorizontal="true"
-                            android:layout_marginTop="16sp"
-                            android:visibility="gone">
-
-                            <androidx.constraintlayout.helper.widget.Flow
-                                android:id="@+id/flow_widget"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                app:flow_horizontalBias="0"
-                                app:flow_horizontalGap="8sp"
-                                app:flow_horizontalStyle="packed"
-                                app:flow_verticalGap="4sp"
-                                app:flow_wrapMode="chain"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent" />
-                        </androidx.constraintlayout.widget.ConstraintLayout>
+                    <!-- Чат -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btn_action_chat"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/penik_panel_secondary"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
 
                         <LinearLayout
-                            android:id="@+id/status_message_subscription_box"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_below="@+id/tags"
-                            android:layout_alignStart="@+id/details_contact_xmpp_address"
-                            android:layout_marginTop="8sp"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
                             android:orientation="vertical">
 
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_chat_24dp"
+                                app:tint="@color/penik_text_primary" />
+
                             <TextView
-                                android:id="@+id/status_message"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginBottom="8sp"
-                                android:textAppearance="?textAppearanceBodyMedium"
-                                tools:text="Hey there! I’m using Conversations" />
-
-                            <CheckBox
-                                android:id="@+id/details_send_presence"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/send_presence_updates" />
-
-                            <CheckBox
-                                android:id="@+id/details_receive_presence"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/receive_presence_updates" />
+                                android:layout_marginTop="4dp"
+                                android:text="Чат"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="12sp" />
                         </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
-                        <TextView
-                            android:id="@+id/details_account"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_below="@+id/status_message_subscription_box"
-                            android:layout_alignParentEnd="true"
-                            android:layout_alignParentBottom="true"
-                            android:layout_marginTop="16sp"
-                            android:text="@string/using_account"
-                            android:textAppearance="?textAppearanceLabelMedium" />
-                    </RelativeLayout>
-                </com.google.android.material.card.MaterialCardView>
+                    <!-- Звук -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btn_action_mute"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="3dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/penik_panel_secondary"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
 
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/icon_action_mute"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_notifications_24dp"
+                                app:tint="@color/penik_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Звук"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Звонок -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btn_action_call"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="3dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/penik_panel_secondary"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_call_24dp"
+                                app:tint="@color/penik_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Звонок"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Видео -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btn_action_video"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/penik_panel_secondary"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_videocam_24dp"
+                                app:tint="@color/penik_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Видео"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+                <!-- Info Card: Username / JID & Bio / Status -->
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/media_wrapper"
-                    android:layout_width="fill_parent"
+                    android:id="@+id/info_card"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginRight="@dimen/activity_horizontal_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin">
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/penik_panel"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="@dimen/card_padding_regular">
+                        android:padding="16dp">
+
+                        <!-- Username / XMPP Address Row -->
+                        <LinearLayout
+                            android:id="@+id/row_username"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/details_contact_xmpp_address"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/penik_text_primary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    tools:text="\@Dikicactus" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="Имя пользователя"
+                                    android:textColor="@color/penik_text_muted"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_content_copy_24dp"
+                                app:tint="@color/penik_text_muted" />
+                        </LinearLayout>
+
+                        <!-- Status / Bio Row -->
+                        <LinearLayout
+                            android:id="@+id/status_message_subscription_box"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:orientation="vertical"
+                            android:visibility="gone"
+                            tools:visibility="visible">
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginBottom="12dp"
+                                android:background="@color/penik_border" />
+
+                            <TextView
+                                android:id="@+id/status_message"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="15sp"
+                                tools:text="Hey there! I'm using Penik" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="О себе"
+                                android:textColor="@color/penik_text_muted"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <!-- Hidden presence & account views to preserve data binding compatibility -->
+                        <CheckBox
+                            android:id="@+id/details_send_presence"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:visibility="gone" />
+
+                        <CheckBox
+                            android:id="@+id/details_receive_presence"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:visibility="gone" />
+
+                        <TextView
+                            android:id="@+id/details_account"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:visibility="gone" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Add Contact Button if not in roster -->
+                <LinearLayout
+                    android:id="@+id/button_box"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="12dp"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <Button
+                        android:id="@+id/add_contact_button"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="@color/penik_accent"
+                        android:text="@string/add_contact"
+                        android:textColor="@android:color/white" />
+
+                    <Button
+                        android:id="@+id/add_address_book"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/save_to_contact"
+                        android:visibility="gone"
+                        app:icon="@drawable/ic_contacts_24dp" />
+                </LinearLayout>
+
+                <!-- Tags / Groups Flow if any -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/tags"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone">
+
+                    <androidx.constraintlayout.helper.widget.Flow
+                        android:id="@+id/flow_widget"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:flow_horizontalBias="0"
+                        app:flow_horizontalGap="8dp"
+                        app:flow_horizontalStyle="packed"
+                        app:flow_verticalGap="4dp"
+                        app:flow_wrapMode="chain"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Media Preview Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/media_wrapper"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/penik_panel"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:text="Медиафайлы"
+                            android:textColor="@color/penik_text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
 
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/media"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_margin="-2dp"
                             android:orientation="horizontal" />
 
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="end"
-                            android:layout_marginTop="16dp"
-                            android:orientation="horizontal">
-
-                            <Button
-                                android:id="@+id/show_media"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/view_media" />
-                        </LinearLayout>
+                        <Button
+                            android:id="@+id/show_media"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/view_media" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Encryption / OMEMO Keys Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/keys_wrapper"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginRight="@dimen/activity_horizontal_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin">
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="@color/penik_panel"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:text="Сквозное шифрование (OMEMO)"
+                            android:textColor="@color/penik_text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
 
                         <LinearLayout
                             android:id="@+id/details_contact_keys"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="@dimen/card_padding_list" />
+                            android:orientation="vertical" />
 
                         <LinearLayout
                             android:id="@+id/unverified_warning"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:paddingHorizontal="@dimen/card_padding_list">
+                            android:layout_marginTop="8dp"
+                            android:visibility="gone">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginHorizontal="@dimen/list_padding"
                                 android:text="@string/contact_uses_unverified_keys"
-                                android:textAppearance="?textAppearanceBodyMedium"
-                                android:textColor="?colorOnSurfaceVariant" />
+                                android:textColor="@color/penik_warning"
+                                android:textSize="13sp" />
                         </LinearLayout>
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:orientation="horizontal"
-                            android:padding="@dimen/card_padding_list">
-
+                            android:orientation="horizontal">
 
                             <Button
                                 android:id="@+id/scan_button"
                                 style="@style/Widget.Material3.Button.TextButton"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/scan_qr_code" />
+                                android:text="@string/scan_qr_code"
+                                android:visibility="gone" />
 
                             <Button
                                 android:id="@+id/show_inactive_devices"
                                 style="@style/Widget.Material3.Button.TextButton"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/show_inactive_devices" />
+                                android:text="@string/show_inactive_devices"
+                                android:visibility="gone" />
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

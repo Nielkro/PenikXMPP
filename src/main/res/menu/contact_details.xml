@@ -3,71 +3,60 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_notifications"
+        android:icon="@drawable/ic_notifications_24dp"
+        android:orderInCategory="10"
+        android:title="@string/notifications"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_edit_contact"
         android:icon="@drawable/ic_edit_24dp"
-        android:orderInCategory="10"
+        android:orderInCategory="20"
         android:title="@string/action_edit_contact"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_share"
         android:icon="@drawable/ic_share_24dp"
-        android:orderInCategory="15"
+        android:orderInCategory="30"
         android:title="@string/share_uri_with"
-        app:showAsAction="always">
+        app:showAsAction="never">
         <menu>
             <item
-                android:icon="@drawable/ic_xmpp_24dp"
                 android:id="@+id/action_share_uri"
+                android:icon="@drawable/ic_xmpp_24dp"
                 android:title="@string/share_as_uri" />
             <item
                 android:id="@+id/action_share_http"
                 android:icon="@drawable/ic_join_24dp"
                 android:title="@string/share_invitation" />
             <item
-                android:icon="@drawable/ic_qr_code_24dp"
                 android:id="@+id/action_show_qr_code"
+                android:icon="@drawable/ic_qr_code_24dp"
                 android:title="@string/show_qr_code" />
         </menu>
     </item>
-    <item
-        android:id="@+id/action_delete_contact"
-        android:orderInCategory="10"
-        android:title="@string/action_delete_contact"
-        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_block"
-        android:orderInCategory="72"
+        android:icon="@drawable/ic_block_24dp"
+        android:orderInCategory="40"
         android:title="@string/action_block_contact"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_unblock"
-        android:orderInCategory="73"
+        android:icon="@drawable/ic_block_24dp"
+        android:orderInCategory="41"
         android:title="@string/action_unblock_contact"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_custom_notifications"
-        android:orderInCategory="75"
-        android:title="@string/custom_notifications"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_accounts"
-        android:orderInCategory="90"
-        android:title="@string/action_accounts"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_account"
-        android:orderInCategory="90"
-        android:title="@string/action_account"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:id="@+id/action_delete_contact"
+        android:icon="@drawable/ic_delete_24dp"
+        android:orderInCategory="50"
+        android:title="@string/action_delete_contact"
         app:showAsAction="never" />
 
 </menu>

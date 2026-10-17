@@ -100,15 +100,13 @@ fun PenikAttachmentPickerBottomSheet(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val accentColor = colorResource(R.color.penik_accent)
-    val windowHeightPx = context.resources.displayMetrics.heightPixels.toFloat()
 
     var hasPermission by remember { mutableStateOf(hasGalleryPermission(context)) }
     val recentMedias = remember { mutableStateListOf<LocalGalleryMedia>() }
     var isLoadingMedia by remember { mutableStateOf(false) }
     val selectedUris = remember { mutableStateListOf<Uri>() }
-    var sheetHeightPx by remember { mutableFloatStateOf(0f) }
 
     val imageLoader = remember(context) {
         ImageLoader.Builder(context)
@@ -155,9 +153,6 @@ fun PenikAttachmentPickerBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.85f)
-                .onGloballyPositioned { coords ->
-                    sheetHeightPx = coords.size.height.toFloat()
-                }
         ) {
             // Clean Top Header (Only Title / Count and Reset)
             Row(
@@ -340,18 +335,8 @@ fun PenikAttachmentPickerBottomSheet(
                         elevation = FloatingActionButtonDefaults.elevation(6.dp),
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .offset {
-                                val sheetTopInWindow = try {
-                                    sheetState.requireOffset()
-                                } catch (_: Exception) {
-                                    0f
-                                }
-                                val contentBottomInWindow = sheetTopInWindow + sheetHeightPx
-                                val overflow = (contentBottomInWindow - windowHeightPx).coerceAtLeast(0f)
-                                IntOffset(0, -overflow.roundToInt())
-                            }
-                            .padding(20.dp)
                             .navigationBarsPadding()
+                            .padding(end = 20.dp, bottom = 20.dp)
                             .size(56.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
