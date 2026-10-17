@@ -20,4 +20,8 @@
         android:id="@+id/create_contact"
         android:icon="@drawable/ic_person_24dp"
         android:title="@string/add_contact" />
+    <item
+        android:id="@+id/choose_from_phonebook"
+        android:icon="@drawable/ic_contacts_24dp"
+        android:title="@string/choose_from_phonebook" />
 </menu>

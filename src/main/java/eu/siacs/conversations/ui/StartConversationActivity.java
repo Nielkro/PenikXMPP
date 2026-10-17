@@ -11,8 +11,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
+import eu.siacs.conversations.phone.PenikPhoneDirectoryManager;
 import android.util.Log;
 import android.util.Pair;
 import android.view.ContextMenu;
@@ -110,6 +112,7 @@ public class StartConversationActivity extends XmppActivity
     public static final String EXTRA_INVITE_URI = "eu.siacs.conversations.invite_uri";
 
     private final int REQUEST_SYNC_CONTACTS = 0x28cf;
+    private final int REQUEST_CHOOSE_PHONEBOOK_CONTACT = 0x28d0;
     private final int REQUEST_CREATE_CONFERENCE = 0x39da;
     private final PendingItem<Intent> pendingViewIntent = new PendingItem<>();
     private final PendingItem<String> mInitialSearchValue = new PendingItem<>();
@@ -375,12 +378,24 @@ public class StartConversationActivity extends XmppActivity
                     } else if (itemId == R.id.create_contact) {
                         showCreateContactDialog(prefilled, null);
                         return false;
+                    } else if (itemId == R.id.choose_from_phonebook) {
+                        chooseContactFromPhonebook();
+                        return false;
                     } else {
                         return false;
                     }
                 });
         final var backDispatcher = this.getOnBackPressedDispatcher();
         backDispatcher.addCallback(this, this.fabBackPressedCallback);
+    }
+
+    public void chooseContactFromPhonebook() {
+        if (checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {Manifest.permission.READ_CONTACTS}, REQUEST_SYNC_CONTACTS);
+            return;
+        }
+        final Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+        startActivityForResult(intent, REQUEST_CHOOSE_PHONEBOOK_CONTACT);
     }
 
     private void inflateFab(final SpeedDialView speedDialView, final @MenuRes int menuRes) {
@@ -820,6 +835,10 @@ public class StartConversationActivity extends XmppActivity
         if (resultCode == RESULT_OK) {
             if (xmppConnectionServiceBound) {
                 this.mPostponedActivityResult = null;
+                if (requestCode == REQUEST_CHOOSE_PHONEBOOK_CONTACT && intent != null && intent.getData() != null) {
+                    PenikPhoneDirectoryManager.openContactOrInvite(this, xmppConnectionService, intent.getData());
+                    return;
+                }
                 if (requestCode == REQUEST_CREATE_CONFERENCE) {
                     Account account = extractAccount(intent);
                     final String name =
@@ -946,11 +965,15 @@ public class StartConversationActivity extends XmppActivity
         if (grantResults.length > 0)
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (requestCode == REQUEST_SYNC_CONTACTS && xmppConnectionServiceBound) {
-                    if (QuickConversationsService.isQuicksy()) {
-                        setRefreshing(true);
-                    }
+                    setRefreshing(true);
                     xmppConnectionService.loadPhoneContacts();
                     xmppConnectionService.startContactObserver();
+                    PenikPhoneDirectoryManager.syncPhoneContacts(
+                            xmppConnectionService,
+                            () -> {
+                                setRefreshing(false);
+                                refreshUiReal();
+                            });
                 }
             }
     }
@@ -966,6 +989,9 @@ public class StartConversationActivity extends XmppActivity
 
     @Override
     protected void onBackendConnected() {
+        if (checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+            PenikPhoneDirectoryManager.syncPhoneContacts(xmppConnectionService, this::refreshUiReal);
+        }
         if (QuickConversationsService.isContactListIntegration(this)
                 && (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
                         || checkSelfPermission(Manifest.permission.READ_CONTACTS)
@@ -1252,8 +1278,12 @@ public class StartConversationActivity extends XmppActivity
     @Override
     public void onRefresh() {
         Log.d(Config.LOGTAG, "user requested to refresh");
-        if (QuickConversationsService.isQuicksy() && xmppConnectionService != null) {
-            xmppConnectionService.getQuickConversationsService().considerSyncBackground(true);
+        setRefreshing(true);
+        if (xmppConnectionService != null) {
+            PenikPhoneDirectoryManager.syncPhoneContacts(
+                    xmppConnectionService, () -> setRefreshing(false));
+        } else {
+            setRefreshing(false);
         }
     }
 
@@ -1482,9 +1512,7 @@ public class StartConversationActivity extends XmppActivity
                     listFragment.setContextMenu(R.menu.contact_context);
                     listFragment.setOnListItemClickListener(
                             (arg0, arg1, p, arg3) -> openConversationForContact(p));
-                    if (QuickConversationsService.isQuicksy()) {
-                        listFragment.setOnRefreshListener(StartConversationActivity.this);
-                    }
+                    listFragment.setOnRefreshListener(StartConversationActivity.this);
                 }
                 fragments[position] = listFragment;
             }

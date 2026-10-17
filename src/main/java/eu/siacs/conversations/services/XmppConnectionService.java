@@ -58,6 +58,7 @@ import eu.siacs.conversations.Config;
 import eu.siacs.conversations.Conversations;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.android.JabberIdContact;
+import eu.siacs.conversations.phone.PenikPhoneDirectoryManager;
 import eu.siacs.conversations.crypto.OmemoSetting;
 import eu.siacs.conversations.crypto.PgpDecryptionService;
 import eu.siacs.conversations.crypto.PgpEngine;
@@ -1944,6 +1945,7 @@ public class XmppConnectionService extends Service {
                         }
                     }
                     Log.d(Config.LOGTAG, "finished merging phone contacts");
+                    PenikPhoneDirectoryManager.syncPhoneContacts(XmppConnectionService.this, null);
                     mShortcutService.refresh(
                             mInitialAddressbookSyncCompleted.compareAndSet(false, true));
                     updateRosterUi();

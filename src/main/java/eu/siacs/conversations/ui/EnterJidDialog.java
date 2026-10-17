@@ -141,6 +141,15 @@ public class EnterJidDialog extends DialogFragment implements OnBackendConnected
         builder.setPositiveButton(getArguments().getString(POSITIVE_BUTTON_KEY), null);
         this.dialog = builder.create();
 
+        binding.jidLayout.setEndIconOnClickListener(
+                v -> {
+                    final Activity act = getActivity();
+                    if (act instanceof StartConversationActivity) {
+                        dialog.dismiss();
+                        ((StartConversationActivity) act).chooseContactFromPhonebook();
+                    }
+                });
+
         View.OnClickListener dialogOnClick = v -> handleEnter(binding, account);
 
         binding.jid.setOnEditorActionListener(
@@ -167,8 +176,28 @@ public class EnterJidDialog extends DialogFragment implements OnBackendConnected
         final var context = binding.getRoot().getContext();
 
         final var input = CharSequences.nullToEmpty(binding.jid.getText());
-        final var asMiniUri = MiniUri.getXmppUriOrNull(input);
+        final String rawTrimmed = input.toString().trim();
+        final String digitsOnly = rawTrimmed.replaceAll("[^0-9]", "");
 
+        if (rawTrimmed.startsWith("+") || (!rawTrimmed.contains("@") && digitsOnly.length() >= 7)) {
+            eu.siacs.conversations.phone.PenikPhoneDirectoryManager.lookupJidByPhone(
+                    rawTrimmed,
+                    jidStr -> {
+                        if (jidStr != null) {
+                            try {
+                                final Jid resolved = Jid.of(jidStr);
+                                submitContactJid(binding, accountJid, resolved);
+                            } catch (Exception ex) {
+                                binding.jidLayout.setError(context.getString(R.string.invalid_jid));
+                            }
+                        } else {
+                            binding.jidLayout.setError("Номер не найден в Penik. Проверьте номер или используйте JID");
+                        }
+                    });
+            return;
+        }
+
+        final var asMiniUri = MiniUri.getXmppUriOrNull(input);
         final Jid contactJid;
 
         if (asMiniUri != null
@@ -186,6 +215,12 @@ public class EnterJidDialog extends DialogFragment implements OnBackendConnected
             }
         }
 
+        submitContactJid(binding, accountJid, contactJid);
+    }
+
+    private void submitContactJid(
+            final DialogEnterJidBinding binding, final Jid accountJid, final Jid contactJid) {
+        final var context = binding.getRoot().getContext();
         if (!issuedWarning && sanityCheckJid) {
             if (contactJid.isDomainJid()) {
                 binding.jidLayout.setError(context.getString(R.string.this_looks_like_a_domain));

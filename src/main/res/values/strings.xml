@@ -81,6 +81,7 @@
     <string name="attach_file">Attach file</string>
     <string name="not_in_roster">Add this missing contact to your contact list?</string>
     <string name="add_contact">Add contact</string>
+    <string name="choose_from_phonebook">Contact from phonebook</string>
     <string name="send_failed">delivery failed</string>
     <string name="preparing_image">Getting ready to send image</string>
     <string name="preparing_images">Getting ready to send images</string>

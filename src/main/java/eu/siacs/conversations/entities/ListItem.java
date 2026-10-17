@@ -44,8 +44,9 @@ public interface ListItem extends Comparable<ListItem>, AvatarService.Avatar {
     }
 
     private boolean matchInItem(final String needle) {
-        return getAddress().toString().contains(needle)
+        return (getAddress() != null && getAddress().toString().contains(needle))
                 || getDisplayName().toLowerCase(Locale.US).contains(needle)
+                || (this instanceof Contact && ((Contact) this).getPhoneNumber() != null && ((Contact) this).getPhoneNumber().contains(needle))
                 || matchInTag(needle);
     }
 

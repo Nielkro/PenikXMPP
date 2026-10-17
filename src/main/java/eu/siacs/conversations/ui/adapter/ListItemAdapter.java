@@ -81,7 +81,11 @@ public class ListItemAdapter extends ArrayAdapter<ListItem> {
         final Jid jid = item.getAddress();
         if (jid != null) {
             viewHolder.jid.setVisibility(View.VISIBLE);
-            viewHolder.jid.setText(IrregularUnicodeDetector.style(activity, jid, true));
+            if (item instanceof Contact && ((Contact) item).getPhoneNumber() != null && !((Contact) item).getPhoneNumber().isEmpty()) {
+                viewHolder.jid.setText(eu.siacs.conversations.phone.PenikPhoneDirectoryManager.formatPhoneNumberHuman(((Contact) item).getPhoneNumber()));
+            } else {
+                viewHolder.jid.setText(IrregularUnicodeDetector.style(activity, jid, true));
+            }
         } else {
             viewHolder.jid.setVisibility(View.GONE);
         }

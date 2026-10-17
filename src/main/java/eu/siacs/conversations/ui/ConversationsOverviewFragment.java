@@ -32,11 +32,16 @@ package eu.siacs.conversations.ui;
 import static androidx.recyclerview.widget.ItemTouchHelper.LEFT;
 import static androidx.recyclerview.widget.ItemTouchHelper.RIGHT;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
+import eu.siacs.conversations.phone.PenikPhoneDirectoryManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -108,6 +113,8 @@ public class ConversationsOverviewFragment extends XmppFragment {
     private final PendingItem<Conversation> swipedConversation = new PendingItem<>();
     private FragmentConversationsOverviewBinding binding;
     private SearchSuggestionAdapter searchSuggestionAdapter;
+    private static final int REQUEST_SYNC_CONTACTS = 0x28cf;
+    private static final int REQUEST_CHOOSE_PHONEBOOK_CONTACT = 0x28d0;
     private final PendingActionHelper pendingActionHelper = new PendingActionHelper();
     private final PenikChatsState penikChatsState = new PenikChatsState();
 
@@ -406,6 +413,34 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     }
 
                     @Override
+                    public void onOpenPhoneContacts() {
+                        if (getActivity() == null) return;
+                        if (getActivity().checkSelfPermission(Manifest.permission.READ_CONTACTS)
+                                != PackageManager.PERMISSION_GRANTED) {
+                            requestPermissions(
+                                    new String[] {Manifest.permission.READ_CONTACTS},
+                                    REQUEST_SYNC_CONTACTS);
+                            return;
+                        }
+                        final Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+                        startActivityForResult(intent, REQUEST_CHOOSE_PHONEBOOK_CONTACT);
+                    }
+
+                    @Override
+                    public void onCreateGroup() {
+                        final XmppActivity activity = requireXmppActivity();
+                        if (activity != null && activity.xmppConnectionService != null) {
+                            final List<String> activated = new ArrayList<>();
+                            for (Account account : activity.xmppConnectionService.getAccounts()) {
+                                if (account.isEnabled()) {
+                                    activated.add(account.getJid().asBareJid().toString());
+                                }
+                            }
+                            CreatePrivateGroupChatDialog.newInstance(activated).show(getParentFragmentManager(), "create_group");
+                        }
+                    }
+
+                    @Override
                     public void onEditAvatar() {
                         ConversationsOverviewFragment.this.editAvatar();
                     }
@@ -552,8 +587,43 @@ public class ConversationsOverviewFragment extends XmppFragment {
     }
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (requestCode == REQUEST_CHOOSE_PHONEBOOK_CONTACT && resultCode == Activity.RESULT_OK && intent != null && intent.getData() != null) {
+            final XmppActivity xmppActivity = requireXmppActivity();
+            if (xmppActivity != null && xmppActivity.xmppConnectionService != null) {
+                PenikPhoneDirectoryManager.openContactOrInvite(
+                        requireActivity(), xmppActivity.xmppConnectionService, intent.getData());
+            }
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, intent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (requestCode == REQUEST_SYNC_CONTACTS) {
+                final XmppActivity xmppActivity = requireXmppActivity();
+                if (xmppActivity != null && xmppActivity.xmppConnectionService != null) {
+                    xmppActivity.xmppConnectionService.loadPhoneContacts();
+                    PenikPhoneDirectoryManager.syncPhoneContacts(
+                            xmppActivity.xmppConnectionService, null);
+                }
+                final Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+                startActivityForResult(intent, REQUEST_CHOOSE_PHONEBOOK_CONTACT);
+            }
+        }
+    }
+
+    @Override
     public void onBackendConnected() {
         refresh();
+        final XmppActivity xmppActivity = requireXmppActivity();
+        if (xmppActivity != null && xmppActivity.xmppConnectionService != null) {
+            PenikPhoneDirectoryManager.syncPhoneContacts(
+                    xmppActivity.xmppConnectionService, null);
+        }
     }
 
     @Override

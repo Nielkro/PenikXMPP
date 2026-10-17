@@ -219,7 +219,8 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `src/main/java/eu/siacs/conversations/entities/Message.java` — Message with statuses, edits, reactions, attachments, and stickers (`TYPE_STICKER = 7`).
 - `src/main/java/eu/siacs/conversations/entities/Sticker.java` — Sticker entity (`packId`, `stickerId`, `emoji`, `width`, `height`, `format`, `url`) with JSON serialization/deserialization.
 - `src/main/java/eu/siacs/conversations/stickers/StickerManager.kt` — Sticker pack and recents manager: local storage, bundle installation, Telegram sticker pack import via REST API, HMAC-SHA256 token generator.
-- `src/main/java/eu/siacs/conversations/phone/PenikPhoneDirectoryManager.kt` — Phone directory manager: normalized phone directory client with `penik-service-rs` REST sync and local address book matching.
+- `src/main/java/eu/siacs/conversations/phone/PenikPhoneDirectoryManager.kt` — Phone directory manager: normalized phone directory client with `penik-service-rs` REST sync, phonebook contact matching, and contact resolution.
+- `src/main/java/eu/siacs/conversations/android/PenikPhoneContact.java` — Phone contact model extending `AbstractPhoneContact` for local address book matching.
 - `src/main/java/eu/siacs/conversations/entities/Contact.java`, `Roster.java` — Roster model.
 - `src/main/java/eu/siacs/conversations/entities/MucOptions.java` — MUC roles, affiliation, subject, config.
 - `src/main/java/eu/siacs/conversations/entities/Presences.java` — Presence map per contact.

@@ -29,6 +29,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Contacts
+import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -101,6 +104,8 @@ interface PenikChatsListener {
     fun onOpenSelfChat()
     fun onOpenSettings()
     fun onNewChat()
+    fun onOpenPhoneContacts()
+    fun onCreateGroup()
     fun onEditAvatar()
     fun onLogout()
     fun onPublishAvatar(uri: android.net.Uri)
@@ -170,6 +175,7 @@ fun PenikMainScreen(
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
     val isArchiveOpen = state.isArchiveOpen
+    var showNewChatSheet by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(isSearchActive) {
         if (isSearchActive) {
@@ -359,7 +365,7 @@ fun PenikMainScreen(
             floatingActionButton = {
                 if (tab == PenikTab.CHATS && !isArchiveOpen) {
                     FloatingActionButton(
-                            onClick = { listener.onNewChat() },
+                            onClick = { showNewChatSheet = true },
                             containerColor = accent,
                             contentColor = Color.White
                     ) {
@@ -390,6 +396,149 @@ fun PenikMainScreen(
                                     activity = activity,
                                     listener = listener
                             )
+                }
+            }
+        }
+    }
+
+    if (showNewChatSheet) {
+        ModalBottomSheet(
+                onDismissRequest = { showNewChatSheet = false },
+                containerColor = panel,
+                dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            Column(
+                    modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                            .padding(bottom = 32.dp)
+            ) {
+                Text(
+                        text = "Новый чат",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Option 1: Pick from phone address book
+                Row(
+                        modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    showNewChatSheet = false
+                                    listener.onOpenPhoneContacts()
+                                }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                            modifier = Modifier
+                                    .size(44.dp)
+                                    .background(accent.copy(alpha = 0.15f), CircleShape),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                                imageVector = Icons.Default.Contacts,
+                                contentDescription = null,
+                                tint = accent
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                                text = "Выбрать из контактов телефона",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textPrimary
+                        )
+                        Text(
+                                text = "Начать чат с человеком из адресной книги",
+                                fontSize = 13.sp,
+                                color = textMuted
+                        )
+                    }
+                }
+
+                // Option 2: All contacts / search
+                Row(
+                        modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    showNewChatSheet = false
+                                    listener.onNewChat()
+                                }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                            modifier = Modifier
+                                    .size(44.dp)
+                                    .background(accent.copy(alpha = 0.15f), CircleShape),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                                imageVector = Icons.Default.ChatBubble,
+                                contentDescription = null,
+                                tint = accent
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Все контакты и поиск",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Список контактов, каналы и поиск по JID",
+                            fontSize = 13.sp,
+                            color = textMuted
+                        )
+                    }
+                }
+
+                // Option 3: Create group
+                Row(
+                        modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    showNewChatSheet = false
+                                    listener.onCreateGroup()
+                                }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                            modifier = Modifier
+                                    .size(44.dp)
+                                    .background(accent.copy(alpha = 0.15f), CircleShape),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                                imageVector = Icons.Default.GroupAdd,
+                                contentDescription = null,
+                                tint = accent
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                                text = "Создать группу",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textPrimary
+                        )
+                        Text(
+                                text = "Групповой чат для нескольких участников",
+                                fontSize = 13.sp,
+                                color = textMuted
+                        )
+                    }
                 }
             }
         }

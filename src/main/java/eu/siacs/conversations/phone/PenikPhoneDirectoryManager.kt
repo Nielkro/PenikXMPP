@@ -1,9 +1,23 @@
 package eu.siacs.conversations.phone
 
+import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.ContactsContract
 import android.util.Log
+import androidx.core.content.ContextCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import eu.siacs.conversations.Config
+import eu.siacs.conversations.android.PenikPhoneContact
+import eu.siacs.conversations.entities.Contact
+import eu.siacs.conversations.services.XmppConnectionService
+import eu.siacs.conversations.ui.XmppActivity
+import eu.siacs.conversations.xmpp.Jid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,6 +41,10 @@ data class MatchedPhoneContact(
     val rawPhoneNumber: String
 )
 
+fun interface PhoneLookupCallback {
+    fun onResult(jid: String?)
+}
+
 object PenikPhoneDirectoryManager {
 
     private const val TAG = "PenikPhoneDir"
@@ -35,6 +53,12 @@ object PenikPhoneDirectoryManager {
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(10, TimeUnit.SECONDS)
         .build()
+
+    @Volatile
+    private var cachedDirectory: List<DirectoryEntry>? = null
+
+    @Volatile
+    private var lastFetchTime = 0L
 
     @JvmStatic
     fun normalizePhoneNumber(phone: String): String {
@@ -105,7 +129,12 @@ object PenikPhoneDirectoryManager {
         }
     }
 
-    suspend fun fetchPhoneDirectory(): Result<List<DirectoryEntry>> = withContext(Dispatchers.IO) {
+    suspend fun fetchPhoneDirectory(forceRefresh: Boolean = false): Result<List<DirectoryEntry>> = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        if (!forceRefresh && cachedDirectory != null && (now - lastFetchTime < 30_000L)) {
+            return@withContext Result.success(cachedDirectory!!)
+        }
+
         try {
             val cleanBase = Config.STICKERS_BASE_URL.trimEnd('/')
             val request = Request.Builder()
@@ -137,11 +166,222 @@ object PenikPhoneDirectoryManager {
                         )
                     )
                 }
+                cachedDirectory = list
+                lastFetchTime = now
                 Result.success(list)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching phone directory", e)
-            Result.failure(e)
+            if (cachedDirectory != null) {
+                Result.success(cachedDirectory!!)
+            } else {
+                Result.failure(e)
+            }
+        }
+    }
+
+    @JvmStatic
+    fun syncPhoneContacts(service: XmppConnectionService, onComplete: Runnable? = null) {
+        if (ContextCompat.checkSelfPermission(
+                service,
+                Manifest.permission.READ_CONTACTS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            onComplete?.let { Handler(Looper.getMainLooper()).post(it) }
+            return
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val directoryRes = fetchPhoneDirectory(forceRefresh = true)
+                val directory = directoryRes.getOrNull() ?: cachedDirectory ?: emptyList()
+                if (directory.isEmpty()) {
+                    onComplete?.let { Handler(Looper.getMainLooper()).post(it) }
+                    return@launch
+                }
+
+                val phoneMap = mutableMapOf<String, String>()
+                for (entry in directory) {
+                    val norm = normalizePhoneNumber(entry.phone)
+                    phoneMap[norm] = entry.jid
+                    val digits = norm.replace(Regex("[^0-9]"), "")
+                    if (digits.length >= 10) {
+                        phoneMap[digits.takeLast(10)] = entry.jid
+                    }
+                }
+
+                val projection = arrayOf(
+                    ContactsContract.Data._ID,
+                    ContactsContract.Data.LOOKUP_KEY,
+                    ContactsContract.Data.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER,
+                    ContactsContract.Data.PHOTO_URI
+                )
+
+                val cursor = service.contentResolver.query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    projection,
+                    null,
+                    null,
+                    null
+                )
+
+                cursor?.use { c ->
+                    val numIdx = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                    while (c.moveToNext()) {
+                        val number = if (numIdx >= 0) c.getString(numIdx) ?: "" else ""
+                        if (number.isNotBlank()) {
+                            val norm = normalizePhoneNumber(number)
+                            val digits = norm.replace(Regex("[^0-9]"), "")
+                            val matchedJid = phoneMap[norm] ?: if (digits.length >= 10) phoneMap[digits.takeLast(10)] else null
+                            if (matchedJid != null) {
+                                try {
+                                    val jid = Jid.of(matchedJid)
+                                    val phoneContact = PenikPhoneContact(c)
+                                    for (account in service.accounts) {
+                                        if (account.isEnabled) {
+                                            val contact = account.roster.getContact(jid)
+                                            contact.setPhoneContact(phoneContact)
+                                            contact.setPhoneNumber(norm)
+                                            contact.setOption(Contact.Options.SYNCED_VIA_OTHER)
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w(TAG, "Error applying phone contact for $matchedJid", e)
+                                }
+                            }
+                        }
+                    }
+                }
+                service.updateRosterUi()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during syncPhoneContacts", e)
+            } finally {
+                onComplete?.let { Handler(Looper.getMainLooper()).post(it) }
+            }
+        }
+    }
+
+    @JvmStatic
+    fun lookupJidByPhone(phone: String, callback: PhoneLookupCallback) {
+        val norm = normalizePhoneNumber(phone)
+        val digits = norm.replace(Regex("[^0-9]"), "")
+        CoroutineScope(Dispatchers.IO).launch {
+            val directory = cachedDirectory ?: fetchPhoneDirectory().getOrNull() ?: emptyList()
+            var foundJid: String? = null
+            for (entry in directory) {
+                val entryNorm = normalizePhoneNumber(entry.phone)
+                val entryDigits = entryNorm.replace(Regex("[^0-9]"), "")
+                if (entryNorm == norm || (digits.length >= 10 && entryDigits.endsWith(digits.takeLast(10)))) {
+                    foundJid = entry.jid
+                    break
+                }
+            }
+            Handler(Looper.getMainLooper()).post {
+                callback.onResult(foundJid)
+            }
+        }
+    }
+
+    @JvmStatic
+    fun openContactOrInvite(activity: Activity, service: XmppConnectionService, contactUri: Uri) {
+        CoroutineScope(Dispatchers.IO).launch {
+            var rawName = ""
+            var rawNumber = ""
+            var lookupUri: Uri? = null
+            var photoUri: String? = null
+
+            try {
+                val projection = arrayOf(
+                    ContactsContract.Data._ID,
+                    ContactsContract.Data.LOOKUP_KEY,
+                    ContactsContract.Data.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER,
+                    ContactsContract.Data.PHOTO_URI
+                )
+                activity.contentResolver.query(contactUri, projection, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val nameIdx = cursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME)
+                        val numIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                        val photoIdx = cursor.getColumnIndex(ContactsContract.Data.PHOTO_URI)
+                        val idIdx = cursor.getColumnIndex(ContactsContract.Data._ID)
+                        val lookupIdx = cursor.getColumnIndex(ContactsContract.Data.LOOKUP_KEY)
+
+                        if (nameIdx >= 0) rawName = cursor.getString(nameIdx) ?: ""
+                        if (numIdx >= 0) rawNumber = cursor.getString(numIdx) ?: ""
+                        if (photoIdx >= 0) photoUri = cursor.getString(photoIdx)
+                        if (idIdx >= 0 && lookupIdx >= 0) {
+                            val id = cursor.getLong(idIdx)
+                            val lookup = cursor.getString(lookupIdx)
+                            lookupUri = ContactsContract.Contacts.getLookupUri(id, lookup)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error querying picked contact", e)
+            }
+
+            if (rawNumber.isBlank()) {
+                Handler(Looper.getMainLooper()).post {
+                    MaterialAlertDialogBuilder(activity)
+                        .setTitle("Контакт")
+                        .setMessage("У выбранного контакта не указан номер телефона.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+                return@launch
+            }
+
+            val norm = normalizePhoneNumber(rawNumber)
+            val digits = norm.replace(Regex("[^0-9]"), "")
+            val directory = cachedDirectory ?: fetchPhoneDirectory(forceRefresh = true).getOrNull() ?: emptyList()
+            var matchedJid: String? = null
+            for (entry in directory) {
+                val entryNorm = normalizePhoneNumber(entry.phone)
+                val entryDigits = entryNorm.replace(Regex("[^0-9]"), "")
+                if (entryNorm == norm || (digits.length >= 10 && entryDigits.endsWith(digits.takeLast(10)))) {
+                    matchedJid = entry.jid
+                    break
+                }
+            }
+
+            Handler(Looper.getMainLooper()).post {
+                if (matchedJid != null) {
+                    val account = service.accounts.firstOrNull { it.isEnabled }
+                    if (account != null) {
+                        try {
+                            val jid = Jid.of(matchedJid)
+                            val contact = account.roster.getContact(jid)
+                            if (rawName.isNotBlank()) contact.setSystemName(rawName)
+                            contact.setPhoneNumber(norm)
+                            contact.setOption(Contact.Options.SYNCED_VIA_OTHER)
+                            if (lookupUri != null) contact.setSystemAccount(lookupUri)
+                            if (photoUri != null) contact.setPhotoUri(photoUri)
+                            service.updateRosterUi()
+
+                            val conversation = service.findOrCreateConversation(account, contact.address, false, true)
+                            (activity as? XmppActivity)?.switchToConversation(conversation)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error opening conversation with $matchedJid", e)
+                        }
+                    }
+                } else {
+                    val formatted = formatPhoneNumberHuman(norm)
+                    val titleName = rawName.ifBlank { formatted }
+                    MaterialAlertDialogBuilder(activity)
+                        .setTitle(titleName)
+                        .setMessage("Пользователь с номером $formatted ещё не зарегистрирован в Penik.\n\nХотите отправить приглашение?")
+                        .setPositiveButton("Пригласить") { _, _ ->
+                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, "Привет! Давай общаться в Penik: https://penik.ru")
+                            }
+                            activity.startActivity(Intent.createChooser(sendIntent, "Пригласить в Penik"))
+                        }
+                        .setNegativeButton("Отмена", null)
+                        .show()
+                }
+            }
         }
     }
 
@@ -155,7 +395,6 @@ object PenikPhoneDirectoryManager {
             return@withContext emptyList()
         }
 
-        // Map normalized phone (and last 10 digits) -> jid
         val phoneMap = mutableMapOf<String, String>()
         for (entry in directory) {
             val norm = normalizePhoneNumber(entry.phone)

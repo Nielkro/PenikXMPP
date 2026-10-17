@@ -75,6 +75,7 @@
     <string name="attach_file">Прикрепить файл</string>
     <string name="not_in_roster">Контакт не находится в вашем списке контактов. Добавить его?</string>
     <string name="add_contact">Добавить контакт</string>
+    <string name="choose_from_phonebook">Контакт из телефонной книги</string>
     <string name="send_failed">доставка не выполнена</string>
     <string name="preparing_image">Подготовка к передаче изображения</string>
     <string name="preparing_images">Подготовка к передаче изображений</string>
