@@ -95,6 +95,33 @@ public class VCardManager extends AbstractManager {
                 connection.sendIqPacket(iq), result -> null, MoreExecutors.directExecutor());
     }
 
+    public ListenableFuture<Void> publishPhoneNumber(final String phoneNumber) {
+        final Jid address = getAccount().getJid().asBareJid();
+        final var retrieveFuture = this.retrieve(address);
+        final var caughtFuture =
+                Futures.catchingAsync(
+                        retrieveFuture,
+                        Exception.class,
+                        ex -> Futures.immediateFuture(new VCard()),
+                        MoreExecutors.directExecutor());
+
+        return Futures.transformAsync(
+                caughtFuture,
+                existing -> {
+                    final VCard vCard = existing != null ? existing : new VCard();
+                    vCard.setPhoneNumber(phoneNumber);
+                    return publish(address, vCard);
+                },
+                MoreExecutors.directExecutor());
+    }
+
+    public ListenableFuture<String> retrievePhoneNumber(final Jid address) {
+        return Futures.transform(
+                retrieve(address),
+                vCard -> vCard != null ? vCard.getPhoneNumber() : null,
+                MoreExecutors.directExecutor());
+    }
+
     public ListenableFuture<Void> deletePhoto() {
         final var vCardFuture = retrieve(getAccount().getJid().asBareJid());
         return Futures.transformAsync(

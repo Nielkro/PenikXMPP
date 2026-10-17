@@ -4,3 +4,4 @@ data/
 *.db-shm
 *.db-wal
 penik-stickers-rs
+penik-service-rs

@@ -72,6 +72,15 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
 
     private String mLastPresence = null;
     private RtpCapability.Capability rtpCapability;
+    private String phoneNumber;
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 
     public Contact(
             final String account,

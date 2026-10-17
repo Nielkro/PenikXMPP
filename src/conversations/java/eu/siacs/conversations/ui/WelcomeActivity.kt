@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import eu.siacs.conversations.Config
 import eu.siacs.conversations.R
 import eu.siacs.conversations.entities.Account
+import eu.siacs.conversations.phone.PenikPhoneDirectoryManager
 import eu.siacs.conversations.services.XmppConnectionService
 import eu.siacs.conversations.ui.compose.PenikAuthListener
 import eu.siacs.conversations.ui.compose.PenikAuthMode
@@ -32,6 +33,7 @@ class WelcomeActivity : QrCodeProcessingActivity(),
     private var isRegistering by mutableStateOf(false)
     private var pendingDisplayName by mutableStateOf<String?>(null)
     private var pendingAvatarUri by mutableStateOf<Uri?>(null)
+    private var pendingPhoneNumber by mutableStateOf<String?>(null)
 
     companion object {
         const val EXTRA_DOMAIN = "domain"
@@ -169,6 +171,14 @@ class WelcomeActivity : QrCodeProcessingActivity(),
                     if (avUri != null) {
                         service.publishAvatar(account, avUri, false, null)
                     }
+                    val phone = pendingPhoneNumber
+                    if (!phone.isNullOrBlank()) {
+                        service.publishPhoneNumber(account, phone)
+                        PenikPhoneDirectoryManager.uploadPhoneHashAsync(
+                            account.jid.asBareJid().toString(),
+                            phone
+                        )
+                    }
                 } else {
                     account.setOption(Account.OPTION_LOGGED_IN_SUCCESSFULLY, true)
                     service.updateAccount(account)
@@ -222,7 +232,7 @@ class WelcomeActivity : QrCodeProcessingActivity(),
         }
     }
 
-    override fun onRegister(nickname: String, password: String, displayName: String, avatarUri: Uri?) {
+    override fun onRegister(nickname: String, password: String, displayName: String, avatarUri: Uri?, phoneNumber: String?) {
         val service = xmppConnectionService
         if (service == null) {
             authState = authState.copy(error = "Сервис инициализируется, подождите...")
@@ -242,6 +252,7 @@ class WelcomeActivity : QrCodeProcessingActivity(),
         val resolvedName = displayName.ifBlank { nickname }
         pendingDisplayName = resolvedName
         pendingAvatarUri = avatarUri
+        pendingPhoneNumber = phoneNumber
         currentTargetAccountJid = jid
 
         var account = service.findAccountByJid(jid)

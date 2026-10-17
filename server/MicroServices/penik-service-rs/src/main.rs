@@ -24,14 +24,14 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "penik_stickers_rs=info,tower_http=info".into()),
+                .unwrap_or_else(|_| "penik_service_rs=info,tower_http=info".into()),
         )
         .init();
 
     // 2. Parse configuration
     let config = Arc::new(Config::parse());
     info!(
-        "Starting Penik Stickers Service on {}:{}",
+        "Starting Penik Service on {}:{}",
         config.host, config.port
     );
 
@@ -80,6 +80,11 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/stickers/file/:pack_id/:file_name",
             axum::routing::get(handlers::get_file),
+        )
+        .route(
+            "/phone-directory",
+            axum::routing::get(handlers::get_phone_directory)
+                .post(handlers::update_phone_hash),
         );
 
     let app = axum::Router::new()

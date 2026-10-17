@@ -1,6 +1,6 @@
 services:
-  penik-stickers:
-    container_name: penik-stickers
+  penik-service:
+    container_name: penik-service
     build: .
     restart: unless-stopped
     ports:

@@ -77,7 +77,10 @@ import eu.siacs.conversations.xmpp.OnUpdateBlocklist;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.manager.BlockingManager;
 import eu.siacs.conversations.xmpp.manager.PresenceManager;
-import eu.siacs.conversations.xmpp.manager.RosterManager;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
+import eu.siacs.conversations.xmpp.manager.VCardManager;
 import im.conversations.android.xmpp.model.stanza.Presence;
 import java.util.Collection;
 import java.util.Collections;
@@ -502,6 +505,27 @@ public class ContactDetailsActivity extends OmemoActivity
         }
     }
 
+    private void copyPhoneNumber(String phone) {
+        if (phone == null || phone.isEmpty()) return;
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Phone Number", phone);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(this, "Номер телефона скопирован", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void dialPhoneNumber(String phone) {
+        if (phone == null || phone.isEmpty()) return;
+        final Intent dialIntent = new Intent(Intent.ACTION_DIAL);
+        dialIntent.setData(Uri.parse("tel:" + Uri.encode(phone)));
+        try {
+            startActivity(dialIntent);
+        } catch (Exception e) {
+            copyPhoneNumber(phone);
+        }
+    }
+
     private void populateView() {
         if (contact == null) {
             return;
@@ -535,6 +559,55 @@ public class ContactDetailsActivity extends OmemoActivity
         final boolean isMuted = conversation != null && conversation.isMuted();
         binding.iconActionMute.setImageResource(
                 isMuted ? R.drawable.ic_notifications_off_24dp : R.drawable.ic_notifications_24dp);
+
+        // Phone Number in info card
+        final String cachedPhone = contact.getPhoneNumber();
+        if (!Strings.isNullOrEmpty(cachedPhone)) {
+            binding.detailsContactPhone.setText(cachedPhone);
+            binding.rowPhone.setVisibility(View.VISIBLE);
+            binding.dividerPhoneUsername.setVisibility(View.VISIBLE);
+            binding.rowPhone.setOnClickListener(v -> dialPhoneNumber(cachedPhone));
+            binding.rowPhone.setOnLongClickListener(v -> {
+                copyPhoneNumber(cachedPhone);
+                return true;
+            });
+        } else {
+            binding.rowPhone.setVisibility(View.GONE);
+            binding.dividerPhoneUsername.setVisibility(View.GONE);
+            final Account account = contact.getAccount();
+            if (account != null && account.getXmppConnection() != null) {
+                final var vCardFuture =
+                        account.getXmppConnection()
+                                .getManager(VCardManager.class)
+                                .retrievePhoneNumber(contact.getAddress());
+                Futures.addCallback(
+                        vCardFuture,
+                        new FutureCallback<>() {
+                            @Override
+                            public void onSuccess(String phone) {
+                                if (!Strings.isNullOrEmpty(phone)) {
+                                    contact.setPhoneNumber(phone);
+                                    runOnUiThread(() -> {
+                                        binding.detailsContactPhone.setText(phone);
+                                        binding.rowPhone.setVisibility(View.VISIBLE);
+                                        binding.dividerPhoneUsername.setVisibility(View.VISIBLE);
+                                        binding.rowPhone.setOnClickListener(v -> dialPhoneNumber(phone));
+                                        binding.rowPhone.setOnLongClickListener(v -> {
+                                            copyPhoneNumber(phone);
+                                            return true;
+                                        });
+                                    });
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull Throwable t) {
+                                // Silent fallback
+                            }
+                        },
+                        MoreExecutors.directExecutor());
+            }
+        }
 
         // Username / Address in info card
         final String addressStr = JidHelper.displayAddress(contact.getAddress());

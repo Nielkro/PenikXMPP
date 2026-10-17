@@ -409,3 +409,57 @@ pub async fn get_file(
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read file").into_response(),
     }
 }
+
+pub async fn get_phone_directory(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<ApiResponse<Vec<crate::models::PhoneDirectoryEntry>>>, (StatusCode, Json<ApiResponse<()>>)> {
+    match db::get_phone_directory(&state.pool).await {
+        Ok(entries) => Ok(Json(ApiResponse::success(entries))),
+        Err(e) => {
+            error!("Failed to fetch phone directory: {:?}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::err(e.to_string())),
+            ))
+        }
+    }
+}
+
+pub async fn update_phone_hash(
+    MaybeAuthUser(auth_jid): MaybeAuthUser,
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<crate::models::UpdatePhoneHashRequest>,
+) -> Result<Json<ApiResponse<()>>, (StatusCode, Json<ApiResponse<()>>)> {
+    let jid = match (auth_jid, payload.jid) {
+        (Some(j), _) => j,
+        (None, Some(j)) if !j.trim().is_empty() => j.trim().to_lowercase(),
+        _ => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::err("Missing authentication or jid")),
+            ));
+        }
+    };
+
+    let phone_hash = payload.phone_hash.trim();
+    if phone_hash.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiResponse::err("phone_hash must not be empty")),
+        ));
+    }
+
+    match db::save_phone_hash(&state.pool, &jid, phone_hash).await {
+        Ok(()) => {
+            info!("Updated phone hash for {}", jid);
+            Ok(Json(ApiResponse::success(())))
+        }
+        Err(e) => {
+            error!("Failed to save phone hash for {}: {:?}", jid, e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::err(e.to_string())),
+            ))
+        }
+    }
+}

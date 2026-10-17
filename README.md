@@ -95,7 +95,7 @@ Comprehensive specifications:
 | **Binary Protocol** | PXMPP / FunXMPP (`eu.siacs.conversations.xmpp.fun.*`) |
 | **Media & Calls** | Jingle WebRTC RTP engine, ExoPlayer |
 | **Server Plugins** | Prosody Lua modules (`server/Modules/mod_funxmpp.lua`, `mod_stickers_auth.lua`) |
-| **Microservices** | Rust Axum sticker service (`server/MicroServices/penik-stickers-rs`) |
+| **Microservices** | Rust Axum backend service (`server/MicroServices/penik-service-rs`) |
 | **Build System** | Gradle 9, AGP 9.2, R8 optimizer, DataBinding |
 
 ---
@@ -146,7 +146,7 @@ The resulting APKs are generated under `build/outputs/apk/`.
 │   │   ├── mod_stickers_auth.lua # HMAC-SHA256 stickers token issuer
 │   │   └── test_mod_stickers_auth.lua # Stickers auth test suite
 │   └── MicroServices/      # Standalone backend microservices (Rust)
-│       └── penik-stickers-rs/   # Telegram sticker converter & bundle service
+│       └── penik-service-rs/    # Stickers & phone directory backend service
 ├── src/
 │   ├── main/
 │   │   ├── AndroidManifest.xml
@@ -170,7 +170,7 @@ The resulting APKs are generated under `build/outputs/apk/`.
 ## Server Deployment Notes
 
 - **Prosody Modules:** Copy `server/Modules/mod_funxmpp.lua` and `server/Modules/mod_stickers_auth.lua` into your Prosody `modules/` directory. Enable `"funxmpp"` and `"stickers_auth"` in your `modules_enabled` list. Run the provided Lua test suites to verify compatibility.
-- **Sticker Microservice:** Build and run `server/MicroServices/penik-stickers-rs` using Cargo or Docker. The service requires `ffmpeg` with `libvpx-vp9` and exposes a secure HMAC-SHA256 authenticated REST API.
+- **Backend Service:** Build and run `server/MicroServices/penik-service-rs` using Cargo or Docker. The service requires `ffmpeg` with `libvpx-vp9` and exposes a secure HMAC-SHA256 authenticated REST API for stickers and phone directory matching.
 
 ---
 

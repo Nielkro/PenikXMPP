@@ -1,4 +1,4 @@
-use crate::models::{Sticker, StickerPack};
+use crate::models::{PhoneDirectoryEntry, Sticker, StickerPack};
 use sqlx::{sqlite::SqliteConnectOptions, SqlitePool};
 use std::str::FromStr;
 
@@ -48,6 +48,13 @@ pub async fn init_db(db_path: &str) -> anyhow::Result<SqlitePool> {
             PRIMARY KEY (user_jid, pack_id)
         );
         CREATE INDEX IF NOT EXISTS idx_user_packs ON user_sticker_packs(user_jid, sort_order);
+
+        CREATE TABLE IF NOT EXISTS phone_directory (
+            jid TEXT PRIMARY KEY,
+            phone_hash TEXT NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_phone_hash ON phone_directory(phone_hash);
         "#,
     )
     .execute(&pool)
@@ -206,4 +213,37 @@ pub async fn get_user_installed_packs(pool: &SqlitePool, user_jid: &str) -> anyh
     .fetch_all(pool)
     .await?;
     Ok(packs)
+}
+
+pub async fn save_phone_hash(pool: &SqlitePool, jid: &str, phone_hash: &str) -> anyhow::Result<()> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+
+    sqlx::query(
+        r#"
+        INSERT INTO phone_directory (jid, phone_hash, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(jid) DO UPDATE SET
+            phone_hash = excluded.phone_hash,
+            updated_at = excluded.updated_at
+        "#,
+    )
+    .bind(jid)
+    .bind(phone_hash)
+    .bind(now)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn get_phone_directory(pool: &SqlitePool) -> anyhow::Result<Vec<PhoneDirectoryEntry>> {
+    let entries = sqlx::query_as::<_, PhoneDirectoryEntry>(
+        "SELECT jid, phone_hash, updated_at FROM phone_directory ORDER BY updated_at DESC"
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(entries)
 }

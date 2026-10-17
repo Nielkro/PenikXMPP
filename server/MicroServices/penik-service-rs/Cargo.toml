@@ -1,5 +1,5 @@
 [package]
-name = "penik-stickers-rs"
+name = "penik-service-rs"
 version = "0.1.0"
 edition = "2021"
 

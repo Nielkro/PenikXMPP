@@ -74,7 +74,7 @@ data class PenikAuthState(
 )
 
 interface PenikAuthListener {
-    fun onRegister(nickname: String, password: String, displayName: String, avatarUri: Uri?)
+    fun onRegister(nickname: String, password: String, displayName: String, avatarUri: Uri?, phoneNumber: String?)
     fun onLogin(usernameOrJid: String, password: String)
     fun onImportBackup()
 }
@@ -93,6 +93,7 @@ fun PenikAuthScreen(
     var nickname by remember(state.initialNickname) { mutableStateOf(state.initialNickname) }
     var password by remember { mutableStateOf("") }
     var displayName by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
     var avatarUri by remember { mutableStateOf<Uri?>(null) }
     var localError by remember { mutableStateOf<String?>(null) }
 
@@ -149,7 +150,7 @@ fun PenikAuthScreen(
                 )
             }
 
-            val maxSteps = if (mode == PenikAuthMode.REGISTER) 3 else 2
+            val maxSteps = if (mode == PenikAuthMode.REGISTER) 4 else 2
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -430,18 +431,89 @@ fun PenikAuthScreen(
                             RenderAuthError(displayError, danger)
                             Spacer(modifier = Modifier.height(24.dp))
                             PrimaryAuthButton(
+                                text = "Продолжить",
+                                isLoading = false,
+                                accentColor = accent,
+                                onClick = {
+                                    step = 3
+                                }
+                            )
+                        }
+
+                        3 -> { // Phone Number (Optional)
+                            Text(
+                                text = "Номер телефона",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textPrimary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Поможет друзьям найти вас в мессенджере.\nВы можете указать его или пропустить этот шаг.",
+                                fontSize = 13.sp,
+                                color = textMuted,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            OutlinedTextField(
+                                value = phoneNumber,
+                                onValueChange = {
+                                    phoneNumber = it
+                                    localError = null
+                                },
+                                label = { Text("Номер телефона") },
+                                placeholder = { Text("+7 (999) 000-00-00") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = inputBg,
+                                    unfocusedContainerColor = inputBg,
+                                    focusedBorderColor = accent,
+                                    unfocusedBorderColor = border,
+                                    focusedTextColor = textPrimary,
+                                    unfocusedTextColor = textPrimary,
+                                    focusedLabelColor = accent,
+                                    unfocusedLabelColor = textMuted
+                                )
+                            )
+                            RenderAuthError(displayError, danger)
+                            Spacer(modifier = Modifier.height(24.dp))
+                            PrimaryAuthButton(
                                 text = "Завершить регистрацию",
                                 isLoading = state.isLoading,
                                 accentColor = accent,
+                                onClick = {
+                                    val cleaned = phoneNumber.trim()
+                                    listener.onRegister(
+                                        nickname = nickname.trim().lowercase(),
+                                        password = password,
+                                        displayName = displayName.trim(),
+                                        avatarUri = avatarUri,
+                                        phoneNumber = if (cleaned.isNotEmpty()) cleaned else null
+                                    )
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            TextButton(
                                 onClick = {
                                     listener.onRegister(
                                         nickname = nickname.trim().lowercase(),
                                         password = password,
                                         displayName = displayName.trim(),
-                                        avatarUri = avatarUri
+                                        avatarUri = avatarUri,
+                                        phoneNumber = null
                                     )
-                                }
-                            )
+                                },
+                                enabled = !state.isLoading
+                            ) {
+                                Text(
+                                    text = "Пропустить",
+                                    color = textMuted,
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
                     }
                 }

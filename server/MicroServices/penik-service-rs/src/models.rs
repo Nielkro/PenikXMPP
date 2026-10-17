@@ -42,6 +42,19 @@ pub struct ImportRequest {
     pub name: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PhoneDirectoryEntry {
+    pub jid: String,
+    pub phone_hash: String,
+    pub updated_at: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdatePhoneHashRequest {
+    pub jid: Option<String>,
+    pub phone_hash: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiResponse<T> {
     pub ok: bool,

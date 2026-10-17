@@ -95,7 +95,7 @@ flowchart LR
 | **Бинарный протокол** | PXMPP / FunXMPP (`eu.siacs.conversations.xmpp.fun.*`) |
 | **Медиа и звонки** | Jingle WebRTC RTP движок, ExoPlayer |
 | **Серверные модули** | Prosody Lua модули (`server/Modules/mod_funxmpp.lua`, `mod_stickers_auth.lua`) |
-| **Микросервисы** | Rust Axum микросервис стикеров (`server/MicroServices/penik-stickers-rs`) |
+| **Микросервисы** | Rust Axum вспомогательный бэкенд-сервис (`server/MicroServices/penik-service-rs`) |
 | **Система сборки** | Gradle 9, AGP 9.2, оптимизатор R8, DataBinding |
 
 ---
@@ -146,7 +146,7 @@ bash ./gradlew testConversationsFreeDebugUnitTest
 │   │   ├── mod_stickers_auth.lua # Генерация HMAC-токенов стикеров
 │   │   └── test_mod_stickers_auth.lua # Тесты авторизации стикеров
 │   └── MicroServices/      # Автономные серверные микросервисы (Rust)
-│       └── penik-stickers-rs/   # Сервис импорта Telegram-стикеров и бандлов
+│       └── penik-service-rs/    # Сервис стикеров и справочника номеров Penik
 ├── src/
 │   ├── main/
 │   │   ├── AndroidManifest.xml
@@ -170,7 +170,7 @@ bash ./gradlew testConversationsFreeDebugUnitTest
 ## Развёртывание на сервере
 
 - **Модули Prosody:** Скопируйте `server/Modules/mod_funxmpp.lua` и `server/Modules/mod_stickers_auth.lua` в каталог `modules/` сервера Prosody. Добавьте `"funxmpp"` и `"stickers_auth"` в список `modules_enabled`. Для проверки запустите соответствующие скрипты тестов Lua.
-- **Микросервис стикеров:** Соберите и запустите `server/MicroServices/penik-stickers-rs` через Cargo или Docker. Сервису требуется установленный `ffmpeg` с поддержкой декодера `libvpx-vp9`. Сервис предоставляет REST API, защищенный HMAC-SHA256 токенами.
+- **Вспомогательный бэкенд-сервис:** Соберите и запустите `server/MicroServices/penik-service-rs` через Cargo или Docker. Сервису требуется установленный `ffmpeg` с поддержкой декодера `libvpx-vp9`. Сервис предоставляет REST API для стикеров и справочника номеров, защищенный HMAC-SHA256 токенами.
 
 ---
 
