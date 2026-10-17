@@ -4,7 +4,7 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "8085:8085"
+      - "127.0.0.1:8085:8085"
     environment:
       - STICKERS_HOST=0.0.0.0
       - STICKERS_PORT=8085
