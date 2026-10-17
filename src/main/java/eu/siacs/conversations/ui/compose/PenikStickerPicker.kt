@@ -449,7 +449,7 @@ private fun PenikStickerPickerCell(
                 )
             }
         } else {
-            // For video/animated WebP, thumbFile was generated at 20 fps by the server.
+            // For video/animated WebP, thumbFile was generated at 30 fps by the server.
             // If thumbFile is absent or 0 bytes, fall back to fullFile or remote URL.
             val validThumb = thumbFile?.takeIf { it.exists() && it.length() > 0L }
             val validFull = fullFile?.takeIf { it.exists() && it.length() > 0L }

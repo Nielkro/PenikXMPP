@@ -113,13 +113,34 @@ public class UIHelper {
         } else if (interaction instanceof LastUserInteraction.None) {
             return null; // just hide the subtitle
         } else if (interaction instanceof LastUserInteraction.Idle idle) {
-            if (context.getResources().getBoolean(R.bool.last_seen_full_text)) {
+            final long time = idle.getSince().toEpochMilli();
+            if (time == 0) {
+                return context.getString(R.string.last_seen, context.getString(R.string.just_now));
+            }
+            final long difference = (System.currentTimeMillis() - time) / 1000;
+            if (difference < 60) {
+                return context.getString(R.string.last_seen, context.getString(R.string.just_now));
+            } else if (difference < 60 * 2) {
+                return context.getString(R.string.last_seen, context.getString(R.string.minute_ago));
+            } else if (difference < 60 * 15) {
                 return context.getString(
                         R.string.last_seen,
-                        UIHelper.readableTimeDifferenceFull(
-                                context, idle.getSince().toEpochMilli()));
+                        context.getString(R.string.minutes_ago, Math.round(difference / 60.0)));
+            }
+            final Date date = new Date(time);
+            final java.text.DateFormat df = DateFormat.getTimeFormat(context);
+            if (today(date)) {
+                return context.getString(R.string.last_seen_at, df.format(date));
+            } else if (yesterday(time)) {
+                return context.getString(R.string.last_seen_yesterday_at, df.format(date));
             } else {
-                return UIHelper.readableTimeDifference(context, idle.getSince().toEpochMilli());
+                final boolean fullDate = context.getResources().getBoolean(R.bool.last_seen_full_text);
+                final String formatted =
+                        DateUtils.formatDateTime(
+                                context,
+                                date.getTime(),
+                                fullDate ? FULL_DATE_FLAGS : SHORT_DATE_FLAGS);
+                return context.getString(R.string.last_seen, formatted);
             }
         } else {
             return null;
