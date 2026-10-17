@@ -4,6 +4,10 @@
 
 <h1 align="center">Penik (XMPP)</h1>
 
+<p align="center">
+  <b>English</b> | <a href="README_RU.md">Русский</a>
+</p>
+
 **Penik** (`ru.penik.xmpp`) is a next-generation Android messenger powered by the high-performance **PXMPP** binary protocol and a modern, fluid Jetpack Compose user interface.
 
 It combines the decentralized power and security of open standards with the polish, speed, and efficiency expected of contemporary consumer messengers.
@@ -21,6 +25,11 @@ It combines the decentralized power and security of open standards with the poli
   - Clean Material 3 design with custom Penik palette (`Theme.Penik`, circular avatars, unified chat bubble geometry).
   - Real-time message status indicators (single/double delivery and read receipts), live reactions, and chat state indication.
   - Streamlined navigation: Chats, Calls, Saved Messages, and Profile tabs.
+  - Telegram-style attachment bottom sheet with multi-select and live media preview.
+- **Telegram-Compatible Stickers**
+  - Support for Telegram sticker packs: static WebP, Animated WebP, and vector `.tgs` animations.
+  - High-performance Rust backend converts WebM VP9 with alpha transparency (`-c:v libvpx-vp9`) into smooth Animated WebP without heavy custom OpenGL shaders.
+  - 4-column sticker keyboard with static 128x128 thumbnails for zero-stutter 60 FPS scrolling.
 - **Privacy & Encryption**
   - Seamless end-to-end encryption (OMEMO) with zero configuration required.
   - Automatic key acceptance and chat upgrade when communicating with encrypted peers.
@@ -29,9 +38,10 @@ It combines the decentralized power and security of open standards with the poli
   - Jingle / WebRTC peer-to-peer audio and video calling.
   - Telegram-style independent video upgrade: video streams toggle independently on each side without disrupting ongoing audio.
   - Full-screen incoming call activity for instant pickup.
-- **Rock-Solid Connectivity**
+- **Rock-Solid Connectivity & Push Notifications**
   - Full XEP-0198 Stream Management support with optimized server piggybacking.
   - Instant stream resumption across Wi-Fi and mobile network switches with zero packet loss.
+  - Dual push notification backends: Google Play Services (FCM) and UnifiedPush.
 
 ---
 
@@ -79,12 +89,13 @@ Comprehensive specifications:
 
 | Component | Technology |
 | :--- | :--- |
-| **UI Framework** | Jetpack Compose (Material 3, Navigation, Coil), Compose BOM 2026.09 |
+| **UI Framework** | Jetpack Compose (Material 3, Navigation, Coil, Lottie), Compose BOM 2026.09 |
 | **Language & Toolchain** | Kotlin 2.4, Java 21, Android SDK (minSdk 26, compileSdk 37) |
 | **XMPP & Crypto Core** | Penik XMPP Core (`im.conversations.android.xmpp`), Conscrypt TLS, OMEMO |
 | **Binary Protocol** | PXMPP / FunXMPP (`eu.siacs.conversations.xmpp.fun.*`) |
-| **Media & Calls** | Jingle WebRTC RTP engine, Exoplayer |
-| **Server Plugin** | Prosody Lua module (`server/Modules/mod_funxmpp.lua`) |
+| **Media & Calls** | Jingle WebRTC RTP engine, ExoPlayer |
+| **Server Plugins** | Prosody Lua modules (`server/Modules/mod_funxmpp.lua`, `mod_stickers_auth.lua`) |
+| **Microservices** | Rust Axum sticker service (`server/MicroServices/penik-stickers-rs`) |
 | **Build System** | Gradle 9, AGP 9.2, R8 optimizer, DataBinding |
 
 ---
@@ -95,8 +106,11 @@ Comprehensive specifications:
 An all-in-one automation script is provided in the repository root:
 
 ```bash
-# Build, install on connected phone, and launch Penik
+# Build and install Playstore flavor with FCM notifications (default)
 ./install_phone.sh
+
+# Build and install Free flavor with UnifiedPush
+./install_phone.sh --free
 
 # Reinstall existing build without rebuilding
 ./install_phone.sh -n
@@ -107,13 +121,16 @@ An all-in-one automation script is provided in the repository root:
 
 ### Manual Gradle Build
 ```bash
-# Build debug APK
+# Build Playstore debug APK with FCM notifications
+bash ./gradlew assembleConversationsPlaystoreDebug
+
+# Build Free debug APK with UnifiedPush
 bash ./gradlew assembleConversationsFreeDebug
 
 # Run unit tests
 bash ./gradlew testConversationsFreeDebugUnitTest
 ```
-The resulting APK is generated in `build/outputs/apk/conversationsFree/debug/`.
+The resulting APKs are generated under `build/outputs/apk/`.
 
 ---
 
@@ -124,14 +141,18 @@ The resulting APK is generated in `build/outputs/apk/conversationsFree/debug/`.
 │   └── PXMPP/              # PXMPP binary protocol specifications (EN / RU)
 ├── server/
 │   ├── Modules/            # Prosody / Snikket Lua plugins
-│   │   ├── mod_funxmpp.lua # Binary protocol plugin
-│   │   └── test_mod_funxmpp.lua # Lua test suite
+│   │   ├── mod_funxmpp.lua      # Binary protocol plugin
+│   │   ├── test_mod_funxmpp.lua # FunXMPP Lua test suite
+│   │   ├── mod_stickers_auth.lua # HMAC-SHA256 stickers token issuer
+│   │   └── test_mod_stickers_auth.lua # Stickers auth test suite
 │   └── MicroServices/      # Standalone backend microservices (Rust)
+│       └── penik-stickers-rs/   # Telegram sticker converter & bundle service
 ├── src/
 │   ├── main/
 │   │   ├── AndroidManifest.xml
 │   │   ├── java/eu/siacs/conversations/
-│   │   │   ├── ui/compose/ # Penik Compose screens (Chats, Calls, Profile)
+│   │   │   ├── ui/compose/ # Penik Compose screens (Chats, Calls, Picker, Stickers)
+│   │   │   ├── stickers/   # StickerManager and pack caching
 │   │   │   ├── xmpp/fun/   # FunWriter, FunReader, FunTokens (PXMPP engine)
 │   │   │   └── ...         # Core XMPP connection, crypto, managers
 │   │   └── res/            # Penik themes, vector drawables, colors
@@ -148,10 +169,11 @@ The resulting APK is generated in `build/outputs/apk/conversationsFree/debug/`.
 
 ## Server Deployment Notes
 
-- **Server Plugin Installation:** Copy `server/Modules/mod_funxmpp.lua` into your Prosody `modules/` directory and add `"funxmpp"` to your `modules_enabled` list. Run `lua server/Modules/test_mod_funxmpp.lua` to verify compatibility.
+- **Prosody Modules:** Copy `server/Modules/mod_funxmpp.lua` and `server/Modules/mod_stickers_auth.lua` into your Prosody `modules/` directory. Enable `"funxmpp"` and `"stickers_auth"` in your `modules_enabled` list. Run the provided Lua test suites to verify compatibility.
+- **Sticker Microservice:** Build and run `server/MicroServices/penik-stickers-rs` using Cargo or Docker. The service requires `ffmpeg` with `libvpx-vp9` and exposes a secure HMAC-SHA256 authenticated REST API.
 
 ---
 
 ## Upstream & Heritage
 
-Penik's core networking, cryptographic foundations, and XMPP compliance are built upon the robust, battle-tested open-source code of [Conversations](https://codeberg.org/iNPUTmice/Conversations) by Daniel Gultsch. Penik extends this base with the PXMPP binary protocol, a rewritten Jetpack Compose UI, and modern mobile UX enhancements.
+Penik's core networking, cryptographic foundations, and XMPP compliance are built upon the robust, battle-tested open-source code of [Conversations](https://codeberg.org/iNPUTmice/Conversations) by Daniel Gultsch. Penik extends this base with the PXMPP binary protocol, a rewritten Jetpack Compose UI, Telegram stickers support, and modern mobile UX enhancements.
