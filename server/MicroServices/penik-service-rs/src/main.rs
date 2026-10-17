@@ -84,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/phone-directory",
             axum::routing::get(handlers::get_phone_directory)
-                .post(handlers::update_phone_hash),
+                .post(handlers::update_phone),
         );
 
     let app = axum::Router::new()

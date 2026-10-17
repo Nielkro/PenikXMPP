@@ -13,12 +13,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 data class DirectoryEntry(
     val jid: String,
-    val phoneHash: String,
+    val phone: String,
     val updatedAt: Long
 )
 
@@ -31,7 +30,6 @@ data class MatchedPhoneContact(
 object PenikPhoneDirectoryManager {
 
     private const val TAG = "PenikPhoneDir"
-    private const val SALT = "penik:"
 
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
@@ -39,24 +37,21 @@ object PenikPhoneDirectoryManager {
         .build()
 
     fun normalizePhoneNumber(phone: String): String {
-        return phone.replace(Regex("[^0-9+]"), "").lowercase()
+        val digits = phone.replace(Regex("[^0-9]"), "")
+        if (digits.length == 11 && (digits.startsWith("7") || digits.startsWith("8"))) {
+            return "+7" + digits.substring(1)
+        }
+        return if (phone.startsWith("+")) "+$digits" else digits
     }
 
-    fun hashPhoneNumber(phone: String): String {
-        val normalized = normalizePhoneNumber(phone)
-        val input = "$SALT$normalized"
-        val digest = MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8))
-        return digest.joinToString("") { "%02x".format(it) }
-    }
-
-    fun uploadPhoneHashAsync(jid: String, phoneNumber: String, authToken: String? = null) {
+    fun uploadPhoneAsync(jid: String, phoneNumber: String, authToken: String? = null) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val cleanBase = Config.STICKERS_BASE_URL.trimEnd('/')
-                val hash = hashPhoneNumber(phoneNumber)
+                val normalized = normalizePhoneNumber(phoneNumber)
                 val json = JSONObject().apply {
                     put("jid", jid)
-                    put("phone_hash", hash)
+                    put("phone", normalized)
                 }.toString()
 
                 val requestBuilder = Request.Builder()
@@ -69,13 +64,13 @@ object PenikPhoneDirectoryManager {
 
                 httpClient.newCall(requestBuilder.build()).execute().use { response ->
                     if (response.isSuccessful) {
-                        Log.d(TAG, "Uploaded phone hash for $jid successfully")
+                        Log.d(TAG, "Uploaded phone for $jid successfully")
                     } else {
-                        Log.w(TAG, "Failed to upload phone hash: HTTP ${response.code}")
+                        Log.w(TAG, "Failed to upload phone: HTTP ${response.code}")
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error uploading phone hash for $jid", e)
+                Log.e(TAG, "Error uploading phone for $jid", e)
             }
         }
     }
@@ -103,10 +98,11 @@ object PenikPhoneDirectoryManager {
                 val list = mutableListOf<DirectoryEntry>()
                 for (i in 0 until dataArray.length()) {
                     val item = dataArray.getJSONObject(i)
+                    val phone = item.optString("phone").ifEmpty { item.optString("phone_hash") }
                     list.add(
                         DirectoryEntry(
                             jid = item.getString("jid"),
-                            phoneHash = item.getString("phone_hash"),
+                            phone = phone,
                             updatedAt = item.optLong("updated_at", 0L)
                         )
                     )
@@ -129,8 +125,17 @@ object PenikPhoneDirectoryManager {
             return@withContext emptyList()
         }
 
-        // Map hash -> jid
-        val hashMap = directory.associateBy({ it.phoneHash }, { it.jid })
+        // Map normalized phone (and last 10 digits) -> jid
+        val phoneMap = mutableMapOf<String, String>()
+        for (entry in directory) {
+            val norm = normalizePhoneNumber(entry.phone)
+            phoneMap[norm] = entry.jid
+            val digits = norm.replace(Regex("[^0-9]"), "")
+            if (digits.length >= 10) {
+                phoneMap[digits.takeLast(10)] = entry.jid
+            }
+        }
+
         val matched = mutableListOf<MatchedPhoneContact>()
 
         try {
@@ -154,8 +159,9 @@ object PenikPhoneDirectoryManager {
                     val name = if (nameIndex >= 0) it.getString(nameIndex) ?: "" else ""
                     val number = if (numberIndex >= 0) it.getString(numberIndex) ?: "" else ""
                     if (number.isNotBlank()) {
-                        val computedHash = hashPhoneNumber(number)
-                        val jid = hashMap[computedHash]
+                        val norm = normalizePhoneNumber(number)
+                        val digits = norm.replace(Regex("[^0-9]"), "")
+                        val jid = phoneMap[norm] ?: if (digits.length >= 10) phoneMap[digits.takeLast(10)] else null
                         if (jid != null) {
                             matched.add(
                                 MatchedPhoneContact(

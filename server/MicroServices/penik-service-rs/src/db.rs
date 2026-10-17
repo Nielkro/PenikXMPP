@@ -51,10 +51,10 @@ pub async fn init_db(db_path: &str) -> anyhow::Result<SqlitePool> {
 
         CREATE TABLE IF NOT EXISTS phone_directory (
             jid TEXT PRIMARY KEY,
-            phone_hash TEXT NOT NULL,
+            phone TEXT NOT NULL,
             updated_at INTEGER NOT NULL
         );
-        CREATE INDEX IF NOT EXISTS idx_phone_hash ON phone_directory(phone_hash);
+        CREATE INDEX IF NOT EXISTS idx_phone ON phone_directory(phone);
         "#,
     )
     .execute(&pool)
@@ -215,7 +215,7 @@ pub async fn get_user_installed_packs(pool: &SqlitePool, user_jid: &str) -> anyh
     Ok(packs)
 }
 
-pub async fn save_phone_hash(pool: &SqlitePool, jid: &str, phone_hash: &str) -> anyhow::Result<()> {
+pub async fn save_phone(pool: &SqlitePool, jid: &str, phone: &str) -> anyhow::Result<()> {
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
@@ -223,15 +223,15 @@ pub async fn save_phone_hash(pool: &SqlitePool, jid: &str, phone_hash: &str) -> 
 
     sqlx::query(
         r#"
-        INSERT INTO phone_directory (jid, phone_hash, updated_at)
+        INSERT INTO phone_directory (jid, phone, updated_at)
         VALUES (?, ?, ?)
         ON CONFLICT(jid) DO UPDATE SET
-            phone_hash = excluded.phone_hash,
+            phone = excluded.phone,
             updated_at = excluded.updated_at
         "#,
     )
     .bind(jid)
-    .bind(phone_hash)
+    .bind(phone)
     .bind(now)
     .execute(pool)
     .await?;
@@ -241,7 +241,7 @@ pub async fn save_phone_hash(pool: &SqlitePool, jid: &str, phone_hash: &str) -> 
 
 pub async fn get_phone_directory(pool: &SqlitePool) -> anyhow::Result<Vec<PhoneDirectoryEntry>> {
     let entries = sqlx::query_as::<_, PhoneDirectoryEntry>(
-        "SELECT jid, phone_hash, updated_at FROM phone_directory ORDER BY updated_at DESC"
+        "SELECT jid, phone, updated_at FROM phone_directory ORDER BY updated_at DESC"
     )
     .fetch_all(pool)
     .await?;

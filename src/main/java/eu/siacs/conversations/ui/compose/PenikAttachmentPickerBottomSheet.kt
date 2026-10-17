@@ -100,13 +100,15 @@ fun PenikAttachmentPickerBottomSheet(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val accentColor = colorResource(R.color.penik_accent)
+    val windowHeightPx = context.resources.displayMetrics.heightPixels.toFloat()
 
     var hasPermission by remember { mutableStateOf(hasGalleryPermission(context)) }
     val recentMedias = remember { mutableStateListOf<LocalGalleryMedia>() }
     var isLoadingMedia by remember { mutableStateOf(false) }
     val selectedUris = remember { mutableStateListOf<Uri>() }
+    var sheetHeightPx by remember { mutableFloatStateOf(0f) }
 
     val imageLoader = remember(context) {
         ImageLoader.Builder(context)
@@ -153,35 +155,72 @@ fun PenikAttachmentPickerBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.85f)
+                .onGloballyPositioned { coords ->
+                    sheetHeightPx = coords.size.height.toFloat()
+                }
         ) {
-            // Clean Top Header (Only Title / Count and Reset)
+            // Top Header: clearly visible in BOTH half-screen and full-screen states
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (selectedUris.isNotEmpty()) {
-                    Text(
-                        text = "Выбрано: ${selectedUris.size}",
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Выбрано: ${selectedUris.size}",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White.copy(alpha = 0.12f))
+                                .clickable { selectedUris.clear() }
+                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                        ) {
+                            Text(
+                                text = "Сбросить",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = accentColor
+                            )
+                        }
+                    }
+
+                    // Top Send Button: directly reachable in both half-screen and full-screen states
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.12f))
-                            .clickable { selectedUris.clear() }
-                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(accentColor)
+                            .clickable {
+                                val toSend = selectedUris.toList()
+                                onDismiss()
+                                onSendRecentMedias(toSend)
+                            }
+                            .padding(horizontal = 14.dp, vertical = 7.dp)
                     ) {
-                        Text(
-                            text = "Сбросить",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = accentColor
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Отправить",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "Отправить (${selectedUris.size})",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                 } else {
                     Text(
@@ -335,6 +374,16 @@ fun PenikAttachmentPickerBottomSheet(
                         elevation = FloatingActionButtonDefaults.elevation(6.dp),
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
+                            .offset {
+                                val sheetTopInWindow = try {
+                                    sheetState.requireOffset()
+                                } catch (_: Exception) {
+                                    0f
+                                }
+                                val contentBottomInWindow = sheetTopInWindow + sheetHeightPx
+                                val overflow = (contentBottomInWindow - windowHeightPx).coerceAtLeast(0f)
+                                IntOffset(0, -overflow.roundToInt())
+                            }
                             .navigationBarsPadding()
                             .padding(end = 20.dp, bottom = 20.dp)
                             .size(56.dp)

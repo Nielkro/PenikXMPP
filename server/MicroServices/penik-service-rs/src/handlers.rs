@@ -425,10 +425,10 @@ pub async fn get_phone_directory(
     }
 }
 
-pub async fn update_phone_hash(
+pub async fn update_phone(
     MaybeAuthUser(auth_jid): MaybeAuthUser,
     State(state): State<Arc<AppState>>,
-    Json(payload): Json<crate::models::UpdatePhoneHashRequest>,
+    Json(payload): Json<crate::models::UpdatePhoneRequest>,
 ) -> Result<Json<ApiResponse<()>>, (StatusCode, Json<ApiResponse<()>>)> {
     let jid = match (auth_jid, payload.jid) {
         (Some(j), _) => j,
@@ -441,21 +441,21 @@ pub async fn update_phone_hash(
         }
     };
 
-    let phone_hash = payload.phone_hash.trim();
-    if phone_hash.is_empty() {
+    let phone = payload.phone.trim();
+    if phone.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::err("phone_hash must not be empty")),
+            Json(ApiResponse::err("phone must not be empty")),
         ));
     }
 
-    match db::save_phone_hash(&state.pool, &jid, phone_hash).await {
+    match db::save_phone(&state.pool, &jid, phone).await {
         Ok(()) => {
-            info!("Updated phone hash for {}", jid);
+            info!("Updated phone for {}", jid);
             Ok(Json(ApiResponse::success(())))
         }
         Err(e) => {
-            error!("Failed to save phone hash for {}: {:?}", jid, e);
+            error!("Failed to save phone for {}: {:?}", jid, e);
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiResponse::err(e.to_string())),

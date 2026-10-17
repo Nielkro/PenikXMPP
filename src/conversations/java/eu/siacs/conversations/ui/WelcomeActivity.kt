@@ -174,7 +174,7 @@ class WelcomeActivity : QrCodeProcessingActivity(),
                     val phone = pendingPhoneNumber
                     if (!phone.isNullOrBlank()) {
                         service.publishPhoneNumber(account, phone)
-                        PenikPhoneDirectoryManager.uploadPhoneHashAsync(
+                        PenikPhoneDirectoryManager.uploadPhoneAsync(
                             account.jid.asBareJid().toString(),
                             phone
                         )

@@ -1,6 +1,10 @@
 package eu.siacs.conversations.ui.compose
 
+import android.content.Context
 import android.graphics.Bitmap
+import com.google.common.util.concurrent.FutureCallback
+import com.google.common.util.concurrent.Futures
+import eu.siacs.conversations.phone.PenikPhoneDirectoryManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -1423,8 +1427,54 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
     val danger = colorResource(R.color.penik_danger)
     val context = LocalContext.current
     val account = state.account
+
+    if (account == null) {
+        Box(modifier = Modifier.fillMaxSize().background(background), contentAlignment = Alignment.Center) {
+            Text(text = "Нет аккаунта", color = textMuted, fontSize = 16.sp)
+        }
+        return
+    }
+
+    val prefs = remember(account.uuid) {
+        context.getSharedPreferences("penik_profile_${account.uuid}", Context.MODE_PRIVATE)
+    }
+    var phoneNumber by remember(account.uuid) {
+        mutableStateOf(prefs.getString("phone_number", null) ?: "")
+    }
+    var currentDisplayName by remember(account.uuid) {
+        mutableStateOf(account.displayName ?: "")
+    }
+
     var showAvatarOptions by remember { mutableStateOf(false) }
+    var showEditPhoneDialog by remember { mutableStateOf(false) }
+    var showEditNameDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     var tempCameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
+
+    LaunchedEffect(account.uuid) {
+        val connection = account.xmppConnection
+        if (connection != null) {
+            val vCardManager = connection.getManager(eu.siacs.conversations.xmpp.manager.VCardManager::class.java)
+            if (vCardManager != null) {
+                Futures.addCallback(
+                    vCardManager.retrievePhoneNumber(account.jid.asBareJid()),
+                    object : FutureCallback<String?> {
+                        override fun onSuccess(result: String?) {
+                            if (!result.isNullOrBlank()) {
+                                activity.runOnUiThread {
+                                    phoneNumber = result
+                                    prefs.edit().putString("phone_number", result).apply()
+                                }
+                            }
+                        }
+                        override fun onFailure(t: Throwable) {}
+                    },
+                    activity.mainExecutor
+                )
+            }
+        }
+    }
+
     val galleryLauncher =
             rememberLauncherForActivityResult(
                     androidx.activity.result.contract.ActivityResultContracts.GetContent()
@@ -1451,36 +1501,31 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                     listener.onPublishAvatar(uri)
                 }
             }
-    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    val density = LocalDensity.current
+    val avatarService = activity.avatarService()
+    var bitmap by remember(account.uuid) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(account.uuid) {
+        if (avatarService == null) {
+            return@LaunchedEffect
+        }
+        val sizePx = with(density) { 96.dp.roundToPx() }
+        bitmap =
+                withContext(Dispatchers.IO) {
+                    try {
+                        avatarService.get(account, sizePx, false)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+    }
+
     Column(
             modifier =
                     Modifier.fillMaxSize().background(background).padding(horizontal = 24.dp)
                             .padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (account == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Нет аккаунта", color = textMuted, fontSize = 16.sp)
-            }
-            return@Column
-        }
-        val density = LocalDensity.current
-        val avatarService = activity.avatarService()
-        var bitmap by remember(account.uuid) { mutableStateOf<Bitmap?>(null) }
-        LaunchedEffect(account.uuid) {
-            if (avatarService == null) {
-                return@LaunchedEffect
-            }
-            val sizePx = with(density) { 96.dp.roundToPx() }
-            bitmap =
-                    withContext(Dispatchers.IO) {
-                        try {
-                            avatarService.get(account, sizePx, false)
-                        } catch (e: Exception) {
-                            null
-                        }
-                    }
-        }
         Spacer(modifier = Modifier.height(40.dp))
         Box(modifier = Modifier.size(104.dp), contentAlignment = Alignment.Center) {
             val loaded = bitmap
@@ -1531,33 +1576,302 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                 )
             }
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         val local = JidHelper.displayAddress(account.jid.asBareJid())
-        if (local.isNotBlank()) {
+        val headerName = if (currentDisplayName.isNotBlank()) currentDisplayName else local
+        Text(
+            text = headerName,
+            color = textPrimary,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
+        if (currentDisplayName.isNotBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                    text = local,
-                    color = textPrimary,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold
+                text = "@$local",
+                color = textMuted,
+                fontSize = 14.sp
             )
         }
-        Spacer(modifier = Modifier.weight(1f))
-        androidx.compose.material3.Button(
-                onClick = { showLogoutDialog = true },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors =
-                        androidx.compose.material3.ButtonDefaults.buttonColors(
-                                containerColor = danger.copy(alpha = 0.15f)
-                        )
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        // Telegram-style Profile Info Card
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(panel)
         ) {
             Text(
-                    text = "Выйти",
-                    color = danger,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                text = "АККАУНТ",
+                color = accent,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 4.dp)
+            )
+
+            // Phone number row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showEditPhoneDialog = true }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_phone_24dp),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (phoneNumber.isNotBlank()) phoneNumber else "Не указан",
+                        color = textPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Нажмите, чтобы изменить номер",
+                        color = textMuted,
+                        fontSize = 12.sp
+                    )
+                }
+                Icon(
+                    painter = painterResource(R.drawable.ic_edit_24dp),
+                    contentDescription = "Изменить номер",
+                    tint = textMuted,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            HorizontalDivider(
+                modifier = Modifier.padding(start = 56.dp, end = 16.dp),
+                color = background,
+                thickness = 1.dp
+            )
+
+            // Username / JID row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_person_24dp),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "@$local",
+                        color = textPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Имя пользователя",
+                        color = textMuted,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            HorizontalDivider(
+                modifier = Modifier.padding(start = 56.dp, end = 16.dp),
+                color = background,
+                thickness = 1.dp
+            )
+
+            // Display Name row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showEditNameDialog = true }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_edit_24dp),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (currentDisplayName.isNotBlank()) currentDisplayName else "Не указано",
+                        color = textPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Имя в профиле",
+                        color = textMuted,
+                        fontSize = 12.sp
+                    )
+                }
+                Icon(
+                    painter = painterResource(R.drawable.ic_edit_24dp),
+                    contentDescription = "Изменить имя",
+                    tint = textMuted,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        androidx.compose.material3.Button(
+            onClick = { showLogoutDialog = true },
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = danger.copy(alpha = 0.15f)
+            )
+        ) {
+            Text(
+                text = "Выйти",
+                color = danger,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
             )
         }
+    }
+
+    if (showEditPhoneDialog) {
+        var tempPhone by remember { mutableStateOf(phoneNumber) }
+        AlertDialog(
+            onDismissRequest = { showEditPhoneDialog = false },
+            containerColor = panel,
+            title = {
+                Text(
+                    text = "Номер телефона",
+                    color = textPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Укажите ваш номер телефона. Ваши контакты смогут найти вас в Penik по адресной книге.",
+                        color = textMuted,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = tempPhone,
+                        onValueChange = { tempPhone = it },
+                        label = { Text("Номер телефона (+7...)") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = accent,
+                            unfocusedBorderColor = textMuted.copy(alpha = 0.4f),
+                            focusedTextColor = textPrimary,
+                            unfocusedTextColor = textPrimary,
+                            cursorColor = accent
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val norm = PenikPhoneDirectoryManager.normalizePhoneNumber(tempPhone.trim())
+                        phoneNumber = norm
+                        prefs.edit().putString("phone_number", norm).apply()
+                        val service = activity.xmppConnectionService
+                        if (service != null) {
+                            service.publishPhoneNumber(account, norm)
+                        }
+                        PenikPhoneDirectoryManager.uploadPhoneAsync(
+                            account.jid.asBareJid().toString(),
+                            norm
+                        )
+                        showEditPhoneDialog = false
+                    }
+                ) {
+                    Text("Сохранить", color = accent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditPhoneDialog = false }) {
+                    Text("Отмена", color = textMuted)
+                }
+            }
+        )
+    }
+
+    if (showEditNameDialog) {
+        var tempName by remember { mutableStateOf(currentDisplayName) }
+        AlertDialog(
+            onDismissRequest = { showEditNameDialog = false },
+            containerColor = panel,
+            title = {
+                Text(
+                    text = "Имя в профиле",
+                    color = textPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Введите ваше имя или псевдоним, который будут видеть собеседники.",
+                        color = textMuted,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = tempName,
+                        onValueChange = { tempName = it },
+                        label = { Text("Имя") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = accent,
+                            unfocusedBorderColor = textMuted.copy(alpha = 0.4f),
+                            focusedTextColor = textPrimary,
+                            unfocusedTextColor = textPrimary,
+                            cursorColor = accent
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val trimmed = tempName.trim()
+                        currentDisplayName = trimmed
+                        account.displayName = trimmed
+                        val service = activity.xmppConnectionService
+                        if (service != null) {
+                            service.publishDisplayName(account)
+                            service.databaseBackend.updateAccount(account)
+                        }
+                        showEditNameDialog = false
+                    }
+                ) {
+                    Text("Сохранить", color = accent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditNameDialog = false }) {
+                    Text("Отмена", color = textMuted)
+                }
+            }
+        )
     }
     if (showLogoutDialog) {
         androidx.compose.material3.AlertDialog(
