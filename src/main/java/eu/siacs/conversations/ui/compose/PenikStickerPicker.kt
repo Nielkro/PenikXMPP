@@ -132,7 +132,7 @@ fun PenikStickerPickerBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.6f)
+                .fillMaxHeight(0.42f)
                 .navigationBarsPadding()
         ) {
             // Header / Tabs
