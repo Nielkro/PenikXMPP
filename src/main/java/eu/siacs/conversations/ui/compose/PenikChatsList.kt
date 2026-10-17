@@ -109,6 +109,11 @@ class PenikChatsState {
     var selfChat by mutableStateOf<Conversation?>(null)
     var account by mutableStateOf<Account?>(null)
     var isArchiveOpen by mutableStateOf(false)
+    var revision by mutableStateOf(0L)
+
+    fun bumpRevision() {
+        revision++
+    }
 }
 
 enum class PenikConnectionState {
@@ -456,7 +461,7 @@ fun PenikChatsTab(
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(filtered, key = { "${it.uuid}_${it.isPinnedOnTop}_${it.unreadCount()}_${it.latestMessage?.uuid}_${it.isMuted}" }) { conversation ->
+                    items(filtered, key = { "${it.uuid}_${it.contact?.avatar}_${it.mucOptions?.avatar}_${it.isPinnedOnTop}_${it.unreadCount()}_${it.latestMessage?.uuid}_${it.isMuted}" }) { conversation ->
                         PenikConversationRow(
                                 conversation = conversation,
                                 activity = activity,
@@ -538,7 +543,7 @@ fun PenikChatsTab(
                         }
                     }
                 } else {
-                    items(filtered, key = { "${it.uuid}_${it.isPinnedOnTop}_${it.unreadCount()}_${it.latestMessage?.uuid}_${it.isMuted}" }) { conversation ->
+                    items(filtered, key = { "${it.uuid}_${it.contact?.avatar}_${it.mucOptions?.avatar}_${it.isPinnedOnTop}_${it.unreadCount()}_${it.latestMessage?.uuid}_${it.isMuted}" }) { conversation ->
                         PenikConversationRow(
                                 conversation = conversation,
                                 activity = activity,

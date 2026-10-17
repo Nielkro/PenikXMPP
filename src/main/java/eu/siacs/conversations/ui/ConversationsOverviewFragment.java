@@ -640,6 +640,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
         }
         this.penikChatsState.setConversations(ImmutableList.copyOf(main));
         this.penikChatsState.setArchived(ImmutableList.copyOf(archived));
+        this.penikChatsState.bumpRevision();
         this.penikChatsState.setConnectionState(
                 online
                         ? PenikConnectionState.ONLINE

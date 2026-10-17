@@ -3655,10 +3655,19 @@ public class ConversationFragment extends XmppFragment
         if (trustKeysIfNeeded(conversation, REQUEST_TRUST_KEYS_TEXT)) {
             return;
         }
-        final Message message = new Message(conversation, sticker.toJson(), conversation.getNextEncryption());
+        final Sticker finalSticker;
+        if (sticker.url() == null || sticker.url().isEmpty()) {
+            final String ext = Sticker.FORMAT_ANIMATED.equals(sticker.format()) ? "tgs" : "webp";
+            final String fileName = sticker.stickerId() + "." + ext;
+            final String resolvedUrl = Config.STICKERS_BASE_URL + "/api/v1/stickers/file/" + sticker.packId() + "/" + fileName;
+            finalSticker = new Sticker(sticker.packId(), sticker.stickerId(), sticker.emoji(), sticker.width(), sticker.height(), sticker.format(), resolvedUrl);
+        } else {
+            finalSticker = sticker;
+        }
+        final Message message = new Message(conversation, finalSticker.toJson(), conversation.getNextEncryption());
         message.setType(Message.TYPE_STICKER);
         Message.configurePrivateMessage(message);
-        StickerManager.Companion.getInstance(requireContext()).addRecentSticker(sticker);
+        StickerManager.Companion.getInstance(requireContext()).addRecentSticker(finalSticker);
         if (conversation.getNextEncryption() == Message.ENCRYPTION_PGP) {
             sendPgpMessage(message);
         } else {

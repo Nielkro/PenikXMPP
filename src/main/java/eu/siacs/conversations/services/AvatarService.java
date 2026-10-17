@@ -309,6 +309,7 @@ public class AvatarService {
     }
 
     public void clear(final Contact contact) {
+        this.cache.invalidateAll();
         synchronized (this.sizes) {
             for (final Integer size : sizes) {
                 this.cache.invalidate(key(contact, Surface.REGULAR, size));
@@ -337,6 +338,8 @@ public class AvatarService {
                 + surface
                 + '\0'
                 + emptyOnNull(contact.getAddress())
+                + '\0'
+                + Strings.nullToEmpty(contact.getAvatar())
                 + '\0'
                 + size;
     }

@@ -83,16 +83,22 @@ class StickerManager private constructor(private val context: Context) {
 
                     for (i in 0 until stickersArray.length()) {
                         val s = stickersArray.getJSONObject(i)
+                        val sId = s.optString("id")
+                        val pId = s.optString("pack_id", id)
+                        val rawUrl = s.optString("url", "")
+                        val ext = if (format == Sticker.FORMAT_ANIMATED) "tgs" else "webp"
+                        val fName = s.optString("file_name").takeIf { it.isNotBlank() } ?: "$sId.$ext"
+                        val itemUrl = if (rawUrl.isNotBlank()) rawUrl else "${Config.STICKERS_BASE_URL}/api/v1/stickers/file/$pId/$fName"
                         items.add(
                             StickerItem(
-                                id = s.optString("id"),
-                                packId = s.optString("pack_id", id),
+                                id = sId,
+                                packId = pId,
                                 emoji = s.optString("emoji", ""),
-                                fileName = s.optString("file_name"),
+                                fileName = fName,
                                 width = s.optInt("width", 512),
                                 height = s.optInt("height", 512),
                                 format = format,
-                                url = s.optString("url", "")
+                                url = itemUrl
                             )
                         )
                     }
@@ -115,16 +121,23 @@ class StickerManager private constructor(private val context: Context) {
             val list = mutableListOf<StickerItem>()
             for (i in 0 until jsonArray.length()) {
                 val s = jsonArray.getJSONObject(i)
+                val sId = s.optString("id")
+                val pId = s.optString("pack_id")
+                val sFormat = s.optString("format", Sticker.FORMAT_STATIC)
+                val rawUrl = s.optString("url", "")
+                val ext = if (sFormat == Sticker.FORMAT_ANIMATED) "tgs" else "webp"
+                val fName = s.optString("file_name").takeIf { it.isNotBlank() } ?: "$sId.$ext"
+                val itemUrl = if (rawUrl.isNotBlank()) rawUrl else "${Config.STICKERS_BASE_URL}/api/v1/stickers/file/$pId/$fName"
                 list.add(
                     StickerItem(
-                        id = s.optString("id"),
-                        packId = s.optString("pack_id"),
+                        id = sId,
+                        packId = pId,
                         emoji = s.optString("emoji", ""),
-                        fileName = s.optString("file_name"),
+                        fileName = fName,
                         width = s.optInt("width", 512),
                         height = s.optInt("height", 512),
-                        format = s.optString("format", Sticker.FORMAT_STATIC),
-                        url = s.optString("url", "")
+                        format = sFormat,
+                        url = itemUrl
                     )
                 )
             }

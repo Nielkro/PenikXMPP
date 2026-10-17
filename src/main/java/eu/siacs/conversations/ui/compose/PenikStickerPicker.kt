@@ -1,6 +1,7 @@
 package eu.siacs.conversations.ui.compose
 
 import android.widget.Toast
+import eu.siacs.conversations.Config
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -259,6 +260,17 @@ fun PenikStickerPickerBottomSheet(
                             stickerManager = stickerManager,
                             serverBaseUrl = serverBaseUrl,
                             onPick = {
+                                val cleanBase = (if (serverBaseUrl.isNotBlank()) serverBaseUrl else Config.STICKERS_BASE_URL).trimEnd('/')
+                                val isAnimatedVector = stickerItem.format == Sticker.FORMAT_ANIMATED
+                                val extension = if (isAnimatedVector) "tgs" else "webp"
+                                val fileName = if (stickerItem.fileName.isNotBlank()) stickerItem.fileName else "${stickerItem.id}.$extension"
+                                val resolvedUrl = if (stickerItem.url.isNotBlank()) {
+                                    stickerItem.url
+                                } else if (cleanBase.isNotBlank() && stickerItem.packId.isNotBlank()) {
+                                    "$cleanBase/api/v1/stickers/file/${stickerItem.packId}/$fileName"
+                                } else {
+                                    ""
+                                }
                                 val sticker = Sticker(
                                     stickerItem.packId,
                                     stickerItem.id,
@@ -266,7 +278,7 @@ fun PenikStickerPickerBottomSheet(
                                     stickerItem.width,
                                     stickerItem.height,
                                     stickerItem.format,
-                                    stickerItem.url
+                                    resolvedUrl
                                 )
                                 stickerManager.addRecentSticker(sticker)
                                 onStickerPicked(sticker)
