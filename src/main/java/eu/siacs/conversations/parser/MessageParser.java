@@ -587,7 +587,7 @@ public class MessageParser extends AbstractParser
                 message.setBody(sticker.toJson());
             } else if (message.getType() != Message.TYPE_STICKER && message.getBody() != null) {
                 final String trimmed = message.getBody().trim();
-                if (trimmed.startsWith("{\"pack_id\":") && trimmed.contains("\"sticker_id\":")) {
+                if (trimmed.startsWith("{") && trimmed.contains("\"pack_id\"") && trimmed.contains("\"sticker_id\"")) {
                     message.setType(Message.TYPE_STICKER);
                 }
             }

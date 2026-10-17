@@ -86,6 +86,7 @@ import eu.siacs.conversations.entities.Conversation
 import eu.siacs.conversations.entities.Conversational
 import eu.siacs.conversations.entities.Message
 import eu.siacs.conversations.entities.RtpSessionStatus
+import eu.siacs.conversations.entities.Sticker
 import eu.siacs.conversations.services.AvatarService
 import eu.siacs.conversations.ui.XmppActivity
 import eu.siacs.conversations.utils.JidHelper
@@ -589,6 +590,7 @@ fun PenikChatsTab(
     var selectedConversation by remember { mutableStateOf<Conversation?>(null) }
     var pendingDeleteConversation by remember { mutableStateOf<Conversation?>(null) }
     var isArchiveHidden by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val rev = state.revision
 
     val feed =
             if (isArchiveOpen) {
@@ -614,10 +616,17 @@ fun PenikChatsTab(
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(filtered, key = { "${it.uuid}_${it.contact?.avatar}_${it.mucOptions?.avatar}_${it.isPinnedOnTop}_${it.unreadCount()}_${it.latestMessage?.uuid}_${it.isMuted}" }) { conversation ->
+                    items(
+                        items = filtered,
+                        key = {
+                            val latest = it.latestMessage
+                            "${it.uuid}_${it.contact?.avatar}_${it.mucOptions?.avatar}_${it.isPinnedOnTop}_${it.unreadCount()}_${latest?.uuid}_${latest?.timeSent}_${latest?.body?.hashCode()}_${it.isMuted}_$rev"
+                        }
+                    ) { conversation ->
                         PenikConversationRow(
                                 conversation = conversation,
                                 activity = activity,
+                                revision = rev,
                                 onClick = { listener.onConversationClick(conversation) },
                                 onLongClick = { selectedConversation = conversation }
                         )
@@ -672,10 +681,11 @@ fun PenikChatsTab(
                 }
 
                 // 2. Self Chat ("Избранное")
-                item(key = "self_chat") {
+                item(key = "self_chat_$rev") {
                     PenikSelfRow(
                             selfChat = state.selfChat,
                             activity = activity,
+                            revision = rev,
                             onClick = { listener.onOpenSelfChat() }
                     )
                     HorizontalDivider(color = border, modifier = Modifier.padding(horizontal = 16.dp))
@@ -696,10 +706,17 @@ fun PenikChatsTab(
                         }
                     }
                 } else {
-                    items(filtered, key = { "${it.uuid}_${it.contact?.avatar}_${it.mucOptions?.avatar}_${it.isPinnedOnTop}_${it.unreadCount()}_${it.latestMessage?.uuid}_${it.isMuted}" }) { conversation ->
+                    items(
+                        items = filtered,
+                        key = {
+                            val latest = it.latestMessage
+                            "${it.uuid}_${it.contact?.avatar}_${it.mucOptions?.avatar}_${it.isPinnedOnTop}_${it.unreadCount()}_${latest?.uuid}_${latest?.timeSent}_${latest?.body?.hashCode()}_${it.isMuted}_$rev"
+                        }
+                    ) { conversation ->
                         PenikConversationRow(
                                 conversation = conversation,
                                 activity = activity,
+                                revision = rev,
                                 onClick = { listener.onConversationClick(conversation) },
                                 onLongClick = { selectedConversation = conversation }
                         )
@@ -945,7 +962,7 @@ fun PenikConfirmDialog(
 }
 
 @Composable
-fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, onClick: () -> Unit) {
+fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long = 0L, onClick: () -> Unit) {
     val context = LocalContext.current
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
@@ -1108,6 +1125,7 @@ fun PenikArchiveRow(count: Int, onClick: () -> Unit, onLongClick: (() -> Unit)? 
 fun PenikConversationRow(
         conversation: Conversation,
         activity: XmppActivity,
+        revision: Long = 0L,
         onClick: () -> Unit,
         onLongClick: () -> Unit
 ) {
@@ -2258,7 +2276,7 @@ fun penikMessagePreviewData(
             (isHttp && (mime.isNotEmpty() || isImageExt || isAudioExt || isVideoExt || lowerUrl.matches(Regex(".*\\.(pdf|apk|zip|rar|tar|gz|doc|docx|xls|xlsx|ppt|pptx|txt)(\\?.*)?"))))
 
     if (message.type == Message.TYPE_STICKER || message.isSticker) {
-        val sticker = message.sticker
+        val sticker = message.sticker ?: Sticker.fromJson(message.body)
         val emoji = sticker?.emoji()?.takeIf { it.isNotEmpty() }?.let { " $it" } ?: ""
         return PenikPreviewData(iconRes = R.drawable.ic_add_reaction_24dp, text = "Стикер$emoji", sender = sender)
     }

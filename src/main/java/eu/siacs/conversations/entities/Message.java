@@ -534,7 +534,10 @@ public class Message extends AbstractEntity
         if (this.type == TYPE_STICKER) {
             return true;
         }
-        return this.body != null && this.body.startsWith("{\"pack_id\":") && this.body.contains("\"sticker_id\":");
+        return this.body != null
+                && this.body.trim().startsWith("{")
+                && this.body.contains("\"pack_id\"")
+                && this.body.contains("\"sticker_id\"");
     }
 
     @Nullable

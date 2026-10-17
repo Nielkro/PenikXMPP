@@ -276,6 +276,7 @@ public class ContactDetailsActivity extends OmemoActivity
         binding.btnActionCall.setOnClickListener(v -> startVoiceCall());
         binding.btnActionVideo.setOnClickListener(v -> startVideoCall());
         binding.rowUsername.setOnClickListener(v -> copyUsername());
+        binding.detailsContactName.setOnClickListener(v -> editContactName());
 
         binding.showInactiveDevices.setOnClickListener(
                 v -> {
@@ -374,33 +375,7 @@ public class ContactDetailsActivity extends OmemoActivity
                     .show();
             return true;
         } else if (itemId == R.id.action_edit_contact) {
-            final Uri systemAccount = contact.getSystemAccount();
-            if (systemAccount == null) {
-                quickEdit(
-                        contact.getServerName(),
-                        R.string.contact_name,
-                        value -> {
-                            contact.setServerName(value);
-                            final var connection = contact.getAccount().getXmppConnection();
-                            connection.getManager(RosterManager.class).addRosterItem(contact, null);
-                            populateView();
-                            return null;
-                        },
-                        true);
-            } else {
-                Intent intent = new Intent(Intent.ACTION_EDIT);
-                intent.setDataAndType(systemAccount, Contacts.CONTENT_ITEM_TYPE);
-                intent.putExtra("finishActivityOnSaveCompleted", true);
-                try {
-                    startActivity(intent);
-                } catch (ActivityNotFoundException e) {
-                    Toast.makeText(
-                                    ContactDetailsActivity.this,
-                                    R.string.no_application_found_to_view_contact,
-                                    Toast.LENGTH_SHORT)
-                            .show();
-                }
-            }
+            editContactName();
             return true;
         } else if (itemId == R.id.action_block || itemId == R.id.action_unblock) {
             BlockContactDialog.show(this, contact);
@@ -408,6 +383,32 @@ public class ContactDetailsActivity extends OmemoActivity
         } else {
             return super.onOptionsItemSelected(menuItem);
         }
+    }
+
+    private void editContactName() {
+        if (contact == null) {
+            return;
+        }
+        final String currentName = contact.getDisplayName();
+        quickEdit(
+                currentName,
+                R.string.contact_name,
+                value -> {
+                    final String newName = value != null ? value.trim() : "";
+                    contact.setServerName(newName);
+                    contact.setSystemName(newName);
+                    final var connection = contact.getAccount().getXmppConnection();
+                    if (connection != null && contact.showInRoster()) {
+                        connection.getManager(RosterManager.class).addRosterItem(contact, null);
+                    }
+                    if (xmppConnectionService != null) {
+                        xmppConnectionService.updateConversationUi();
+                        xmppConnectionService.updateRosterUi();
+                    }
+                    populateView();
+                    return null;
+                },
+                true);
     }
 
     @SuppressLint("RestrictedApi")
@@ -436,7 +437,6 @@ public class ContactDetailsActivity extends OmemoActivity
             if (block != null) block.setVisible(false);
         }
         if (!contact.showInRoster()) {
-            if (edit != null) edit.setVisible(false);
             if (delete != null) delete.setVisible(false);
         }
         return super.onCreateOptionsMenu(menu);

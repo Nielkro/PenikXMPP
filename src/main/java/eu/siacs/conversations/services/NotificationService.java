@@ -1563,7 +1563,9 @@ public class NotificationService {
                 SpannableString styledString;
                 for (Message message : messages) {
                     final String name = UIHelper.getMessageDisplayName(message);
-                    styledString = new SpannableString(name + ": " + message.getBody());
+                    final String preview =
+                            UIHelper.getMessagePreview(mXmppConnectionService, message, ' ').first.toString();
+                    styledString = new SpannableString(name + ": " + preview);
                     styledString.setSpan(new StyleSpan(Typeface.BOLD), 0, name.length(), 0);
                     style.addLine(styledString);
                 }
@@ -1571,7 +1573,9 @@ public class NotificationService {
                 int count = messages.size();
                 if (count == 1) {
                     final String name = UIHelper.getMessageDisplayName(messages.get(0));
-                    styledString = new SpannableString(name + ": " + messages.get(0).getBody());
+                    final String preview =
+                            UIHelper.getMessagePreview(mXmppConnectionService, messages.get(0), ' ').first.toString();
+                    styledString = new SpannableString(name + ": " + preview);
                     styledString.setSpan(new StyleSpan(Typeface.BOLD), 0, name.length(), 0);
                     builder.setContentText(styledString);
                     builder.setTicker(styledString);

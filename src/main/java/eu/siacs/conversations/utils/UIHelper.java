@@ -20,6 +20,7 @@ import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.RtpSessionStatus;
+import eu.siacs.conversations.entities.Sticker;
 import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.ui.adapter.MediaAdapter;
 import eu.siacs.conversations.ui.util.QuoteHelper;
@@ -207,6 +208,12 @@ public class UIHelper {
             return new Pair<>(context.getString(R.string.omemo_decryption_failed), true);
         } else if (message.isFileOrImage()) {
             return new Pair<>(getFileDescriptionString(context, message), true);
+        } else if (message.getType() == Message.TYPE_STICKER || message.isSticker()) {
+            final Sticker sticker = message.getSticker() != null ? message.getSticker() : Sticker.fromJson(message.getBody());
+            final String emoji = (sticker != null && sticker.emoji() != null && !sticker.emoji().isEmpty())
+                    ? " " + sticker.emoji()
+                    : "";
+            return new Pair<>("Стикер" + emoji, false);
         } else if (message.getType() == Message.TYPE_RTP_SESSION) {
             RtpSessionStatus rtpSessionStatus = RtpSessionStatus.of(message.getBody());
             final boolean received = message.getStatus() == Message.STATUS_RECEIVED;
