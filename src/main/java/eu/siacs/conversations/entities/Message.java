@@ -71,6 +71,7 @@ public class Message extends AbstractEntity
     public static final int TYPE_PRIVATE = 4;
     public static final int TYPE_PRIVATE_FILE = 5;
     public static final int TYPE_RTP_SESSION = 6;
+    public static final int TYPE_STICKER = 7;
 
     public static final String CONVERSATION = "conversationUuid";
     public static final String COUNTERPART = "counterpart";
@@ -526,6 +527,18 @@ public class Message extends AbstractEntity
 
     public void markRead() {
         this.read = true;
+    }
+
+    public boolean isSticker() {
+        return this.type == TYPE_STICKER;
+    }
+
+    @Nullable
+    public Sticker getSticker() {
+        if (this.type == TYPE_STICKER) {
+            return Sticker.fromJson(this.body);
+        }
+        return null;
     }
 
     public void markUnread() {

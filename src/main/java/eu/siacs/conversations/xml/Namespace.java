@@ -137,4 +137,6 @@ public final class Namespace {
     public static final String LIMITS = "urn:xmpp:stream-limits:0";
     public static final String LAST = "jabber:iq:last";
     public static final String REPORTING_ACCOUNT_AFFILIATIONS = "urn:xmpp:raa:0";
+    public static final String PENIK_STICKERS = "penik:stickers:0";
+    public static final String PENIK_STICKERS_AUTH = "penik:stickers:auth:0";
 }

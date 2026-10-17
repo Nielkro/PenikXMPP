@@ -147,6 +147,8 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `src/main/java/eu/siacs/conversations/ui/compose/PenikChatsList.kt` — Penik main screen (Compose, 1:1 with Penik app): TopAppBar with search, connection banner, chats tab (self-chat row, archive folder, rows with avatars/unread/lock/mute, archive dialogs), calls tab from RTP history, profile tab, bottom navigation; data bridged from `ConversationsOverviewFragment` via `PenikChatsState`.
 - `src/main/java/eu/siacs/conversations/ui/compose/PenikChatRoom.kt` — Penik chat room (Compose): timeline with date headers, text bubbles with links/quotes/ticks/lock/edited, emoji-only messages, attachments (image thumbs, inline voice player, files, audio, geo), call cards from RTP history, bug-report collapse, long-press menu (copy/reply/edit/share/resend/open); data bridged from `ConversationFragment` via `PenikChatState`.
 - `src/main/java/eu/siacs/conversations/ui/compose/PenikAttachmentPickerBottomSheet.kt` — Penik attachment picker (Compose, Telegram-style): 3-column media grid with live camera tile, numeric multi-selection pills, floating bottom capsule ("Галерея" / "Файл"), permission flow, and quick send.
+- `src/main/java/eu/siacs/conversations/ui/compose/PenikStickerBubble.kt` — Penik sticker bubble (Compose): renders static and animated WebP (Coil + ImageDecoderDecoder) and Telegram `.tgs` vector animations (lottie-compose) with semi-transparent delivery badges.
+- `src/main/java/eu/siacs/conversations/ui/compose/PenikStickerPicker.kt` — Telegram-style sticker picker bottom sheet (Compose): recents tab, installed pack tabs, 4-column static thumbnail grid (128x128 WebP) to avoid UI stutters, and Telegram pack import dialog.
 - `src/main/java/eu/siacs/conversations/ui/compose/PenikAuthScreen.kt` — Penik onboarding & auth screen (Compose, 1:1 with Penik app): Welcome screen, 3-step registration wizard (nickname, password, avatar/display name) on default server without server picker, and login wizard.
 - `src/main/java/eu/siacs/conversations/ui/ConversationsActivity.java` — Account/conversation overview host (`singleTask`).
 - `src/main/java/eu/siacs/conversations/ui/ConversationsOverviewFragment.java` — Unified inbox list.
@@ -214,7 +216,9 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `src/main/java/eu/siacs/conversations/persistance/UnifiedPushDatabase.java` — Push subscriptions store.
 - `src/main/java/eu/siacs/conversations/entities/Account.java` — Account state machine.
 - `src/main/java/eu/siacs/conversations/entities/Conversation.java` — 1:1 and MUC conversation aggregate.
-- `src/main/java/eu/siacs/conversations/entities/Message.java` — Message with statuses, edits, reactions, attachments.
+- `src/main/java/eu/siacs/conversations/entities/Message.java` — Message with statuses, edits, reactions, attachments, and stickers (`TYPE_STICKER = 7`).
+- `src/main/java/eu/siacs/conversations/entities/Sticker.java` — Sticker entity (`packId`, `stickerId`, `emoji`, `width`, `height`, `format`, `url`) with JSON serialization/deserialization.
+- `src/main/java/eu/siacs/conversations/stickers/StickerManager.kt` — Sticker pack and recents manager: local storage, bundle installation, Telegram sticker pack import via REST API, HMAC-SHA256 token generator.
 - `src/main/java/eu/siacs/conversations/entities/Contact.java`, `Roster.java` — Roster model.
 - `src/main/java/eu/siacs/conversations/entities/MucOptions.java` — MUC roles, affiliation, subject, config.
 - `src/main/java/eu/siacs/conversations/entities/Presences.java` — Presence map per contact.
@@ -258,8 +262,9 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `plan/funxmpp-fixes-plan.md` — Plan for FunXMPP review follow-ups: P0 outgoing mod_smacks piggyback `<r/>` string bypassing binary framing, P1 `CONTENT_MIXED` child order (v2 sequence, breaking), P2 buffer/length/counter polish, plus items verified as-is (incoming SM routing, JID `@` scan).
 - `plan/stickers-rust-service-plan.md` — Implementation plan for Telegram-compatible stickers via standalone Rust microservice, XMPP stanza extensions, and Compose UI.
 - `landing/` — Static landing page: `index.html` (hero, features, protocol terminal demo, comparison, FAQ, download links), `logo_fixed.svg` / `logo_fixed.webp`; note `landing/penik.apk` stays untracked via the `*.apk` gitignore rule.
-- `server/Modules/` — Prosody/Snikket Lua plugins: `mod_funxmpp.lua` (FunXMPP binary tokenized protocol plugin: symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks), `test_mod_funxmpp.lua` (standalone Lua test suite).
-- `server/MicroServices/` — Standalone backend microservices (e.g. `penik-stickers-rs` sticker management service).
+- `server/Modules/` — Prosody/Snikket Lua plugins: `mod_funxmpp.lua` (FunXMPP binary tokenized protocol plugin: symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks), `test_mod_funxmpp.lua` (standalone Lua test suite), `mod_stickers_auth.lua` (Prosody HMAC-SHA256 Bearer token issuer for stickers service via IQ `penik:stickers:auth:0`), `test_mod_stickers_auth.lua`.
+- `server/MicroServices/` — Standalone backend microservices:
+  - `server/MicroServices/penik-stickers-rs/` — High-performance Rust sticker service (Axum 0.7, SQLite WAL, Tokio, Reqwest): Telegram Bot API sticker pack importer, WebM VP9 with alpha to Animated WebP converter via FFmpeg (`-c:v libvpx-vp9`), 128x128 thumbnail generator, pre-built `bundle.zip` packager, and HMAC-SHA256 authenticated REST API.
 - `PROJECT_MAP.md` — This index.
 
 ## Note on `libs/Penik` (Excluded)

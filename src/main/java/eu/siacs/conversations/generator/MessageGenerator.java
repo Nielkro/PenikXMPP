@@ -5,6 +5,7 @@ import eu.siacs.conversations.crypto.axolotl.XmppAxolotlMessage;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.entities.Sticker;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
@@ -88,6 +89,25 @@ public class MessageGenerator extends AbstractGenerator {
 
     public im.conversations.android.xmpp.model.stanza.Message generateChat(Message message) {
         im.conversations.android.xmpp.model.stanza.Message packet = preparePacket(message);
+        if (message.isSticker()) {
+            final Sticker sticker = message.getSticker();
+            if (sticker != null) {
+                final String fallbackText = "[Стикер" + (sticker.emoji().isEmpty() ? "" : ": " + sticker.emoji()) + "]";
+                packet.setBody(fallbackText);
+                packet.addChild("sticker", Namespace.PENIK_STICKERS)
+                        .setAttribute("pack_id", sticker.packId())
+                        .setAttribute("sticker_id", sticker.stickerId())
+                        .setAttribute("emoji", sticker.emoji())
+                        .setAttribute("width", String.valueOf(sticker.width()))
+                        .setAttribute("height", String.valueOf(sticker.height()))
+                        .setAttribute("format", sticker.format())
+                        .setAttribute("url", sticker.url());
+                if (!sticker.url().isEmpty()) {
+                    packet.addChild("x", Namespace.OOB).addChild("url").setContent(sticker.url());
+                }
+                return packet;
+            }
+        }
         String content;
         if (message.hasFileOnRemoteHost()) {
             final Message.FileParams fileParams = message.getFileParams();

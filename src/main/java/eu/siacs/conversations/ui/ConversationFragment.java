@@ -112,6 +112,8 @@ import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.MucOptions;
+import eu.siacs.conversations.entities.Sticker;
+import eu.siacs.conversations.stickers.StickerManager;
 import eu.siacs.conversations.entities.ReadByMarker;
 import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.entities.TransferablePlaceholder;
@@ -1488,6 +1490,11 @@ public class ConversationFragment extends XmppFragment
         }
         setAttachmentChoicesVisibility(false);
         binding.attachButton.setOnClickListener((v) -> toggleAttachmentChoicesVisibility());
+        binding.stickerButton.setOnClickListener(
+                (v) -> {
+                    hideSoftKeyboard(this.binding.textInput);
+                    this.penikChatState.setShowStickerPicker(true);
+                });
         binding.cancelReplyButton.setOnClickListener((v) -> clearActiveReply());
         binding.attachmentChoicesFlow.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         binding.getRoot().setOnClickListener(null); // TODO why the fuck did we do this?
@@ -1561,6 +1568,11 @@ public class ConversationFragment extends XmppFragment
                     @Override
                     public void onSendRecentMedias(final List<Uri> uris) {
                         ConversationFragment.this.onSendRecentMedias(uris);
+                    }
+
+                    @Override
+                    public void onSendSticker(final Sticker sticker) {
+                        ConversationFragment.this.sendSticker(sticker);
                     }
                 });
 
@@ -3268,6 +3280,9 @@ public class ConversationFragment extends XmppFragment
         this.binding.attachButton.setIconTint(
                 MessageAdapter.bubbleToOnSurfaceColorStateList(
                         this.binding.attachButton, bubbleColor));
+        this.binding.stickerButton.setIconTint(
+                MessageAdapter.bubbleToOnSurfaceColorStateList(
+                        this.binding.stickerButton, bubbleColor));
         MessageAdapter.setBackgroundTint(this.binding.inputLayout, bubbleColor);
         if (bubbleColor == MessageAdapter.BubbleColor.TERTIARY) {
             final var color =
@@ -3616,10 +3631,34 @@ public class ConversationFragment extends XmppFragment
         }
         final boolean isMuc = this.conversation.getMode() == Conversational.MODE_MULTI;
         final boolean showAvatars11 = new AppSettings(requireContext()).isShowAvatars11();
+        if (this.conversation.getAccount() != null && this.conversation.getAccount().getJid() != null) {
+            final String accountJid = this.conversation.getAccount().getJid().asBareJid().toString();
+            this.penikChatState.setStickerServerUrl(Config.STICKERS_BASE_URL);
+            this.penikChatState.setStickerAuthToken(StickerManager.Companion.createAuthToken(accountJid, "penik_secret_shared_key"));
+        }
         this.penikChatState.update(
                 new ArrayList<>(this.messageList),
                 isMuc,
                 showAvatars11);
+    }
+
+    public void sendSticker(final Sticker sticker) {
+        final Conversation conversation = this.conversation;
+        if (conversation == null || sticker == null) {
+            return;
+        }
+        if (trustKeysIfNeeded(conversation, REQUEST_TRUST_KEYS_TEXT)) {
+            return;
+        }
+        final Message message = new Message(conversation, sticker.toJson(), conversation.getNextEncryption());
+        message.setType(Message.TYPE_STICKER);
+        Message.configurePrivateMessage(message);
+        StickerManager.Companion.getInstance(requireContext()).addRecentSticker(sticker);
+        if (conversation.getNextEncryption() == Message.ENCRYPTION_PGP) {
+            sendPgpMessage(message);
+        } else {
+            sendMessage(message);
+        }
     }
 
     public void onPenikMessageAction(final String action, final Message message) {
@@ -3801,6 +3840,7 @@ public class ConversationFragment extends XmppFragment
     private void updateAttachmentButton() {
         if (mediaPreviewAdapter.hasAttachments()) {
             this.binding.attachButton.setVisibility(View.VISIBLE);
+            this.binding.stickerButton.setVisibility(View.VISIBLE);
         } else {
             if (CharSequences.nullToEmpty(this.binding.textInput.getText()).isEmpty()) {
                 final var c = this.conversation;
@@ -3814,8 +3854,10 @@ public class ConversationFragment extends XmppFragment
                     visible = true;
                 }
                 this.binding.attachButton.setVisibility(visible ? View.VISIBLE : View.GONE);
+                this.binding.stickerButton.setVisibility(visible ? View.VISIBLE : View.GONE);
             } else {
                 this.binding.attachButton.setVisibility(View.GONE);
+                this.binding.stickerButton.setVisibility(View.GONE);
                 // this is a last resort. in most cases this should have already been removed by
                 // focus or onSoftKeyboard listeners
                 setAttachmentChoicesVisibility(false);

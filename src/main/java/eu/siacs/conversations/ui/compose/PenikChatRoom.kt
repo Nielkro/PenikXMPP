@@ -176,6 +176,7 @@ interface PenikChatListener {
     fun onPickDocument() {}
     fun onTakePhoto() {}
     fun onSendRecentMedias(uris: @JvmSuppressWildcards List<Uri>) {}
+    fun onSendSticker(sticker: eu.siacs.conversations.entities.Sticker) {}
 }
 
 object PenikChatActions {
@@ -196,6 +197,9 @@ class PenikChatState {
     var isMuc by mutableStateOf(false)
     var showAvatars11 by mutableStateOf(true)
     var showAttachmentPicker by mutableStateOf(false)
+    var showStickerPicker by mutableStateOf(false)
+    var stickerServerUrl by mutableStateOf("")
+    var stickerAuthToken by mutableStateOf("")
     var revision by mutableStateOf(0L)
 
     fun update(newMessages: List<Message>, muc: Boolean, avatars11: Boolean = true) {
@@ -498,6 +502,18 @@ fun PenikChatRoom(
             onSendRecentMedias = { uris ->
                 state.showAttachmentPicker = false
                 listener.onSendRecentMedias(uris)
+            }
+        )
+    }
+
+    if (state.showStickerPicker) {
+        PenikStickerPickerBottomSheet(
+            serverBaseUrl = state.stickerServerUrl,
+            authToken = state.stickerAuthToken,
+            onDismiss = { state.showStickerPicker = false },
+            onStickerPicked = { sticker ->
+                state.showStickerPicker = false
+                listener.onSendSticker(sticker)
             }
         )
     }
@@ -2394,7 +2410,8 @@ fun PenikAttachmentRow(
     var showImageViewer by remember(message.uuid) { mutableStateOf(false) }
     var showVideoViewer by remember(message.uuid) { mutableStateOf(false) }
     val mime = message.mimeType ?: ""
-    val isImage = (message.type == Message.TYPE_IMAGE || mime.startsWith("image/")) && !message.isGeoUri
+    val isSticker = message.type == Message.TYPE_STICKER || message.isSticker
+    val isImage = (message.type == Message.TYPE_IMAGE || mime.startsWith("image/")) && !message.isGeoUri && !isSticker
     val isVideo = penikIsVideo(message)
 
     val service = activity.xmppConnectionService
@@ -2407,7 +2424,18 @@ fun PenikAttachmentRow(
             modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
             contentAlignment = boxAlignment
     ) {
-        if (isImage || isVideo) {
+        if (isSticker) {
+            PenikStickerBubble(
+                message = message,
+                isSentByMe = isSentByMe,
+                timeText = timeText,
+                onClick = {},
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    showMenu = true
+                }
+            )
+        } else if (isImage || isVideo) {
             Box(
                     modifier =
                             Modifier.padding(horizontal = 12.dp)

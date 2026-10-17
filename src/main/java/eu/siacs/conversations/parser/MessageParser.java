@@ -15,6 +15,7 @@ import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.entities.Sticker;
 import eu.siacs.conversations.http.HttpConnectionManager;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.utils.CryptoHelper;
@@ -564,6 +565,26 @@ public class MessageParser extends AbstractParser
                 if (CryptoHelper.isPgpEncryptedUrl(oobUrl)) {
                     message.setEncryption(Message.ENCRYPTION_DECRYPTED);
                 }
+            }
+            final Element stickerElement = packet.findChild("sticker", Namespace.PENIK_STICKERS);
+            if (stickerElement != null) {
+                final String packId = stickerElement.getAttribute("pack_id");
+                final String stickerId = stickerElement.getAttribute("sticker_id");
+                final String emoji = stickerElement.getAttribute("emoji");
+                int width = 512;
+                int height = 512;
+                try {
+                    final String wStr = stickerElement.getAttribute("width");
+                    if (wStr != null) width = Integer.parseInt(wStr);
+                    final String hStr = stickerElement.getAttribute("height");
+                    if (hStr != null) height = Integer.parseInt(hStr);
+                } catch (NumberFormatException ignored) {
+                }
+                final String format = stickerElement.getAttribute("format");
+                final String url = stickerElement.getAttribute("url");
+                final Sticker sticker = new Sticker(packId, stickerId, emoji, width, height, format, url);
+                message.setType(Message.TYPE_STICKER);
+                message.setBody(sticker.toJson());
             }
             message.markable = packet.hasExtension(Markable.class);
             if (conversationMultiMode) {
