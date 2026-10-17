@@ -232,14 +232,12 @@ class StickerManager private constructor(private val context: Context) {
                 .build()
 
             val importRes = httpClient.newCall(importReq).execute()
-            if (!importRes.isSuccessful) {
-                return@withContext Result.failure(Exception("Import failed: HTTP ${importRes.code}"))
-            }
-
             val resStr = importRes.body.string()
-            val root = JSONObject(resStr)
-            if (!root.optBoolean("ok", false)) {
-                return@withContext Result.failure(Exception(root.optString("error", "Unknown error")))
+            val root = try { JSONObject(resStr) } catch (_: Exception) { null }
+            if (!importRes.isSuccessful || root == null || !root.optBoolean("ok", false)) {
+                val serverErr = root?.optString("error")?.takeIf { it.isNotEmpty() }
+                val errorMsg = serverErr ?: "HTTP ${importRes.code}"
+                return@withContext Result.failure(Exception(errorMsg))
             }
 
             val packObj = root.getJSONObject("data").getJSONObject("pack")

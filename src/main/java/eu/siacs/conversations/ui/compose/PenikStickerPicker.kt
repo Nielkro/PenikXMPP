@@ -36,6 +36,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -274,7 +276,18 @@ fun PenikStickerPickerBottomSheet(
                     OutlinedTextField(
                         value = importUrlInput,
                         onValueChange = { importUrlInput = it },
-                        placeholder = { Text("t.me/addstickers/name") },
+                        placeholder = { Text("t.me/addstickers/name", color = textMuted) },
+                        textStyle = TextStyle(color = textPrimary, fontSize = 14.sp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textPrimary,
+                            unfocusedTextColor = textPrimary,
+                            focusedContainerColor = panelSecondary,
+                            unfocusedContainerColor = panelSecondary,
+                            focusedBorderColor = accentColor,
+                            unfocusedBorderColor = Color.Transparent,
+                            cursorColor = accentColor
+                        ),
+                        shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         enabled = !isImporting,
                         modifier = Modifier.fillMaxWidth()

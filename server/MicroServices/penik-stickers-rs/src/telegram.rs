@@ -59,6 +59,9 @@ impl TelegramClient {
     }
 
     pub async fn get_sticker_set(&self, name: &str) -> anyhow::Result<TgStickerSet> {
+        if self.bot_token.trim().is_empty() {
+            anyhow::bail!("TELEGRAM_BOT_TOKEN не настроен на сервере в .env");
+        }
         let url = format!(
             "https://api.telegram.org/bot{}/getStickerSet?name={}",
             self.bot_token, name
