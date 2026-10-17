@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -57,16 +58,28 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.AnimatedImageDrawable
+import android.os.Build
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
 import eu.siacs.conversations.R
 import eu.siacs.conversations.entities.Sticker
 import eu.siacs.conversations.stickers.StickerItem
 import eu.siacs.conversations.stickers.StickerManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileInputStream
+import java.util.zip.GZIPInputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -218,42 +231,24 @@ fun PenikStickerPickerBottomSheet(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(currentStickers, key = { it.id }) { stickerItem ->
-                        val thumbFile = remember(stickerItem.packId, stickerItem.id) {
-                            stickerManager.getStickerThumbFile(stickerItem.packId, stickerItem.id)
-                        }
-                        val model = thumbFile ?: stickerItem.url
-
-                        Box(
-                            modifier = Modifier
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable {
-                                    val sticker = Sticker(
-                                        stickerItem.packId,
-                                        stickerItem.id,
-                                        stickerItem.emoji,
-                                        stickerItem.width,
-                                        stickerItem.height,
-                                        stickerItem.format,
-                                        stickerItem.url
-                                    )
-                                    stickerManager.addRecentSticker(sticker)
-                                    onStickerPicked(sticker)
-                                    onDismiss()
-                                }
-                                .padding(4.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(model)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = stickerItem.emoji,
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
+                        PenikStickerPickerCell(
+                            stickerItem = stickerItem,
+                            stickerManager = stickerManager,
+                            onPick = {
+                                val sticker = Sticker(
+                                    stickerItem.packId,
+                                    stickerItem.id,
+                                    stickerItem.emoji,
+                                    stickerItem.width,
+                                    stickerItem.height,
+                                    stickerItem.format,
+                                    stickerItem.url
+                                )
+                                stickerManager.addRecentSticker(sticker)
+                                onStickerPicked(sticker)
+                                onDismiss()
+                            }
+                        )
                     }
                 }
             }
@@ -349,3 +344,94 @@ fun PenikStickerPickerBottomSheet(
         )
     }
 }
+
+@Composable
+private fun PenikStickerPickerCell(
+    stickerItem: StickerItem,
+    stickerManager: StickerManager,
+    onPick: () -> Unit
+) {
+    val context = LocalContext.current
+    val isAnimatedVector = stickerItem.format == Sticker.FORMAT_ANIMATED
+    val extension = if (isAnimatedVector) "tgs" else "webp"
+    val fullFile = remember(stickerItem.packId, stickerItem.id, extension) {
+        stickerManager.getStickerFile(stickerItem.packId, "${stickerItem.id}.$extension")
+    }
+    val thumbFile = remember(stickerItem.packId, stickerItem.id) {
+        stickerManager.getStickerThumbFile(stickerItem.packId, stickerItem.id)
+    }
+
+    Box(
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onPick)
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isAnimatedVector && fullFile != null && fullFile.exists()) {
+            val lottieJson = remember(fullFile.absolutePath) {
+                try {
+                    GZIPInputStream(FileInputStream(fullFile)).bufferedReader().use { it.readText() }
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            if (lottieJson != null) {
+                val composition by rememberLottieComposition(LottieCompositionSpec.JsonString(lottieJson))
+                var frameIndex by remember { mutableStateOf(0) }
+                LaunchedEffect(composition) {
+                    if (composition != null) {
+                        // 2 FPS: updates frame every 500ms
+                        while (true) {
+                            delay(500L)
+                            frameIndex = (frameIndex + 1) % 20
+                        }
+                    }
+                }
+                LottieAnimation(
+                    composition = composition,
+                    progress = { (frameIndex * 0.05f) % 1f },
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                val model = thumbFile ?: stickerItem.url
+                AsyncImage(
+                    model = ImageRequest.Builder(context).data(model).crossfade(true).build(),
+                    contentDescription = stickerItem.emoji,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        } else {
+            // For video/animated WebP, thumbFile was generated at 2 fps by the server.
+            // If thumbFile is absent, fall back to fullFile or URL.
+            val model = thumbFile ?: fullFile ?: stickerItem.url
+            val imageRequest = remember(model) {
+                val builder = ImageRequest.Builder(context)
+                    .data(model)
+                    .crossfade(true)
+                if (Build.VERSION.SDK_INT >= 28) {
+                    builder.decoderFactory(ImageDecoderDecoder.Factory())
+                }
+                builder.build()
+            }
+            AsyncImage(
+                model = imageRequest,
+                contentDescription = stickerItem.emoji,
+                contentScale = ContentScale.Fit,
+                onSuccess = { state ->
+                    if (Build.VERSION.SDK_INT >= 28) {
+                        (state.result.drawable as? AnimatedImageDrawable)?.let { anim ->
+                            anim.repeatCount = AnimatedImageDrawable.REPEAT_INFINITE
+                            anim.start()
+                        }
+                    }
+                    (state.result.drawable as? Animatable)?.start()
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+

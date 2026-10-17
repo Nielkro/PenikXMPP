@@ -59,18 +59,18 @@ pub async fn generate_webm_thumbnail(
         ])
         .arg(input_path)
         .args([
-            "-vframes",
-            "1",
             "-vcodec",
             "libwebp",
             "-filter:v",
-            "scale=128:128:flags=lanczos",
+            "fps=2,scale=128:128:flags=lanczos",
             "-lossless",
             "0",
             "-compression_level",
             "6",
             "-q:v",
-            "70",
+            "60",
+            "-loop",
+            "0",
         ])
         .arg(thumb_path)
         .status()
