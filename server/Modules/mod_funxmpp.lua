@@ -660,12 +660,13 @@ local function handle_session_cleanup(event)
         pcall(filters.remove_filter, session, "bytes/in", funxmpp_bytes_in);
         pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_stash_out);
         pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_out);
-        module:log("debug", "FunXMPP stream state reset on disconnect/hibernation for %s",
+        module:log("info", "FunXMPP stream state reset on disconnect/hibernation for %s",
             session.full_jid or session.ip or "unknown");
     end
 end
 
 module:hook("c2s-closed", handle_session_cleanup, 100);
-module:hook("smacks-hibernated", handle_session_cleanup, 100);
+module:hook("c2s-destroyed", handle_session_cleanup, 100);
+module:hook("smacks-hibernation-start", handle_session_cleanup, 100);
 
 module:log("info", "mod_funxmpp initialized for high-performance mobile binary framing");

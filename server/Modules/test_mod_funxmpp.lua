@@ -212,7 +212,8 @@ end
 do
     local cleanup_handler = hooks["c2s-closed"];
     assert(type(cleanup_handler) == "function", "c2s-closed hook is registered");
-    assert(hooks["smacks-hibernated"] == cleanup_handler, "smacks-hibernated hook is registered to same handler");
+    assert(hooks["c2s-destroyed"] == cleanup_handler, "c2s-destroyed hook is registered to same handler");
+    assert(hooks["smacks-hibernation-start"] == cleanup_handler, "smacks-hibernation-start hook is registered to same handler");
 
     session.funxmpp_enabled = true;
     session.funxmpp_in_buf = "leftover";
