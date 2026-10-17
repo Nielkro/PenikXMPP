@@ -1,10 +1,4 @@
-FROM rust:1.85-bookworm AS builder
-
-WORKDIR /app
-COPY . .
-RUN cargo build --release
-
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
@@ -12,7 +6,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=builder /app/target/release/penik-stickers-rs /app/penik-stickers-rs
+COPY penik-stickers-rs /app/penik-stickers-rs
+RUN chmod +x /app/penik-stickers-rs
 
 ENV STICKERS_HOST=0.0.0.0
 ENV STICKERS_PORT=8085

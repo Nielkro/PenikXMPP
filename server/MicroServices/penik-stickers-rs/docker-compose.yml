@@ -1,0 +1,16 @@
+services:
+  penik-stickers:
+    container_name: penik-stickers
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      - STICKERS_HOST=0.0.0.0
+      - STICKERS_PORT=8085
+      - STICKERS_DB_PATH=/data/stickers.db
+      - STICKERS_STORAGE_DIR=/data/stickers
+      - STICKERS_SHARED_SECRET=${STICKERS_SHARED_SECRET:-penik_secret_shared_key}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+    volumes:
+      - ./data:/data
