@@ -32,9 +32,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import eu.siacs.conversations.R
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.airbnb.lottie.compose.LottieAnimation
@@ -190,19 +192,20 @@ fun PenikStickerBubble(
                         fontSize = 11.sp
                     )
                     if (isSentByMe) {
+                        val accent = colorResource(R.color.penik_accent)
                         val status = message.status
                         if (status == Message.STATUS_SEND_DISPLAYED || status == Message.STATUS_SEND_RECEIVED) {
                             Icon(
                                 imageVector = Icons.Default.DoneAll,
                                 contentDescription = null,
-                                tint = if (status == Message.STATUS_SEND_DISPLAYED) Color(0xFF64B5F6) else Color.White.copy(alpha = 0.9f),
-                                modifier = Modifier.padding(start = 3.dp).size(13.dp)
+                                tint = if (status == Message.STATUS_SEND_DISPLAYED) accent else Color.White.copy(alpha = 0.85f),
+                                modifier = Modifier.padding(start = 3.dp).size(15.dp)
                             )
                         } else if (status == Message.STATUS_SEND) {
                             Icon(
                                 imageVector = Icons.Default.Done,
                                 contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.9f),
+                                tint = Color.White.copy(alpha = 0.85f),
                                 modifier = Modifier.padding(start = 3.dp).size(13.dp)
                             )
                         }

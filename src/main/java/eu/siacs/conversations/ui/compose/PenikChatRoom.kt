@@ -44,6 +44,8 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
@@ -594,27 +596,13 @@ fun PenikTicksIcon(
         accent: Color,
         modifier: Modifier = Modifier
 ) {
-    val second = if (read) accent else tint
-    val first = if (read && double) accent else tint
-    Canvas(modifier = modifier.size(if (double) 20.dp else 11.dp, 13.dp)) {
-        val stroke = (size.height * 0.15f).coerceAtLeast(1.5.dp.toPx())
-        val style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        val slot = if (double) size.width * 0.62f else size.width
-        val dx = if (double) size.width * 0.38f else 0f
-        fun check(offsetX: Float, color: Color) {
-            val p =
-                    Path().apply {
-                        moveTo(offsetX + slot * 0.08f, size.height * 0.52f)
-                        lineTo(offsetX + slot * 0.38f, size.height * 0.78f)
-                        lineTo(offsetX + slot * 0.96f, size.height * 0.18f)
-                    }
-            drawPath(p, color, style = style)
-        }
-        check(0f, first)
-        if (double) {
-            check(dx, second)
-        }
-    }
+    val color = if (read) accent else tint
+    Icon(
+            imageVector = if (double) Icons.Default.DoneAll else Icons.Default.Done,
+            contentDescription = null,
+            tint = color,
+            modifier = modifier.size(if (double) 16.dp else 14.dp)
+    )
 }
 
 fun penikBareImageUrl(text: String): String? {
@@ -1005,6 +993,8 @@ fun PenikTextBubble(
             ) {
                 Column(horizontalAlignment = if (isSentByMe) Alignment.End else Alignment.Start) {
                     Text(text = rawBody, fontSize = fontSize)
+                    val effectiveMuted = if (isSentByMe) fgColor.copy(alpha = 0.7f) else textMuted
+                    val readAccent = if (isSentByMe && bgColor == accent) Color(0xFF80D8FF) else accent
                     PenikMetaRow(
                             timeText = timeText,
                             ticks = ticks,
@@ -1012,7 +1002,10 @@ fun PenikTextBubble(
                             isEncrypted = message.encryption != Message.ENCRYPTION_NONE,
                             edited = edited,
                             overlayDark = false,
-                            baseColor = textMuted
+                            baseColor = effectiveMuted,
+                            status = status,
+                            isSentByMe = isSentByMe,
+                            accent = readAccent
                     )
                 }
                 if (showMenu) {
@@ -1125,17 +1118,19 @@ fun PenikTextBubble(
                         if (edited) {
                             Text(text = "изм. ", color = textMuted, fontSize = 11.sp)
                         }
+                        val effectiveMuted = if (isSentByMe) fgColor.copy(alpha = 0.7f) else textMuted
+                        val readAccent = if (isSentByMe && bgColor == accent) Color(0xFF80D8FF) else accent
                         if (message.encryption != Message.ENCRYPTION_NONE) {
                             Icon(
                                     imageVector = Icons.Default.Lock,
                                     contentDescription = null,
-                                    tint = textMuted,
+                                    tint = effectiveMuted,
                                     modifier = Modifier.size(11.dp)
                             )
                             Spacer(modifier = Modifier.width(3.dp))
                         }
                         if (timeText.isNotEmpty()) {
-                            Text(text = timeText, color = textMuted, fontSize = 11.sp)
+                            Text(text = timeText, color = effectiveMuted, fontSize = 11.sp)
                         }
                         if (isSentByMe) {
                             if (status == Message.STATUS_SEND_FAILED) {
@@ -1154,8 +1149,8 @@ fun PenikTextBubble(
                                 PenikTicksIcon(
                                         double = isDouble,
                                         read = status == Message.STATUS_SEND_DISPLAYED,
-                                        tint = textMuted,
-                                        accent = accent
+                                        tint = effectiveMuted,
+                                        accent = readAccent
                                 )
                             }
                         }
@@ -1185,7 +1180,10 @@ fun PenikMetaRow(
         isEncrypted: Boolean,
         edited: Boolean,
         overlayDark: Boolean,
-        baseColor: Color
+        baseColor: Color,
+        status: Int = Message.STATUS_RECEIVED,
+        isSentByMe: Boolean = false,
+        accent: Color = Color.Unspecified
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (edited) {
@@ -1207,7 +1205,25 @@ fun PenikMetaRow(
                     fontSize = 11.sp
             )
         }
-        if (ticks.isNotEmpty()) {
+        if (isSentByMe && status != Message.STATUS_RECEIVED) {
+            Spacer(modifier = Modifier.width(4.dp))
+            if (status == Message.STATUS_SEND_FAILED) {
+                Text(
+                        text = "!",
+                        color = Color(0xFFF05A5A),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                )
+            } else {
+                val isDouble = status == Message.STATUS_SEND_RECEIVED || status == Message.STATUS_SEND_DISPLAYED
+                PenikTicksIcon(
+                        double = isDouble,
+                        read = status == Message.STATUS_SEND_DISPLAYED,
+                        tint = if (overlayDark) Color.White.copy(alpha = 0.85f) else baseColor,
+                        accent = if (accent != Color.Unspecified) accent else Color(0xFF64B5F6)
+                )
+            }
+        } else if (ticks.isNotEmpty()) {
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                     text = ticks,
@@ -2600,6 +2616,23 @@ fun PenikAttachmentRow(
             val bubbleBg = if (isVoice) voiceBg else bgColor
             val effectiveFgColor = if (isVoice && isSentByMe) Color.White else fgColor
             val effectiveMutedColor = if (isVoice && isSentByMe) Color.White.copy(alpha = 0.75f) else textMuted
+            val onBubbleClick: () -> Unit = if (isVoice) {
+                {
+                    val file = try {
+                        activity.xmppConnectionService?.fileBackend?.getFile(message)
+                    } catch (e: Exception) {
+                        null
+                    }
+                    if (file != null && file.exists()) {
+                        val runtimeMs = message.fileParams?.runtime ?: 0
+                        PenikVoicePlayer.toggle(context, file, message.uuid, runtimeMs)
+                    } else {
+                        listener.onMessageAction(PenikChatActions.OPEN, message)
+                    }
+                }
+            } else {
+                { listener.onMessageAction(PenikChatActions.OPEN, message) }
+            }
             Box(
                     modifier =
                             Modifier.padding(horizontal = 12.dp)
@@ -2607,7 +2640,7 @@ fun PenikAttachmentRow(
                                     .clip(bubbleShape)
                                     .background(bubbleBg)
                                     .combinedClickable(
-                                            onClick = { listener.onMessageAction(PenikChatActions.OPEN, message) },
+                                            onClick = onBubbleClick,
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 showMenu = true
@@ -2649,11 +2682,12 @@ fun PenikAttachmentRow(
                                 val isDouble =
                                         status == Message.STATUS_SEND_RECEIVED ||
                                                 status == Message.STATUS_SEND_DISPLAYED
+                                val readAccent = if (isSentByMe && bubbleBg == accent) Color(0xFF80D8FF) else accent
                                 PenikTicksIcon(
                                         double = isDouble,
                                         read = status == Message.STATUS_SEND_DISPLAYED,
-                                        tint = textMuted,
-                                        accent = accent
+                                        tint = effectiveMutedColor,
+                                        accent = readAccent
                                 )
                             }
                         }
