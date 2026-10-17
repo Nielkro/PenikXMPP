@@ -733,7 +733,36 @@ fun PenikMessageRow(
                 modifier = Modifier.weight(1f, fill = false),
                 contentAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
         ) {
-            if (message.type == Message.TYPE_TEXT) {
+            val isStickerMsg = message.isSticker || (body.startsWith("{\"pack_id\":") && body.contains("\"sticker_id\":"))
+            if (isStickerMsg) {
+                val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(activity) }
+                val timeText = if (message.timeSent > 0) timeFormat.format(java.util.Date(message.timeSent)) else ""
+                var showMenu by remember(message.uuid) { mutableStateOf(false) }
+                val haptic = LocalHapticFeedback.current
+                Box {
+                    PenikStickerBubble(
+                        message = message,
+                        isSentByMe = isSentByMe,
+                        timeText = timeText,
+                        onClick = {},
+                        onLongClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            showMenu = true
+                        }
+                    )
+                    if (showMenu) {
+                        PenikMessageMenu(
+                            message = message,
+                            isSentByMe = isSentByMe,
+                            onDismiss = { showMenu = false },
+                            onAction = {
+                                showMenu = false
+                                listener.onMessageAction(it, message)
+                            }
+                        )
+                    }
+                }
+            } else if (message.type == Message.TYPE_TEXT) {
                 val bareUrl = remember(body) { penikBareImageUrl(body) }
                 if (bareUrl != null) {
                     PenikUrlImageRow(
@@ -2435,6 +2464,17 @@ fun PenikAttachmentRow(
                     showMenu = true
                 }
             )
+            if (showMenu) {
+                PenikMessageMenu(
+                    message = message,
+                    isSentByMe = isSentByMe,
+                    onDismiss = { showMenu = false },
+                    onAction = {
+                        showMenu = false
+                        listener.onMessageAction(it, message)
+                    }
+                )
+            }
         } else if (isImage || isVideo) {
             Box(
                     modifier =

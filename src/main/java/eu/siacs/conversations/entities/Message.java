@@ -531,12 +531,15 @@ public class Message extends AbstractEntity
     }
 
     public boolean isSticker() {
-        return this.type == TYPE_STICKER;
+        if (this.type == TYPE_STICKER) {
+            return true;
+        }
+        return this.body != null && this.body.startsWith("{\"pack_id\":") && this.body.contains("\"sticker_id\":");
     }
 
     @Nullable
     public Sticker getSticker() {
-        if (this.type == TYPE_STICKER) {
+        if (isSticker()) {
             return Sticker.fromJson(this.body);
         }
         return null;
@@ -1004,11 +1007,11 @@ public class Message extends AbstractEntity
     }
 
     public boolean isFileOrImage() {
-        return type == TYPE_FILE || type == TYPE_IMAGE || type == TYPE_PRIVATE_FILE;
+        return (type == TYPE_FILE || type == TYPE_IMAGE || type == TYPE_PRIVATE_FILE) && !isSticker();
     }
 
     public boolean isTypeText() {
-        return type == TYPE_TEXT || type == TYPE_PRIVATE;
+        return (type == TYPE_TEXT || type == TYPE_PRIVATE) && !isSticker();
     }
 
     public boolean hasFileOnRemoteHost() {

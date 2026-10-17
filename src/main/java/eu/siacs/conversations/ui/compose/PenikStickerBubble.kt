@@ -1,6 +1,9 @@
 package eu.siacs.conversations.ui.compose
 
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.AnimatedImageDrawable
 import android.os.Build
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -18,8 +21,11 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,12 +42,17 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import eu.siacs.conversations.Config
 import eu.siacs.conversations.entities.Message
 import eu.siacs.conversations.entities.Sticker
 import eu.siacs.conversations.stickers.StickerManager
-import java.io.ByteArrayInputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.zip.GZIPInputStream
 
 @Composable
@@ -53,15 +64,63 @@ fun PenikStickerBubble(
     onClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val sticker = message.sticker ?: return
+    val sticker = message.sticker ?: Sticker.fromJson(message.body) ?: return
     val stickerManager = remember { StickerManager.getInstance(context) }
 
     val extension = if (sticker.format() == Sticker.FORMAT_ANIMATED) "tgs" else "webp"
-    val localFile = remember(sticker.packId(), sticker.stickerId()) {
-        stickerManager.getStickerFile(sticker.packId(), "${sticker.stickerId()}.$extension")
+    val fileName = "${sticker.stickerId()}.$extension"
+    val localFile = remember(sticker.packId(), sticker.stickerId(), extension) {
+        stickerManager.getStickerFile(sticker.packId(), fileName)
     }
 
-    val model = localFile ?: sticker.url()
+    val defaultBaseUrl = "https://stickers.snikket.penik.ru"
+    val fileUrl = remember(sticker.url(), sticker.packId(), fileName) {
+        if (!sticker.url().isNullOrBlank()) {
+            sticker.url()
+        } else {
+            "$defaultBaseUrl/api/v1/stickers/file/${sticker.packId()}/$fileName"
+        }
+    }
+
+    var lottieJson by remember(sticker.packId(), sticker.stickerId()) { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(sticker.packId(), sticker.stickerId(), localFile) {
+        if (sticker.format() == Sticker.FORMAT_ANIMATED) {
+            withContext(Dispatchers.IO) {
+                try {
+                    val fileToRead = if (localFile != null && localFile.exists()) {
+                        localFile
+                    } else {
+                        val targetDir = File(context.filesDir, "stickers/${sticker.packId()}")
+                        if (!targetDir.exists()) targetDir.mkdirs()
+                        val cachedFile = File(targetDir, fileName)
+                        if (!cachedFile.exists() || cachedFile.length() == 0L) {
+                            val conn = URL(fileUrl).openConnection() as HttpURLConnection
+                            conn.connectTimeout = 10000
+                            conn.readTimeout = 10000
+                            if (conn.responseCode in 200..299) {
+                                conn.inputStream.use { input ->
+                                    FileOutputStream(cachedFile).use { output ->
+                                        input.copyTo(output)
+                                    }
+                                }
+                            }
+                        }
+                        if (cachedFile.exists() && cachedFile.length() > 0L) cachedFile else null
+                    }
+
+                    if (fileToRead != null && fileToRead.exists()) {
+                        val json = GZIPInputStream(FileInputStream(fileToRead)).bufferedReader().use { it.readText() }
+                        withContext(Dispatchers.Main) {
+                            lottieJson = json
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(Config.LOGTAG, "Failed to load/download animated sticker", e)
+                }
+            }
+        }
+    }
 
     val width = if (sticker.width() > 0) sticker.width() else 512
     val height = if (sticker.height() > 0) sticker.height() else 512
@@ -78,17 +137,9 @@ fun PenikStickerBubble(
                 onLongClick = onLongClick
             )
     ) {
-        if (sticker.format() == Sticker.FORMAT_ANIMATED && localFile != null && localFile.exists()) {
-            val lottieJson = remember(localFile.absolutePath) {
-                try {
-                    GZIPInputStream(FileInputStream(localFile)).bufferedReader().use { it.readText() }
-                } catch (e: Exception) {
-                    null
-                }
-            }
-
+        if (sticker.format() == Sticker.FORMAT_ANIMATED) {
             if (lottieJson != null) {
-                val composition by rememberLottieComposition(LottieCompositionSpec.JsonString(lottieJson))
+                val composition by rememberLottieComposition(LottieCompositionSpec.JsonString(lottieJson!!))
                 val progress by animateLottieCompositionAsState(
                     composition = composition,
                     iterations = LottieConstants.IterateForever
@@ -99,10 +150,13 @@ fun PenikStickerBubble(
                     modifier = Modifier.matchParentSize()
                 )
             } else {
-                FallbackStickerImage(model = model)
+                val thumbFile = stickerManager.getStickerThumbFile(sticker.packId(), sticker.stickerId())
+                val thumbUrl = "$defaultBaseUrl/api/v1/stickers/file/${sticker.packId()}/thumb_${sticker.stickerId()}.webp"
+                FallbackStickerImage(model = thumbFile ?: thumbUrl)
             }
         } else {
-            FallbackStickerImage(model = model)
+            val imageModel = if (localFile != null && localFile.exists()) localFile else fileUrl
+            FallbackStickerImage(model = imageModel)
         }
 
         // Delivery ticks & time badge on semi-transparent background
@@ -162,6 +216,15 @@ private fun FallbackStickerImage(model: Any) {
         model = imageRequest,
         contentDescription = "Sticker",
         contentScale = ContentScale.Fit,
+        onSuccess = { state ->
+            if (Build.VERSION.SDK_INT >= 28) {
+                (state.result.drawable as? AnimatedImageDrawable)?.let { anim ->
+                    anim.repeatCount = AnimatedImageDrawable.REPEAT_INFINITE
+                    anim.start()
+                }
+            }
+            (state.result.drawable as? Animatable)?.start()
+        },
         modifier = Modifier.fillMaxSize()
     )
 }
