@@ -48,9 +48,13 @@ local function handle_auth_iq(event)
     local expires_at = now + token_ttl;
     local raw_data = user_jid .. ":" .. tostring(expires_at);
 
-    -- Compute HMAC-SHA256
-    local hmac_bytes = hashes.hmac_sha256(shared_secret, raw_data, false);
-    local sig_hex = hashes.hex(hmac_bytes);
+    -- Compute HMAC-SHA256 (hex-encoded)
+    local sig_hex;
+    if hashes.hex then
+        sig_hex = hashes.hex(hashes.hmac_sha256(shared_secret, raw_data, false));
+    else
+        sig_hex = hashes.hmac_sha256(shared_secret, raw_data, true);
+    end
 
     -- Format: base64(user_jid:expires_at:sig_hex)
     local raw_token = raw_data .. ":" .. sig_hex;
