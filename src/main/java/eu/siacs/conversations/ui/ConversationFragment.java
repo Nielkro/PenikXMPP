@@ -1551,6 +1551,11 @@ public class ConversationFragment extends XmppFragment
                     }
 
                     @Override
+                    public void onAvatarClick(final Message message) {
+                        ConversationFragment.this.onPenikAvatarClick(message);
+                    }
+
+                    @Override
                     public void onPickPhotoOrVideo() {
                         ConversationFragment.this.attachFile(ATTACHMENT_CHOICE_CHOOSE_IMAGE);
                     }
@@ -3751,6 +3756,33 @@ public class ConversationFragment extends XmppFragment
         }
     }
 
+    public void onPenikAvatarClick(final Message message) {
+        if (message == null) {
+            return;
+        }
+        final var c = message.getConversation() != null ? message.getConversation() : this.conversation;
+        if (c == null) {
+            return;
+        }
+        if (c.getMode() == Conversational.MODE_MULTI) {
+            final var contact = message.getContact();
+            if (contact != null) {
+                final var account = contact.getAccount();
+                final Intent intent = new Intent(requireContext(), ContactDetailsActivity.class);
+                intent.setAction(ContactDetailsActivity.ACTION_VIEW_CONTACT);
+                intent.putExtra(EXTRA_ACCOUNT, account.getJid().asBareJid().toString());
+                intent.putExtra("contact", contact.getAddress().toString());
+                startActivity(intent);
+                return;
+            }
+        }
+        if (c instanceof Conversation conv) {
+            openConversationDetails(conv);
+        } else if (this.conversation != null) {
+            openConversationDetails(this.conversation);
+        }
+    }
+
     public void onSendRecentMedias(final List<Uri> uris) {
         if (uris == null || uris.isEmpty() || this.conversation == null) {
             return;
@@ -3991,6 +4023,11 @@ public class ConversationFragment extends XmppFragment
         final int gap =
                 Math.round(12 * getResources().getDisplayMetrics().density);
         this.binding.toolbar.setLogo(new android.graphics.drawable.InsetDrawable(drawable, 0, 0, gap, 0));
+        final var conversation = getConversation();
+        if (conversation != null) {
+            ToolbarUtils.setActionBarOnClickListener(
+                    this.binding.toolbar, v -> openConversationDetails(conversation));
+        }
     }
 
     private void openConversationDetails(final Conversation conversation) {

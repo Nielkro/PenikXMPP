@@ -172,6 +172,7 @@ interface PenikChatListener {
     fun onMessageAction(action: String, message: Message)
     fun onLoadMore()
     fun onBottomVisible(uuid: String)
+    fun onAvatarClick(message: Message) {}
     fun onPickPhotoOrVideo() {}
     fun onPickDocument() {}
     fun onTakePhoto() {}
@@ -724,7 +725,8 @@ fun PenikMessageRow(
             PenikAvatarImage(
                     name = UIHelper.getMessageDisplayName(message),
                     bitmap = avatarBitmap,
-                    size = 28.dp
+                    size = 28.dp,
+                    modifier = Modifier.clip(CircleShape).clickable { listener.onAvatarClick(message) }
             )
             Spacer(modifier = Modifier.width(4.dp))
         }
@@ -1612,7 +1614,13 @@ fun PenikWaveform(
 }
 
 @Composable
-fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, textMuted: Color) {
+fun PenikVoiceRow(
+        message: Message,
+        activity: XmppActivity,
+        isSentByMe: Boolean = false,
+        fgColor: Color,
+        textMuted: Color
+) {
     val context = LocalContext.current
     val accent = colorResource(R.color.penik_accent)
     val service = activity.xmppConnectionService
@@ -1625,7 +1633,40 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
                 }
             }
     if (file == null || !file.exists()) {
-        PenikFileRow(message = message, fgColor = fgColor, textMuted = textMuted)
+        Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+        ) {
+            Box(
+                    modifier =
+                            Modifier.size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isSentByMe) Color.White.copy(alpha = 0.25f) else accent),
+                    contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                        painter = painterResource(R.drawable.ic_play_arrow_24dp),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                        text = "Голосовое сообщение",
+                        color = if (isSentByMe) Color.White else fgColor,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                        text = "Нажмите, чтобы загрузить",
+                        color = if (isSentByMe) Color.White.copy(alpha = 0.75f) else textMuted,
+                        fontSize = 11.sp
+                )
+            }
+        }
         return
     }
     val uuid = message.uuid
@@ -1691,6 +1732,9 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
             }
         }
     }
+    val btnBg = if (isSentByMe) Color.White.copy(alpha = 0.25f) else accent
+    val waveActive = if (isSentByMe) Color.White else accent
+    val waveInactive = if (isSentByMe) Color.White.copy(alpha = 0.4f) else accent.copy(alpha = 0.35f)
     Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
@@ -1699,7 +1743,7 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
                 modifier =
                         Modifier.size(42.dp)
                                 .clip(CircleShape)
-                                .background(accent)
+                                .background(btnBg)
                                 .clickable {
                                     PenikVoicePlayer.toggle(context, file, uuid, runtimeMs)
                                 },
@@ -1721,8 +1765,8 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
             PenikWaveform(
                     progress = progressFraction,
                     amplitudes = waveform,
-                    activeColor = accent,
-                    inactiveColor = accent.copy(alpha = 0.35f),
+                    activeColor = waveActive,
+                    inactiveColor = waveInactive,
                     onSeek = { fraction ->
                         if (durationMs > 0) {
                             val seekMs = (fraction * durationMs).toInt()
@@ -1742,7 +1786,7 @@ fun PenikVoiceRow(message: Message, activity: XmppActivity, fgColor: Color, text
             }
             Text(
                     text = timeAndSizeText,
-                    color = textMuted,
+                    color = if (isSentByMe) Color.White.copy(alpha = 0.8f) else textMuted,
                     fontSize = 11.sp,
                     maxLines = 1
             )
@@ -2551,12 +2595,17 @@ fun PenikAttachmentRow(
             }
         } else {
             val bubbleShape = PenikBubbleShape(isSentByMe = isSentByMe)
+            val isVoice = mime.startsWith("audio/")
+            val voiceBg = if (isSentByMe) colorResource(R.color.penik_accent) else colorResource(R.color.penik_panel_secondary)
+            val bubbleBg = if (isVoice) voiceBg else bgColor
+            val effectiveFgColor = if (isVoice && isSentByMe) Color.White else fgColor
+            val effectiveMutedColor = if (isVoice && isSentByMe) Color.White.copy(alpha = 0.75f) else textMuted
             Box(
                     modifier =
                             Modifier.padding(horizontal = 12.dp)
                                     .widthIn(max = 300.dp)
                                     .clip(bubbleShape)
-                                    .background(bgColor)
+                                    .background(bubbleBg)
                                     .combinedClickable(
                                             onClick = { listener.onMessageAction(PenikChatActions.OPEN, message) },
                                             onLongClick = {
@@ -2567,12 +2616,13 @@ fun PenikAttachmentRow(
                                     .padding(10.dp)
             ) {
                 Column {
-                    if (mime.startsWith("audio/")) {
+                    if (isVoice) {
                         PenikVoiceRow(
                                 message = message,
                                 activity = activity,
-                                fgColor = fgColor,
-                                textMuted = textMuted
+                                isSentByMe = isSentByMe,
+                                fgColor = effectiveFgColor,
+                                textMuted = effectiveMutedColor
                         )
                     } else {
                         PenikFileRow(message = message, fgColor = fgColor, textMuted = textMuted)
@@ -2583,7 +2633,7 @@ fun PenikAttachmentRow(
                             verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (timeText.isNotEmpty()) {
-                            Text(text = timeText, color = textMuted, fontSize = 11.sp)
+                            Text(text = timeText, color = effectiveMutedColor, fontSize = 11.sp)
                         }
                         if (isSentByMe) {
                             if (status == Message.STATUS_SEND_FAILED) {
@@ -2865,22 +2915,14 @@ fun PenikVideoThumb(message: Message, activity: XmppActivity, fgColor: Color) {
         } else {
             Box(
                     modifier = modifier
-                            .background(Color(0xFF1E232B)),
-                    contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                        imageVector = Icons.Default.PlayCircle,
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.5f),
-                        modifier = Modifier.size(54.dp)
-                )
-            }
+                            .background(Color(0xFF1E232B))
+            )
         }
 
-        // Center play circle
+        // Compact center play circle
         Box(
                 modifier = Modifier
-                        .size(48.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
                         .background(Color.Black.copy(alpha = 0.55f)),
                 contentAlignment = Alignment.Center
@@ -2889,7 +2931,7 @@ fun PenikVideoThumb(message: Message, activity: XmppActivity, fgColor: Color) {
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = "Воспроизвести",
                     tint = Color.White,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(20.dp)
             )
         }
 

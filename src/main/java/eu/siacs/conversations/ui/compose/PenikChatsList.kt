@@ -996,7 +996,10 @@ fun PenikConversationRow(
     val isEncrypted = conversation.nextEncryption != Message.ENCRYPTION_NONE
     val avatarBitmap = penikAvatarBitmap(conversation, activity)
     Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
     ) {
         PenikAvatarImage(
@@ -1005,9 +1008,7 @@ fun PenikConversationRow(
         )
         Spacer(modifier = Modifier.width(12.dp))
         Row(
-                modifier =
-                        Modifier.weight(1f)
-                                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -1118,8 +1119,13 @@ fun PenikConversationRow(
 fun penikAvatarBitmap(conversation: Conversation, activity: XmppActivity): Bitmap? {
     val density = LocalDensity.current
     val avatarService = activity.avatarService()
-    var bitmap by remember(conversation.uuid) { mutableStateOf<Bitmap?>(null) }
-    LaunchedEffect(conversation.uuid) {
+    val contactAvatar = runCatching { conversation.contact?.avatar }.getOrNull()
+    val mucAvatar = runCatching { conversation.mucOptions?.avatar }.getOrNull()
+    val avatarKey = remember(conversation.uuid, contactAvatar, mucAvatar) {
+        "${conversation.uuid}_${contactAvatar ?: mucAvatar ?: ""}"
+    }
+    var bitmap by remember(avatarKey) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(avatarKey) {
         if (avatarService == null) {
             return@LaunchedEffect
         }
@@ -1140,13 +1146,14 @@ fun penikAvatarBitmap(conversation: Conversation, activity: XmppActivity): Bitma
 fun PenikAvatarImage(
         name: String,
         bitmap: Bitmap?,
-        size: androidx.compose.ui.unit.Dp = 48.dp
+        size: androidx.compose.ui.unit.Dp = 48.dp,
+        modifier: Modifier = Modifier
 ) {
     if (bitmap != null) {
         androidx.compose.foundation.Image(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = null,
-                modifier = Modifier.size(size).clip(CircleShape)
+                modifier = modifier.size(size).clip(CircleShape)
         )
     } else {
         val panelSecondary = colorResource(R.color.penik_panel_secondary)
@@ -1154,7 +1161,7 @@ fun PenikAvatarImage(
         val initial = name.firstOrNull()?.uppercase() ?: "?"
         val fontSize = (size.value * 0.42f).sp
         Box(
-                modifier = Modifier.size(size).clip(CircleShape).background(tint),
+                modifier = modifier.size(size).clip(CircleShape).background(tint),
                 contentAlignment = Alignment.Center
         ) {
             Text(

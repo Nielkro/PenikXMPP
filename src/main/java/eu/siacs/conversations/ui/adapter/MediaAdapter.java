@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import androidx.annotation.DimenRes;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.DiffUtil;
@@ -155,7 +156,7 @@ public class MediaAdapter extends ListAdapter<Attachment, MediaAdapter.MediaView
         } else if (mime.equals("audio/x-m4b")) {
             return R.drawable.ic_play_lesson_48dp;
         } else if (mime.startsWith("audio/")) {
-            return R.drawable.ic_headphones_48dp;
+            return R.drawable.ic_mic_24dp;
         } else if (mime.equals("text/calendar") || (mime.equals("text/x-vcalendar"))) {
             return R.drawable.ic_event_48dp;
         } else if (mime.equals("text/x-vcard")) {
@@ -198,6 +199,15 @@ public class MediaAdapter extends ListAdapter<Attachment, MediaAdapter.MediaView
     }
 
     static void renderPreview(final Attachment attachment, final ImageView imageView) {
+        if (attachment.getType() == Attachment.Type.RECORDING
+                || (attachment.getMime() != null && attachment.getMime().startsWith("audio/"))) {
+            ImageViewCompat.setImageTintList(
+                    imageView, ColorStateList.valueOf(android.graphics.Color.WHITE));
+            imageView.setImageResource(R.drawable.ic_mic_24dp);
+            imageView.setBackgroundColor(
+                    ContextCompat.getColor(imageView.getContext(), R.color.penik_accent));
+            return;
+        }
         ImageViewCompat.setImageTintList(
                 imageView,
                 ColorStateList.valueOf(

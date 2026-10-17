@@ -23,6 +23,7 @@ import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -55,6 +56,10 @@ public class ToolbarUtils {
         if (subtitle != null) {
             subtitle.setOnClickListener(null);
         }
+        final ImageView logo = getLogoImageView(view);
+        if (logo != null) {
+            logo.setOnClickListener(null);
+        }
     }
 
     public static void setActionBarOnClickListener(
@@ -67,6 +72,21 @@ public class ToolbarUtils {
         if (subtitle != null) {
             subtitle.setOnClickListener(onClickListener);
         }
+        final ImageView logo = getLogoImageView(view);
+        if (logo != null) {
+            logo.setOnClickListener(onClickListener);
+        }
+    }
+
+    @Nullable
+    public static ImageView getLogoImageView(@NonNull Toolbar toolbar) {
+        for (int i = 0; i < toolbar.getChildCount(); i++) {
+            View child = toolbar.getChildAt(i);
+            if (child instanceof ImageView && !(child instanceof android.widget.ImageButton)) {
+                return (ImageView) child;
+            }
+        }
+        return null;
     }
 
     @Nullable
