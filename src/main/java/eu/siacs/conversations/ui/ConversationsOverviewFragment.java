@@ -35,6 +35,7 @@ import static androidx.recyclerview.widget.ItemTouchHelper.RIGHT;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
@@ -428,15 +429,11 @@ public class ConversationsOverviewFragment extends XmppFragment {
 
                     @Override
                     public void onCreateGroup() {
-                        final XmppActivity activity = requireXmppActivity();
-                        if (activity != null && activity.xmppConnectionService != null) {
-                            final List<String> activated = new ArrayList<>();
-                            for (Account account : activity.xmppConnectionService.getAccounts()) {
-                                if (account.isEnabled()) {
-                                    activated.add(account.getJid().asBareJid().toString());
-                                }
-                            }
-                            CreatePrivateGroupChatDialog.newInstance(activated).show(getParentFragmentManager(), "create_group");
+                        final Context context = getContext();
+                        if (context != null) {
+                            final Intent intent = new Intent(context, StartConversationActivity.class);
+                            intent.putExtra(StartConversationActivity.EXTRA_CREATE_GROUP, true);
+                            startActivity(intent);
                         }
                     }
 

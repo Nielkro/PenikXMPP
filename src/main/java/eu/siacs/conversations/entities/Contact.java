@@ -369,9 +369,10 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
     }
 
     public boolean showInContactList() {
-        return showInRoster()
-                || getOption(Options.SYNCED_VIA_OTHER)
-                || (QuickConversationsService.isQuicksy() && systemAccount != null);
+        return !isSelf()
+                && (showInRoster()
+                        || getOption(Options.SYNCED_VIA_OTHER)
+                        || (QuickConversationsService.isQuicksy() && systemAccount != null));
     }
 
     public void parseSubscriptionFromElement(Element item) {

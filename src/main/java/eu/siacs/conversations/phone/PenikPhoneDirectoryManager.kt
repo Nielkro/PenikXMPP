@@ -240,7 +240,13 @@ object PenikPhoneDirectoryManager {
                                     val phoneContact = PenikPhoneContact(c)
                                     for (account in service.accounts) {
                                         if (account.isEnabled) {
+                                            if (account.jid.asBareJid().equals(jid.asBareJid())) {
+                                                continue
+                                            }
                                             val contact = account.roster.getContact(jid)
+                                            if (contact.isSelf) {
+                                                continue
+                                            }
                                             contact.setPhoneContact(phoneContact)
                                             contact.setPhoneNumber(norm)
                                             contact.setOption(Contact.Options.SYNCED_VIA_OTHER)
@@ -352,11 +358,13 @@ object PenikPhoneDirectoryManager {
                         try {
                             val jid = Jid.of(matchedJid)
                             val contact = account.roster.getContact(jid)
-                            if (rawName.isNotBlank()) contact.setSystemName(rawName)
-                            contact.setPhoneNumber(norm)
-                            contact.setOption(Contact.Options.SYNCED_VIA_OTHER)
-                            if (lookupUri != null) contact.setSystemAccount(lookupUri)
-                            if (photoUri != null) contact.setPhotoUri(photoUri)
+                            if (!contact.isSelf) {
+                                if (rawName.isNotBlank()) contact.setSystemName(rawName)
+                                contact.setPhoneNumber(norm)
+                                contact.setOption(Contact.Options.SYNCED_VIA_OTHER)
+                                if (lookupUri != null) contact.setSystemAccount(lookupUri)
+                                if (photoUri != null) contact.setPhotoUri(photoUri)
+                            }
                             service.updateRosterUi()
 
                             val conversation = service.findOrCreateConversation(account, contact.address, false, true)

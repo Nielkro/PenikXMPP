@@ -110,6 +110,7 @@ public class StartConversationActivity extends XmppActivity
             "contact_list_integration_consent";
 
     public static final String EXTRA_INVITE_URI = "eu.siacs.conversations.invite_uri";
+    public static final String EXTRA_CREATE_GROUP = "eu.siacs.conversations.create_group";
 
     private final int REQUEST_SYNC_CONTACTS = 0x28cf;
     private final int REQUEST_CHOOSE_PHONEBOOK_CONTACT = 0x28d0;
@@ -130,6 +131,7 @@ public class StartConversationActivity extends XmppActivity
     private final AtomicBoolean mOpenedFab = new AtomicBoolean(false);
     private boolean mHideOfflineContacts = false;
     private boolean createdByViewIntent = false;
+    private boolean mPendingChooseContactFromPhonebook = false;
     private final MenuItem.OnActionExpandListener mOnActionExpandListener =
             new MenuItem.OnActionExpandListener() {
 
@@ -391,6 +393,7 @@ public class StartConversationActivity extends XmppActivity
 
     public void chooseContactFromPhonebook() {
         if (checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            mPendingChooseContactFromPhonebook = true;
             requestPermissions(new String[] {Manifest.permission.READ_CONTACTS}, REQUEST_SYNC_CONTACTS);
             return;
         }
@@ -483,6 +486,14 @@ public class StartConversationActivity extends XmppActivity
     @Override
     public void onNewIntent(final Intent intent) {
         super.onNewIntent(intent);
+        if (intent != null && intent.getBooleanExtra(EXTRA_CREATE_GROUP, false)) {
+            intent.removeExtra(EXTRA_CREATE_GROUP);
+            if (xmppConnectionServiceBound) {
+                showCreatePrivateGroupChatDialog();
+            } else {
+                getIntent().putExtra(EXTRA_CREATE_GROUP, true);
+            }
+        }
         if (xmppConnectionServiceBound) {
             processViewIntent(intent);
         } else {
@@ -974,6 +985,10 @@ public class StartConversationActivity extends XmppActivity
                                 setRefreshing(false);
                                 refreshUiReal();
                             });
+                    if (mPendingChooseContactFromPhonebook) {
+                        mPendingChooseContactFromPhonebook = false;
+                        chooseContactFromPhonebook();
+                    }
                 }
             }
     }
@@ -1005,6 +1020,10 @@ public class StartConversationActivity extends XmppActivity
         }
         this.mActivatedAccounts.clear();
         this.mActivatedAccounts.addAll(AccountUtils.getEnabledAccounts(xmppConnectionService));
+        if (getIntent().getBooleanExtra(EXTRA_CREATE_GROUP, false)) {
+            getIntent().removeExtra(EXTRA_CREATE_GROUP);
+            showCreatePrivateGroupChatDialog();
+        }
         configureHomeButton();
         Intent intent = pendingViewIntent.pop();
         if (intent != null && processViewIntent(intent)) {
@@ -1155,7 +1174,8 @@ public class StartConversationActivity extends XmppActivity
             if (account.isEnabled()) {
                 for (Contact contact : account.getRoster().getContacts()) {
                     Presence.Availability s = contact.getShownStatus();
-                    if (contact.showInContactList()
+                    if (!contact.isSelf()
+                            && contact.showInContactList()
                             && contact.match(needle)
                             && (showOffline || s.compareTo(Presence.Availability.OFFLINE) < 0)) {
                         this.contacts.add(contact);

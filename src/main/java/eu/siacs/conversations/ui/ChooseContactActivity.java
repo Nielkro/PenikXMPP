@@ -270,7 +270,8 @@ public class ChooseContactActivity extends AbstractSearchableListItemActivity
         for (final Account account : xmppConnectionService.getAccounts()) {
             if (account.isEnabled()) {
                 for (final Contact contact : account.getRoster().getContacts()) {
-                    if (contact.showInContactList()
+                    if (!contact.isSelf()
+                            && contact.showInContactList()
                             && !filterContacts.contains(contact.getAddress().asBareJid().toString())
                             && contact.match(needle)) {
                         getListItems().add(contact);
