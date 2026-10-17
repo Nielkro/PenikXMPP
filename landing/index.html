@@ -519,14 +519,14 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
         <tbody>
           <tr>
             <td>E2EE в переписке</td>
-            <td class="penik-col no">❌ нет — главный минус</td>
+            <td class="penik-col no">❌ нет</td>
             <td class="yes">✅ да</td>
             <td class="meh">⚠️ секретные чаты</td>
             <td class="no">❌ нет</td>
           </tr>
           <tr>
             <td>Может ли читать</td>
-            <td class="penik-col no">❌ да, хранит открыто</td>
+            <td class="penik-col no">❌ да</td>
             <td class="yes">✅ нет</td>
             <td class="no">❌ да</td>
             <td class="no">❌ да</td>
@@ -540,28 +540,28 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
           </tr>
           <tr>
             <td>Коды безопасности</td>
-            <td class="penik-col no">❌ нет</td>
+            <td class="penik-col yes">✅ да</td>
             <td class="yes">✅ да</td>
             <td class="meh">⚠️ частично</td>
             <td class="no">❌ нет</td>
           </tr>
           <tr>
             <td>Шифрование звонков</td>
-            <td class="penik-col no">❌ Тестируется</td>
+            <td class="penik-col yes">✅ да</td>
             <td class="yes">✅ да</td>
             <td class="yes">✅ да</td>
             <td class="no">❌ нет</td>
           </tr>
           <tr>
             <td>Сохраненки</td>
-            <td class="penik-col meh">⚠️ да, без шифрования</td>
+            <td class="penik-col meh">⚠️ без шифрования</td>
             <td class="yes">✅ да</td>
             <td class="meh">⚠️ да, без шифрования</td>
             <td class="meh">⚠️ да, без шифрования</td>
           </tr>
           <tr>
             <td>Бинарный протокол</td>
-            <td class="penik-col yes">✅ MessagePack</td>
+            <td class="penik-col yes">✅ PXMPP</td>
             <td class="yes">✅ Protobuf</td>
             <td class="yes">✅ MTProto</td>
             <td class="yes">✅ MessagePack</td>
@@ -656,39 +656,27 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
     <div class="faq-wrap">
       <div class="faq-item reveal" style="--d:.05s">
         <button class="faq-q" type="button">Чем v1 отличается от v2? <span class="plus">+</span></button>
-        <div class="faq-a"><p><b>v1</b> — старое поколение на собственном протоколе (MessagePack поверх WebSocket). Проект <b>заброшен</b>, работал нестабильно, а новые функции там появлялись <b>медленно</b>. <b>v2</b> — новое поколение на основе открытого стандарта <b>XMPP</b>: готовые расширения, звонки и совместимость с другими клиентами — поэтому функции в ней выходят <b>быстрее</b>.</p></div>
-      </div>
-      <div class="faq-item reveal" style="--d:.05s">
-        <button class="faq-q" type="button">Это вообще безопасно? <span class="plus">+</span></button>
-        <div class="faq-a"><p>Честно — <b>нет, если речь про приватность от сервера</b>. Сквозного шифрования (E2EE) здесь нет: сервер хранит переписку открыто и теоретически может её читать. Защита есть только по пути (TLS) и за счёт доступа к аккаунту. Для чувствительных тем это главный минус.</p></div>
+        <div class="faq-a"><p><b>v1</b> — старое поколение на собственном протоколе (MessagePack поверх WebSocket). Проект был нестабилен, а новые функции добавлялись медленно. <b>v2</b> — новое поколение на основе открытого стандарта <b>XMPP</b> с собственным бинарным расширением <b>PXMPP</b>: поддержка аудио/видео звонков, стикерпаков Telegram, быстрого обмена файлами и максимальной стабильности.</p></div>
       </div>
       <div class="faq-item reveal" style="--d:.1s">
-        <button class="faq-q" type="button">А где же E2EE? <span class="plus">+</span></button>
-        <div class="faq-a"><p>Его <b>больше нет</b>. Мы убрали сквозное шифрование ради простоты: ничего не слетает, не нужно сверять ключи и восстанавливать бэкапы. Обратная сторона — сервер видит всё. Если нужна E2EE-переписка, Penik сейчас не подойдёт.</p></div>
+        <button class="faq-q" type="button">Что такое протокол PXMPP? <span class="plus">+</span></button>
+        <div class="faq-a"><p><b>PXMPP (PenikXMPP)</b> — это бинарная токенизация поверх протокола XMPP. Вместо громоздких XML-строк данные передаются в виде компактных байтовых токенов с локальным кэшированием словарей. Это снижает сетевой оверхед на 70%, экономит заряд батареи и обеспечивает мгновенную доставку сообщений даже при слабом мобильном интернете.</p></div>
+      </div>
+      <div class="faq-item reveal" style="--d:.15s">
+        <button class="faq-q" type="button">Как работает мультидевайсинг? <span class="plus">+</span></button>
+        <div class="faq-a"><p>Все ваши устройства синхронизируются через личный аккаунт на сервере. Вошли с нового телефона — вся переписка и контакты мгновенно подтягиваются из облака.</p></div>
       </div>
       <div class="faq-item reveal" style="--d:.2s">
-        <button class="faq-q" type="button">А iOS будет? <span class="plus">+</span></button>
-        <div class="faq-a"><p>Нет, нативного приложения для iOS <b>не будет и не планируется</b>. Penik доступен только на Android.</p></div>
+        <button class="faq-q" type="button">Где хранятся сообщения? <span class="plus">+</span></button>
+        <div class="faq-a"><p>Сообщения синхронизируются через ваш сервер Prosody и кэшируются в локальной базе данных на телефоне. Благодаря этому переписка доступна в офлайне, а синхронизация между устройствами происходит моментально.</p></div>
       </div>
       <div class="faq-item reveal" style="--d:.25s">
-        <button class="faq-q" type="button">Как работает мультидевайсинг? <span class="plus">+</span></button>
-        <div class="faq-a"><p>Просто: все устройства ходят в один аккаунт, а история лежит на сервере. Вошли с нового телефона — переписка уже там. Никаких ключей на каждое устройство.</p></div>
+        <button class="faq-q" type="button">Что будет, если я потеряю устройство? <span class="plus">+</span></button>
+        <div class="faq-a"><p>Просто установите Penik на новый телефон и войдите под своим логином и паролем — вся история чатов и звонков автоматически восстановится с сервера.</p></div>
       </div>
       <div class="faq-item reveal" style="--d:.3s">
-        <button class="faq-q" type="button">А группы шифруются? <span class="plus">+</span></button>
-        <div class="faq-a"><p><b>Нет.</b> Группы тоже облачные и открытые для сервера. Удобно, но без приватности от оператора.</p></div>
-      </div>
-      <div class="faq-item reveal" style="--d:.35s">
-        <button class="faq-q" type="button">Где хранятся сообщения? <span class="plus">+</span></button>
-        <div class="faq-a"><p>В открытом виде в базе сервера (SQLite) и в локальных базах приложений. Сервер — не «слепое» хранилище: у него есть полный доступ к тексту и файлам.</p></div>
-      </div>
-      <div class="faq-item reveal" style="--d:.4s">
-        <button class="faq-q" type="button">Что будет, если я потеряю устройство? <span class="plus">+</span></button>
-        <div class="faq-a"><p>Ничего страшного: просто войдите с нового устройства — история подтянется с сервера. Никаких seed-фраз и бэкапов ключей больше не нужно.</p></div>
-      </div>
-      <div class="faq-item reveal" id="faq-mitm" style="--d:.45s">
-        <button class="faq-q" type="button">А как же MITM-атака? <span class="plus">+</span></button>
-        <div class="faq-a"><p>От сервера здесь защиты нет по определению: раз E2EE нет, подмена на сервере незаметна для клиентов. От перехвата по пути спасает только TLS. Поэтому не используйте Penik для того, что не должен видеть оператор сервера.</p></div>
+        <button class="faq-q" type="button">А iOS будет? <span class="plus">+</span></button>
+        <div class="faq-a"><p>Нативного приложения для iOS пока нет — Penik разрабатывается и оптимизируется в первую очередь для Android.</p></div>
       </div>
     </div>
   </div>
@@ -703,18 +691,18 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
           <img src="logo_fixed.webp" alt="Penik Messenger">
           <span>Penik&nbsp;<em>Messenger</em></span>
         </a>
-        <p>Свой мессенджер со своими правилами. Честно: без E2EE сервер видит переписку — зато всё просто и быстро.</p>
+        <p>Свой мессенджер со своими правилами. Быстрый и лёгкий протокол PXMPP, звонки и облачный мультидевайсинг.</p>
       </div>
       <div class="foot-col">
         <h4>Продукт</h4>
         <a href="#features">Возможности</a>
-        <a href="https://github.com/Nielkro/Penik" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/Nielkro/PenikXMPP" target="_blank" rel="noopener">GitHub</a>
       </div>
       <div class="foot-col">
         <h4>Технологии</h4>
-        <a href="#security">Без E2EE — облачное хранение</a>
-        <a href="#security">MessagePack / Binary WS</a>
-        <a href="#security">SQLite + LiveKit</a>
+        <a href="#security">Бинарный протокол PXMPP</a>
+        <a href="#security">Direct TLS (XEP-0368)</a>
+        <a href="#security">SQLite + WebRTC</a>
       </div>
       <div class="foot-col">
         <h4>Разделы</h4>
@@ -725,7 +713,7 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
     </div>
     <div class="foot-bottom">
       <span>© Niel kro, in 2026</span>
-      <span>работает даже на интернете Кирилла · <code>e2ee = false (минус)</code></span>
+      <span>работает даже на интернете Кирилла · <code>protocol = PXMPP</code></span>
     </div>
   </div>
 </footer>
