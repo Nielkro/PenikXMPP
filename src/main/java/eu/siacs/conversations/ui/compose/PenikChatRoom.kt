@@ -732,8 +732,8 @@ fun PenikMessageRow(
     val highlightedUuid = LocalHighlightedMessageUuid.current
     val isHighlighted = highlightedUuid != null && highlightedUuid == message.uuid
     val highlightAlpha by animateFloatAsState(
-            targetValue = if (isHighlighted) 0.35f else 0f,
-            animationSpec = tween(durationMillis = 300),
+            targetValue = if (isHighlighted) 0.38f else 0f,
+            animationSpec = tween(durationMillis = 280),
             label = "quote_highlight"
     )
 
@@ -744,7 +744,7 @@ fun PenikMessageRow(
                             .then(
                                     if (highlightAlpha > 0f) {
                                         Modifier.background(
-                                                colorResource(R.color.penik_accent).copy(alpha = highlightAlpha),
+                                                Color(0xFFFFA000).copy(alpha = highlightAlpha),
                                                 shape = RoundedCornerShape(12.dp)
                                         )
                                     } else Modifier
@@ -1005,8 +1005,13 @@ fun formatPenikQuoteContent(raw: String): String {
     val trimmed = raw.trim()
     if (trimmed.startsWith("{") && trimmed.contains("\"pack_id\"") && trimmed.contains("\"sticker_id\"")) {
         val emojiRegex = "\"emoji\"\\s*:\\s*\"([^\"]+)\"".toRegex()
-        val emoji = emojiRegex.find(trimmed)?.groupValues?.get(1)?.let { " $it" } ?: ""
-        return "🎨 Стикер$emoji"
+        val emoji = emojiRegex.find(trimmed)?.groupValues?.get(1)?.trim()?.let { "$it " } ?: ""
+        return "${emoji}Стикер"
+    }
+    if (trimmed.startsWith("🎨")) {
+        val rest = trimmed.removePrefix("🎨").trim()
+        val emoji = rest.removePrefix("Стикер").trim()
+        return if (emoji.isNotEmpty()) "$emoji Стикер" else "Стикер"
     }
     val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
     val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")

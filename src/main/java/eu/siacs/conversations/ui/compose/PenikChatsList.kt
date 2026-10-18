@@ -2275,10 +2275,14 @@ fun penikMessagePreviewData(
             isAesGcm ||
             (isHttp && (mime.isNotEmpty() || isImageExt || isAudioExt || isVideoExt || lowerUrl.matches(Regex(".*\\.(pdf|apk|zip|rar|tar|gz|doc|docx|xls|xlsx|ppt|pptx|txt)(\\?.*)?"))))
 
-    if (message.type == Message.TYPE_STICKER || message.isSticker) {
+    if (message.type == Message.TYPE_STICKER || message.isSticker || (message.body?.startsWith("{\"pack_id\":") == true)) {
         val sticker = message.sticker ?: Sticker.fromJson(message.body)
-        val emoji = sticker?.emoji()?.takeIf { it.isNotEmpty() }?.let { " $it" } ?: ""
-        return PenikPreviewData(iconRes = R.drawable.ic_add_reaction_24dp, text = "Стикер$emoji", sender = sender)
+        val emoji = sticker?.emoji()?.takeIf { it.isNotBlank() }?.let { "${it.trim()} " } ?: ""
+        return PenikPreviewData(
+            iconRes = if (emoji.isEmpty()) R.drawable.ic_add_reaction_24dp else null,
+            text = "${emoji}Стикер",
+            sender = sender
+        )
     }
 
     if (isMediaOrDownloadable) {

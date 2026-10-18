@@ -229,12 +229,12 @@ public class UIHelper {
             return new Pair<>(context.getString(R.string.omemo_decryption_failed), true);
         } else if (message.isFileOrImage()) {
             return new Pair<>(getFileDescriptionString(context, message), true);
-        } else if (message.getType() == Message.TYPE_STICKER || message.isSticker()) {
+        } else if (message.getType() == Message.TYPE_STICKER || message.isSticker() || (message.getBody() != null && message.getBody().startsWith("{\"pack_id\":"))) {
             final Sticker sticker = message.getSticker() != null ? message.getSticker() : Sticker.fromJson(message.getBody());
-            final String emoji = (sticker != null && sticker.emoji() != null && !sticker.emoji().isEmpty())
-                    ? " " + sticker.emoji()
+            final String emoji = (sticker != null && sticker.emoji() != null && !sticker.emoji().trim().isEmpty())
+                    ? sticker.emoji().trim() + " "
                     : "";
-            return new Pair<>("Стикер" + emoji, false);
+            return new Pair<>(emoji + "Стикер", false);
         } else if (message.getType() == Message.TYPE_RTP_SESSION) {
             RtpSessionStatus rtpSessionStatus = RtpSessionStatus.of(message.getBody());
             final boolean received = message.getStatus() == Message.STATUS_RECEIVED;
