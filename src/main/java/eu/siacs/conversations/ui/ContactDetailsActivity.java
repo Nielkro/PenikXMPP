@@ -28,7 +28,9 @@ import android.view.View.OnClickListener;
 import androidx.appcompat.view.menu.MenuBuilder;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.phone.PenikPhoneDirectoryManager;
+import eu.siacs.conversations.utils.TimeFrameUtils;
 import eu.siacs.conversations.utils.UIHelper;
+import java.time.Duration;
 import java.time.Instant;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -352,8 +354,17 @@ public class ContactDetailsActivity extends OmemoActivity
         if (itemId == android.R.id.home) {
             finish();
             return true;
-        } else if (itemId == R.id.action_notifications) {
-            toggleMute();
+        } else if (itemId == R.id.action_mute) {
+            final Conversation c = getConversation();
+            if (c != null) {
+                muteConversationDialog(c);
+            }
+            return true;
+        } else if (itemId == R.id.action_unmute) {
+            final Conversation c = getConversation();
+            if (c != null) {
+                unMuteConversation(c);
+            }
             return true;
         } else if (itemId == R.id.action_share_http) {
             shareLink(true);
@@ -418,28 +429,55 @@ public class ContactDetailsActivity extends OmemoActivity
         if (menu instanceof MenuBuilder menuBuilder) {
             menuBuilder.setOptionalIconsVisible(true);
         }
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(final Menu menu) {
         final MenuItem block = menu.findItem(R.id.action_block);
         final MenuItem unblock = menu.findItem(R.id.action_unblock);
         final MenuItem edit = menu.findItem(R.id.action_edit_contact);
         final MenuItem delete = menu.findItem(R.id.action_delete_contact);
-        if (contact == null) {
-            return true;
+        final MenuItem menuMute = menu.findItem(R.id.action_mute);
+        final MenuItem menuUnmute = menu.findItem(R.id.action_unmute);
+
+        final Conversation conversation = getConversation();
+        final boolean isSelf = contact != null && contact.isSelf();
+
+        if (contact == null || isSelf || conversation == null) {
+            if (menuMute != null) menuMute.setVisible(false);
+            if (menuUnmute != null) menuUnmute.setVisible(false);
+        } else {
+            if (conversation.isMuted()) {
+                if (menuMute != null) menuMute.setVisible(false);
+                if (menuUnmute != null) menuUnmute.setVisible(true);
+            } else {
+                if (menuMute != null) menuMute.setVisible(true);
+                if (menuUnmute != null) menuUnmute.setVisible(false);
+            }
         }
-        final XmppConnection connection = contact.getAccount().getXmppConnection();
-        if (connection != null && connection.getManager(BlockingManager.class).hasFeature()) {
-            if (this.contact.isBlocked()) {
-                if (block != null) block.setVisible(false);
+
+        if (contact != null) {
+            final XmppConnection connection = contact.getAccount().getXmppConnection();
+            if (connection != null && connection.getManager(BlockingManager.class).hasFeature()) {
+                if (this.contact.isBlocked()) {
+                    if (block != null) block.setVisible(false);
+                    if (unblock != null) unblock.setVisible(true);
+                } else {
+                    if (unblock != null) unblock.setVisible(false);
+                    if (block != null) block.setVisible(true);
+                }
             } else {
                 if (unblock != null) unblock.setVisible(false);
+                if (block != null) block.setVisible(false);
             }
-        } else {
-            if (unblock != null) unblock.setVisible(false);
-            if (block != null) block.setVisible(false);
+            if (!contact.showInRoster()) {
+                if (delete != null) delete.setVisible(false);
+            } else {
+                if (delete != null) delete.setVisible(true);
+            }
         }
-        if (!contact.showInRoster()) {
-            if (delete != null) delete.setVisible(false);
-        }
-        return super.onCreateOptionsMenu(menu);
+        return super.onPrepareOptionsMenu(menu);
     }
 
     private Conversation getConversation() {
@@ -465,15 +503,51 @@ public class ContactDetailsActivity extends OmemoActivity
         final Conversation c = getConversation();
         if (c != null) {
             if (c.isMuted()) {
-                c.setMutedTill(null);
-                Toast.makeText(this, "Уведомления включены", Toast.LENGTH_SHORT).show();
+                unMuteConversation(c);
             } else {
-                c.setMutedTill(Instant.MAX);
-                Toast.makeText(this, "Уведомления отключены", Toast.LENGTH_SHORT).show();
+                muteConversationDialog(c);
             }
-            xmppConnectionService.updateConversation(c);
-            populateView();
         }
+    }
+
+    protected void muteConversationDialog(final Conversation conversation) {
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        builder.setTitle(R.string.disable_notifications);
+        final int[] durations = getResources().getIntArray(R.array.mute_options_durations);
+        final CharSequence[] labels = new CharSequence[durations.length];
+        for (int i = 0; i < durations.length; ++i) {
+            if (durations[i] == -1) {
+                labels[i] = getString(R.string.until_further_notice);
+            } else {
+                labels[i] = TimeFrameUtils.resolve(this, 1000L * durations[i]);
+            }
+        }
+        builder.setItems(
+                labels,
+                (dialog, which) -> {
+                    final Instant till;
+                    if (durations[which] == -1) {
+                        till = Instant.MAX;
+                    } else {
+                        till = Instant.now().plus(Duration.ofSeconds(durations[which]));
+                    }
+                    conversation.setMutedTill(till);
+                    if (xmppConnectionService != null) {
+                        xmppConnectionService.updateConversation(conversation);
+                    }
+                    invalidateOptionsMenu();
+                    populateView();
+                });
+        builder.create().show();
+    }
+
+    public void unMuteConversation(final Conversation conversation) {
+        conversation.setMutedTill(null);
+        if (xmppConnectionService != null) {
+            xmppConnectionService.updateConversation(conversation);
+        }
+        invalidateOptionsMenu();
+        populateView();
     }
 
     private void startVoiceCall() {

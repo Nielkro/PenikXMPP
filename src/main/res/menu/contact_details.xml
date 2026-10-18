@@ -3,10 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_notifications"
-        android:icon="@drawable/ic_notifications_24dp"
+        android:id="@+id/action_mute"
+        android:icon="@drawable/ic_notifications_off_24dp"
         android:orderInCategory="10"
-        android:title="@string/notifications"
+        android:title="@string/disable_notifications"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_unmute"
+        android:icon="@drawable/ic_notifications_24dp"
+        android:orderInCategory="11"
+        android:title="@string/enable_notifications"
         app:showAsAction="never" />
 
     <item
