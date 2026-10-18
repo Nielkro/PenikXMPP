@@ -109,6 +109,7 @@ import eu.siacs.conversations.entities.Conversation
 import eu.siacs.conversations.entities.Conversational
 import eu.siacs.conversations.entities.Message
 import eu.siacs.conversations.entities.RtpSessionStatus
+import eu.siacs.conversations.entities.Sticker
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -866,27 +867,73 @@ private fun findPenikQuotedMessageIndex(
         currentMsg: Message,
         quote: String
 ): Int? {
-    val lines = quote.lines()
-    val firstLine = lines.firstOrNull()?.trim() ?: ""
-    val isRawJson = firstLine.startsWith("{")
-    val hasColon = !isRawJson && firstLine.contains(":") && !firstLine.startsWith("http://") && !firstLine.startsWith("https://")
-    val author = if (hasColon) firstLine.substringBefore(":").trim() else null
-    val content = if (hasColon) {
-        (listOf(firstLine.substringAfter(":").trim()) + lines.drop(1)).joinToString("\n").trim()
-    } else {
-        quote.trim()
+    // 1. Direct UUID resolution if available
+    val msgUuidRegex = "penik:msg:([a-zA-Z0-9_-]+)".toRegex()
+    val targetUuid = msgUuidRegex.find(quote)?.groupValues?.get(1)
+    if (targetUuid != null) {
+        val exactIndex = rows.indexOfFirst { it is ChatRow.Msg && it.message.uuid == targetUuid }
+        if (exactIndex >= 0) {
+            return exactIndex
+        }
     }
 
+    // Strip invisible/markdown UUID links if present
+    val cleanQuote = quote.replace("\\[[^\\]]*\\]\\(penik:msg:[^)]+\\)".toRegex(), "").trim()
+    val lines = cleanQuote.lines()
+    val firstLine = lines.firstOrNull()?.trim() ?: ""
+    val isRawJson = firstLine.startsWith("{")
+    val hasColon = !isRawJson && firstLine.contains(": ") &&
+            !firstLine.startsWith("http://", ignoreCase = true) &&
+            !firstLine.startsWith("https://", ignoreCase = true) &&
+            !firstLine.startsWith("aesgcm://", ignoreCase = true) &&
+            !firstLine.startsWith("geo:", ignoreCase = true) &&
+            !firstLine.startsWith("xmpp:", ignoreCase = true)
+
+    val author = if (hasColon) firstLine.substringBefore(": ").trim().takeIf { it.isNotBlank() } else null
+    val content = if (hasColon) {
+        val remainder = firstLine.substringAfter(": ").trim()
+        (listOf(remainder) + lines.drop(1)).joinToString("\n").trim()
+    } else {
+        cleanQuote.trim()
+    }
+
+    if (content.isEmpty()) return null
+
+    // Detect quote type
     val isStickerQuote = (content.startsWith("{") && content.contains("\"pack_id\"")) ||
-            content.startsWith("🎨") || content.contains("Стикер")
+            content.contains("Стикер") || content.startsWith("🎨")
+
     val isPhotoQuote = content.startsWith("📷") || content.contains("Фото")
     val isVoiceQuote = content.startsWith("🎙") || content.contains("Голосовое")
     val isVideoQuote = content.startsWith("🎬") || content.contains("Видео")
     val isFileQuote = content.startsWith("📎")
     val isGeoQuote = content.startsWith("📍") || content.startsWith("geo:")
 
+    val isMediaOrUrlQuote = content.startsWith("http://", ignoreCase = true) ||
+            content.startsWith("https://", ignoreCase = true) ||
+            content.startsWith("aesgcm://", ignoreCase = true) ||
+            content.contains("aesgcm://") ||
+            (content.contains("http") && content.contains("|"))
+
     val stickerIdRegex = "\"sticker_id\"\\s*:\\s*\"([^\"]+)\"".toRegex()
     val stickerId = if (content.contains("\"sticker_id\"")) stickerIdRegex.find(content)?.groupValues?.get(1) else null
+
+    val quoteEmoji: String? = when {
+        content.contains("\"emoji\"") -> {
+            "\"emoji\"\\s*:\\s*\"([^\"]+)\"".toRegex().find(content)?.groupValues?.get(1)?.trim()
+        }
+        content.contains("Стикер") -> {
+            val emojiPart = content.removeSuffix("Стикер").replace("🎨", "").trim()
+            emojiPart.takeIf { it.isNotEmpty() }
+        }
+        else -> null
+    }
+
+    // Clean URL base path for media/link matching (e.g. server.com/upload/abc.jpg)
+    val urlBase = if (isMediaOrUrlQuote) {
+        val s = if (content.contains("://")) content.substringAfter("://") else content
+        s.substringBefore("|").substringBefore("?").substringBefore("#").trim().takeIf { it.isNotBlank() }
+    } else null
 
     fun matchesAuthor(m: Message): Boolean {
         if (author.isNullOrBlank()) return true
@@ -895,91 +942,111 @@ private fun findPenikQuotedMessageIndex(
         val name2 = (m.counterpart?.resource ?: "").lowercase()
         val name3 = (m.counterpart?.local ?: "").lowercase()
         val name4 = (m.contact?.displayName ?: "").lowercase()
-        return name1.contains(a) || a.contains(name1) ||
-                name2.contains(a) || a.contains(name2) ||
-                name3.contains(a) || a.contains(name3) ||
-                name4.contains(a) || a.contains(name4)
+        return name1 == a || a == name1 ||
+                name2 == a || a == name2 ||
+                name3 == a || a == name3 ||
+                name4 == a || a == name4 ||
+                name1.contains(a) || a.contains(name1)
     }
 
     fun matchesContent(m: Message): Boolean {
         val b = m.body ?: ""
-        return when {
-            isStickerQuote -> {
-                val isSticker = m.isSticker || (b.startsWith("{\"pack_id\":") && b.contains("\"sticker_id\":"))
-                if (!isSticker) false
-                else if (stickerId != null) b.contains(stickerId)
-                else true
-            }
-            isPhotoQuote -> {
-                m.type == Message.TYPE_IMAGE || (m.isFileOrImage && m.mimeType?.startsWith("image/") == true) || penikBareImageUrl(b) != null
-            }
-            isVoiceQuote -> {
-                m.isFileOrImage && (m.mimeType?.startsWith("audio/") == true || b.contains("voice"))
-            }
-            isVideoQuote -> {
-                penikIsVideo(m) || (m.isFileOrImage && m.mimeType?.startsWith("video/") == true)
-            }
-            isFileQuote -> {
-                m.isFileOrImage || m.type == Message.TYPE_FILE
-            }
-            isGeoQuote -> {
-                m.isGeoUri
-            }
-            else -> {
-                val targetText = content.trim()
-                if (targetText.isEmpty()) false
-                else {
-                    val bodyTrim = b.trim()
-                    bodyTrim == targetText ||
-                            bodyTrim.contains(targetText) ||
-                            (targetText.length >= 10 && bodyTrim.contains(targetText.take(30))) ||
-                            (targetText.length >= 5 && targetText.contains(bodyTrim))
+
+        if (isStickerQuote) {
+            val isSticker = m.type == Message.TYPE_STICKER || m.isSticker || (b.startsWith("{\"pack_id\":") && b.contains("\"sticker_id\":"))
+            if (!isSticker) return false
+            if (stickerId != null) return b.contains(stickerId)
+            if (quoteEmoji != null) {
+                val sticker = m.sticker ?: Sticker.fromJson(b)
+                val candEmoji = sticker?.emoji()?.trim()
+                return if (!candEmoji.isNullOrEmpty()) {
+                    candEmoji == quoteEmoji || candEmoji.contains(quoteEmoji) || quoteEmoji.contains(candEmoji)
+                } else {
+                    b.contains(quoteEmoji)
                 }
             }
+            return true
         }
+
+        if (isPhotoQuote) {
+            return m.type == Message.TYPE_IMAGE || (m.isFileOrImage && m.mimeType?.startsWith("image/") == true) || penikBareImageUrl(b) != null
+        }
+
+        if (isVoiceQuote) {
+            return m.isFileOrImage && (m.mimeType?.startsWith("audio/") == true || b.contains("voice"))
+        }
+
+        if (isVideoQuote) {
+            return penikIsVideo(m) || (m.isFileOrImage && m.mimeType?.startsWith("video/") == true)
+        }
+
+        if (isFileQuote) {
+            return m.isFileOrImage || m.type == Message.TYPE_FILE
+        }
+
+        if (isGeoQuote) {
+            return m.isGeoUri
+        }
+
+        if (urlBase != null) {
+            val mFileUrl = m.fileParams?.url ?: ""
+            return b.contains(urlBase) || mFileUrl.contains(urlBase)
+        }
+
+        // Regular text quote: candidate MUST be a text message, NOT an attachment, audio, or sticker
+        if (m.type != Message.TYPE_TEXT || m.isFileOrImage || m.isSticker || m.isGeoUri) {
+            return false
+        }
+
+        val targetText = content.trim()
+        val bodyTrim = b.trim()
+        return bodyTrim == targetText ||
+                bodyTrim.startsWith(targetText) ||
+                (targetText.length >= 10 && bodyTrim.contains(targetText))
     }
 
     val currentIndex = rows.indexOfFirst { it is ChatRow.Msg && it.message.uuid == currentMsg.uuid }
-
     val priorIndices = if (currentIndex >= 0) (currentIndex + 1 until rows.size) else rows.indices
-    var fallbackMatch: Int? = null
 
+    // Pass 1: search prior messages matching BOTH content and author
     for (idx in priorIndices) {
         val row = rows[idx]
         if (row is ChatRow.Msg) {
             val m = row.message
-            if (matchesContent(m)) {
-                if (matchesAuthor(m)) {
+            if (matchesContent(m) && matchesAuthor(m)) {
+                return idx
+            }
+        }
+    }
+
+    // Pass 2: if author was specified but no combined match was found, search prior messages matching content only
+    if (author != null) {
+        for (idx in priorIndices) {
+            val row = rows[idx]
+            if (row is ChatRow.Msg) {
+                val m = row.message
+                if (matchesContent(m)) {
                     return idx
-                }
-                if (fallbackMatch == null) {
-                    fallbackMatch = idx
                 }
             }
         }
     }
 
-    if (fallbackMatch != null) {
-        return fallbackMatch
-    }
-
-    for (idx in rows.indices) {
-        if (idx == currentIndex) continue
-        val row = rows[idx]
-        if (row is ChatRow.Msg) {
-            val m = row.message
-            if (matchesContent(m)) {
-                if (matchesAuthor(m)) {
+    // Pass 3: fallback to newer messages (e.g. clock skew) matching both content and author
+    if (currentIndex > 0) {
+        for (idx in 0 until currentIndex) {
+            val row = rows[idx]
+            if (row is ChatRow.Msg) {
+                val m = row.message
+                if (matchesContent(m) && matchesAuthor(m)) {
                     return idx
-                }
-                if (fallbackMatch == null) {
-                    fallbackMatch = idx
                 }
             }
         }
     }
 
-    return fallbackMatch
+    // No match found — DO NOT jump to a random message
+    return null
 }
 
 fun splitPenikQuote(text: String): Pair<String?, String> {
@@ -1002,7 +1069,8 @@ fun splitPenikQuote(text: String): Pair<String?, String> {
 }
 
 fun formatPenikQuoteContent(raw: String): String {
-    val trimmed = raw.trim()
+    val cleanRaw = raw.replace("\\[[^\\]]*\\]\\(penik:msg:[^)]+\\)".toRegex(), "").trim()
+    val trimmed = cleanRaw.trim()
     if (trimmed.startsWith("{") && trimmed.contains("\"pack_id\"") && trimmed.contains("\"sticker_id\"")) {
         val emojiRegex = "\"emoji\"\\s*:\\s*\"([^\"]+)\"".toRegex()
         val emoji = emojiRegex.find(trimmed)?.groupValues?.get(1)?.trim()?.let { "$it " } ?: ""
@@ -1015,21 +1083,26 @@ fun formatPenikQuoteContent(raw: String): String {
     }
     val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
     val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
+    val pathOnly = try {
+        java.net.URI(if (cleanUrl.contains("://")) cleanUrl else "https://$cleanUrl").path?.lowercase() ?: lower
+    } catch (e: Exception) {
+        lower
+    }
+    val ext = pathOnly.substringAfterLast(".", "")
     return when {
         trimmed.startsWith("geo:") -> "📍 Местоположение"
-        lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp") || lower.endsWith(".gif") || lower.endsWith(".bmp") || lower.contains("/image") -> "📷 Фото"
-        lower.endsWith(".ogg") || lower.endsWith(".mp3") || lower.endsWith(".m4a") || lower.endsWith(".opus") || lower.endsWith(".wav") || lower.endsWith(".aac") || lower.contains("/audio") || lower.contains("voice") -> "🎙 Голосовое сообщение"
-        lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mov") || lower.endsWith(".mkv") || lower.contains("/video") -> "🎬 Видео"
-        trimmed.startsWith("http://", ignoreCase = true) || trimmed.startsWith("https://", ignoreCase = true) || trimmed.startsWith("aesgcm://", ignoreCase = true) -> {
+        ext in listOf("jpg", "jpeg", "png", "webp", "gif", "bmp") -> "📷 Фото"
+        ext in listOf("ogg", "mp3", "m4a", "opus", "wav", "aac") -> "🎙 Голосовое сообщение"
+        ext in listOf("mp4", "webm", "mov", "mkv", "3gp", "avi") -> "🎬 Видео"
+        trimmed.startsWith("aesgcm://", ignoreCase = true) -> {
             val fileName = try {
-                val path = if (trimmed.startsWith("aesgcm://", ignoreCase = true)) "https://${trimmed.substring("aesgcm://".length)}" else trimmed
-                java.net.URL(path.substringBefore("#").substringBefore("|")).path.substringAfterLast("/").takeIf { it.isNotBlank() }
+                java.net.URI("https://${trimmed.substring("aesgcm://".length).substringBefore("|")}").path?.substringAfterLast("/")?.takeIf { it.isNotBlank() }
             } catch (e: Exception) {
                 null
             }
             if (fileName != null) "📎 $fileName" else "📎 Файл"
         }
-        else -> raw
+        else -> cleanRaw
     }
 }
 
@@ -1041,16 +1114,23 @@ fun PenikQuoteBlock(
         isSentByMe: Boolean = false,
         onClick: (() -> Unit)? = null
 ) {
-    val lines = quote.lines()
+    val cleanQuote = quote.replace("\\[[^\\]]*\\]\\(penik:msg:[^)]+\\)".toRegex(), "").trim()
+    val lines = cleanQuote.lines()
     val firstLine = lines.firstOrNull() ?: ""
     val isRawJson = firstLine.trim().startsWith("{")
-    val hasColon = !isRawJson && firstLine.contains(":") && !firstLine.startsWith("http://") && !firstLine.startsWith("https://")
-    val author = if (hasColon) firstLine.substringBefore(":").trim() else null
+    val hasColon = !isRawJson && firstLine.contains(": ") &&
+            !firstLine.startsWith("http://", ignoreCase = true) &&
+            !firstLine.startsWith("https://", ignoreCase = true) &&
+            !firstLine.startsWith("aesgcm://", ignoreCase = true) &&
+            !firstLine.startsWith("geo:", ignoreCase = true) &&
+            !firstLine.startsWith("xmpp:", ignoreCase = true)
+
+    val author = if (hasColon) firstLine.substringBefore(": ").trim().takeIf { it.isNotBlank() } else null
     val content = if (hasColon) {
-        val remainder = firstLine.substringAfter(":").trim()
+        val remainder = firstLine.substringAfter(": ").trim()
         (listOf(remainder) + lines.drop(1)).joinToString("\n").trim()
     } else {
-        quote
+        cleanQuote
     }
 
     Row(

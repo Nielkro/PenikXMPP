@@ -1180,7 +1180,9 @@ public class ConversationFragment extends XmppFragment
                 quoteBody = MessageUtils.prepareQuote(this.activeReplyMessage);
             }
             if (!quoteBody.isEmpty()) {
-                body = "> " + (author.isEmpty() ? "" : author + ": ") + quoteBody.replace("\n", "\n> ") + "\n\n" + body;
+                final String replyUuid = this.activeReplyMessage.getUuid();
+                final String ref = !Strings.isNullOrEmpty(replyUuid) ? "[\u200B](penik:msg:" + replyUuid + ")" : "";
+                body = "> " + ref + (author.isEmpty() ? "" : author + ": ") + quoteBody.replace("\n", "\n> ") + "\n\n" + body;
             }
             clearActiveReply();
         }
