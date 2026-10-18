@@ -30,6 +30,12 @@ It combines the decentralized power and security of open standards with the poli
   - Support for Telegram sticker packs: static WebP, Animated WebP, and vector `.tgs` animations.
   - High-performance Rust backend converts WebM VP9 with alpha transparency (`-c:v libvpx-vp9`) into smooth Animated WebP without heavy custom OpenGL shaders.
   - 4-column sticker keyboard with static 128x128 thumbnails for zero-stutter 60 FPS scrolling.
+- **Private Contact Discovery ($k$-anonymity Contact Discovery)**
+  - Safe address book synchronization without revealing user contacts to the server.
+  - Client normalizes phone numbers to E.164 and computes their SHA-256 hashes.
+  - Only short 3-hex-char prefixes are transmitted to the server (`POST /api/v1/phone-directory/lookup`), implementing a strict $k$-anonymity bucket model.
+  - Server returns matching `{jid, phone_hash}` tuples; full hash comparison happens strictly on the local client device.
+  - Plain phone numbers are never bulk-broadcasted: targeted `GET /api/v1/phone-directory/:jid` resolution is guarded by Bearer HMAC-SHA256 tokens and only fulfilled for mutual authorized contacts.
 - **Privacy & Encryption**
   - Seamless end-to-end encryption (OMEMO) with zero configuration required.
   - Automatic key acceptance and chat upgrade when communicating with encrypted peers.
@@ -95,7 +101,7 @@ Comprehensive specifications:
 | **Binary Protocol** | PXMPP / FunXMPP (`eu.siacs.conversations.xmpp.fun.*`) |
 | **Media & Calls** | Jingle WebRTC RTP engine, ExoPlayer |
 | **Server Plugins** | Prosody Lua modules (`server/Modules/mod_funxmpp.lua`, `mod_stickers_auth.lua`) |
-| **Microservices** | Rust Axum backend service (`server/MicroServices/penik-service-rs`) |
+| **Microservices** | Rust Axum backend companion service (`server/MicroServices/penik-service-rs`): Telegram stickers converter/importer, $k$-anonymity private contact discovery, and phone directory with HMAC-SHA256 Bearer authentication |
 | **Build System** | Gradle 9, AGP 9.2, R8 optimizer, DataBinding |
 
 ---
@@ -146,7 +152,7 @@ The resulting APKs are generated under `build/outputs/apk/`.
 │   │   ├── mod_stickers_auth.lua # HMAC-SHA256 stickers token issuer
 │   │   └── test_mod_stickers_auth.lua # Stickers auth test suite
 │   └── MicroServices/      # Standalone backend microservices (Rust)
-│       └── penik-service-rs/    # Stickers & phone directory backend service
+│       └── penik-service-rs/    # Telegram stickers & $k$-anonymity contact discovery backend service
 ├── src/
 │   ├── main/
 │   │   ├── AndroidManifest.xml
@@ -170,7 +176,7 @@ The resulting APKs are generated under `build/outputs/apk/`.
 ## Server Deployment Notes
 
 - **Prosody Modules:** Copy `server/Modules/mod_funxmpp.lua` and `server/Modules/mod_stickers_auth.lua` into your Prosody `modules/` directory. Enable `"funxmpp"` and `"stickers_auth"` in your `modules_enabled` list. Run the provided Lua test suites to verify compatibility.
-- **Backend Service:** Build and run `server/MicroServices/penik-service-rs` using Cargo or Docker. The service requires `ffmpeg` with `libvpx-vp9` and exposes a secure HMAC-SHA256 authenticated REST API for stickers and phone directory matching.
+- **Backend Service:** Build and run `server/MicroServices/penik-service-rs` using Cargo or Docker. The service requires `ffmpeg` with `libvpx-vp9` and exposes a secure HMAC-SHA256 authenticated REST API for stickers and $k$-anonymity contact discovery by 3-hex-char phone hash prefixes.
 
 ---
 
