@@ -1143,7 +1143,23 @@ public class ConversationFragment extends XmppFragment
                 author = UIHelper.getMessageDisplayName(activeReplyMessage);
             }
             final String quoteBody;
-            if (activeReplyMessage.isFileOrImage()) {
+            final boolean isSticker = activeReplyMessage.isSticker()
+                    || activeReplyMessage.getType() == Message.TYPE_STICKER
+                    || (activeReplyMessage.getBody() != null && activeReplyMessage.getBody().startsWith("{\"pack_id\":"));
+            if (isSticker) {
+                final eu.siacs.conversations.entities.Sticker sticker = activeReplyMessage.getSticker();
+                String emoji = sticker != null && !Strings.isNullOrEmpty(sticker.emoji()) ? " " + sticker.emoji() : "";
+                if (emoji.isEmpty() && activeReplyMessage.getBody() != null && activeReplyMessage.getBody().contains("\"emoji\"")) {
+                    try {
+                        final org.json.JSONObject obj = new org.json.JSONObject(activeReplyMessage.getBody());
+                        final String e = obj.optString("emoji", "");
+                        if (!e.isEmpty()) {
+                            emoji = " " + e;
+                        }
+                    } catch (Exception ignored) {}
+                }
+                quoteBody = "🎨 Стикер" + emoji;
+            } else if (activeReplyMessage.isFileOrImage()) {
                 final String mime = activeReplyMessage.getMimeType() != null ? activeReplyMessage.getMimeType() : "";
                 if (activeReplyMessage.getType() == Message.TYPE_IMAGE || mime.startsWith("image/")) {
                     quoteBody = "📷 Фото";
@@ -1653,7 +1669,23 @@ public class ConversationFragment extends XmppFragment
             author = UIHelper.getMessageDisplayName(message);
         }
         String previewText = message.getBody();
-        if (message.isFileOrImage()) {
+        final boolean isSticker = message.isSticker()
+                || message.getType() == Message.TYPE_STICKER
+                || (message.getBody() != null && message.getBody().startsWith("{\"pack_id\":"));
+        if (isSticker) {
+            final eu.siacs.conversations.entities.Sticker sticker = message.getSticker();
+            String emoji = sticker != null && !Strings.isNullOrEmpty(sticker.emoji()) ? " " + sticker.emoji() : "";
+            if (emoji.isEmpty() && message.getBody() != null && message.getBody().contains("\"emoji\"")) {
+                try {
+                    final org.json.JSONObject obj = new org.json.JSONObject(message.getBody());
+                    final String e = obj.optString("emoji", "");
+                    if (!e.isEmpty()) {
+                        emoji = " " + e;
+                    }
+                } catch (Exception ignored) {}
+            }
+            previewText = "🎨 Стикер" + emoji;
+        } else if (message.isFileOrImage()) {
             final String mime = message.getMimeType() != null ? message.getMimeType() : "";
             if (message.getType() == Message.TYPE_IMAGE || mime.startsWith("image/")) {
                 previewText = "📷 Фото";

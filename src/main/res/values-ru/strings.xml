@@ -1158,7 +1158,7 @@
     <string name="could_not_moderate_message">Невозможно модерировать сообщение</string>
     <string name="last_seen">был(а) в сети %s</string>
     <string name="last_seen_at">был(а) в сети в %s</string>
-    <string name="last_seen_yesterday_at">был(а) в сети вчера в %s</string>
+    <string name="last_seen_yesterday_at">вчера в %s</string>
     <plurals name="x_participants">
         <item quantity="one">%1$d участник</item>
         <item quantity="few">%1$d участника</item>

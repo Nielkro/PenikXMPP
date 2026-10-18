@@ -33,6 +33,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -61,6 +63,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -128,6 +131,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.viewinterop.AndroidView
 import android.net.Uri
 import java.io.File
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import eu.siacs.conversations.ui.XmppActivity
 import eu.siacs.conversations.ui.YuriLauncherActivity
@@ -341,6 +345,9 @@ fun penikLinkified(text: String, linkColor: Color, onLinkClick: ((String) -> Uni
             }
         }
 
+val LocalQuoteScrollHandler = compositionLocalOf<((String, Message) -> Unit)?> { null }
+val LocalHighlightedMessageUuid = compositionLocalOf<String?> { null }
+
 @Composable
 fun PenikChatRoom(
         state: PenikChatState,
@@ -426,6 +433,29 @@ fun PenikChatRoom(
             }
         }
     }
+    var highlightedMessageUuid by remember { mutableStateOf<String?>(null) }
+    var highlightJob by remember { mutableStateOf<Job?>(null) }
+
+    val onQuoteClick: (String, Message) -> Unit = remember(rows) {
+        { quote, currentMsg ->
+            val matchedIndex = findPenikQuotedMessageIndex(rows, currentMsg, quote)
+            if (matchedIndex != null) {
+                val targetMsg = (rows.getOrNull(matchedIndex) as? ChatRow.Msg)?.message
+                highlightJob?.cancel()
+                highlightJob = scope.launch {
+                    listState.animateScrollToItem(matchedIndex)
+                    if (targetMsg != null) {
+                        highlightedMessageUuid = targetMsg.uuid
+                        delay(1400)
+                        if (highlightedMessageUuid == targetMsg.uuid) {
+                            highlightedMessageUuid = null
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     val defaultUriHandler = LocalUriHandler.current
     val customUriHandler = remember(activity, defaultUriHandler) {
         object : androidx.compose.ui.platform.UriHandler {
@@ -434,7 +464,11 @@ fun PenikChatRoom(
             }
         }
     }
-    CompositionLocalProvider(LocalUriHandler provides customUriHandler) {
+    CompositionLocalProvider(
+            LocalUriHandler provides customUriHandler,
+            LocalQuoteScrollHandler provides onQuoteClick,
+            LocalHighlightedMessageUuid provides highlightedMessageUuid
+    ) {
         Scaffold(
                 containerColor = background,
                 floatingActionButton = {
@@ -695,9 +729,26 @@ fun PenikMessageRow(
     }
     val isSentByMe = status != Message.STATUS_RECEIVED
     val showAvatar = !isSentByMe && (isMuc || showAvatars11)
+    val highlightedUuid = LocalHighlightedMessageUuid.current
+    val isHighlighted = highlightedUuid != null && highlightedUuid == message.uuid
+    val highlightAlpha by animateFloatAsState(
+            targetValue = if (isHighlighted) 0.35f else 0f,
+            animationSpec = tween(durationMillis = 300),
+            label = "quote_highlight"
+    )
 
     Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 1.dp),
+            modifier =
+                    Modifier.fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                            .then(
+                                    if (highlightAlpha > 0f) {
+                                        Modifier.background(
+                                                colorResource(R.color.penik_accent).copy(alpha = highlightAlpha),
+                                                shape = RoundedCornerShape(12.dp)
+                                        )
+                                    } else Modifier
+                            ),
             horizontalArrangement = if (isSentByMe) Arrangement.End else Arrangement.Start,
             verticalAlignment = Alignment.Bottom
     ) {
@@ -810,6 +861,127 @@ fun PenikMessageRow(
     }
 }
 
+private fun findPenikQuotedMessageIndex(
+        rows: List<ChatRow>,
+        currentMsg: Message,
+        quote: String
+): Int? {
+    val lines = quote.lines()
+    val firstLine = lines.firstOrNull()?.trim() ?: ""
+    val isRawJson = firstLine.startsWith("{")
+    val hasColon = !isRawJson && firstLine.contains(":") && !firstLine.startsWith("http://") && !firstLine.startsWith("https://")
+    val author = if (hasColon) firstLine.substringBefore(":").trim() else null
+    val content = if (hasColon) {
+        (listOf(firstLine.substringAfter(":").trim()) + lines.drop(1)).joinToString("\n").trim()
+    } else {
+        quote.trim()
+    }
+
+    val isStickerQuote = (content.startsWith("{") && content.contains("\"pack_id\"")) ||
+            content.startsWith("🎨") || content.contains("Стикер")
+    val isPhotoQuote = content.startsWith("📷") || content.contains("Фото")
+    val isVoiceQuote = content.startsWith("🎙") || content.contains("Голосовое")
+    val isVideoQuote = content.startsWith("🎬") || content.contains("Видео")
+    val isFileQuote = content.startsWith("📎")
+    val isGeoQuote = content.startsWith("📍") || content.startsWith("geo:")
+
+    val stickerIdRegex = "\"sticker_id\"\\s*:\\s*\"([^\"]+)\"".toRegex()
+    val stickerId = if (content.contains("\"sticker_id\"")) stickerIdRegex.find(content)?.groupValues?.get(1) else null
+
+    fun matchesAuthor(m: Message): Boolean {
+        if (author.isNullOrBlank()) return true
+        val a = author.lowercase()
+        val name1 = UIHelper.getMessageDisplayName(m).lowercase()
+        val name2 = (m.counterpart?.resource ?: "").lowercase()
+        val name3 = (m.counterpart?.local ?: "").lowercase()
+        val name4 = (m.contact?.displayName ?: "").lowercase()
+        return name1.contains(a) || a.contains(name1) ||
+                name2.contains(a) || a.contains(name2) ||
+                name3.contains(a) || a.contains(name3) ||
+                name4.contains(a) || a.contains(name4)
+    }
+
+    fun matchesContent(m: Message): Boolean {
+        val b = m.body ?: ""
+        return when {
+            isStickerQuote -> {
+                val isSticker = m.isSticker || (b.startsWith("{\"pack_id\":") && b.contains("\"sticker_id\":"))
+                if (!isSticker) false
+                else if (stickerId != null) b.contains(stickerId)
+                else true
+            }
+            isPhotoQuote -> {
+                m.type == Message.TYPE_IMAGE || (m.isFileOrImage && m.mimeType?.startsWith("image/") == true) || penikBareImageUrl(b) != null
+            }
+            isVoiceQuote -> {
+                m.isFileOrImage && (m.mimeType?.startsWith("audio/") == true || b.contains("voice"))
+            }
+            isVideoQuote -> {
+                penikIsVideo(m) || (m.isFileOrImage && m.mimeType?.startsWith("video/") == true)
+            }
+            isFileQuote -> {
+                m.isFileOrImage || m.type == Message.TYPE_FILE
+            }
+            isGeoQuote -> {
+                m.isGeoUri
+            }
+            else -> {
+                val targetText = content.trim()
+                if (targetText.isEmpty()) false
+                else {
+                    val bodyTrim = b.trim()
+                    bodyTrim == targetText ||
+                            bodyTrim.contains(targetText) ||
+                            (targetText.length >= 10 && bodyTrim.contains(targetText.take(30))) ||
+                            (targetText.length >= 5 && targetText.contains(bodyTrim))
+                }
+            }
+        }
+    }
+
+    val currentIndex = rows.indexOfFirst { it is ChatRow.Msg && it.message.uuid == currentMsg.uuid }
+
+    val priorIndices = if (currentIndex >= 0) (currentIndex + 1 until rows.size) else rows.indices
+    var fallbackMatch: Int? = null
+
+    for (idx in priorIndices) {
+        val row = rows[idx]
+        if (row is ChatRow.Msg) {
+            val m = row.message
+            if (matchesContent(m)) {
+                if (matchesAuthor(m)) {
+                    return idx
+                }
+                if (fallbackMatch == null) {
+                    fallbackMatch = idx
+                }
+            }
+        }
+    }
+
+    if (fallbackMatch != null) {
+        return fallbackMatch
+    }
+
+    for (idx in rows.indices) {
+        if (idx == currentIndex) continue
+        val row = rows[idx]
+        if (row is ChatRow.Msg) {
+            val m = row.message
+            if (matchesContent(m)) {
+                if (matchesAuthor(m)) {
+                    return idx
+                }
+                if (fallbackMatch == null) {
+                    fallbackMatch = idx
+                }
+            }
+        }
+    }
+
+    return fallbackMatch
+}
+
 fun splitPenikQuote(text: String): Pair<String?, String> {
     val lines = text.lines()
     val quoted = ArrayList<String>()
@@ -831,6 +1003,11 @@ fun splitPenikQuote(text: String): Pair<String?, String> {
 
 fun formatPenikQuoteContent(raw: String): String {
     val trimmed = raw.trim()
+    if (trimmed.startsWith("{") && trimmed.contains("\"pack_id\"") && trimmed.contains("\"sticker_id\"")) {
+        val emojiRegex = "\"emoji\"\\s*:\\s*\"([^\"]+)\"".toRegex()
+        val emoji = emojiRegex.find(trimmed)?.groupValues?.get(1)?.let { " $it" } ?: ""
+        return "🎨 Стикер$emoji"
+    }
     val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
     val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
     return when {
@@ -856,11 +1033,13 @@ fun PenikQuoteBlock(
         quote: String,
         barColor: Color,
         textColor: Color,
-        isSentByMe: Boolean = false
+        isSentByMe: Boolean = false,
+        onClick: (() -> Unit)? = null
 ) {
     val lines = quote.lines()
     val firstLine = lines.firstOrNull() ?: ""
-    val hasColon = firstLine.contains(":") && !firstLine.startsWith("http://") && !firstLine.startsWith("https://")
+    val isRawJson = firstLine.trim().startsWith("{")
+    val hasColon = !isRawJson && firstLine.contains(":") && !firstLine.startsWith("http://") && !firstLine.startsWith("https://")
     val author = if (hasColon) firstLine.substringBefore(":").trim() else null
     val content = if (hasColon) {
         val remainder = firstLine.substringAfter(":").trim()
@@ -875,6 +1054,7 @@ fun PenikQuoteBlock(
                             .padding(bottom = 6.dp)
                             .clip(RoundedCornerShape(6.dp))
                             .background(Color(0x12FFFFFF))
+                            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                             .height(androidx.compose.foundation.layout.IntrinsicSize.Max),
             verticalAlignment = Alignment.CenterVertically
     ) {
@@ -923,6 +1103,7 @@ fun PenikTextBubble(
         revision: Long = 0L
 ) {
     val context = LocalContext.current
+    val quoteScrollHandler = LocalQuoteScrollHandler.current
     val haptic = LocalHapticFeedback.current
     val uriHandler = LocalUriHandler.current
     val sentBg = colorResource(R.color.penik_sent_message_bg)
@@ -1072,7 +1253,10 @@ fun PenikTextBubble(
                                     quote = quote,
                                     barColor = accent,
                                     textColor = textMuted,
-                                    isSentByMe = isSentByMe
+                                    isSentByMe = isSentByMe,
+                                    onClick = quoteScrollHandler?.let { handler ->
+                                        { handler(quote, message) }
+                                    }
                             )
                         }
                         val mainText = if (quote != null) rest else rawBody
