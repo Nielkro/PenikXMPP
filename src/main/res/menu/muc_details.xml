@@ -34,32 +34,5 @@
         android:orderInCategory="82"
         android:title="@string/destroy_room"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/action_server_info_show_more"
-        android:checkable="true"
-        android:checked="false"
-        android:orderInCategory="85"
-        android:title="@string/server_info_show_more"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_custom_notifications"
-        android:orderInCategory="89"
-        android:title="@string/custom_notifications"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_accounts"
-        android:orderInCategory="90"
-        android:title="@string/action_accounts"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_account"
-        android:orderInCategory="90"
-        android:title="@string/action_account"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never" />
 
 </menu>

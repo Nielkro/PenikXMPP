@@ -6,359 +6,337 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/penik_background"
         android:fitsSystemWindows="true"
         android:orientation="vertical">
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            app:elevation="0dp">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="?attr/actionBarSize" />
+                android:background="@android:color/transparent"
+                android:minHeight="?attr/actionBarSize"
+                app:navigationIcon="@drawable/ic_arrow_back_24dp"
+                app:navigationIconTint="@color/penik_text_primary"
+                app:title="" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
         <ScrollView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:id="@+id/muc_main_layout"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingBottom="32dp">
 
-                <com.google.android.material.card.MaterialCardView
+                <!-- Centered Profile Header (Avatar, Title, Topic/Members) -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginRight="@dimen/activity_horizontal_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin">
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="20dp">
 
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/your_photo"
+                        android:layout_width="110dp"
+                        android:layout_height="110dp"
+                        android:scaleType="centerCrop"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular"
+                        tools:src="@drawable/person" />
+
+                    <!-- Title & Edit Button -->
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:id="@+id/muc_display"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:paddingHorizontal="@dimen/card_padding_regular"
-                        android:paddingTop="@dimen/card_padding_regular">
-
-                        <RelativeLayout
-                            android:layout_width="fill_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="32dp">
-
-                            <com.google.android.material.imageview.ShapeableImageView
-                                android:id="@+id/your_photo"
-                                android:layout_width="@dimen/avatar_on_details_screen_size"
-                                android:layout_height="@dimen/avatar_on_details_screen_size"
-                                android:layout_alignParentStart="true"
-                                android:layout_marginEnd="@dimen/avatar_item_distance"
-                                app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
-
-                            <LinearLayout
-                                android:layout_width="fill_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentTop="true"
-                                android:layout_toEndOf="@+id/your_photo"
-                                android:orientation="vertical">
-
-                                <RelativeLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content">
-
-                                    <LinearLayout
-                                        android:id="@+id/muc_display"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_alignParentStart="true"
-                                        android:layout_toStartOf="@+id/edit_muc_name_button"
-                                        android:orientation="vertical">
-
-                                        <TextView
-                                            android:id="@+id/muc_title"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:textAppearance="?textAppearanceTitleLarge" />
-
-                                        <TextView
-                                            android:id="@+id/muc_subject"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:textAppearance="?textAppearanceTitleMedium" />
-                                    </LinearLayout>
-
-
-                                    <LinearLayout
-                                        android:id="@+id/muc_editor"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_alignParentStart="true"
-                                        android:layout_toStartOf="@+id/edit_muc_name_button"
-                                        android:orientation="vertical"
-                                        android:visibility="gone">
-
-                                        <com.google.android.material.textfield.TextInputLayout
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content">
-
-                                            <EditText
-                                                android:id="@+id/muc_edit_title"
-                                                android:layout_width="match_parent"
-                                                android:layout_height="wrap_content"
-                                                android:hint="@string/group_chat_name" />
-                                        </com.google.android.material.textfield.TextInputLayout>
-
-                                        <com.google.android.material.textfield.TextInputLayout
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content">
-
-                                            <EditText
-                                                android:id="@+id/muc_edit_subject"
-                                                android:layout_width="match_parent"
-                                                android:layout_height="wrap_content"
-                                                android:hint="@string/topic" />
-                                        </com.google.android.material.textfield.TextInputLayout>
-
-                                    </LinearLayout>
-
-                                    <ImageButton
-                                        android:id="@+id/edit_muc_name_button"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_alignParentTop="true"
-                                        android:layout_alignParentEnd="true"
-                                        android:background="?attr/selectableItemBackgroundBorderless"
-                                        android:padding="@dimen/image_button_padding"
-                                        android:src="@drawable/ic_edit_24dp" />
-                                </RelativeLayout>
-                            </LinearLayout>
-                        </RelativeLayout>
-
-                        <RelativeLayout
-                            android:id="@+id/muc_settings"
-                            android:layout_width="fill_parent"
-                            android:layout_height="wrap_content">
-
-                            <TextView
-                                android:id="@+id/muc_conference_type"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentStart="true"
-                                android:layout_centerVertical="true"
-                                android:layout_toStartOf="@+id/change_conference_button"
-                                android:textAppearance="?textAppearanceBodyMedium" />
-
-                            <ImageButton
-                                android:id="@+id/change_conference_button"
-                                style="?android:attr/buttonStyleSmall"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentEnd="true"
-                                android:layout_centerVertical="true"
-                                android:layout_gravity="center_horizontal"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/edit_configuration"
-                                android:padding="@dimen/image_button_padding"
-                                android:src="@drawable/ic_settings_24dp" />
-                        </RelativeLayout>
-
-                        <TableLayout
-                            android:id="@+id/muc_info_more"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:shrinkColumns="0"
-                            android:stretchColumns="1"
-                            android:visibility="gone">
-
-                            <TableRow
-                                android:layout_width="fill_parent"
-                                android:layout_height="match_parent">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="4dp"
-                                    android:ellipsize="end"
-                                    android:singleLine="true"
-                                    android:text="@string/server_info_mam"
-                                    android:textAppearance="?textAppearanceBodyMedium" />
-
-                                <TextView
-                                    android:id="@+id/muc_info_mam"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="end"
-                                    android:text="@string/server_info_available"
-                                    android:textAppearance="?textAppearanceBodyMedium" />
-                            </TableRow>
-
-                            <TableRow
-                                android:layout_width="fill_parent"
-                                android:layout_height="match_parent">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="4dp"
-                                    android:ellipsize="end"
-                                    android:singleLine="true"
-                                    android:text="@string/server_info_occupant_id"
-                                    android:textAppearance="?textAppearanceBodyMedium" />
-
-                                <TextView
-                                    android:id="@+id/muc_info_occupant_id"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="end"
-                                    android:textAppearance="?textAppearanceBodyMedium" />
-                            </TableRow>
-
-                            <TableRow
-                                android:id="@+id/muc_info_moderated_row"
-                                android:layout_width="fill_parent"
-                                android:layout_height="match_parent">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="4dp"
-                                    android:ellipsize="end"
-                                    android:singleLine="true"
-                                    android:text="@string/server_info_moderated_message_retraction"
-                                    android:textAppearance="?textAppearanceBodyMedium" />
-
-                                <TextView
-                                    android:id="@+id/muc_info_moderated_message_retraction"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="end"
-                                    android:text="@string/server_info_available"
-                                    android:textAppearance="?textAppearanceBodyMedium" />
-                            </TableRow>
-
-                        </TableLayout>
-
-                        <RelativeLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end"
-                            android:layout_marginTop="32dp">
-
-                            <TextView
-                                android:id="@+id/jid"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_centerVertical="true"
-                                android:layout_toEndOf="@id/jid_warning"
-                                android:textAppearance="?textAppearanceLabelMedium"
-                                tools:text="foo@bar.tld" />
-
-                            <Button
-                                android:id="@+id/jid_warning"
-                                style="?attr/materialIconButtonStyle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                app:icon="@drawable/ic_report_outline_24dp"
-                                app:iconTint="?attr/colorError" />
-                        </RelativeLayout>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/users_wrapper"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginRight="@dimen/activity_horizontal_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="@dimen/card_padding_regular">
+                        android:layout_marginTop="14dp"
+                        android:layout_marginHorizontal="24dp"
+                        android:gravity="center"
+                        android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/no_users_hints"
+                            android:id="@+id/muc_title"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/no_users_hint_channel"
-                            android:textAppearance="?textAppearanceBodyMedium"
-                            android:textColor="?colorOnSurfaceVariant" />
+                            android:gravity="center_horizontal"
+                            android:textColor="@color/penik_text_primary"
+                            android:textSize="22sp"
+                            android:textStyle="bold"
+                            tools:text="Название группы" />
 
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/users"
+                        <ImageButton
+                            android:id="@+id/edit_muc_name_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="4dp"
+                            android:src="@drawable/ic_edit_24dp"
+                            app:tint="@color/penik_text_muted" />
+                    </LinearLayout>
+
+                    <!-- In-place Editor for Title & Subject -->
+                    <LinearLayout
+                        android:id="@+id/muc_editor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginHorizontal="24dp"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_margin="-2dp"
-                            android:orientation="horizontal" />
+                            android:layout_marginBottom="8dp">
 
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="end"
-                            android:layout_marginTop="16dp"
-                            android:orientation="horizontal">
-
-                            <Button
-                                android:id="@+id/invite"
-                                style="@style/Widget.Material3.Button.TextButton"
-                                android:layout_width="wrap_content"
+                            <EditText
+                                android:id="@+id/muc_edit_title"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/invite" />
+                                android:hint="@string/group_chat_name" />
+                        </com.google.android.material.textfield.TextInputLayout>
 
-                            <Button
-                                android:id="@+id/show_users"
-                                style="@style/Widget.Material3.Button.TextButton"
-                                android:layout_width="wrap_content"
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <EditText
+                                android:id="@+id/muc_edit_subject"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                tools:text="View n Participants" />
-                        </LinearLayout>
+                                android:hint="@string/topic" />
+                        </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
 
-                <com.google.android.material.card.MaterialCardView
+                    <TextView
+                        android:id="@+id/muc_members_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center_horizontal"
+                        android:textColor="@color/penik_text_muted"
+                        android:textSize="13sp"
+                        tools:text="12 участников" />
+
+                </LinearLayout>
+
+                <!-- 3 Action Buttons Row: Чат | Звук | Добавить -->
+                <LinearLayout
+                    android:id="@+id/action_buttons_row"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginRight="@dimen/activity_horizontal_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin">
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="16dp">
+
+                    <!-- Чат -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btn_action_chat"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/penik_panel_secondary"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_chat_24dp"
+                                app:tint="@color/penik_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Чат"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Звук -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btn_action_mute"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="3dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/penik_panel_secondary"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/icon_action_mute"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_notifications_24dp"
+                                app:tint="@color/penik_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Звук"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Добавить -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btn_action_invite"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/penik_panel_secondary"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_person_add_24dp"
+                                app:tint="@color/penik_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Добавить"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+                <!-- Info Card: Topic, Your Nick in Group, Notifications -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/info_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/penik_panel"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="@dimen/card_padding_regular">
+                        android:padding="16dp">
 
-                        <RelativeLayout
+                        <!-- Subject / Topic Row (if present) -->
+                        <LinearLayout
+                            android:id="@+id/row_subject"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content">
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Тема / Описание"
+                                android:textColor="@color/penik_text_muted"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/muc_subject"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="15sp"
+                                tools:text="Обсуждение разработки PenikXMPP" />
+
+                            <View
+                                android:id="@+id/divider_subject"
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginVertical="12dp"
+                                android:background="@color/penik_divider" />
+                        </LinearLayout>
+
+                        <!-- Your Nick in Group Row (READ-ONLY, matching profile name) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Ваше имя в группе"
+                                android:textColor="@color/penik_text_muted"
+                                android:textSize="12sp" />
 
                             <LinearLayout
-                                android:layout_toStartOf="@+id/edit_nick_button"
-                                android:layout_width="fill_parent"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_centerVertical="true"
-                                android:orientation="vertical">
+                                android:layout_marginTop="2dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
 
                                 <TextView
                                     android:id="@+id/muc_your_nick"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:singleLine="true"
-                                    android:textAppearance="?textAppearanceBodyLarge" />
+                                    android:textColor="@color/penik_text_primary"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold"
+                                    tools:text="Niel" />
 
                                 <androidx.constraintlayout.widget.ConstraintLayout
                                     android:id="@+id/tags"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginTop="4sp">
+                                    android:layout_marginStart="8dp">
 
                                     <androidx.constraintlayout.helper.widget.Flow
                                         android:id="@+id/flow_widget"
@@ -375,71 +353,143 @@
                                 </androidx.constraintlayout.widget.ConstraintLayout>
                             </LinearLayout>
 
-                            <ImageButton
-                                android:id="@+id/edit_nick_button"
+                            <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_alignParentEnd="true"
-                                android:layout_centerVertical="true"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/edit_nick"
-                                android:padding="@dimen/image_button_padding"
-                                android:src="@drawable/ic_edit_24dp" />
-                        </RelativeLayout>
+                                android:layout_marginTop="2dp"
+                                android:text="Совпадает с именем вашего профиля"
+                                android:textColor="@color/penik_text_muted"
+                                android:textSize="11sp" />
+                        </LinearLayout>
 
-                        <RelativeLayout
-                            android:layout_width="fill_parent"
-                            android:layout_height="wrap_content">
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginVertical="12dp"
+                            android:background="@color/penik_divider" />
+
+                        <!-- Notifications Row (Mute toggle like in person's profile) -->
+                        <LinearLayout
+                            android:id="@+id/row_notifications"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Уведомления"
+                                android:textColor="@color/penik_text_muted"
+                                android:textSize="12sp" />
 
                             <TextView
                                 android:id="@+id/notification_status_text"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_alignParentStart="true"
-                                android:layout_centerVertical="true"
-                                android:layout_toStartOf="@+id/notification_status_button"
-                                android:text="@string/notify_on_all_messages"
-                                android:textAppearance="?textAppearanceBodyMedium" />
+                                android:layout_marginTop="2dp"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="15sp"
+                                tools:text="Включены" />
+                        </LinearLayout>
 
-                            <ImageButton
-                                android:id="@+id/notification_status_button"
-                                style="?android:attr/buttonStyleSmall"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentEnd="true"
-                                android:layout_centerVertical="true"
-                                android:layout_gravity="center_horizontal"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/change_notification_settings"
-                                android:padding="@dimen/image_button_padding"
-                                android:src="@drawable/ic_notifications_24dp" />
-                        </RelativeLayout>
-
-                        <TextView
-                            android:id="@+id/details_account"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end"
-                            android:layout_marginTop="32dp"
-                            android:text="@string/using_account"
-                            android:textAppearance="?textAppearanceLabelMedium" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Participants Card -->
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/media_wrapper"
-                    android:layout_width="fill_parent"
+                    android:id="@+id/users_wrapper"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginRight="@dimen/activity_horizontal_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin">
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/penik_panel"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="@dimen/card_padding_regular">
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:text="Участники"
+                            android:textColor="@color/penik_text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/no_users_hints"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/no_users_hint_channel"
+                            android:textAppearance="?textAppearanceBodyMedium"
+                            android:textColor="@color/penik_text_muted" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/users"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="-2dp"
+                            android:orientation="horizontal" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end"
+                            android:layout_marginTop="12dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/invite"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/invite" />
+
+                            <Button
+                                android:id="@+id/show_users"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                tools:text="Все участники (12)" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Media Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/media_wrapper"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/penik_panel"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:text="Общие медиа"
+                            android:textColor="@color/penik_text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
 
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/media"
@@ -450,14 +500,14 @@
 
                         <LinearLayout
                             android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
+                            android:layout_height="wrap_content"
                             android:layout_gravity="end"
-                            android:layout_marginTop="16dp"
+                            android:layout_marginTop="12dp"
                             android:orientation="horizontal">
 
                             <Button
                                 android:id="@+id/show_media"
-                                style="?attr/materialButtonOutlinedStyle"
+                                style="@style/Widget.Material3.Button.TextButton"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/view_media" />

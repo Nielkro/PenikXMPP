@@ -601,28 +601,11 @@ public class MucOptions {
     }
 
     private String getProposedNick() {
-        final var bookmark = this.conversation.getBookmark();
-        if (bookmark != null) {
-            // if we already have a bookmark we consider this the source of truth
-            return getProposedNickPure();
-        }
-        final var storedJid = conversation.getAddress();
-        if (storedJid.isBareJid()) {
-            return defaultNick(account);
-        } else {
-            return storedJid.getResource();
-        }
+        return defaultNick(account);
     }
 
     public String getProposedNickPure() {
-        final var bookmark = this.conversation.getBookmark();
-        final String bookmarkedNick =
-                normalize(account.getJid(), bookmark == null ? null : bookmark.getNick());
-        if (bookmarkedNick != null) {
-            return bookmarkedNick;
-        } else {
-            return defaultNick(account);
-        }
+        return defaultNick(account);
     }
 
     public static String defaultNick(final Account account) {
