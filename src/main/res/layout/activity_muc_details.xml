@@ -300,7 +300,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="1dp"
                                 android:layout_marginVertical="12dp"
-                                android:background="@color/penik_divider" />
+                                android:background="@color/penik_border" />
                         </LinearLayout>
 
                         <!-- Your Nick in Group Row (READ-ONLY, matching profile name) -->
@@ -366,7 +366,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
                             android:layout_marginVertical="12dp"
-                            android:background="@color/penik_divider" />
+                            android:background="@color/penik_border" />
 
                         <!-- Notifications Row (Mute toggle like in person's profile) -->
                         <LinearLayout

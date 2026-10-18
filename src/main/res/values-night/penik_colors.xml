@@ -7,6 +7,7 @@
     <color name="penik_input_bg">#FF1E1E2A</color>
     <color name="penik_border">#FF252535</color>
     <color name="penik_border_light">#FF2E2E42</color>
+    <color name="penik_divider">#FF252535</color>
     <color name="penik_accent">#FF5B6EF5</color>
     <color name="penik_accent_hover">#FF4A5DE4</color>
     <color name="penik_text_primary">#FFEEEEF5</color>
