@@ -1081,29 +1081,28 @@ fun formatPenikQuoteContent(raw: String): String {
         val emoji = rest.removePrefix("Стикер").trim()
         return if (emoji.isNotEmpty()) "$emoji Стикер" else "Стикер"
     }
-    val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
-    val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
-    val pathOnly = try {
-        java.net.URI(if (cleanUrl.contains("://")) cleanUrl else "https://$cleanUrl").path?.lowercase() ?: lower
-    } catch (e: Exception) {
-        lower
+    if (trimmed.startsWith("geo:")) {
+        return "📍 Местоположение"
     }
-    val ext = pathOnly.substringAfterLast(".", "")
-    return when {
-        trimmed.startsWith("geo:") -> "📍 Местоположение"
-        ext in listOf("jpg", "jpeg", "png", "webp", "gif", "bmp") -> "📷 Фото"
-        ext in listOf("ogg", "mp3", "m4a", "opus", "wav", "aac") -> "🎙 Голосовое сообщение"
-        ext in listOf("mp4", "webm", "mov", "mkv", "3gp", "avi") -> "🎬 Видео"
-        trimmed.startsWith("aesgcm://", ignoreCase = true) -> {
-            val fileName = try {
-                java.net.URI("https://${trimmed.substring("aesgcm://".length).substringBefore("|")}").path?.substringAfterLast("/")?.takeIf { it.isNotBlank() }
-            } catch (e: Exception) {
-                null
+    if (trimmed.startsWith("aesgcm://", ignoreCase = true)) {
+        val cleanUrl = trimmed.substring("aesgcm://".length).substringBefore("|").trim()
+        val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
+        val ext = lower.substringAfterLast(".", "")
+        return when {
+            ext in listOf("jpg", "jpeg", "png", "webp", "gif", "bmp") -> "📷 Фото"
+            ext in listOf("ogg", "mp3", "m4a", "opus", "wav", "aac") -> "🎙 Голосовое сообщение"
+            ext in listOf("mp4", "webm", "mov", "mkv", "3gp", "avi") -> "🎬 Видео"
+            else -> {
+                val fileName = try {
+                    java.net.URI("https://$cleanUrl").path?.substringAfterLast("/")?.takeIf { it.isNotBlank() }
+                } catch (e: Exception) {
+                    null
+                }
+                if (fileName != null) "📎 $fileName" else "📎 Файл"
             }
-            if (fileName != null) "📎 $fileName" else "📎 Файл"
         }
-        else -> cleanRaw
     }
+    return cleanRaw
 }
 
 @Composable
@@ -1126,11 +1125,16 @@ fun PenikQuoteBlock(
             !firstLine.startsWith("xmpp:", ignoreCase = true)
 
     val author = if (hasColon) firstLine.substringBefore(": ").trim().takeIf { it.isNotBlank() } else null
-    val content = if (hasColon) {
+    val rawContent = if (hasColon) {
         val remainder = firstLine.substringAfter(": ").trim()
         (listOf(remainder) + lines.drop(1)).joinToString("\n").trim()
     } else {
         cleanQuote
+    }
+    val content = if (rawContent.startsWith(">") || rawContent.startsWith("»")) {
+        rawContent.lines().dropWhile { it.trimStart().startsWith(">") || it.trimStart().startsWith("»") }.joinToString("\n").trim().ifEmpty { rawContent }
+    } else {
+        rawContent
     }
 
     Row(

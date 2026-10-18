@@ -43,6 +43,29 @@ public class MessageUtils {
 
     private static final Pattern LTR_RTL = Pattern.compile("(\\u200E[^\\u200F]*\\u200F){3,}");
 
+    public static String extractReplyText(final String body) {
+        if (body == null) return "";
+        final String[] lines = body.split("\n");
+        int i = 0;
+        while (i < lines.length) {
+            final String trimmed = lines[i].trim();
+            if (trimmed.startsWith(">") || trimmed.startsWith("»")) {
+                i++;
+            } else if (trimmed.isEmpty() && i > 0 && i < lines.length) {
+                i++;
+            } else {
+                break;
+            }
+        }
+        final StringBuilder sb = new StringBuilder();
+        for (int j = i; j < lines.length; j++) {
+            if (sb.length() > 0) sb.append('\n');
+            sb.append(lines[j]);
+        }
+        final String res = sb.toString().trim();
+        return res.isEmpty() ? body.trim() : res;
+    }
+
     public static String prepareQuote(final Message message) {
         final StringBuilder builder = new StringBuilder();
         final String body;
@@ -61,14 +84,16 @@ public class MessageUtils {
         } else {
             body = message.getBody();
         }
-        for (String line : body.split("\n")) {
-            if (!(line.length() <= 0) && QuoteHelper.isNestedTooDeeply(line)) {
+        final String replyOnly = extractReplyText(body);
+        for (String line : replyOnly.split("\n")) {
+            final String trimmed = line.trim();
+            if (trimmed.startsWith(">") || trimmed.startsWith("»")) {
                 continue;
             }
             if (builder.length() != 0) {
                 builder.append('\n');
             }
-            builder.append(line.trim());
+            builder.append(trimmed);
         }
         return builder.toString();
     }

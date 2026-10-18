@@ -1672,7 +1672,7 @@ public class ConversationFragment extends XmppFragment
         } else {
             author = UIHelper.getMessageDisplayName(message);
         }
-        String previewText = message.getBody();
+        String previewText = MessageUtils.extractReplyText(message.getBody());
         final boolean isSticker = message.isSticker()
                 || message.getType() == Message.TYPE_STICKER
                 || (message.getBody() != null && message.getBody().startsWith("{\"pack_id\":"));
