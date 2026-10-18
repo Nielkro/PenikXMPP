@@ -4062,29 +4062,61 @@ public class ConversationFragment extends XmppFragment
         this.binding.toolbar.setTitle(c.getName());
         loadToolbarAvatar(c);
         if (c.getMode() == Conversation.MODE_SINGLE) {
-            final var contact = conversation.getContact();
-            final String lastSeen =
-                    UIHelper.lastUserInteraction(
-                            requireContext(), contact.getLastUserInteraction());
-            this.binding.toolbar.setSubtitle(lastSeen);
-            if (getString(R.string.presence_online).equalsIgnoreCase(lastSeen)) {
+            final var account = conversation.getAccount();
+            final var connection = account != null ? account.getXmppConnection() : null;
+            final var state =
+                    connection != null
+                            ? connection
+                                    .getManager(ChatStateManager.class)
+                                    .getIncoming(conversation.getAddress())
+                            : null;
+            if (Objects.equals(state, Composing.class)) {
+                this.binding.toolbar.setSubtitle(R.string.typing);
                 this.binding.toolbar.setSubtitleTextColor(
                         ContextCompat.getColor(requireContext(), R.color.penik_accent));
             } else {
-                this.binding.toolbar.setSubtitleTextColor(
-                        ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
+                final var contact = conversation.getContact();
+                final String lastSeen =
+                        UIHelper.lastUserInteraction(
+                                requireContext(), contact.getLastUserInteraction());
+                this.binding.toolbar.setSubtitle(lastSeen);
+                if (getString(R.string.presence_online).equalsIgnoreCase(lastSeen)) {
+                    this.binding.toolbar.setSubtitleTextColor(
+                            ContextCompat.getColor(requireContext(), R.color.penik_accent));
+                } else {
+                    this.binding.toolbar.setSubtitleTextColor(
+                            ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
+                }
             }
         } else if (c.getMode() == Conversation.MODE_MULTI) {
             final var mucOptions = conversation.getMucOptions();
-            final var userCount = mucOptions.getUserCount();
-            if (mucOptions.isPrivateAndNonAnonymous() || userCount < 1) {
-                this.binding.toolbar.setSubtitle(null);
-            } else {
-                this.binding.toolbar.setSubtitle(
-                        getResources()
-                                .getQuantityString(R.plurals.x_participants, userCount, userCount));
+            final var usersChatState = mucOptions.getUsersWithChatState(5);
+            if (!usersChatState.users().isEmpty()
+                    && Objects.equals(usersChatState.chatState(), Composing.class)) {
+                final String typingText;
+                if (usersChatState.users().size() == 1) {
+                    final MucOptions.User user = Iterables.getOnlyElement(usersChatState.users());
+                    typingText = getString(R.string.contact_is_typing, user.getDisplayName());
+                } else {
+                    typingText =
+                            getString(
+                                    R.string.contacts_are_typing,
+                                    UIHelper.concatNames(usersChatState.users()));
+                }
+                this.binding.toolbar.setSubtitle(typingText);
                 this.binding.toolbar.setSubtitleTextColor(
-                        ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
+                        ContextCompat.getColor(requireContext(), R.color.penik_accent));
+            } else {
+                final var userCount = mucOptions.getUserCount();
+                if (mucOptions.isPrivateAndNonAnonymous() || userCount < 1) {
+                    this.binding.toolbar.setSubtitle(null);
+                } else {
+                    this.binding.toolbar.setSubtitle(
+                            getResources()
+                                    .getQuantityString(R.plurals.x_participants, userCount, userCount));
+                    this.binding.toolbar.setSubtitleTextColor(
+                            ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
+                }
             }
         } else {
             this.binding.toolbar.setSubtitle(null);
@@ -4190,29 +4222,13 @@ public class ConversationFragment extends XmppFragment
         }
         if (conversation.getMode() == Conversation.MODE_SINGLE) {
             final var account = conversation.getAccount();
-            final var connection = account.getXmppConnection();
-            final var state =
-                    connection
-                            .getManager(ChatStateManager.class)
-                            .getIncoming(conversation.getAddress());
-            final var zonedDateTimeFuture =
-                    connection
-                            .getManager(EntityTimeManager.class)
-                            .getZonedDateTime(conversation.getAddress());
-            final var zonedDateTime = getOrNull(zonedDateTimeFuture);
-            if (Objects.equals(state, Composing.class)) {
-                this.messageList.add(
-                        Message.createStatusMessage(
-                                conversation,
-                                getString(R.string.contact_is_typing, conversation.getName())));
-            } else if (Objects.equals(state, Paused.class)) {
-                this.messageList.add(
-                        Message.createStatusMessage(
-                                conversation,
-                                getString(
-                                        R.string.contact_has_stopped_typing,
-                                        conversation.getName())));
-            } else {
+            final var connection = account != null ? account.getXmppConnection() : null;
+            if (connection != null) {
+                final var zonedDateTimeFuture =
+                        connection
+                                .getManager(EntityTimeManager.class)
+                                .getZonedDateTime(conversation.getAddress());
+                final var zonedDateTime = getOrNull(zonedDateTimeFuture);
                 final var contact = conversation.getContact();
                 final var availability = contact.getShownStatus();
                 if (availability == Presence.Availability.DND
@@ -4231,36 +4247,6 @@ public class ConversationFragment extends XmppFragment
                     this.messageList.add(localTimeMessage);
                 }
             }
-        } else {
-            final MucOptions mucOptions = conversation.getMucOptions();
-            final var usersChatState = mucOptions.getUsersWithChatState(5);
-            if (usersChatState.users().isEmpty()) {
-                return;
-            }
-            Message statusMessage;
-            if (usersChatState.users().size() == 1) {
-                MucOptions.User user = Iterables.getOnlyElement(usersChatState.users());
-                int id =
-                        Objects.equals(usersChatState.chatState(), Composing.class)
-                                ? R.string.contact_is_typing
-                                : R.string.contact_has_stopped_typing;
-                statusMessage =
-                        Message.createStatusMessage(
-                                conversation, getString(id, user.getDisplayName()));
-                statusMessage.setTrueCounterpart(user.getRealJid());
-                statusMessage.setCounterpart(user.getFullJid());
-            } else {
-                int id =
-                        Objects.equals(usersChatState.chatState(), Composing.class)
-                                ? R.string.contacts_are_typing
-                                : R.string.contacts_have_stopped_typing;
-                statusMessage =
-                        Message.createStatusMessage(
-                                conversation,
-                                getString(id, UIHelper.concatNames(usersChatState.users())));
-                statusMessage.setCounterparts(usersChatState.users());
-            }
-            this.messageList.add(statusMessage);
         }
     }
 

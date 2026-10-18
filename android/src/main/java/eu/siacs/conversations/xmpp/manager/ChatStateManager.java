@@ -53,10 +53,14 @@ public class ChatStateManager extends AbstractManager {
             return;
         }
         final var chatStateNotification = message.getExtension(ChatStateNotification.class);
-        if (chatStateNotification == null) {
+        final Class<? extends ChatStateNotification> chatState;
+        if (chatStateNotification != null) {
+            chatState = chatStateNotification.getClass();
+        } else if (message.hasChild("body") || message.hasChild("encrypted")) {
+            chatState = Active.class;
+        } else {
             return;
         }
-        final var chatState = chatStateNotification.getClass();
         if (getManager(MultiUserChatManager.class).isMuc(message)) {
             final var mucOptions =
                     getManager(MultiUserChatManager.class).getState(from.asBareJid());
@@ -67,7 +71,9 @@ public class ChatStateManager extends AbstractManager {
             if (user == null) {
                 return;
             }
-            if (user.setChatState(chatState)) {}
+            if (user.setChatState(chatState)) {
+                this.service.updateConversationUi();
+            }
 
         } else {
             final var account = getAccount().getJid().asBareJid();

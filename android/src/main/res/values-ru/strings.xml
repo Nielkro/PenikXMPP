@@ -407,6 +407,7 @@
     <string name="offering_x_file">Предложен %s</string>
     <string name="hide_offline">Скрыть не в сети</string>
     <string name="contact_is_typing">%s печатает…</string>
+    <string name="typing">печатает…</string>
     <string name="contact_has_stopped_typing">%s перестал(а) печатать</string>
     <string name="contacts_are_typing">%s печатают…</string>
     <string name="contacts_have_stopped_typing">%s перестали печатать</string>
