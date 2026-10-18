@@ -174,10 +174,10 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
         }
         if (Config.X509_VERIFICATION && !TextUtils.isEmpty(this.commonName)) {
             return this.commonName;
-        } else if (!TextUtils.isEmpty(this.systemName)) {
-            return this.systemName;
         } else if (!TextUtils.isEmpty(this.serverName)) {
             return this.serverName;
+        } else if (!TextUtils.isEmpty(this.systemName)) {
+            return this.systemName;
         } else if (!TextUtils.isEmpty(this.presenceName)
                 && ((QuickConversationsService.isQuicksy()
                                 && JidHelper.isQuicksyDomain(jid.getDomain()))

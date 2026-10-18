@@ -406,11 +406,19 @@ public class ContactDetailsActivity extends OmemoActivity
                 R.string.contact_name,
                 value -> {
                     final String newName = value != null ? value.trim() : "";
-                    contact.setServerName(newName);
-                    contact.setSystemName(newName);
+                    contact.setServerName(newName.isEmpty() ? null : newName);
                     final var connection = contact.getAccount().getXmppConnection();
-                    if (connection != null && contact.showInRoster()) {
+                    if (connection != null) {
                         connection.getManager(RosterManager.class).addRosterItem(contact, null);
+                    } else {
+                        contact.resetOption(Contact.Options.DIRTY_DELETE);
+                        contact.setOption(Contact.Options.DIRTY_PUSH);
+                        if (xmppConnectionService != null) {
+                            xmppConnectionService.databaseBackend.writeRoster(
+                                    contact.getAccount(),
+                                    null,
+                                    contact.getAccount().getRoster().getContacts());
+                        }
                     }
                     if (xmppConnectionService != null) {
                         xmppConnectionService.updateConversationUi();
