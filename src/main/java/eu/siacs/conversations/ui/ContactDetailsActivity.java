@@ -694,12 +694,36 @@ public class ContactDetailsActivity extends OmemoActivity
                                             return true;
                                         });
                                     });
+                                } else {
+                                    fetchPhoneFromDirectory();
                                 }
                             }
 
                             @Override
                             public void onFailure(@NonNull Throwable t) {
-                                // Silent fallback
+                                fetchPhoneFromDirectory();
+                            }
+
+                            private void fetchPhoneFromDirectory() {
+                                PenikPhoneDirectoryManager.fetchPhoneForJidAsync(
+                                        contact.getAddress().asBareJid().toString(),
+                                        account.getJid().asBareJid().toString(),
+                                        dirPhone -> {
+                                            if (!Strings.isNullOrEmpty(dirPhone)) {
+                                                contact.setPhoneNumber(dirPhone);
+                                                runOnUiThread(() -> {
+                                                    final String formatted = PenikPhoneDirectoryManager.formatPhoneNumberHuman(dirPhone);
+                                                    binding.detailsContactPhone.setText(formatted);
+                                                    binding.rowPhone.setVisibility(View.VISIBLE);
+                                                    binding.dividerPhoneUsername.setVisibility(View.VISIBLE);
+                                                    binding.rowPhone.setOnClickListener(v -> showPhoneActionDialog(dirPhone));
+                                                    binding.rowPhone.setOnLongClickListener(v -> {
+                                                        copyPhoneNumber(dirPhone);
+                                                        return true;
+                                                    });
+                                                });
+                                            }
+                                        });
                             }
                         },
                         MoreExecutors.directExecutor());

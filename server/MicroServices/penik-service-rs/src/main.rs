@@ -83,8 +83,16 @@ async fn main() -> anyhow::Result<()> {
         )
         .route(
             "/phone-directory",
-            axum::routing::get(handlers::get_phone_directory)
-                .post(handlers::update_phone),
+            axum::routing::post(handlers::update_phone),
+        )
+        .route(
+            "/phone-directory/lookup",
+            axum::routing::get(handlers::lookup_phone_directory_get)
+                .post(handlers::lookup_phone_directory_post),
+        )
+        .route(
+            "/phone-directory/:jid",
+            axum::routing::get(handlers::get_phone_by_jid),
         );
 
     let app = axum::Router::new()

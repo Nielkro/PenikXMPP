@@ -43,9 +43,39 @@ pub struct ImportRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct PhoneDirectoryEntry {
+pub struct PhoneDirectoryLookupEntry {
+    pub jid: String,
+    pub phone_hash: String,
+    pub updated_at: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhoneLookupRequest {
+    #[serde(default)]
+    pub prefixes: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhoneLookupQuery {
+    pub prefix: Option<String>,
+    pub prefixes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PhoneDirectoryDetails {
     pub jid: String,
     pub phone: String,
+    pub phone_hash: String,
+    pub updated_at: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PhoneDirectoryEntry {
+    pub jid: String,
+    #[serde(default)]
+    pub phone: String,
+    #[serde(default)]
+    pub phone_hash: String,
     pub updated_at: i64,
 }
 

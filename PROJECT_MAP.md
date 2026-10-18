@@ -219,7 +219,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `src/main/java/eu/siacs/conversations/entities/Message.java` — Message with statuses, edits, reactions, attachments, and stickers (`TYPE_STICKER = 7`).
 - `src/main/java/eu/siacs/conversations/entities/Sticker.java` — Sticker entity (`packId`, `stickerId`, `emoji`, `width`, `height`, `format`, `url`) with JSON serialization/deserialization.
 - `src/main/java/eu/siacs/conversations/stickers/StickerManager.kt` — Sticker pack and recents manager: local storage, bundle installation, Telegram sticker pack import via REST API, HMAC-SHA256 token generator.
-- `src/main/java/eu/siacs/conversations/phone/PenikPhoneDirectoryManager.kt` — Phone directory manager: normalized phone directory client with `penik-service-rs` REST sync, phonebook contact matching, and contact resolution.
+- `src/main/java/eu/siacs/conversations/phone/PenikPhoneDirectoryManager.kt` — Phone directory manager: SHA-256 k-anonymity prefix lookup client with `penik-service-rs` REST sync, single-JID phone details fetch, local address book matching, and roster contact synchronization.
 - `src/main/java/eu/siacs/conversations/android/PenikPhoneContact.java` — Phone contact model extending `AbstractPhoneContact` for local address book matching.
 - `src/main/java/eu/siacs/conversations/entities/Contact.java`, `Roster.java` — Roster model.
 - `src/main/java/eu/siacs/conversations/entities/MucOptions.java` — MUC roles, affiliation, subject, config.
@@ -267,7 +267,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `landing/` — Static landing page: `index.html` (hero, features, protocol terminal demo, comparison, FAQ, download links), `logo_fixed.svg` / `logo_fixed.webp`; note `landing/penik.apk` stays untracked via the `*.apk` gitignore rule.
 - `server/Modules/` — Prosody/Snikket Lua plugins: `mod_funxmpp.lua` (FunXMPP binary tokenized protocol plugin: symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks), `test_mod_funxmpp.lua` (standalone Lua test suite), `mod_stickers_auth.lua` (Prosody HMAC-SHA256 Bearer token issuer for stickers service via IQ `penik:stickers:auth:0`), `test_mod_stickers_auth.lua`.
 - `server/MicroServices/` — Standalone backend microservices:
-  - `server/MicroServices/penik-service-rs/` — High-performance Rust backend companion service (Axum 0.7, SQLite WAL, Tokio, Reqwest): Telegram Bot API sticker pack importer, WebM VP9 with alpha to Animated WebP converter via FFmpeg (`-c:v libvpx-vp9`), 128x128 thumbnail generator, pre-built `bundle.zip` packager, phone directory index (`GET`/`POST` `/api/v1/phone-directory`), and HMAC-SHA256 authenticated REST API.
+  - `server/MicroServices/penik-service-rs/` — High-performance Rust backend companion service (Axum 0.7, SQLite WAL, Tokio, Reqwest): Telegram Bot API sticker pack importer, WebM VP9 with alpha to Animated WebP converter via FFmpeg (`-c:v libvpx-vp9`), 128x128 thumbnail generator, pre-built `bundle.zip` packager, phone directory with HMAC-SHA256 authentication, SHA-256 k-anonymity prefix lookup (`/phone-directory/lookup`), single-JID phone details (`/phone-directory/:jid`), and phone update (`POST /phone-directory`).
 - `PROJECT_MAP.md` — This index.
 
 ## Note on `libs/Penik` (Excluded)

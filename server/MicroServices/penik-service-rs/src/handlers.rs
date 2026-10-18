@@ -410,13 +410,72 @@ pub async fn get_file(
     }
 }
 
-pub async fn get_phone_directory(
+pub async fn lookup_phone_directory_post(
+    _auth: AuthUser,
     State(state): State<Arc<AppState>>,
-) -> Result<Json<ApiResponse<Vec<crate::models::PhoneDirectoryEntry>>>, (StatusCode, Json<ApiResponse<()>>)> {
-    match db::get_phone_directory(&state.pool).await {
+    Json(payload): Json<crate::models::PhoneLookupRequest>,
+) -> Result<Json<ApiResponse<Vec<crate::models::PhoneDirectoryLookupEntry>>>, (StatusCode, Json<ApiResponse<()>>)> {
+    match db::lookup_phone_hashes_by_prefixes(&state.pool, &payload.prefixes).await {
         Ok(entries) => Ok(Json(ApiResponse::success(entries))),
         Err(e) => {
-            error!("Failed to fetch phone directory: {:?}", e);
+            error!("Failed to lookup phone directory by prefixes: {:?}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::err(e.to_string())),
+            ))
+        }
+    }
+}
+
+pub async fn lookup_phone_directory_get(
+    _auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    axum::extract::Query(query): axum::extract::Query<crate::models::PhoneLookupQuery>,
+) -> Result<Json<ApiResponse<Vec<crate::models::PhoneDirectoryLookupEntry>>>, (StatusCode, Json<ApiResponse<()>>)> {
+    let mut prefixes = Vec::new();
+    if let Some(p) = query.prefix {
+        prefixes.push(p);
+    }
+    if let Some(list) = query.prefixes {
+        for part in list.split(',') {
+            let trimmed = part.trim();
+            if !trimmed.is_empty() {
+                prefixes.push(trimmed.to_string());
+            }
+        }
+    }
+    match db::lookup_phone_hashes_by_prefixes(&state.pool, &prefixes).await {
+        Ok(entries) => Ok(Json(ApiResponse::success(entries))),
+        Err(e) => {
+            error!("Failed to lookup phone directory by prefixes: {:?}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::err(e.to_string())),
+            ))
+        }
+    }
+}
+
+pub async fn get_phone_by_jid(
+    AuthUser(requester_jid): AuthUser,
+    State(state): State<Arc<AppState>>,
+    axum::extract::Path(target_jid): axum::extract::Path<String>,
+) -> Result<Json<ApiResponse<crate::models::PhoneDirectoryDetails>>, (StatusCode, Json<ApiResponse<()>>)> {
+    let target = target_jid.trim().to_lowercase();
+    let requester = requester_jid.trim().to_lowercase();
+
+    // TODO: Verify that requester and target are mutual contacts in XMPP roster.
+    // (Prosody roster checking will be integrated once the backend is linked with Prosody auth / storage).
+    info!("Phone lookup for {} requested by {}", target, requester);
+
+    match db::get_phone_by_jid(&state.pool, &target).await {
+        Ok(Some(entry)) => Ok(Json(ApiResponse::success(entry))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::err("User not found in phone directory")),
+        )),
+        Err(e) => {
+            error!("Failed to fetch phone for {}: {:?}", target, e);
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiResponse::err(e.to_string())),
@@ -426,21 +485,11 @@ pub async fn get_phone_directory(
 }
 
 pub async fn update_phone(
-    MaybeAuthUser(auth_jid): MaybeAuthUser,
+    AuthUser(jid): AuthUser,
     State(state): State<Arc<AppState>>,
     Json(payload): Json<crate::models::UpdatePhoneRequest>,
 ) -> Result<Json<ApiResponse<()>>, (StatusCode, Json<ApiResponse<()>>)> {
-    let jid = match (auth_jid, payload.jid) {
-        (Some(j), _) => j,
-        (None, Some(j)) if !j.trim().is_empty() => j.trim().to_lowercase(),
-        _ => {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::err("Missing authentication or jid")),
-            ));
-        }
-    };
-
+    let clean_jid = jid.trim().to_lowercase();
     let phone = payload.phone.trim();
     if phone.is_empty() {
         return Err((
@@ -449,13 +498,13 @@ pub async fn update_phone(
         ));
     }
 
-    match db::save_phone(&state.pool, &jid, phone).await {
+    match db::save_phone(&state.pool, &clean_jid, phone).await {
         Ok(()) => {
-            info!("Updated phone for {}", jid);
+            info!("Updated phone for {}", clean_jid);
             Ok(Json(ApiResponse::success(())))
         }
         Err(e) => {
-            error!("Failed to save phone for {}: {:?}", jid, e);
+            error!("Failed to save phone for {}: {:?}", clean_jid, e);
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiResponse::err(e.to_string())),
