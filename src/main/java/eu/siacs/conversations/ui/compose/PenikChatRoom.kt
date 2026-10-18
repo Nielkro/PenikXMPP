@@ -128,16 +128,18 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.unit.IntOffset
-import kotlin.math.roundToInt
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.ui.viewinterop.AndroidView
 import android.net.Uri
 import java.io.File
@@ -453,6 +455,12 @@ fun PenikChatRoom(
                 val targetMsg = (rows.getOrNull(matchedIndex) as? ChatRow.Msg)?.message
                 highlightJob?.cancel()
                 highlightJob = scope.launch {
+                    val currentIndex = listState.firstVisibleItemIndex
+                    val distance = kotlin.math.abs(matchedIndex - currentIndex)
+                    if (distance > 3) {
+                        val preIndex = if (matchedIndex > currentIndex) matchedIndex - 2 else matchedIndex + 2
+                        listState.scrollToItem(preIndex.coerceIn(0, (rows.size - 1).coerceAtLeast(0)))
+                    }
                     listState.animateScrollToItem(matchedIndex)
                     if (targetMsg != null) {
                         highlightedMessageUuid = targetMsg.uuid
@@ -902,14 +910,14 @@ fun PenikMessageRow(
                 modifier =
                         Modifier.fillMaxWidth()
                                 .padding(horizontal = 4.dp, vertical = 1.dp)
-                                .then(
-                                        if (highlightAlpha > 0f) {
-                                            Modifier.background(
-                                                    Color(0xFFFFA000).copy(alpha = highlightAlpha),
-                                                    shape = RoundedCornerShape(12.dp)
-                                            )
-                                        } else Modifier
-                                ),
+                                .drawBehind {
+                                    if (highlightAlpha > 0f) {
+                                        drawRoundRect(
+                                                color = Color(0xFFFFA000).copy(alpha = highlightAlpha),
+                                                cornerRadius = CornerRadius(12.dp.toPx())
+                                        )
+                                    }
+                                },
                 horizontalArrangement = if (isSentByMe) Arrangement.End else Arrangement.Start,
                 verticalAlignment = Alignment.Bottom
         ) {
