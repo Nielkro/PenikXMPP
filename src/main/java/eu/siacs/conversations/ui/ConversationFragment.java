@@ -4063,9 +4063,17 @@ public class ConversationFragment extends XmppFragment
         loadToolbarAvatar(c);
         if (c.getMode() == Conversation.MODE_SINGLE) {
             final var contact = conversation.getContact();
-            this.binding.toolbar.setSubtitle(
+            final String lastSeen =
                     UIHelper.lastUserInteraction(
-                            requireContext(), contact.getLastUserInteraction()));
+                            requireContext(), contact.getLastUserInteraction());
+            this.binding.toolbar.setSubtitle(lastSeen);
+            if (getString(R.string.presence_online).equalsIgnoreCase(lastSeen)) {
+                this.binding.toolbar.setSubtitleTextColor(
+                        ContextCompat.getColor(requireContext(), R.color.penik_accent));
+            } else {
+                this.binding.toolbar.setSubtitleTextColor(
+                        ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
+            }
         } else if (c.getMode() == Conversation.MODE_MULTI) {
             final var mucOptions = conversation.getMucOptions();
             final var userCount = mucOptions.getUserCount();
@@ -4075,6 +4083,8 @@ public class ConversationFragment extends XmppFragment
                 this.binding.toolbar.setSubtitle(
                         getResources()
                                 .getQuantityString(R.plurals.x_participants, userCount, userCount));
+                this.binding.toolbar.setSubtitleTextColor(
+                        ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
             }
         } else {
             this.binding.toolbar.setSubtitle(null);
