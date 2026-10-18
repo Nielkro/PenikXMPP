@@ -18,13 +18,13 @@
         android:icon="@drawable/ic_videocam_24dp"
         android:orderInCategory="11"
         android:title="@string/video_call"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search_24dp"
         android:orderInCategory="12"
         android:title="@string/search_messages"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/action_toggle_pinned"
         android:icon="@drawable/ic_push_pin_24dp"
