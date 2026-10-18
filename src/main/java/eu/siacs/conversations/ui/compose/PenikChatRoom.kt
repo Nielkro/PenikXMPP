@@ -88,6 +88,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.TextLayoutResult
@@ -110,6 +111,11 @@ import eu.siacs.conversations.entities.Conversational
 import eu.siacs.conversations.entities.Message
 import eu.siacs.conversations.entities.RtpSessionStatus
 import eu.siacs.conversations.entities.Sticker
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -123,7 +129,10 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.DisposableEffect
@@ -700,6 +709,153 @@ fun penikIsVideo(message: Message): Boolean {
             lower.endsWith(".avi")
 }
 
+@Composable
+fun PenikSwipeToReplyWrapper(
+        message: Message,
+        listener: PenikChatListener,
+        content: @Composable () -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val offsetX = remember(message.uuid) { Animatable(0f) }
+    val density = LocalDensity.current
+    val triggerThresholdPx = with(density) { 60.dp.toPx() }
+    val maxDragPx = with(density) { 92.dp.toPx() }
+    val haptic = LocalHapticFeedback.current
+    var hasVibrated by remember(message.uuid) { mutableStateOf(false) }
+
+    Box(
+            modifier =
+                    Modifier.fillMaxWidth().pointerInput(message.uuid) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            val touchSlop = viewConfiguration.touchSlop
+                            var totalDx = 0f
+                            var totalDy = 0f
+                            var isSwipingLeft = false
+
+                            try {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                                    if (!change.pressed) {
+                                        if (isSwipingLeft) {
+                                            val triggered = -offsetX.value >= triggerThresholdPx
+                                            coroutineScope.launch {
+                                                offsetX.animateTo(
+                                                        targetValue = 0f,
+                                                        animationSpec =
+                                                                spring(
+                                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                                        stiffness = Spring.StiffnessLow
+                                                                )
+                                                )
+                                            }
+                                            if (triggered) {
+                                                listener.onMessageAction(PenikChatActions.QUOTE, message)
+                                            }
+                                            hasVibrated = false
+                                        }
+                                        break
+                                    }
+
+                                    val dragDelta = change.positionChange()
+                                    if (!isSwipingLeft) {
+                                        totalDx += dragDelta.x
+                                        totalDy += dragDelta.y
+                                        if (totalDx < -touchSlop && kotlin.math.abs(totalDx) > kotlin.math.abs(totalDy)) {
+                                            isSwipingLeft = true
+                                            change.consume()
+                                            val initialDelta = totalDx + touchSlop
+                                            val newTarget = (offsetX.value + initialDelta).coerceAtMost(0f)
+                                            coroutineScope.launch { offsetX.snapTo(newTarget) }
+                                        } else if (kotlin.math.abs(totalDy) > touchSlop || totalDx > touchSlop) {
+                                            break
+                                        }
+                                    } else {
+                                        change.consume()
+                                        val newTarget = offsetX.value + dragDelta.x
+                                        val clampedTarget =
+                                                if (newTarget > 0f) {
+                                                    0f
+                                                } else if (-newTarget > triggerThresholdPx) {
+                                                    val excess = -newTarget - triggerThresholdPx
+                                                    -(triggerThresholdPx + excess * 0.3f).coerceAtMost(maxDragPx)
+                                                } else {
+                                                    newTarget
+                                                }
+
+                                        coroutineScope.launch { offsetX.snapTo(clampedTarget) }
+
+                                        if (-clampedTarget >= triggerThresholdPx && !hasVibrated) {
+                                            hasVibrated = true
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        } else if (-clampedTarget < triggerThresholdPx && hasVibrated) {
+                                            hasVibrated = false
+                                        }
+                                    }
+                                }
+                            } finally {
+                                if (isSwipingLeft && offsetX.value != 0f) {
+                                    coroutineScope.launch {
+                                        offsetX.animateTo(
+                                                targetValue = 0f,
+                                                animationSpec =
+                                                        spring(
+                                                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                                stiffness = Spring.StiffnessLow
+                                                        )
+                                        )
+                                    }
+                                    hasVibrated = false
+                                }
+                            }
+                        }
+                    }
+    ) {
+        val currentOffset = offsetX.value
+        if (currentOffset < -1f) {
+            val progress = (-currentOffset / triggerThresholdPx).coerceIn(0f, 1f)
+            val isReady = -currentOffset >= triggerThresholdPx
+            val accentColor = colorResource(R.color.penik_accent)
+            val defaultBg = colorResource(R.color.penik_panel_secondary)
+
+            Box(
+                    modifier =
+                            Modifier.align(Alignment.CenterEnd)
+                                    .padding(end = 16.dp)
+                                    .size(36.dp)
+                                    .graphicsLayer {
+                                        scaleX = 0.5f + progress * 0.5f
+                                        scaleY = 0.5f + progress * 0.5f
+                                        alpha = progress
+                                        rotationZ = (1f - progress) * -45f
+                                    }
+                                    .background(
+                                            color = if (isReady) accentColor else defaultBg.copy(alpha = 0.85f),
+                                            shape = CircleShape
+                                    ),
+                    contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Reply,
+                        contentDescription = "Ответить",
+                        tint = if (isReady) Color.White else colorResource(R.color.penik_text_primary),
+                        modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Box(
+                modifier =
+                        Modifier.fillMaxWidth().offset {
+                            IntOffset(offsetX.value.roundToInt(), 0)
+                        }
+        ) {
+            content()
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PenikMessageRow(
@@ -738,125 +894,130 @@ fun PenikMessageRow(
             label = "quote_highlight"
     )
 
-    Row(
-            modifier =
-                    Modifier.fillMaxWidth()
-                            .padding(horizontal = 4.dp, vertical = 1.dp)
-                            .then(
-                                    if (highlightAlpha > 0f) {
-                                        Modifier.background(
-                                                Color(0xFFFFA000).copy(alpha = highlightAlpha),
-                                                shape = RoundedCornerShape(12.dp)
-                                        )
-                                    } else Modifier
-                            ),
-            horizontalArrangement = if (isSentByMe) Arrangement.End else Arrangement.Start,
-            verticalAlignment = Alignment.Bottom
+    PenikSwipeToReplyWrapper(
+            message = message,
+            listener = listener
     ) {
-        if (showAvatar) {
-            val context = LocalContext.current
-            val avatarBitmap = remember(message.uuid, revision) {
-                try {
-                    activity.avatarService()?.get(message, (28 * context.resources.displayMetrics.density).toInt(), false)
-                } catch (e: Exception) {
-                    null
-                }
-            }
-            PenikAvatarImage(
-                    name = UIHelper.getMessageDisplayName(message),
-                    bitmap = avatarBitmap,
-                    size = 28.dp,
-                    modifier = Modifier.clip(CircleShape).clickable { listener.onAvatarClick(message) }
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-        }
-
-        Box(
-                modifier = Modifier.weight(1f, fill = false),
-                contentAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
+        Row(
+                modifier =
+                        Modifier.fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                .then(
+                                        if (highlightAlpha > 0f) {
+                                            Modifier.background(
+                                                    Color(0xFFFFA000).copy(alpha = highlightAlpha),
+                                                    shape = RoundedCornerShape(12.dp)
+                                            )
+                                        } else Modifier
+                                ),
+                horizontalArrangement = if (isSentByMe) Arrangement.End else Arrangement.Start,
+                verticalAlignment = Alignment.Bottom
         ) {
-            val isStickerMsg = message.isSticker || (body.startsWith("{\"pack_id\":") && body.contains("\"sticker_id\":"))
-            if (isStickerMsg) {
-                val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(activity) }
-                val timeText = if (message.timeSent > 0) timeFormat.format(java.util.Date(message.timeSent)) else ""
-                var showMenu by remember(message.uuid) { mutableStateOf(false) }
-                val haptic = LocalHapticFeedback.current
-                Box {
-                    PenikStickerBubble(
-                        message = message,
-                        isSentByMe = isSentByMe,
-                        timeText = timeText,
-                        onClick = {},
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            showMenu = true
-                        }
-                    )
-                    if (showMenu) {
-                        PenikMessageMenu(
-                            message = message,
-                            isSentByMe = isSentByMe,
-                            onDismiss = { showMenu = false },
-                            onAction = {
-                                showMenu = false
-                                listener.onMessageAction(it, message)
-                            }
-                        )
+            if (showAvatar) {
+                val context = LocalContext.current
+                val avatarBitmap = remember(message.uuid, revision) {
+                    try {
+                        activity.avatarService()?.get(message, (28 * context.resources.displayMetrics.density).toInt(), false)
+                    } catch (e: Exception) {
+                        null
                     }
                 }
-            } else if (message.type == Message.TYPE_TEXT) {
-                val bareUrl = remember(body) { penikBareImageUrl(body) }
-                if (bareUrl != null) {
-                    PenikUrlImageRow(
-                            url = bareUrl,
+                PenikAvatarImage(
+                        name = UIHelper.getMessageDisplayName(message),
+                        bitmap = avatarBitmap,
+                        size = 28.dp,
+                        modifier = Modifier.clip(CircleShape).clickable { listener.onAvatarClick(message) }
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+
+            Box(
+                    modifier = Modifier.weight(1f, fill = false),
+                    contentAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
+            ) {
+                val isStickerMsg = message.isSticker || (body.startsWith("{\"pack_id\":") && body.contains("\"sticker_id\":"))
+                if (isStickerMsg) {
+                    val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(activity) }
+                    val timeText = if (message.timeSent > 0) timeFormat.format(java.util.Date(message.timeSent)) else ""
+                    var showMenu by remember(message.uuid) { mutableStateOf(false) }
+                    val haptic = LocalHapticFeedback.current
+                    Box {
+                        PenikStickerBubble(
                             message = message,
-                            status = status,
                             isSentByMe = isSentByMe,
-                            listener = listener,
-                            revision = revision
-                    )
-                } else {
-                    val bareVideoUrl = remember(body) { penikBareVideoUrl(body) }
-                    if (bareVideoUrl != null) {
-                        PenikAttachmentRow(
+                            timeText = timeText,
+                            onClick = {},
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                showMenu = true
+                            }
+                        )
+                        if (showMenu) {
+                            PenikMessageMenu(
+                                message = message,
+                                isSentByMe = isSentByMe,
+                                onDismiss = { showMenu = false },
+                                onAction = {
+                                    showMenu = false
+                                    listener.onMessageAction(it, message)
+                                }
+                            )
+                        }
+                    }
+                } else if (message.type == Message.TYPE_TEXT) {
+                    val bareUrl = remember(body) { penikBareImageUrl(body) }
+                    if (bareUrl != null) {
+                        PenikUrlImageRow(
+                                url = bareUrl,
                                 message = message,
                                 status = status,
-                                activity = activity,
                                 isSentByMe = isSentByMe,
                                 listener = listener,
                                 revision = revision
                         )
                     } else {
-                        PenikTextBubble(
-                                message = message,
-                                status = status,
-                                edited = edited,
-                                activity = activity,
-                                isMuc = isMuc,
-                                listener = listener,
-                                revision = revision
-                        )
+                        val bareVideoUrl = remember(body) { penikBareVideoUrl(body) }
+                        if (bareVideoUrl != null) {
+                            PenikAttachmentRow(
+                                    message = message,
+                                    status = status,
+                                    activity = activity,
+                                    isSentByMe = isSentByMe,
+                                    listener = listener,
+                                    revision = revision
+                            )
+                        } else {
+                            PenikTextBubble(
+                                    message = message,
+                                    status = status,
+                                    edited = edited,
+                                    activity = activity,
+                                    isMuc = isMuc,
+                                    listener = listener,
+                                    revision = revision
+                            )
+                        }
                     }
+                } else if (message.isFileOrImage || message.isGeoUri || penikIsVideo(message)) {
+                    PenikAttachmentRow(
+                            message = message,
+                            status = status,
+                            activity = activity,
+                            isSentByMe = isSentByMe,
+                            listener = listener,
+                            revision = revision
+                    )
+                } else {
+                    PenikTextBubble(
+                            message = message,
+                            status = status,
+                            edited = edited,
+                            activity = activity,
+                            isMuc = isMuc,
+                            listener = listener,
+                            revision = revision
+                    )
                 }
-            } else if (message.isFileOrImage || message.isGeoUri || penikIsVideo(message)) {
-                PenikAttachmentRow(
-                        message = message,
-                        status = status,
-                        activity = activity,
-                        isSentByMe = isSentByMe,
-                        listener = listener,
-                        revision = revision
-                )
-            } else {
-                PenikTextBubble(
-                        message = message,
-                        status = status,
-                        edited = edited,
-                        activity = activity,
-                        isMuc = isMuc,
-                        listener = listener,
-                        revision = revision
-                )
             }
         }
     }
