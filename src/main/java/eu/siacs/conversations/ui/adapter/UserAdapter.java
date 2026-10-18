@@ -102,8 +102,7 @@ public class UserAdapter extends ListAdapter<MucOptions.User, UserAdapter.ViewHo
                                 Toast.makeText(
                                                 activity,
                                                 activity.getString(
-                                                        R.string.user_has_left_conference,
-                                                        user.getDisplayName()),
+                                                        R.string.presence_offline),
                                                 Toast.LENGTH_SHORT)
                                         .show();
                             }

@@ -393,6 +393,10 @@
             android:name=".ui.PublishGroupChatProfilePictureActivity"
             android:label="@string/group_chat_avatar" />
         <activity
+            android:name=".ui.EditConferenceActivity"
+            android:label="@string/edit_name_and_topic"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+        <activity
             android:name=".ui.ShareWithActivity"
             android:exported="true"
             android:launchMode="singleTop">
