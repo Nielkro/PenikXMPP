@@ -1603,7 +1603,10 @@ public class DatabaseBackend extends SQLiteOpenHelper {
         return message;
     }
 
-    private Message getMessageWithUuid(final Conversation conversation, final String uuid) {
+    public Message getMessageWithUuid(final Conversation conversation, final String uuid) {
+        if (conversation == null || uuid == null) {
+            return null;
+        }
         final var db = this.getReadableDatabase();
         final var sql = "select * from messages where conversationUuid=? and uuid=? LIMIT 1";
         final String[] args = {conversation.getUuid(), uuid};
@@ -1611,14 +1614,94 @@ public class DatabaseBackend extends SQLiteOpenHelper {
             if (cursor.moveToFirst()) {
                 return Message.fromCursor(context, cursor, conversation);
             }
+        } catch (final Exception ignored) {}
+        return null;
+    }
+
+    public Message findQuotedMessage(
+            final Conversation conversation,
+            final String targetUuid,
+            final String urlBase,
+            final boolean isPhoto,
+            final boolean isSticker,
+            final String textContent,
+            final long beforeTimestamp) {
+        if (conversation == null) {
+            return null;
         }
-        throw new IllegalStateException("No message found with uuid");
+        if (targetUuid != null && !targetUuid.isEmpty()) {
+            final Message m = getMessageWithUuid(conversation, targetUuid);
+            if (m != null) return m;
+        }
+        final SQLiteDatabase db = this.getReadableDatabase();
+        final StringBuilder sql = new StringBuilder("SELECT * FROM " + Message.TABLENAME + " WHERE " + Message.CONVERSATION + "=? AND " + Message.TIME_SENT + "<=?");
+        final ArrayList<String> args = new ArrayList<>();
+        args.add(conversation.getUuid());
+        args.add(Long.toString(beforeTimestamp > 0 ? beforeTimestamp : Long.MAX_VALUE));
+
+        if (urlBase != null && !urlBase.isEmpty()) {
+            sql.append(" AND body LIKE ? AND body NOT LIKE '> %' AND body NOT LIKE '» %'");
+            args.add("%" + urlBase + "%");
+        } else if (isPhoto) {
+            sql.append(" AND (type=1 OR mimeType LIKE 'image/%' OR body LIKE '%.jpg%' OR body LIKE '%.png%' OR body LIKE '%.webp%' OR body LIKE 'aesgcm://%')");
+        } else if (isSticker) {
+            sql.append(" AND (type=7 OR body LIKE '%pack_id%')");
+        } else if (textContent != null && !textContent.isEmpty()) {
+            sql.append(" AND type=0 AND body LIKE ? AND body NOT LIKE '> %' AND body NOT LIKE '» %'");
+            final String trimmed = textContent.trim();
+            final String snippet = trimmed.length() > 40 ? trimmed.substring(0, 40) : trimmed;
+            args.add("%" + snippet + "%");
+        }
+        sql.append(" ORDER BY " + Message.TIME_SENT + " DESC LIMIT 1");
+        try (final Cursor cursor = db.rawQuery(sql.toString(), args.toArray(new String[0]))) {
+            if (cursor.moveToFirst()) {
+                return Message.fromCursor(context, cursor, conversation);
+            }
+        } catch (final Exception ignored) {}
+        return null;
+    }
+
+    public ArrayList<Message> getMessagesPriorToIncluding(
+            final Conversation conversation,
+            final long oldestTimestamp,
+            final long targetTimestamp,
+            final int padding) {
+        final SQLiteDatabase db = this.getReadableDatabase();
+        int count = 0;
+        final String countSql =
+                "SELECT COUNT(*) FROM "
+                        + Message.TABLENAME
+                        + " WHERE "
+                        + Message.CONVERSATION
+                        + "=? AND "
+                        + Message.TIME_SENT
+                        + "<? AND "
+                        + Message.TIME_SENT
+                        + ">=?";
+        try (final Cursor countCursor =
+                db.rawQuery(
+                        countSql,
+                        new String[] {
+                            conversation.getUuid(),
+                            Long.toString(oldestTimestamp),
+                            Long.toString(targetTimestamp)
+                        })) {
+            if (countCursor.moveToFirst()) {
+                count = countCursor.getInt(0);
+            }
+        } catch (final Exception ignored) {}
+        final int limit = Math.max(count + padding, 20);
+        return getMessages(conversation, limit, oldestTimestamp);
     }
 
     public ListenableFuture<Message> getMessageWithUuidFuture(
             final Conversation conversation, final String uuid) {
         return Futures.submit(
-                () -> getMessageWithUuid(conversation, uuid),
+                () -> {
+                    final Message m = getMessageWithUuid(conversation, uuid);
+                    if (m != null) return m;
+                    throw new IllegalStateException("No message found with uuid");
+                },
                 XmppConnectionService.DATABASE_READER);
     }
 

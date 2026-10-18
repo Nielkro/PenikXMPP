@@ -196,6 +196,7 @@ interface PenikChatListener {
     fun onTakePhoto() {}
     fun onSendRecentMedias(uris: @JvmSuppressWildcards List<Uri>) {}
     fun onSendSticker(sticker: eu.siacs.conversations.entities.Sticker) {}
+    fun onQuoteTargetNotFound(quote: String, currentMsg: Message) {}
 }
 
 object PenikChatActions {
@@ -220,6 +221,7 @@ class PenikChatState {
     var stickerServerUrl by mutableStateOf("")
     var stickerAuthToken by mutableStateOf("")
     var revision by mutableStateOf(0L)
+    var pendingScrollTargetUuid by mutableStateOf<String?>(null)
 
     fun update(newMessages: List<Message>, muc: Boolean, avatars11: Boolean = true) {
         messages = newMessages
@@ -448,6 +450,34 @@ fun PenikChatRoom(
     var highlightedMessageUuid by remember { mutableStateOf<String?>(null) }
     var highlightJob by remember { mutableStateOf<Job?>(null) }
 
+    LaunchedEffect(rows, state.pendingScrollTargetUuid) {
+        val targetUuid = state.pendingScrollTargetUuid
+        if (!targetUuid.isNullOrBlank() && rows.isNotEmpty()) {
+            val matchedIndex = rows.indexOfFirst { it is ChatRow.Msg && it.message.uuid == targetUuid }
+            if (matchedIndex >= 0) {
+                state.pendingScrollTargetUuid = null
+                val targetMsg = (rows.getOrNull(matchedIndex) as? ChatRow.Msg)?.message
+                highlightJob?.cancel()
+                highlightJob = scope.launch {
+                    val currentIndex = listState.firstVisibleItemIndex
+                    val distance = kotlin.math.abs(matchedIndex - currentIndex)
+                    if (distance > 3) {
+                        val preIndex = if (matchedIndex > currentIndex) matchedIndex - 2 else matchedIndex + 2
+                        listState.scrollToItem(preIndex.coerceIn(0, (rows.size - 1).coerceAtLeast(0)))
+                    }
+                    listState.animateScrollToItem(matchedIndex)
+                    if (targetMsg != null) {
+                        highlightedMessageUuid = targetMsg.uuid
+                        delay(1400)
+                        if (highlightedMessageUuid == targetMsg.uuid) {
+                            highlightedMessageUuid = null
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     val onQuoteClick: (String, Message) -> Unit = remember(rows) {
         { quote, currentMsg ->
             val matchedIndex = findPenikQuotedMessageIndex(rows, currentMsg, quote)
@@ -470,6 +500,8 @@ fun PenikChatRoom(
                         }
                     }
                 }
+            } else {
+                listener.onQuoteTargetNotFound(quote, currentMsg)
             }
         }
     }
@@ -1138,7 +1170,10 @@ private fun findPenikQuotedMessageIndex(
         }
 
         if (isPhotoQuote) {
-            return m.type == Message.TYPE_IMAGE || (m.isFileOrImage && m.mimeType?.startsWith("image/") == true) || penikBareImageUrl(b) != null
+            val isPhotoMsg = m.type == Message.TYPE_IMAGE || (m.isFileOrImage && m.mimeType?.startsWith("image/") == true) || penikBareImageUrl(b) != null
+            if (!isPhotoMsg) return false
+            val cleanBody = splitPenikQuote(b).second
+            return cleanBody.isBlank() || m.isFileOrImage || penikBareImageUrl(cleanBody) != null
         }
 
         if (isVoiceQuote) {
@@ -1159,7 +1194,8 @@ private fun findPenikQuotedMessageIndex(
 
         if (urlBase != null) {
             val mFileUrl = m.fileParams?.url ?: ""
-            return b.contains(urlBase) || mFileUrl.contains(urlBase)
+            val cleanBody = splitPenikQuote(b).second
+            return cleanBody.contains(urlBase) || mFileUrl.contains(urlBase)
         }
 
         // Regular text quote: candidate MUST be a text message, NOT an attachment, audio, or sticker
@@ -1168,10 +1204,10 @@ private fun findPenikQuotedMessageIndex(
         }
 
         val targetText = content.trim()
-        val bodyTrim = b.trim()
-        return bodyTrim == targetText ||
-                bodyTrim.startsWith(targetText) ||
-                (targetText.length >= 10 && bodyTrim.contains(targetText))
+        val cleanBody = splitPenikQuote(b).second.trim()
+        return cleanBody == targetText ||
+                cleanBody.startsWith(targetText) ||
+                (targetText.length >= 10 && cleanBody.contains(targetText))
     }
 
     val currentIndex = rows.indexOfFirst { it is ChatRow.Msg && it.message.uuid == currentMsg.uuid }

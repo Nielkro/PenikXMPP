@@ -1599,6 +1599,11 @@ public class ConversationFragment extends XmppFragment
                     public void onSendSticker(final Sticker sticker) {
                         ConversationFragment.this.sendSticker(sticker);
                     }
+
+                    @Override
+                    public void onQuoteTargetNotFound(final String quote, final Message currentMsg) {
+                        ConversationFragment.this.onPenikQuoteTargetNotFound(quote, currentMsg);
+                    }
                 });
 
         this.binding.textInput.setCustomInsertionActionModeCallback(
@@ -3801,6 +3806,77 @@ public class ConversationFragment extends XmppFragment
         if (getActivity() instanceof ConversationsActivity ca) {
             ca.onConversationRead(c, uuid);
         }
+    }
+
+    public void onPenikQuoteTargetNotFound(final String quote, final Message currentMsg) {
+        if (this.conversation == null || currentMsg == null || quote == null) {
+            return;
+        }
+        XmppConnectionService.DATABASE_READER.execute(() -> {
+            try {
+                final String uuidRegex = "penik:msg:([a-zA-Z0-9_-]+)";
+                final java.util.regex.Matcher m = java.util.regex.Pattern.compile(uuidRegex).matcher(quote);
+                final String targetUuid = m.find() ? m.group(1) : null;
+
+                final String cleanQuote = quote.replaceAll("\\[[^\\]]*\\]\\(penik:msg:[^)]+\\)", "").trim();
+                final String[] lines = cleanQuote.split("\n");
+                final String firstLine = lines.length > 0 ? lines[0].trim() : "";
+                final boolean isRawJson = firstLine.startsWith("{");
+                final boolean hasColon = !isRawJson && firstLine.contains(": ")
+                        && !firstLine.toLowerCase().startsWith("http://")
+                        && !firstLine.toLowerCase().startsWith("https://")
+                        && !firstLine.toLowerCase().startsWith("aesgcm://")
+                        && !firstLine.toLowerCase().startsWith("geo:")
+                        && !firstLine.toLowerCase().startsWith("xmpp:");
+                final String content = hasColon
+                        ? cleanQuote.substring(cleanQuote.indexOf(": ") + 2).trim()
+                        : cleanQuote.trim();
+
+                final boolean isPhoto = content.startsWith("📷") || content.contains("Фото");
+                final boolean isSticker = content.contains("Стикер") || (content.startsWith("{") && content.contains("\"pack_id\""));
+                final boolean isUrl = content.startsWith("http://") || content.startsWith("https://") || content.startsWith("aesgcm://") || (content.contains("http") && content.contains("|"));
+                final String urlBase;
+                if (isUrl) {
+                    final String s = content.contains("://") ? content.substring(content.indexOf("://") + 3) : content;
+                    urlBase = s.split("[|?#]")[0].trim();
+                } else {
+                    urlBase = null;
+                }
+
+                final Message target = DatabaseBackend.getInstance(requireContext()).findQuotedMessage(
+                        this.conversation,
+                        targetUuid,
+                        urlBase,
+                        isPhoto,
+                        isSticker,
+                        content,
+                        currentMsg.getTimeSent()
+                );
+
+                if (target != null) {
+                    synchronized (this.messageList) {
+                        final long oldestTime = !this.messageList.isEmpty() ? this.messageList.get(0).getTimeSent() : Long.MAX_VALUE;
+                        if (target.getTimeSent() < oldestTime) {
+                            final List<Message> older = DatabaseBackend.getInstance(requireContext())
+                                    .getMessagesPriorToIncluding(this.conversation, oldestTime, target.getTimeSent(), 15);
+                            if (!older.isEmpty()) {
+                                this.conversation.addAll(0, older);
+                                this.conversation.populateWithMessages(this.messageList);
+                            }
+                        }
+                    }
+                    final var act = getActivity();
+                    if (act != null) {
+                        act.runOnUiThread(() -> {
+                            this.penikChatState.setPendingScrollTargetUuid(target.getUuid());
+                            pushPenikChatState();
+                        });
+                    }
+                }
+            } catch (final Exception e) {
+                Log.w(Config.LOGTAG, "Error looking up quoted message in DB", e);
+            }
+        });
     }
 
     public void onPenikAvatarClick(final Message message) {
