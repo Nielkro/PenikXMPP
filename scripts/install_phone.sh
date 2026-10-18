@@ -4,8 +4,10 @@ set -euo pipefail
 # install_phone.sh
 # Builds and installs Penik (Conversations Playstore / FCM Debug by default) onto a connected Android device via ADB.
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$PROJECT_DIR"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+ANDROID_DIR="$REPO_ROOT/android"
+cd "$ANDROID_DIR"
 
 # Colors
 GREEN='\033[0;32m'

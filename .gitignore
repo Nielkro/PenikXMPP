@@ -2,8 +2,8 @@
 *.swp
 .settings
 
-src/conversationsPlaystore/res/values/push.xml
-src/quicksyPlaystore/res/values/push.xml
+android/src/conversationsPlaystore/res/values/push.xml
+android/src/quicksyPlaystore/res/values/push.xml
 
 
 # https://github.com/github/gitignore/blob/master/Gradle.gitignore
@@ -50,4 +50,4 @@ import-summary.txt
 for_ai.txt
 .directory
 fpush/
-deploy_server.sh
+scripts/deploy_server.sh

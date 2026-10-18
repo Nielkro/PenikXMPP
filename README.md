@@ -109,24 +109,27 @@ Comprehensive specifications:
 ## Quick Start & Installation
 
 ### Automated Build & Install via ADB
-An all-in-one automation script is provided in the repository root:
+An all-in-one automation script is provided in `scripts/`:
 
 ```bash
 # Build and install Playstore flavor with FCM notifications (default)
-./install_phone.sh
+./scripts/install_phone.sh
 
 # Build and install Free flavor with UnifiedPush
-./install_phone.sh --free
+./scripts/install_phone.sh --free
 
 # Reinstall existing build without rebuilding
-./install_phone.sh -n
+./scripts/install_phone.sh -n
 
 # Target specific device
-./install_phone.sh -s <device_serial>
+./scripts/install_phone.sh -s <device_serial>
 ```
 
 ### Manual Gradle Build
 ```bash
+# Navigate to the Android client directory
+cd android
+
 # Build Playstore debug APK with FCM notifications
 bash ./gradlew assembleConversationsPlaystoreDebug
 
@@ -136,36 +139,41 @@ bash ./gradlew assembleConversationsFreeDebug
 # Run unit tests
 bash ./gradlew testConversationsFreeDebugUnitTest
 ```
-The resulting APKs are generated under `build/outputs/apk/`.
+The resulting APKs are generated under `android/build/outputs/apk/`.
 
 ---
 
 ## Repository Structure
 
 ```
+├── android/                # Android client application
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── AndroidManifest.xml
+│   │   │   ├── java/eu/siacs/conversations/
+│   │   │   │   ├── ui/compose/ # Penik Compose screens (Chats, Calls, Picker, Stickers)
+│   │   │   │   ├── stickers/   # StickerManager and pack caching
+│   │   │   │   ├── xmpp/fun/   # FunWriter, FunReader, FunTokens (PXMPP engine)
+│   │   │   │   └── ...         # Core XMPP connection, crypto, managers
+│   │   │   └── res/            # Penik themes, vector drawables, colors
+│   │   └── test/               # JUnit tests (FunProtocolTest, JidTest, etc.)
+│   ├── libs/                   # Annotation and annotation processor modules
+│   └── build.gradle            # Android Gradle project configuration
 ├── docs/
 │   └── PXMPP/              # PXMPP binary protocol specifications (EN / RU)
+├── scripts/
+│   ├── install_phone.sh    # Automated ADB build & install script
+│   └── deploy_server.sh    # Prosody & microservices deployment script
 ├── server/
 │   ├── Modules/            # Prosody / Snikket Lua plugins
 │   │   ├── mod_funxmpp.lua      # Binary protocol plugin
 │   │   ├── test_mod_funxmpp.lua # FunXMPP Lua test suite
 │   │   ├── mod_stickers_auth.lua # HMAC-SHA256 stickers token issuer
 │   │   └── test_mod_stickers_auth.lua # Stickers auth test suite
-│   └── MicroServices/      # Standalone backend microservices (Rust)
+│   └── MicroServices/      # Standalone backend microservices (Rust, GPL-3.0-only)
 │       └── penik-service-rs/    # Telegram stickers & $k$-anonymity contact discovery backend service
-├── src/
-│   ├── main/
-│   │   ├── AndroidManifest.xml
-│   │   ├── java/eu/siacs/conversations/
-│   │   │   ├── ui/compose/ # Penik Compose screens (Chats, Calls, Picker, Stickers)
-│   │   │   ├── stickers/   # StickerManager and pack caching
-│   │   │   ├── xmpp/fun/   # FunWriter, FunReader, FunTokens (PXMPP engine)
-│   │   │   └── ...         # Core XMPP connection, crypto, managers
-│   │   └── res/            # Penik themes, vector drawables, colors
-│   └── test/               # JUnit tests (FunProtocolTest, JidTest, etc.)
-├── install_phone.sh        # Automated ADB build & install script
 ├── PROJECT_MAP.md          # Complete index of all codebase files
-└── build.gradle            # Root Gradle project configuration
+└── LICENSE                 # GNU General Public License v3
 ```
 
 > [!TIP]

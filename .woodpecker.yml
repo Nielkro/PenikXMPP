@@ -6,6 +6,7 @@ steps:
       - event: tag
     image: codeberg.org/freeyourgadget/android-fdroid-tools:latest
     commands:
+      - cd android
       - ./gradlew clean
       - ./gradlew assembleConversationsFreeDebug
       - ./gradlew assembleQuicksyFreeDebug

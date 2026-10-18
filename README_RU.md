@@ -109,24 +109,28 @@ flowchart LR
 ## Быстрый старт и установка
 
 ### Автоматическая сборка и установка через ADB
-В корне репозитория расположен скрипт полной автоматизации:
+### Автоматическая сборка и установка через ADB
+В каталоге `scripts/` расположен скрипт полной автоматизации:
 
 ```bash
 # Сборка и установка версии Playstore с FCM-уведомлениями (по умолчанию)
-./install_phone.sh
+./scripts/install_phone.sh
 
 # Сборка и установка версии Free с UnifiedPush
-./install_phone.sh --free
+./scripts/install_phone.sh --free
 
 # Установка уже собранного APK без повторной компиляции
-./install_phone.sh -n
+./scripts/install_phone.sh -n
 
 # Установка на конкретное устройство по серийному номеру
-./install_phone.sh -s <серийный_номер>
+./scripts/install_phone.sh -s <серийный_номер>
 ```
 
 ### Ручная сборка через Gradle
 ```bash
+# Переход в каталог Android-клиента
+cd android
+
 # Сборка Playstore debug APK с FCM-уведомлениями
 bash ./gradlew assembleConversationsPlaystoreDebug
 
@@ -136,36 +140,41 @@ bash ./gradlew assembleConversationsFreeDebug
 # Запуск модульных тестов
 bash ./gradlew testConversationsFreeDebugUnitTest
 ```
-Собранные установочные пакеты APK располагаются в каталоге `build/outputs/apk/`.
+Собранные установочные пакеты APK располагаются в каталоге `android/build/outputs/apk/`.
 
 ---
 
 ## Структура репозитория
 
 ```
+├── android/                # Android-приложение клиента
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── AndroidManifest.xml
+│   │   │   ├── java/eu/siacs/conversations/
+│   │   │   │   ├── ui/compose/ # Экраны Compose (Чаты, Звонки, Пикер, Стикеры)
+│   │   │   │   ├── stickers/   # Менеджер StickerManager и кеширование паков
+│   │   │   │   ├── xmpp/fun/   # Движок PXMPP (FunWriter, FunReader, FunTokens)
+│   │   │   │   └── ...         # Сетевой стек XMPP, криптография, менеджеры строф
+│   │   │   └── res/            # Темы оформления, векторные ресурсы, цвета
+│   │   └── test/               # JUnit-тесты (FunProtocolTest, JidTest и др.)
+│   ├── libs/                   # Модули аннотаций и процессора аннотаций
+│   └── build.gradle            # Конфигурация Gradle для Android
 ├── docs/
 │   └── PXMPP/              # Спецификации протокола PXMPP (RU / EN)
+├── scripts/
+│   ├── install_phone.sh    # Скрипт сборки и быстрой установки через ADB
+│   └── deploy_server.sh    # Скрипт развертывания Prosody и микросервисов
 ├── server/
 │   ├── Modules/            # Плагины для Prosody / Snikket на Lua
 │   │   ├── mod_funxmpp.lua      # Плагин бинарного протокола
 │   │   ├── test_mod_funxmpp.lua # Тесты плагина FunXMPP
 │   │   ├── mod_stickers_auth.lua # Генерация HMAC-токенов стикеров
 │   │   └── test_mod_stickers_auth.lua # Тесты авторизации стикеров
-│   └── MicroServices/      # Автономные серверные микросервисы (Rust)
+│   └── MicroServices/      # Автономные серверные микросервисы (Rust, GPL-3.0-only)
 │       └── penik-service-rs/    # Сервис стикеров и приватного поиска контактов ($k$-anonymity Contact Discovery)
-├── src/
-│   ├── main/
-│   │   ├── AndroidManifest.xml
-│   │   ├── java/eu/siacs/conversations/
-│   │   │   ├── ui/compose/ # Экраны Compose (Чаты, Звонки, Пикер, Стикеры)
-│   │   │   ├── stickers/   # Менеджер StickerManager и кеширование паков
-│   │   │   ├── xmpp/fun/   # Движок PXMPP (FunWriter, FunReader, FunTokens)
-│   │   │   └── ...         # Сетевой стек XMPP, криптография, менеджеры строф
-│   │   └── res/            # Темы оформления, векторные ресурсы, цвета
-│   └── test/               # JUnit-тесты (FunProtocolTest, JidTest и др.)
-├── install_phone.sh        # Скрипт сборки и быстрой установки через ADB
 ├── PROJECT_MAP.md          # Полная карта файлов и архитектуры проекта
-└── build.gradle            # Главный конфигурационный файл Gradle
+└── LICENSE                 # Лицензия GNU General Public License v3
 ```
 
 > [!TIP]
