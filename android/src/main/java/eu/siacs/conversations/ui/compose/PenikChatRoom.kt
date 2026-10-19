@@ -67,6 +67,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
@@ -419,11 +420,18 @@ fun PenikChatRoom(
             listState.firstVisibleItemIndex > 2
         }
     }
-    val lastVisibleIndex by remember {
+    val shouldLoadMore by remember {
         derivedStateOf {
-            listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val lastIdx = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            rows.isNotEmpty() && lastIdx >= rows.size - 5
         }
     }
+    val isAtBottom by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex == 0
+        }
+    }
+
     val newestUuid = (rows.firstOrNull() as? ChatRow.Msg)?.message?.uuid
     LaunchedEffect(newestUuid) {
         if (listState.firstVisibleItemIndex <= 2 && rows.isNotEmpty()) {
@@ -433,22 +441,54 @@ fun PenikChatRoom(
             listener.onBottomVisible(newestUuid)
         }
     }
-    LaunchedEffect(lastVisibleIndex, rows.size) {
-        if (rows.isNotEmpty() && lastVisibleIndex >= rows.size - 5) {
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore) {
             listener.onLoadMore()
         }
     }
-    LaunchedEffect(listState.firstVisibleItemIndex, newestUuid) {
-        val newest = rows.firstOrNull()
-        if (newest is ChatRow.Msg && listState.firstVisibleItemIndex == 0) {
-            val uuid = newest.message.uuid
-            if (!uuid.isNullOrBlank()) {
-                listener.onBottomVisible(uuid)
+    LaunchedEffect(isAtBottom, newestUuid) {
+        if (isAtBottom) {
+            val newest = rows.firstOrNull()
+            if (newest is ChatRow.Msg) {
+                val uuid = newest.message.uuid
+                if (!uuid.isNullOrBlank()) {
+                    listener.onBottomVisible(uuid)
+                }
             }
         }
     }
+
     var highlightedMessageUuid by remember { mutableStateOf<String?>(null) }
     var highlightJob by remember { mutableStateOf<Job?>(null) }
+    val jumpOriginUuids = remember { mutableStateListOf<String>() }
+
+    LaunchedEffect(isAtBottom) {
+        if (isAtBottom) {
+            jumpOriginUuids.clear()
+        }
+    }
+
+    suspend fun smoothScrollTo(targetIndex: Int, targetMsg: Message? = null) {
+        val maxIdx = (rows.size - 1).coerceAtLeast(0)
+        val validTarget = targetIndex.coerceIn(0, maxIdx)
+        val currentIndex = listState.firstVisibleItemIndex
+        val distance = kotlin.math.abs(validTarget - currentIndex)
+        if (distance > 3) {
+            val preIndex = if (validTarget > currentIndex) validTarget - 2 else validTarget + 2
+            listState.scrollToItem(preIndex.coerceIn(0, maxIdx))
+        }
+        listState.animateScrollToItem(validTarget)
+        if (targetMsg != null) {
+            highlightJob?.cancel()
+            highlightJob = scope.launch {
+                highlightedMessageUuid = targetMsg.uuid
+                delay(1400)
+                if (highlightedMessageUuid == targetMsg.uuid) {
+                    highlightedMessageUuid = null
+                }
+            }
+        }
+    }
 
     LaunchedEffect(rows, state.pendingScrollTargetUuid) {
         val targetUuid = state.pendingScrollTargetUuid
@@ -459,20 +499,7 @@ fun PenikChatRoom(
                 val targetMsg = (rows.getOrNull(matchedIndex) as? ChatRow.Msg)?.message
                 highlightJob?.cancel()
                 highlightJob = scope.launch {
-                    val currentIndex = listState.firstVisibleItemIndex
-                    val distance = kotlin.math.abs(matchedIndex - currentIndex)
-                    if (distance > 3) {
-                        val preIndex = if (matchedIndex > currentIndex) matchedIndex - 2 else matchedIndex + 2
-                        listState.scrollToItem(preIndex.coerceIn(0, (rows.size - 1).coerceAtLeast(0)))
-                    }
-                    listState.animateScrollToItem(matchedIndex)
-                    if (targetMsg != null) {
-                        highlightedMessageUuid = targetMsg.uuid
-                        delay(1400)
-                        if (highlightedMessageUuid == targetMsg.uuid) {
-                            highlightedMessageUuid = null
-                        }
-                    }
+                    smoothScrollTo(matchedIndex, targetMsg)
                 }
             }
         }
@@ -482,23 +509,11 @@ fun PenikChatRoom(
         { quote, currentMsg ->
             val matchedIndex = findPenikQuotedMessageIndex(rows, currentMsg, quote)
             if (matchedIndex != null) {
+                currentMsg.uuid?.let { jumpOriginUuids.add(it) }
                 val targetMsg = (rows.getOrNull(matchedIndex) as? ChatRow.Msg)?.message
                 highlightJob?.cancel()
                 highlightJob = scope.launch {
-                    val currentIndex = listState.firstVisibleItemIndex
-                    val distance = kotlin.math.abs(matchedIndex - currentIndex)
-                    if (distance > 3) {
-                        val preIndex = if (matchedIndex > currentIndex) matchedIndex - 2 else matchedIndex + 2
-                        listState.scrollToItem(preIndex.coerceIn(0, (rows.size - 1).coerceAtLeast(0)))
-                    }
-                    listState.animateScrollToItem(matchedIndex)
-                    if (targetMsg != null) {
-                        highlightedMessageUuid = targetMsg.uuid
-                        delay(1400)
-                        if (highlightedMessageUuid == targetMsg.uuid) {
-                            highlightedMessageUuid = null
-                        }
-                    }
+                    smoothScrollTo(matchedIndex, targetMsg)
                 }
             } else {
                 listener.onQuoteTargetNotFound(quote, currentMsg)
@@ -514,6 +529,9 @@ fun PenikChatRoom(
             }
         }
     }
+    val hasReturnOrigin by remember {
+        derivedStateOf { jumpOriginUuids.isNotEmpty() }
+    }
     CompositionLocalProvider(
             LocalUriHandler provides customUriHandler,
             LocalQuoteScrollHandler provides onQuoteClick,
@@ -524,7 +542,20 @@ fun PenikChatRoom(
                 floatingActionButton = {
                     if (showScrollDown) {
                         FloatingActionButton(
-                                onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                                onClick = {
+                                    highlightJob?.cancel()
+                                    highlightJob = scope.launch {
+                                        val originUuid = if (jumpOriginUuids.isNotEmpty()) jumpOriginUuids.removeLastOrNull() else null
+                                        val matchedIndex = if (originUuid != null) {
+                                            rows.indexOfFirst { it is ChatRow.Msg && it.message.uuid == originUuid }
+                                        } else -1
+
+                                        val targetIndex = if (matchedIndex >= 0) matchedIndex else 0
+                                        val targetMsg = if (matchedIndex >= 0) (rows.getOrNull(matchedIndex) as? ChatRow.Msg)?.message else null
+
+                                        smoothScrollTo(targetIndex, targetMsg)
+                                    }
+                                },
                                 containerColor = colorResource(R.color.penik_panel_secondary),
                                 contentColor = colorResource(R.color.penik_text_primary),
                                 modifier = Modifier.size(44.dp)
@@ -532,7 +563,11 @@ fun PenikChatRoom(
                             Icon(
                                     painter =
                                             painterResource(
-                                                    R.drawable.ic_keyboard_double_arrow_down_24dp
+                                                    if (hasReturnOrigin) {
+                                                        R.drawable.ic_reply_24dp
+                                                    } else {
+                                                        R.drawable.ic_keyboard_double_arrow_down_24dp
+                                                    }
                                             ),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp)
@@ -546,12 +581,21 @@ fun PenikChatRoom(
                     reverseLayout = true,
                     modifier = Modifier.fillMaxSize()
             ) {
-                items(rows, key = { row ->
-                    when (row) {
-                        is ChatRow.DateHeader -> "date-${row.key}"
-                        is ChatRow.Msg -> "msg-${row.message.uuid ?: row.message.hashCode()}"
-                    }
-                }) { row ->
+                items(
+                        items = rows,
+                        key = { row ->
+                            when (row) {
+                                is ChatRow.DateHeader -> "date-${row.key}"
+                                is ChatRow.Msg -> "msg-${row.message.uuid ?: row.message.hashCode()}"
+                            }
+                        },
+                        contentType = { row ->
+                            when (row) {
+                                is ChatRow.DateHeader -> "date_header"
+                                is ChatRow.Msg -> "msg_row"
+                            }
+                        }
+                ) { row ->
                     when (row) {
                         is ChatRow.DateHeader -> PenikDateHeader(label = row.label)
                         is ChatRow.Msg ->
