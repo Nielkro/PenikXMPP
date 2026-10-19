@@ -3891,11 +3891,17 @@ public class ConversationFragment extends XmppFragment
             final var contact = message.getContact();
             if (contact != null) {
                 final var account = contact.getAccount();
-                final Intent intent = new Intent(requireContext(), ContactDetailsActivity.class);
-                intent.setAction(ContactDetailsActivity.ACTION_VIEW_CONTACT);
-                intent.putExtra(EXTRA_ACCOUNT, account.getJid().asBareJid().toString());
-                intent.putExtra("contact", contact.getAddress().toString());
-                startActivity(intent);
+                if (contact.isSelf()) {
+                    final Intent intent = new Intent(requireContext(), EditAccountActivity.class);
+                    intent.putExtra("jid", account.getJid().asBareJid().toString());
+                    startActivity(intent);
+                } else {
+                    final Intent intent = new Intent(requireContext(), ContactDetailsActivity.class);
+                    intent.setAction(ContactDetailsActivity.ACTION_VIEW_CONTACT);
+                    intent.putExtra(EXTRA_ACCOUNT, account.getJid().asBareJid().toString());
+                    intent.putExtra("contact", contact.getAddress().toString());
+                    startActivity(intent);
+                }
                 return;
             }
         }
@@ -4753,6 +4759,17 @@ public class ConversationFragment extends XmppFragment
         if (received) {
             if (message.getConversation() instanceof Conversation c
                     && message.getConversation().getMode() == Conversation.MODE_MULTI) {
+                final var contact = message.getContact();
+                if (contact != null) {
+                    if (contact.isSelf()) {
+                        final Intent intent = new Intent(requireContext(), EditAccountActivity.class);
+                        intent.putExtra("jid", c.getAccount().getJid().asBareJid().toString());
+                        startActivity(intent);
+                    } else {
+                        requireXmppActivity().switchToContactDetails(contact, fingerprint);
+                    }
+                    return;
+                }
                 final var mucOptions = c.getMucOptions();
                 if (mucOptions.participating()) {
                     final var user = mucOptions.getUserOrStub(message);
