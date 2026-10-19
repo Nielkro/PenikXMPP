@@ -1576,7 +1576,7 @@ public class MultiUserChatManager extends AbstractManager {
                 .put("muc#roomconfig_persistentroom", true)
                 .put("muc#roomconfig_membersonly", false)
                 .put("muc#roomconfig_publicroom", true)
-                .put("muc#roomconfig_whois", "moderators")
+                .put("muc#roomconfig_whois", "anyone")
                 .put("muc#roomconfig_changesubject", false)
                 .put("muc#roomconfig_enablearchiving", true) // prosody
                 .put("mam", true) // ejabberd community

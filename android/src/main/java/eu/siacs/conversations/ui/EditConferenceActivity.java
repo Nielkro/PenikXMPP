@@ -134,10 +134,11 @@ public class EditConferenceActivity extends XmppActivity {
             changedAny = true;
         }
 
-        if (isOwner && changed(mucOptions.getRoomConfigName(), newName)) {
+        if (isOwner && (changed(mucOptions.getRoomConfigName(), newName) || !mucOptions.nonanonymous())) {
             final var options =
                     new ImmutableMap.Builder<String, Object>()
                             .put("muc#roomconfig_persistentroom", true)
+                            .put("muc#roomconfig_whois", "anyone")
                             .put("muc#roomconfig_roomname", Strings.nullToEmpty(newName))
                             .build();
             conversation.getAccount()

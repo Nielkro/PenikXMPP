@@ -1165,7 +1165,7 @@ public class Conversation extends AbstractEntity
         }
 
         public boolean acceptNonAnonymous() {
-            return valueOrDefault(this.acceptNonAnonymous, false);
+            return valueOrDefault(this.acceptNonAnonymous, true);
         }
 
         public boolean pinnedOnTop() {
