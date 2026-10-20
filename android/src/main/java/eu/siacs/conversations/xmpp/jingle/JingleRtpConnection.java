@@ -184,15 +184,19 @@ public class JingleRtpConnection extends AbstractJingleConnection
         final var jingle = jinglePacket.getExtension(Jingle.class);
         final var wrapper = jingle.getReason();
         final State previous = this.state;
-        Log.d(
-                Config.LOGTAG,
-                id.account.getJid().asBareJid()
-                        + ": received session terminate reason="
-                        + wrapper.reason()
-                        + "("
-                        + Strings.nullToEmpty(wrapper.text())
-                        + ") while in state "
-                        + previous);
+        if (wrapper != null) {
+            Log.d(
+                    Config.LOGTAG,
+                    id.account.getJid().asBareJid()
+                            + ": received session terminate reason="
+                            + wrapper.reason()
+                            + "("
+                            + Strings.nullToEmpty(wrapper.text())
+                            + ") while in state "
+                            + previous);
+        } else {
+            Log.d(Config.LOGTAG, id.account.getJid().asBareJid() + ": received session terminate");
+        }
         if (TERMINATED.contains(previous)) {
             Log.d(
                     Config.LOGTAG,
@@ -202,7 +206,12 @@ public class JingleRtpConnection extends AbstractJingleConnection
             return;
         }
         webRTCWrapper.close();
-        final State target = reasonToState(wrapper.reason());
+        final State target;
+        if (wrapper != null) {
+            target = reasonToState(wrapper.reason());
+        } else {
+            target = State.TERMINATED_APPLICATION_FAILURE;
+        }
         transitionOrThrow(target);
         if ((previous == State.PROPOSED || previous == State.SESSION_INITIALIZED)
                 && isResponder()) {
