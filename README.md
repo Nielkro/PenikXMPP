@@ -37,9 +37,9 @@ It combines the decentralized power and security of open standards with the poli
   - Server returns matching `{jid, phone_hash}` tuples; full hash comparison happens strictly on the local client device.
   - Plain phone numbers are never bulk-broadcasted: targeted `GET /api/v1/phone-directory/:jid` resolution is guarded by Bearer HMAC-SHA256 tokens and only fulfilled for mutual authorized contacts.
 - **Privacy & Encryption**
-  - Seamless end-to-end encryption (OMEMO) with zero configuration required.
-  - Automatic key acceptance and chat upgrade when communicating with encrypted peers.
-  - Strict TLS transport security and privacy by design.
+  - End-to-end encryption (OMEMO) is **disabled by default**: messages and files are stored on the server unencrypted and can be read by the server operator.
+  - OMEMO remains available as an optional per-chat setting, but it is not enabled out of the box.
+  - TLS protects traffic in transit only. Privacy by design is not claimed for stored history.
 - **High-Definition Voice & Video Calls**
   - Jingle / WebRTC peer-to-peer audio and video calling.
   - Telegram-style independent video upgrade: video streams toggle independently on each side without disrupting ongoing audio.
@@ -97,7 +97,7 @@ Comprehensive specifications:
 | :--- | :--- |
 | **UI Framework** | Jetpack Compose (Material 3, Navigation, Coil, Lottie), Compose BOM 2026.09 |
 | **Language & Toolchain** | Kotlin 2.4, Java 21, Android SDK (minSdk 26, compileSdk 37) |
-| **XMPP & Crypto Core** | Penik XMPP Core (`im.conversations.android.xmpp`), Conscrypt TLS, OMEMO |
+| **XMPP & Crypto Core** | Penik XMPP Core (`im.conversations.android.xmpp`), Conscrypt TLS, OMEMO (optional, off by default) |
 | **Binary Protocol** | PXMPP / FunXMPP (`eu.siacs.conversations.xmpp.fun.*`) |
 | **Media & Calls** | Jingle WebRTC RTP engine, ExoPlayer |
 | **Server Plugins** | Prosody Lua modules (`server/Modules/mod_funxmpp.lua`, `mod_stickers_auth.lua`) |
