@@ -866,46 +866,6 @@ function handleHashFAQ() {
 window.addEventListener('hashchange', handleHashFAQ);
 window.addEventListener('load', () => setTimeout(handleHashFAQ, 300));
 
-/* ---------- DYNAMIC APK VERSION & DOWNLOAD LINK ---------- */
-(function loadDynamicVersion() {
-  const primaryUrl = window.location.hostname === 'penik.ru' ? '/api/v1/version' : 'https://api.penik.ru/api/v1/version';
-  const fallbackUrl = 'https://api.penik.ru/api/v1/version';
-
-  function applyVersion(data) {
-    if (!data) return;
-    if (data.apk_url) {
-      const stableLink = document.getElementById('stableDownloadLink');
-      if (stableLink) {
-        stableLink.href = data.apk_url;
-        if (data.latest_android_version_name) {
-          stableLink.textContent = `Стабильная версия (v${data.latest_android_version_name})`;
-        }
-      }
-    }
-    if (data.latest_android_version_name) {
-      const meta = document.querySelector('.hero-meta');
-      if (meta) {
-        meta.textContent = `Android 8.0+ · v${data.latest_android_version_name} · бесплатно и без рекламы`;
-      }
-    }
-  }
-
-  fetch(primaryUrl)
-    .then(r => {
-      if (!r.ok) throw new Error('status ' + r.status);
-      return r.json();
-    })
-    .then(applyVersion)
-    .catch(() => {
-      if (primaryUrl !== fallbackUrl) {
-        fetch(fallbackUrl)
-          .then(r => r.ok ? r.json() : null)
-          .then(applyVersion)
-          .catch(() => {});
-      }
-    });
-})();
-
 </script>
 </body>
 </html>
