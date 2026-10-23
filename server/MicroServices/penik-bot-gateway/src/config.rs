@@ -26,4 +26,17 @@ pub struct Config {
 
     #[arg(long, env = "PROSODY_UPLOAD_JID", default_value = "share.snikket.penik.ru")]
     pub prosody_upload_jid: String,
+
+    #[arg(long, env = "BOT_GATEWAY_PUBLIC_URL")]
+    pub public_url: Option<String>,
+}
+
+impl Config {
+    pub fn get_public_url(&self) -> String {
+        if let Some(ref url) = self.public_url {
+            url.trim_end_matches('/').to_string()
+        } else {
+            format!("https://{}", self.component_domain)
+        }
+    }
 }

@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
     // 2. Initialize internal channels and shared state
     let (stanza_tx, stanza_rx) = mpsc::channel::<String>(2048);
 
-    let gateway_public_url = format!("http://{}:{}", config.host, config.port);
+    let gateway_public_url = config.get_public_url();
     let botfather = Arc::new(BotFatherEngine::new(pool.clone(), gateway_public_url));
     let dispatcher = Arc::new(WebhookDispatcher::new(
         pool.clone(),
