@@ -18,12 +18,12 @@ pub struct Config {
     #[arg(long, env = "PROSODY_PORT", default_value_t = 5347)]
     pub prosody_port: u16,
 
-    #[arg(long, env = "COMPONENT_DOMAIN", default_value = "bot.penik.chat")]
+    #[arg(long, env = "COMPONENT_DOMAIN", default_value = "bot.snikket.penik.ru")]
     pub component_domain: String,
 
-    #[arg(long, env = "COMPONENT_SECRET", default_value = "penik_component_secret")]
+    #[arg(long, env = "COMPONENT_SECRET", default_value = "penik_bot_gateway_secret_2026")]
     pub component_secret: String,
 
-    #[arg(long, env = "PROSODY_UPLOAD_JID", default_value = "upload.penik.chat")]
+    #[arg(long, env = "PROSODY_UPLOAD_JID", default_value = "share.snikket.penik.ru")]
     pub prosody_upload_jid: String,
 }

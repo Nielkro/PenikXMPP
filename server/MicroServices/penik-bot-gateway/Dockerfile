@@ -1,4 +1,4 @@
-FROM rust:1.85-slim as builder
+FROM rust:slim as builder
 WORKDIR /usr/src/penik-bot-gateway
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
@@ -18,9 +18,9 @@ ENV BOT_GATEWAY_PORT=8086
 ENV BOT_GATEWAY_DB_PATH=/data/bot_gateway.db
 ENV PROSODY_HOST=127.0.0.1
 ENV PROSODY_PORT=5347
-ENV COMPONENT_DOMAIN=bot.penik.chat
-ENV COMPONENT_SECRET=penik_component_secret
-ENV PROSODY_UPLOAD_JID=upload.penik.chat
+ENV COMPONENT_DOMAIN=bot.snikket.penik.ru
+ENV COMPONENT_SECRET=penik_bot_gateway_secret_2026
+ENV PROSODY_UPLOAD_JID=share.snikket.penik.ru
 
 EXPOSE 8086
 CMD ["/app/penik-bot-gateway"]
