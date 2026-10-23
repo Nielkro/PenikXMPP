@@ -98,6 +98,7 @@ public class Message extends AbstractEntity
     public static final String DELETED = "deleted";
     public static final String OCCUPANT_ID = "occupantId";
     public static final String REACTIONS = "reactions";
+    public static final String BOT_MARKUP = "bot_markup";
     public static final String ME_COMMAND = "/me ";
 
     public static final String ERROR_MESSAGE_CANCELLED = "eu.siacs.conversations.cancelled";
@@ -130,6 +131,7 @@ public class Message extends AbstractEntity
     private final Set<ReadByMarker> readByMarkers = new CopyOnWriteArraySet<>();
     private String occupantId;
     private Collection<Reaction> reactions = Collections.emptyList();
+    private BotMarkup botMarkup = null;
 
     private Boolean isGeoUri = null;
     private Boolean isEmojisOnly = null;
@@ -271,7 +273,7 @@ public class Message extends AbstractEntity
 
     public static Message fromCursor(
             final Context context, final Cursor cursor, final Conversation conversation) {
-        return new Message(
+        final var message = new Message(
                 conversation,
                 cursor.getString(cursor.getColumnIndexOrThrow(UUID)),
                 cursor.getString(cursor.getColumnIndexOrThrow(CONVERSATION)),
@@ -298,6 +300,11 @@ public class Message extends AbstractEntity
                 cursor.getString(cursor.getColumnIndexOrThrow(BODY_LANGUAGE)),
                 cursor.getString(cursor.getColumnIndexOrThrow(OCCUPANT_ID)),
                 Reaction.fromString(cursor.getString(cursor.getColumnIndexOrThrow(REACTIONS))));
+        final int botMarkupIndex = cursor.getColumnIndex(BOT_MARKUP);
+        if (botMarkupIndex != -1) {
+            message.setBotMarkup(BotMarkup.fromJson(cursor.getString(botMarkupIndex)));
+        }
+        return message;
     }
 
     protected static StorageLocation storageLocationFromCursor(
@@ -385,6 +392,11 @@ public class Message extends AbstractEntity
         values.put(BODY_LANGUAGE, bodyLanguage);
         values.put(OCCUPANT_ID, occupantId);
         values.put(REACTIONS, Reaction.toString(this.reactions));
+        if (this.botMarkup != null) {
+            values.put(BOT_MARKUP, this.botMarkup.toJson());
+        } else {
+            values.putNull(BOT_MARKUP);
+        }
         return values;
     }
 
@@ -583,6 +595,7 @@ public class Message extends AbstractEntity
 
     public boolean putEdited(final Message edit) {
         final var body = BodyVersion.of(edit);
+        this.botMarkup = edit.getBotMarkup();
         return putEdited(edit.getRemoteMsgId(), edit.getServerMsgId(), edit.getSentAt(), body);
     }
 
@@ -880,6 +893,14 @@ public class Message extends AbstractEntity
 
     public void setReactions(final Collection<Reaction> reactions) {
         this.reactions = reactions;
+    }
+
+    public BotMarkup getBotMarkup() {
+        return this.botMarkup;
+    }
+
+    public void setBotMarkup(final BotMarkup botMarkup) {
+        this.botMarkup = botMarkup;
     }
 
     public boolean hasMeCommand() {

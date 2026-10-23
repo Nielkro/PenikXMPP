@@ -783,9 +783,16 @@ public class Conversation extends AbstractEntity
         this.attributes.pinnedOnTop = value;
     }
 
+    public boolean isBot() {
+        return Config.isBot(this.getAddress());
+    }
+
     public int getNextEncryption() {
         final var contact = getContact();
         if (contact != null && contact.isSelf()) {
+            return Message.ENCRYPTION_NONE;
+        }
+        if (isBot()) {
             return Message.ENCRYPTION_NONE;
         }
         if (!eu.siacs.conversations.crypto.OmemoSetting.isAlways()

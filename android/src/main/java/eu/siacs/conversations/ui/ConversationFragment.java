@@ -107,6 +107,7 @@ import eu.siacs.conversations.databinding.FragmentConversationBinding;
 import eu.siacs.conversations.databinding.ItemMediaChoiceBinding;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Blockable;
+import eu.siacs.conversations.entities.BotMarkup;
 import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Conversational;
@@ -745,6 +746,21 @@ public class ConversationFragment extends XmppFragment
                         menuTogglePinned.setVisible(false);
                         if (menuArchive != null) {
                             menuArchive.setVisible(false);
+                        }
+                    } else if (c.isBot()) {
+                        menuInviteContact.setVisible(false);
+                        menuAudioCall.setVisible(false);
+                        menuOngoingCall.setVisible(false);
+                        menuVideoCall.setVisible(false);
+                        if (c.isMuted()) {
+                            menuMute.setVisible(false);
+                        } else {
+                            menuUnmute.setVisible(false);
+                        }
+                        if (c.isPinnedOnTop()) {
+                            menuTogglePinned.setTitle(R.string.remove_from_favorites);
+                        } else {
+                            menuTogglePinned.setTitle(R.string.add_to_favorites);
                         }
                     } else if (c.getMode() == Conversation.MODE_MULTI) {
                         menuInviteContact.setVisible(c.getMucOptions().canInvite());
@@ -1604,11 +1620,48 @@ public class ConversationFragment extends XmppFragment
                     public void onQuoteTargetNotFound(final String quote, final Message currentMsg) {
                         ConversationFragment.this.onPenikQuoteTargetNotFound(quote, currentMsg);
                     }
+
+                    @Override
+                    public void onBotButtonClick(final Message message, final BotMarkup.Button button) {
+                        ConversationFragment.this.onPenikBotButtonClick(message, button);
+                    }
                 });
 
         this.binding.textInput.setCustomInsertionActionModeCallback(
                 new EditMessageActionModeCallback(this.binding.textInput));
         return binding.getRoot();
+    }
+
+    private void onPenikBotButtonClick(final Message message, final BotMarkup.Button button) {
+        if (button.getUrl() != null && !button.getUrl().isEmpty()) {
+            try {
+                final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(button.getUrl()));
+                startActivity(browserIntent);
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), button.getUrl(), Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+        if (button.getData() != null && this.conversation != null) {
+            final Account account = this.conversation.getAccount();
+            final Jid to = message.getCounterpart() != null ? message.getCounterpart() : this.conversation.getAddress();
+            final String msgId = message.getRemoteMsgId() != null ? message.getRemoteMsgId() : message.getServerMsgId();
+
+            final var packet = new im.conversations.android.xmpp.model.stanza.Message();
+            packet.setTo(to);
+            packet.setType(im.conversations.android.xmpp.model.stanza.Message.Type.CHAT);
+            final var callback = packet.addChild("callback", "penik:bot:markup");
+            if (msgId != null) {
+                callback.setAttribute("msg_id", msgId);
+            }
+            callback.setAttribute("data", button.getData());
+            packet.addChild("no-store", "urn:xmpp:hints");
+
+            final XmppActivity activity = (XmppActivity) getActivity();
+            if (activity != null && activity.xmppConnectionService != null && account != null) {
+                activity.xmppConnectionService.sendMessagePacket(account, packet);
+            }
+        }
     }
 
     private void toggleAttachmentChoicesVisibility() {
@@ -4068,30 +4121,36 @@ public class ConversationFragment extends XmppFragment
         this.binding.toolbar.setTitle(c.getName());
         loadToolbarAvatar(c);
         if (c.getMode() == Conversation.MODE_SINGLE) {
-            final var account = conversation.getAccount();
-            final var connection = account != null ? account.getXmppConnection() : null;
-            final var state =
-                    connection != null
-                            ? connection
-                                    .getManager(ChatStateManager.class)
-                                    .getIncoming(conversation.getAddress())
-                            : null;
-            if (Objects.equals(state, Composing.class)) {
-                this.binding.toolbar.setSubtitle(R.string.typing);
+            if (c.isBot()) {
+                this.binding.toolbar.setSubtitle("бот");
                 this.binding.toolbar.setSubtitleTextColor(
                         ContextCompat.getColor(requireContext(), R.color.penik_accent));
             } else {
-                final var contact = conversation.getContact();
-                final String lastSeen =
-                        UIHelper.lastUserInteraction(
-                                requireContext(), contact.getLastUserInteraction());
-                this.binding.toolbar.setSubtitle(lastSeen);
-                if (getString(R.string.presence_online).equalsIgnoreCase(lastSeen)) {
+                final var account = conversation.getAccount();
+                final var connection = account != null ? account.getXmppConnection() : null;
+                final var state =
+                        connection != null
+                                ? connection
+                                        .getManager(ChatStateManager.class)
+                                        .getIncoming(conversation.getAddress())
+                                : null;
+                if (Objects.equals(state, Composing.class)) {
+                    this.binding.toolbar.setSubtitle(R.string.typing);
                     this.binding.toolbar.setSubtitleTextColor(
                             ContextCompat.getColor(requireContext(), R.color.penik_accent));
                 } else {
-                    this.binding.toolbar.setSubtitleTextColor(
-                            ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
+                    final var contact = conversation.getContact();
+                    final String lastSeen =
+                            UIHelper.lastUserInteraction(
+                                    requireContext(), contact.getLastUserInteraction());
+                    this.binding.toolbar.setSubtitle(lastSeen);
+                    if (getString(R.string.presence_online).equalsIgnoreCase(lastSeen)) {
+                        this.binding.toolbar.setSubtitleTextColor(
+                                ContextCompat.getColor(requireContext(), R.color.penik_accent));
+                    } else {
+                        this.binding.toolbar.setSubtitleTextColor(
+                                ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
+                    }
                 }
             }
         } else if (c.getMode() == Conversation.MODE_MULTI) {

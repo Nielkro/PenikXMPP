@@ -91,6 +91,14 @@ local TOKENS = {
     [144] = "groups.snikket.penik.ru",
     [145] = "share.snikket.penik.ru",
     [146] = "push.snikket.penik.ru",
+
+    -- Bot Platform (147..152)
+    [147] = "bot.snikket.penik.ru",
+    [148] = "markup",
+    [149] = "row",
+    [150] = "button",
+    [151] = "callback",
+    [152] = "penik:bot:markup",
 };
 
 local TOKEN_LOOKUP = {};

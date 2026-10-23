@@ -640,21 +640,32 @@ public class ContactDetailsActivity extends OmemoActivity
         }
         binding.toolbar.setTitle("");
         binding.detailsContactName.setText(contact.getDisplayName());
-
-        // Status / Last seen under avatar
-        final String lastSeen = UIHelper.lastUserInteraction(this, contact.getLastUserInteraction());
-        if (lastSeen != null && !lastSeen.isEmpty()) {
-            binding.detailsLastSeen.setText(lastSeen);
+        final boolean isBot = contact.isBot();
+        binding.badgeBot.setVisibility(isBot ? View.VISIBLE : View.GONE);
+        if (isBot) {
+            binding.btnActionCall.setVisibility(View.GONE);
+            binding.btnActionVideo.setVisibility(View.GONE);
+            binding.detailsLastSeen.setText("бот");
             binding.detailsLastSeen.setVisibility(View.VISIBLE);
-            if (getString(R.string.presence_online).equalsIgnoreCase(lastSeen)) {
-                binding.detailsLastSeen.setTextColor(getColor(R.color.penik_accent));
+            binding.detailsLastSeen.setTextColor(getColor(R.color.penik_accent));
+        } else {
+            binding.btnActionCall.setVisibility(View.VISIBLE);
+            binding.btnActionVideo.setVisibility(View.VISIBLE);
+            // Status / Last seen under avatar
+            final String lastSeen = UIHelper.lastUserInteraction(this, contact.getLastUserInteraction());
+            if (lastSeen != null && !lastSeen.isEmpty()) {
+                binding.detailsLastSeen.setText(lastSeen);
+                binding.detailsLastSeen.setVisibility(View.VISIBLE);
+                if (getString(R.string.presence_online).equalsIgnoreCase(lastSeen)) {
+                    binding.detailsLastSeen.setTextColor(getColor(R.color.penik_accent));
+                } else {
+                    binding.detailsLastSeen.setTextColor(getColor(R.color.penik_text_muted));
+                }
             } else {
+                binding.detailsLastSeen.setText("был(а) недавно");
+                binding.detailsLastSeen.setVisibility(View.VISIBLE);
                 binding.detailsLastSeen.setTextColor(getColor(R.color.penik_text_muted));
             }
-        } else {
-            binding.detailsLastSeen.setText("был(а) недавно");
-            binding.detailsLastSeen.setVisibility(View.VISIBLE);
-            binding.detailsLastSeen.setTextColor(getColor(R.color.penik_text_muted));
         }
 
         // Mute state

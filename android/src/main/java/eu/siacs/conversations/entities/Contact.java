@@ -469,6 +469,10 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
         return account.getJid().asBareJid().equals(jid.asBareJid());
     }
 
+    public boolean isBot() {
+        return Config.isBot(this.jid);
+    }
+
     boolean isOwnServer() {
         return account.getJid().getDomain().equals(jid.asBareJid());
     }

@@ -77,7 +77,15 @@ public final class FunTokens {
         "snikket.penik.ru",
         "groups.snikket.penik.ru",
         "share.snikket.penik.ru",
-        "push.snikket.penik.ru"
+        "push.snikket.penik.ru",
+
+        // Bot Platform (147..152)
+        "bot.snikket.penik.ru",
+        "markup",
+        "row",
+        "button",
+        "callback",
+        "penik:bot:markup"
     };
 
     private static final Map<String, Integer> TOKEN_LOOKUP;

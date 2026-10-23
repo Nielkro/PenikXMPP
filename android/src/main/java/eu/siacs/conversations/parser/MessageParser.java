@@ -591,6 +591,31 @@ public class MessageParser extends AbstractParser
                     message.setType(Message.TYPE_STICKER);
                 }
             }
+            final Element markupElement = packet.findChild("markup", "penik:bot:markup");
+            if (markupElement != null) {
+                final java.util.List<java.util.List<eu.siacs.conversations.entities.BotMarkup.Button>> rows = new java.util.ArrayList<>();
+                for (final Element rowEl : markupElement.getChildren()) {
+                    if ("row".equals(rowEl.getName())) {
+                        final java.util.List<eu.siacs.conversations.entities.BotMarkup.Button> rowButtons = new java.util.ArrayList<>();
+                        for (final Element btnEl : rowEl.getChildren()) {
+                            if ("button".equals(btnEl.getName())) {
+                                final String text = btnEl.getAttribute("text");
+                                final String data = btnEl.getAttribute("data");
+                                final String url = btnEl.getAttribute("url");
+                                if (text != null && !text.isEmpty()) {
+                                    rowButtons.add(new eu.siacs.conversations.entities.BotMarkup.Button(text, data, url));
+                                }
+                            }
+                        }
+                        if (!rowButtons.isEmpty()) {
+                            rows.add(rowButtons);
+                        }
+                    }
+                }
+                if (!rows.isEmpty()) {
+                    message.setBotMarkup(new eu.siacs.conversations.entities.BotMarkup(rows));
+                }
+            }
             message.markable = packet.hasExtension(Markable.class);
             if (conversationMultiMode) {
                 final var mucOptions =

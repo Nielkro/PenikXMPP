@@ -1188,14 +1188,33 @@ fun PenikConversationRow(
                 verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                        text = conversation.name.toString(),
-                        color = if (avatarBitmap != null) textPrimary else penikInitialsColor(conversation.name.toString()),
-                        fontWeight = if (conversation.isRead) FontWeight.Medium else FontWeight.Bold,
-                        fontSize = 16.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                            text = conversation.name.toString(),
+                            color = if (avatarBitmap != null) textPrimary else penikInitialsColor(conversation.name.toString()),
+                            fontWeight = if (conversation.isRead) FontWeight.Medium else FontWeight.Bold,
+                            fontSize = 16.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (conversation.isBot) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                                modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(accent.copy(alpha = 0.16f))
+                                        .padding(horizontal = 4.dp, vertical = 1.dp)
+                        ) {
+                            Text(
+                                    text = "BOT",
+                                    color = accent,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
                 if (preview != null && (preview.sender.isNotEmpty() || preview.text.isNotEmpty() || preview.iconRes != null)) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {

@@ -198,6 +198,7 @@ interface PenikChatListener {
     fun onSendRecentMedias(uris: @JvmSuppressWildcards List<Uri>) {}
     fun onSendSticker(sticker: eu.siacs.conversations.entities.Sticker) {}
     fun onQuoteTargetNotFound(quote: String, currentMsg: Message) {}
+    fun onBotButtonClick(message: Message, button: eu.siacs.conversations.entities.BotMarkup.Button) {}
 }
 
 object PenikChatActions {
@@ -940,6 +941,52 @@ fun PenikSwipeToReplyWrapper(
     }
 }
 
+@Composable
+fun PenikBotKeyboard(
+        markup: eu.siacs.conversations.entities.BotMarkup,
+        message: Message,
+        listener: PenikChatListener,
+        modifier: Modifier = Modifier
+) {
+    val rows = markup.rows
+    if (rows.isEmpty()) return
+
+    Column(
+            modifier = modifier.padding(top = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        for (row in rows) {
+            Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                for (btn in row) {
+                    Box(
+                            modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF2A85FF).copy(alpha = 0.16f))
+                                    .clickable {
+                                        listener.onBotButtonClick(message, btn)
+                                    }
+                                    .padding(vertical = 8.dp, horizontal = 8.dp),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                                text = btn.text,
+                                color = Color(0xFF2A85FF),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PenikMessageRow(
@@ -1019,88 +1066,103 @@ fun PenikMessageRow(
                     modifier = Modifier.weight(1f, fill = false),
                     contentAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
             ) {
-                val isStickerMsg = message.isSticker || (body.startsWith("{\"pack_id\":") && body.contains("\"sticker_id\":"))
-                if (isStickerMsg) {
-                    val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(activity) }
-                    val timeText = if (message.timeSent > 0) timeFormat.format(java.util.Date(message.timeSent)) else ""
-                    var showMenu by remember(message.uuid) { mutableStateOf(false) }
-                    val haptic = LocalHapticFeedback.current
-                    Box {
-                        PenikStickerBubble(
-                            message = message,
-                            isSentByMe = isSentByMe,
-                            timeText = timeText,
-                            onClick = {},
-                            onLongClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                showMenu = true
-                            }
-                        )
-                        if (showMenu) {
-                            PenikMessageMenu(
+                Column(
+                    modifier = Modifier.width(IntrinsicSize.Max),
+                    horizontalAlignment = if (isSentByMe) Alignment.End else Alignment.Start
+                ) {
+                    val isStickerMsg = message.isSticker || (body.startsWith("{\"pack_id\":") && body.contains("\"sticker_id\":"))
+                    if (isStickerMsg) {
+                        val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(activity) }
+                        val timeText = if (message.timeSent > 0) timeFormat.format(java.util.Date(message.timeSent)) else ""
+                        var showMenu by remember(message.uuid) { mutableStateOf(false) }
+                        val haptic = LocalHapticFeedback.current
+                        Box {
+                            PenikStickerBubble(
                                 message = message,
                                 isSentByMe = isSentByMe,
-                                onDismiss = { showMenu = false },
-                                onAction = {
-                                    showMenu = false
-                                    listener.onMessageAction(it, message)
+                                timeText = timeText,
+                                onClick = {},
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    showMenu = true
                                 }
                             )
+                            if (showMenu) {
+                                PenikMessageMenu(
+                                    message = message,
+                                    isSentByMe = isSentByMe,
+                                    onDismiss = { showMenu = false },
+                                    onAction = {
+                                        showMenu = false
+                                        listener.onMessageAction(it, message)
+                                    }
+                                )
+                            }
                         }
-                    }
-                } else if (message.type == Message.TYPE_TEXT) {
-                    val bareUrl = remember(body) { penikBareImageUrl(body) }
-                    if (bareUrl != null) {
-                        PenikUrlImageRow(
-                                url = bareUrl,
-                                message = message,
-                                status = status,
-                                isSentByMe = isSentByMe,
-                                listener = listener,
-                                revision = revision
-                        )
-                    } else {
-                        val bareVideoUrl = remember(body) { penikBareVideoUrl(body) }
-                        if (bareVideoUrl != null) {
-                            PenikAttachmentRow(
+                    } else if (message.type == Message.TYPE_TEXT) {
+                        val bareUrl = remember(body) { penikBareImageUrl(body) }
+                        if (bareUrl != null) {
+                            PenikUrlImageRow(
+                                    url = bareUrl,
                                     message = message,
                                     status = status,
-                                    activity = activity,
                                     isSentByMe = isSentByMe,
                                     listener = listener,
                                     revision = revision
                             )
                         } else {
-                            PenikTextBubble(
-                                    message = message,
-                                    status = status,
-                                    edited = edited,
-                                    activity = activity,
-                                    isMuc = isMuc,
-                                    listener = listener,
-                                    revision = revision
-                            )
+                            val bareVideoUrl = remember(body) { penikBareVideoUrl(body) }
+                            if (bareVideoUrl != null) {
+                                PenikAttachmentRow(
+                                        message = message,
+                                        status = status,
+                                        activity = activity,
+                                        isSentByMe = isSentByMe,
+                                        listener = listener,
+                                        revision = revision
+                                )
+                            } else {
+                                PenikTextBubble(
+                                        message = message,
+                                        status = status,
+                                        edited = edited,
+                                        activity = activity,
+                                        isMuc = isMuc,
+                                        listener = listener,
+                                        revision = revision
+                                )
+                            }
                         }
+                    } else if (message.isFileOrImage || message.isGeoUri || penikIsVideo(message)) {
+                        PenikAttachmentRow(
+                                message = message,
+                                status = status,
+                                activity = activity,
+                                isSentByMe = isSentByMe,
+                                listener = listener,
+                                revision = revision
+                        )
+                    } else {
+                        PenikTextBubble(
+                                message = message,
+                                status = status,
+                                edited = edited,
+                                activity = activity,
+                                isMuc = isMuc,
+                                listener = listener,
+                                revision = revision
+                        )
                     }
-                } else if (message.isFileOrImage || message.isGeoUri || penikIsVideo(message)) {
-                    PenikAttachmentRow(
-                            message = message,
-                            status = status,
-                            activity = activity,
-                            isSentByMe = isSentByMe,
-                            listener = listener,
-                            revision = revision
-                    )
-                } else {
-                    PenikTextBubble(
-                            message = message,
-                            status = status,
-                            edited = edited,
-                            activity = activity,
-                            isMuc = isMuc,
-                            listener = listener,
-                            revision = revision
-                    )
+
+                    val markup = message.botMarkup
+                    if (markup != null && !markup.isEmpty) {
+                        PenikBotKeyboard(
+                                markup = markup,
+                                message = message,
+                                listener = listener,
+                                modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
