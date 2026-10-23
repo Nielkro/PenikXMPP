@@ -1,4 +1,4 @@
-# План архитектуры и реализации платформы ботов в PenikXMPP (v2)
+# План архитектуры и реализации платформы ботов в PenikXMPP (v3)
 
 ## 1. Контекст и цели
 
@@ -34,7 +34,7 @@
 ```mermaid
 flowchart TD
     subgraph Mobile["Смартфон пользователя (Penik Android)"]
-        UI["Compose UI\n(Бейдж 'BOT', инлайн-кнопки, меню команд)"]
+        UI["Compose UI\n(Бейдж 'BOT', инлайн-кнопки, редактирование XEP-0308)"]
         FunXMPP_Client["PXMPP Codec\n(Бинарные TLV-фреймы)"]
         UI <--> FunXMPP_Client
     end
@@ -44,14 +44,15 @@ flowchart TD
             Router["Stanza Router"]
             ModFun["mod_funxmpp\n(Декодирование PXMPP)"]
             CompSubdomain["Component 'bot.penik.chat'\n(XEP-0114 External Component)"]
+            HttpUpload["mod_http_upload\n(http_upload_access = bot.penik.chat)"]
         end
 
         subgraph Gateway["Шлюз ботов (penik-bot-gateway на Rust)"]
             TokioSocket["Tokio TCP Client\n(127.0.0.1:5347)"]
-            BotDB[(SQLite WAL\nbots, tokens, webhooks, pending_updates)]
-            WebhookWorker["Webhook Dispatcher\n(SSRF-safe, Circuit Breaker)"]
-            LongPolling["Long Polling Manager\n(tokio::sync::Notify)"]
-            HttpServer["Axum REST API\n(/bot:token/...)"]
+            BotDB[(SQLite WAL\nbots, tokens, pending_updates)]
+            WebhookWorker["Webhook Dispatcher\n(Reqwest dns::Resolve SSRF/Rebinding-safe)"]
+            LongPolling["Long Polling Manager\n(offset ack, TTL-чистка, tokio Notify)"]
+            HttpServer["Axum REST API\n(/bot:token/sendMessage, editMessageText)"]
             PresenceHandler["Presence & vCard Engine\n(Авто-subscribed, онлайн, аватары)"]
             BotFather["Системный бот\nbotfather@bot.penik.chat"]
         end
@@ -77,19 +78,25 @@ flowchart TD
     BotServer == "HTTPS POST /bot<token>/sendMessage" ==> HttpServer
     LocalDev == "HTTPS GET /bot<token>/getUpdates" ==> HttpServer
     HttpServer --> TokioSocket
+    Gateway -. "XEP-0363 Slot Request" .-> HttpUpload
 ```
 
 ---
 
 ## 4. Детальное описание компонентов и безопасность
 
-### 4.1. Маршрутизация на стороне Prosody (XEP-0114)
-В `prosody.cfg.lua` регистрируется внешний компонент:
+### 4.1. Маршрутизация и права на стороне Prosody (XEP-0114 и XEP-0363)
+В `prosody.cfg.lua`:
 ```lua
+-- Компонент ботов:
 Component "bot.penik.chat"
     component_secret = "env_bot_gateway_secret"
+
+-- Разрешение внешнему компоненту запрашивать слоты загрузки медиа:
+http_upload_access = { "bot.penik.chat" }
 ```
 * **Принцип работы:** Prosody не хранит аккаунты ботов в своей базе. Любое входящее сообщение с JID вида `<любой_бот>@bot.penik.chat` автоматически передается по локальному TCP-соединению шлюзу ботов.
+* **Доступ к медиа (XEP-0363):** По умолчанию Prosody блокирует запросы слотов от внешних компонентов. Параметр `http_upload_access = { "bot.penik.chat" }` позволяет шлюзу прозрачно загружать картинки и файлы разработчиков через `mod_http_upload`.
 * **Пользовательский трафик (PXMPP):** Мобильный клиент Penik общается с сервером исключительно через оптимизированный бинарный протокол PXMPP (`mod_funxmpp`). Распаковка в станзу происходит внутри Prosody на лету — телефон пользователя тратит минимум батареи и трафика.
 
 ---
@@ -99,7 +106,7 @@ Component "bot.penik.chat"
 
 #### 1. XEP-0114 TCP Client & Presence/vCard Engine:
 * Подключается к `127.0.0.1:5347`, проходит рукопожатие с паролем `component_secret` и слушает XML-поток от Prosody.
-* **Обработка Presence:** Так как ботов нет в базе пользователей Prosody, шлюз перехватывает станзы присутствия:
+* **Обработка Presence:** Шлюз перехватывает станзы присутствия:
   - При получении `<presence type="subscribe"/>` от пользователя моментально отвечает `<presence type="subscribed"/>` и шлет ответный `<presence/>` (бот всегда взаимно подписан).
   - При подключении пользователя отправляет `<presence/>`, чтобы бот отображался в сети («В сети» / статус бота).
 * **Обработка профиля (vCard / PEP Avatar):**
@@ -115,7 +122,7 @@ CREATE TABLE bots (
     about TEXT,                         -- Описание профиля бота
     avatar_url TEXT,                    -- URL аватарки бота
     owner_jid TEXT NOT NULL,            -- e.g. "alice@penik.chat"
-    webhook_url TEXT,                   -- URL разработчика (если пустой -> режим getUpdates)
+    webhook_url TEXT,                   -- URL разработчика (если NULL -> режим getUpdates)
     fail_count INTEGER DEFAULT 0,       -- Счетчик последовательных ошибок вебхука
     is_active BOOLEAN DEFAULT 1,
     commands_json TEXT,                 -- Список команд для подсказок [/start, /help]
@@ -129,21 +136,45 @@ CREATE TABLE pending_updates (
     created_at INTEGER NOT NULL,
     FOREIGN KEY(bot_id) REFERENCES bots(id) ON DELETE CASCADE
 );
-CREATE INDEX idx_pending_bot ON pending_updates(bot_id);
+CREATE INDEX idx_pending_bot ON pending_updates(bot_id, id);
 ```
 
-#### 3. Защита от SSRF в Webhooks (Критично!):
-Поскольку шлюз работает на VPS 1 рядом с Prosody, свободный вызов вебхуков создает риск SSRF (атаки на локальные порты `127.0.0.1:5347`, `127.0.0.1:5280`, внутреннюю сеть).
-* **Реализация защиты в Reqwest:**
-  - На этапе `setWebhook` выполняется предварительная валидация схемы: **строго `https://`** (запрет `http://`, `file://`, `ftp://`).
-  - Перед выполнением запроса в `WebhookWorker` выполняется DNS-резолвинг домена через системный резолвер.
-  - Жёсткий фильтр IP-адресов целевого хоста. Запрос **немедленно блокируется**, если IP входит в любой из диапазонов:
-    - `127.0.0.0/8` (Loopback)
-    - `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (Private IPv4)
-    - `169.254.0.0/16` (Link-local)
-    - `::1`, `fc00::/7`, `fe80::/10` (IPv6 Loopback / ULA / Link-local)
-    - `0.0.0.0/8`
-  - Запрет на редиректы (`redirect::Policy::none()`), чтобы сервер разработчика не мог перенаправить шлюз на локальный IP.
+#### 3. Защита от SSRF и DNS Rebinding в Webhooks (Reqwest `dns::Resolve`):
+> [!IMPORTANT]
+> Если разрешать DNS отдельно от HTTP-клиента, возникает уязвимость **Time-of-Check to Time-of-Use (TOCTOU) / DNS Rebinding**: злоумышленник с доменом с TTL=0 при первой проверке отдаёт публичный IP, а в момент отправки запроса Reqwest резолвит `127.0.0.1`.
+
+**Архитектурное решение в коде шлюза:**
+1. Разрешаются **исключительно URL со схемой `https://`** (отклоняются `http://`, `file://`, `ftp://`).
+2. Запрещаются автоматические редиректы: `ClientBuilder::redirect(redirect::Policy::none())`.
+3. Реализуется кастомный DNS-резолвер через трейт `reqwest::dns::Resolve`:
+   ```rust
+   pub struct SafeDnsResolver;
+   impl reqwest::dns::Resolve for SafeDnsResolver {
+       fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {
+           Box::pin(async move {
+               let addrs = tokio::net::lookup_host((name.as_str(), 443)).await?;
+               let safe_addrs: Vec<SocketAddr> = addrs.filter(|addr| {
+                   let ip = addr.ip();
+                   !ip.is_loopback() 
+                   && !ip.is_unspecified()
+                   && match ip {
+                       IpAddr::V4(ipv4) => !ipv4.is_private() && !ipv4.is_link_local(),
+                       IpAddr::V6(ipv6) => !ipv6.is_unique_local() && !ipv6.is_unicast_link_local(),
+                   }
+               }).collect();
+
+               if safe_addrs.is_empty() {
+                   return Err(Box::new(std::io::Error::new(
+                       std::io::ErrorKind::PermissionDenied, 
+                       "Target IP is private or loopback (SSRF blocked)"
+                   )));
+               }
+               Ok(Box::new(safe_addrs.into_iter()) as reqwest::dns::Addrs)
+           })
+       }
+   }
+   ```
+4. Резолвер внедряется в `ClientBuilder::dns_resolver(Arc::new(SafeDnsResolver))`. В этом случае Reqwest соединяется **строго по проверенному IP-адресу**, одновременно сохраняя корректный SNI для валидации TLS-сертификата.
 
 #### 4. Защита от зависших вебхуков (Circuit Breaker):
 * Таймаут каждого HTTP POST вебхука — **5 секунд**.
@@ -153,17 +184,27 @@ CREATE INDEX idx_pending_bot ON pending_updates(bot_id);
   - Шлюз отправляет уведомление владельцу (`owner_jid`) от имени `botfather@bot.penik.chat`:
     > *«⚠️ Вебхук для бота @weather_bot недоступен (50 ошибок подряд) и был временно отключён. Проверьте ваш сервер и настройте setWebhook заново.»*
 
-#### 5. Поддержка Long Polling (`getUpdates`) для локальной разработки:
+#### 5. Long Polling (`getUpdates`) с подтверждением `offset` и TTL-чисткой:
 Если `webhook_url` не задан (NULL):
-* Входящие сообщения для бота сохраняются в таблицу `pending_updates`.
-* Метод `GET /bot<token>/getUpdates?offset=123&timeout=30`:
-  - Если в очереди есть сообщения — отдаются сразу.
-  - Если очередь пуста — Tokio-задача ожидает уведомления от `tokio::sync::Notify` до `timeout` секунд (Long Polling).
-* Это позволяет авторам ботов отлаживать код на домашнем компьютере за NAT без `ngrok`, белых IP и SSL.
+* Входящие сообщения сохраняются в таблицу `pending_updates`.
+* При вызове `GET /bot<token>/getUpdates?offset=105&timeout=30`:
+  1. **Подтверждение и очистка через offset:**
+     Шлюз сразу выполняет:
+     ```sql
+     DELETE FROM pending_updates WHERE bot_id = ? AND id < 105;
+     ```
+  2. Запрашивает оставшиеся записи с `id >= 105`.
+  3. Если записей нет — ожидает поступления новых событий через `tokio::sync::Notify` до `timeout` секунд.
+* **Фоновая очистка от заброшенных ботов (TTL Cleaner):**
+  Фоновая Tokio-задача (запуск каждый час):
+  ```sql
+  DELETE FROM pending_updates WHERE created_at < unixepoch() - 86400;
+  ```
+  Также действует лимит: не более 1000 записей на одного бота (старые вытесняются по принципу FIFO).
 
 #### 6. Работа с медиа (`sendPhoto`, `sendDocument`):
-* **Вариант 1 (По ссылке):** Автор бота передает URL. Шлюз упаковывает URL в станзу через XEP-0066 OOB (`<x xmlns="jabber:x:oob"><url>...</url></x>`).
-* **Вариант 2 (Бинарная загрузка multipart/form-data):**
+* **По ссылке:** Автор бота передает URL. Шлюз упаковывает URL в станзу через XEP-0066 OOB (`<x xmlns="jabber:x:oob"><url>...</url></x>`).
+* **Бинарная загрузка (`multipart/form-data`):**
   - Шлюз принимает файл от разработчика.
   - Запрашивает HTTP Upload слот у Prosody (XEP-0363) через локальный компонент `http_upload`.
   - Загружает файл по полученному PUT URL и возвращает клиенту URL скачивания в OOB-теге.
@@ -209,7 +250,24 @@ CREATE INDEX idx_pending_bot ON pending_updates(bot_id);
 </message>
 ```
 
-### 5.4. Токенизация `penik:bot:markup` в бинарном PXMPP
+### 5.4. Редактирование сообщений на месте (`editMessageText` + XEP-0308)
+Когда пользователь нажимает кнопку, боту часто нужно не присылать новое сообщение, а обновить текущее (например, заменить текст и перерисовать кнопки).
+* Шлюз предоставляет эндпоинт `POST /bot<token>/editMessageText` с телом `{ "chat_id": "...", "message_id": "msg123", "text": "...", "reply_markup": ... }`.
+* Шлюз формирует стандартную XMPP-станзу с заменой по спецификации **XEP-0308 (Last Message Correction)**, которая нативно поддерживается ядром Penik (`urn:xmpp:message-correct:0`):
+```xml
+<message type="chat" to="alice@penik.chat" from="weather_bot@bot.penik.chat" id="msg124">
+  <body>Погода в Москве: +15°C, солнечно</body>
+  <replace id="msg123" xmlns="urn:xmpp:message-correct:0"/>
+  <markup xmlns="penik:bot:markup">
+    <row>
+      <button text="Назад" data="back_to_menu"/>
+    </row>
+  </markup>
+</message>
+```
+* В `PenikChatRoom.kt` пузырь сообщения `msg123` плавно обновляет свой текст и набор кнопок без дёргания скролла и без дублирования сообщений в истории.
+
+### 5.5. Токенизация `penik:bot:markup` в бинарном PXMPP
 Чтобы новые теги не ломали и не замедляли бинарный протокол PXMPP:
 - В `server/Modules/mod_funxmpp.lua` и Android `FunTokens` расширяется таблица словаря токенов:
   - `markup` -> токен
@@ -217,6 +275,7 @@ CREATE INDEX idx_pending_bot ON pending_updates(bot_id);
   - `button` -> токен
   - `callback` -> токен
   - `penik:bot:markup` -> токен пространства имён
+- Тег `urn:xmpp:message-correct:0` уже токенизирован в существующем словаре FunTokens под индексом 63.
 - Нераспознанные атрибуты и кастомные `data` передаются как строковые литералы без потери данных.
 
 ---
@@ -224,16 +283,17 @@ CREATE INDEX idx_pending_bot ON pending_updates(bot_id);
 ## 6. Этапы реализации (Roadmap)
 
 ### Этап 1: Базовый шлюз и XEP-0114 на VPS 1
-- [ ] Настройка `Component "bot.penik.chat"` в конфиге Prosody.
+- [ ] Настройка `Component "bot.penik.chat"` и `http_upload_access = { "bot.penik.chat" }` в Prosody.
 - [ ] Создание каркаса Rust-микросервиса `server/MicroServices/penik-bot-gateway`.
 - [ ] Реализация устойчивого Tokio TCP-клиента к XEP-0114 с автоматическим реконнектом при сбоях.
 - [ ] Обработка `<presence type="subscribe"/>` (авто-ответ `subscribed`) и vCard-запросов (аватары и имена ботов).
-- [ ] Таблица SQLite для хранения ботов, токенов, вебхуков и буфера `pending_updates`.
+- [ ] Таблицы SQLite: `bots`, `pending_updates` с индексами.
 
-### Этап 2: REST API, SSRF-безопасный Webhook Dispatcher и Long Polling
-- [ ] Реализация эндпоинтов Axum: `/bot<token>/getMe`, `/bot<token>/sendMessage`, `/bot<token>/setWebhook`, `/bot<token>/deleteWebhook`.
-- [ ] Реализация `GET /bot<token>/getUpdates` (Long Polling через `tokio::sync::Notify`) для удобной локальной разработки.
-- [ ] Асинхронный `WebhookWorker` в Reqwest с блокировкой приватных IP-диапазонов (защита от SSRF).
+### Этап 2: REST API, SSRF-safe Webhook Dispatcher и Long Polling
+- [ ] Реализация эндпоинтов Axum: `/bot<token>/getMe`, `/bot<token>/sendMessage`, `/bot<token>/editMessageText`, `/bot<token>/setWebhook`, `/bot<token>/deleteWebhook`.
+- [ ] Реализация `GET /bot<token>/getUpdates` с подтверждением `offset`, удалением старых записей и `tokio::sync::Notify`.
+- [ ] Фоновый воркер очистки `pending_updates` по TTL (старше 24 часов / лимит 1000 записей).
+- [ ] Реализация `SafeDnsResolver` через `reqwest::dns::Resolve` (защита от SSRF и DNS Rebinding / TOCTOU).
 - [ ] Circuit breaker для упавших серверов разработчиков (заморозка после 50 ошибок подряд).
 - [ ] Поддержка медиа: отправка по URL и multipart/form-data загрузка через XEP-0363.
 
@@ -246,4 +306,5 @@ CREATE INDEX idx_pending_bot ON pending_updates(bot_id);
 - [ ] Добавление бейджа `BOT` в списках диалогов (`PenikChatsList.kt`) и профиле контакта (`ContactDetailsActivity.java`).
 - [ ] Автоматическое отключение OMEMO по умолчанию для доменов `@bot.penik.chat`.
 - [ ] Рендеринг Compose-кнопок под сообщениями в `PenikChatRoom.kt`.
+- [ ] Обработка XEP-0308 Last Message Correction для обновления текста и кнопок в карточке сообщения.
 - [ ] Отправка станции `<callback msg_id="..." data="..."><no-store/></callback>` при клике на кнопки.
