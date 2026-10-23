@@ -50,6 +50,7 @@ pub struct RawStanza {
     pub callback_data: Option<String>,
     pub is_vcard: bool,
     pub is_disco_info: bool,
+    pub is_disco_items: bool,
     pub is_ping: bool,
 }
 
@@ -69,6 +70,7 @@ pub fn parse_stanza(xml: &str) -> Option<RawStanza> {
         callback_data: None,
         is_vcard: false,
         is_disco_info: false,
+        is_disco_items: false,
         is_ping: false,
     };
 
@@ -100,10 +102,12 @@ pub fn parse_stanza(xml: &str) -> Option<RawStanza> {
                         "vCard" => stanza.is_vcard = true,
                         "query" => {
                             for attr in e.attributes().flatten() {
-                                if attr.key.as_ref() == b"xmlns"
-                                    && attr.value.as_ref() == b"http://jabber.org/protocol/disco#info"
-                                {
-                                    stanza.is_disco_info = true;
+                                if attr.key.as_ref() == b"xmlns" {
+                                    if attr.value.as_ref() == b"http://jabber.org/protocol/disco#info" {
+                                        stanza.is_disco_info = true;
+                                    } else if attr.value.as_ref() == b"http://jabber.org/protocol/disco#items" {
+                                        stanza.is_disco_items = true;
+                                    }
                                 }
                             }
                         }
@@ -138,6 +142,17 @@ pub fn parse_stanza(xml: &str) -> Option<RawStanza> {
                                     "msg_id" => stanza.callback_msg_id = Some(val),
                                     "data" => stanza.callback_data = Some(val),
                                     _ => {}
+                                }
+                            }
+                        }
+                        "query" => {
+                            for attr in e.attributes().flatten() {
+                                if attr.key.as_ref() == b"xmlns" {
+                                    if attr.value.as_ref() == b"http://jabber.org/protocol/disco#info" {
+                                        stanza.is_disco_info = true;
+                                    } else if attr.value.as_ref() == b"http://jabber.org/protocol/disco#items" {
+                                        stanza.is_disco_items = true;
+                                    }
                                 }
                             }
                         }
@@ -441,13 +456,13 @@ async fn handle_incoming_stanza(
     }
 
     // Case 2: Ping or disco to component domain itself
-    if to_jid == component_domain {
-        if raw.tag == "iq" && raw.stanza_type == "get" {
+    if to_jid == component_domain || to_jid.is_empty() {
+        if raw.tag == "iq" && (raw.stanza_type == "get" || raw.stanza_type == "set") {
             if raw.is_ping {
                 let resp = format!(
                     "<iq type='result' to='{}' from='{}' id='{}'/>",
                     xml_escape(&raw.from),
-                    xml_escape(to_jid),
+                    xml_escape(component_domain),
                     xml_escape(&raw.id)
                 );
                 let _ = outbound.send(resp).await;
@@ -457,12 +472,31 @@ async fn handle_incoming_stanza(
                     <query xmlns='http://jabber.org/protocol/disco#info'>\
                         <identity category='component' type='generic' name='Penik Bot Gateway'/>\
                         <feature var='http://jabber.org/protocol/disco#info'/>\
+                        <feature var='http://jabber.org/protocol/disco#items'/>\
                         <feature var='urn:xmpp:ping'/>\
                         <feature var='penik:bot:markup'/>\
                     </query>\
                     </iq>",
                     xml_escape(&raw.from),
-                    xml_escape(to_jid),
+                    xml_escape(component_domain),
+                    xml_escape(&raw.id)
+                );
+                let _ = outbound.send(resp).await;
+            } else if raw.is_disco_items {
+                let resp = format!(
+                    "<iq type='result' to='{}' from='{}' id='{}'><query xmlns='http://jabber.org/protocol/disco#items'/></iq>",
+                    xml_escape(&raw.from),
+                    xml_escape(component_domain),
+                    xml_escape(&raw.id)
+                );
+                let _ = outbound.send(resp).await;
+            } else {
+                let resp = format!(
+                    "<iq type='error' to='{}' from='{}' id='{}'>\
+                    <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
+                    </iq>",
+                    xml_escape(&raw.from),
+                    xml_escape(component_domain),
                     xml_escape(&raw.id)
                 );
                 let _ = outbound.send(resp).await;
@@ -483,7 +517,7 @@ async fn handle_incoming_stanza(
     let bot = match bot_opt {
         Some(b) => b,
         None => {
-            // Unknown bot: reply service-unavailable on chat message
+            // Unknown bot: reply service-unavailable so sender does not time out
             if raw.tag == "message" && (raw.stanza_type == "chat" || raw.stanza_type.is_empty()) {
                 let err_msg = format!(
                     "<message type='error' to='{}' from='{}' id='{}'>\
@@ -494,6 +528,16 @@ async fn handle_incoming_stanza(
                     xml_escape(&raw.id)
                 );
                 let _ = outbound.send(err_msg).await;
+            } else if raw.tag == "iq" && (raw.stanza_type == "get" || raw.stanza_type == "set") {
+                let err_iq = format!(
+                    "<iq type='error' to='{}' from='{}' id='{}'>\
+                    <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
+                    </iq>",
+                    xml_escape(&raw.from),
+                    xml_escape(&raw.to),
+                    xml_escape(&raw.id)
+                );
+                let _ = outbound.send(err_iq).await;
             }
             return;
         }
@@ -559,6 +603,7 @@ async fn handle_incoming_stanza(
                         <query xmlns='http://jabber.org/protocol/disco#info'>\
                             <identity category='client' type='bot' name='{}'/>\
                             <feature var='http://jabber.org/protocol/disco#info'/>\
+                            <feature var='http://jabber.org/protocol/disco#items'/>\
                             <feature var='vcard-temp'/>\
                             <feature var='urn:xmpp:ping'/>\
                             <feature var='penik:bot:markup'/>\
@@ -571,7 +616,35 @@ async fn handle_incoming_stanza(
                         xml_escape(&bot.title)
                     );
                     let _ = outbound.send(resp).await;
+                } else if raw.is_disco_items {
+                    let resp = format!(
+                        "<iq type='result' to='{}' from='{}' id='{}'><query xmlns='http://jabber.org/protocol/disco#items'/></iq>",
+                        xml_escape(&raw.from),
+                        bot_full_jid,
+                        xml_escape(&raw.id)
+                    );
+                    let _ = outbound.send(resp).await;
+                } else {
+                    let resp = format!(
+                        "<iq type='error' to='{}' from='{}' id='{}'>\
+                        <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
+                        </iq>",
+                        xml_escape(&raw.from),
+                        bot_full_jid,
+                        xml_escape(&raw.id)
+                    );
+                    let _ = outbound.send(resp).await;
                 }
+            } else if raw.stanza_type == "set" {
+                let resp = format!(
+                    "<iq type='error' to='{}' from='{}' id='{}'>\
+                    <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
+                    </iq>",
+                    xml_escape(&raw.from),
+                    bot_full_jid,
+                    xml_escape(&raw.id)
+                );
+                let _ = outbound.send(resp).await;
             }
         }
         "message" => {
@@ -692,6 +765,7 @@ async fn handle_botfather_stanza(
                         <query xmlns='http://jabber.org/protocol/disco#info'>\
                             <identity category='client' type='bot' name='BotFather'/>\
                             <feature var='http://jabber.org/protocol/disco#info'/>\
+                            <feature var='http://jabber.org/protocol/disco#items'/>\
                             <feature var='vcard-temp'/>\
                             <feature var='urn:xmpp:ping'/>\
                         </query>\
@@ -701,7 +775,35 @@ async fn handle_botfather_stanza(
                         xml_escape(&raw.id)
                     );
                     let _ = outbound.send(resp).await;
+                } else if raw.is_disco_items {
+                    let resp = format!(
+                        "<iq type='result' to='{}' from='{}' id='{}'><query xmlns='http://jabber.org/protocol/disco#items'/></iq>",
+                        xml_escape(&raw.from),
+                        bf_jid,
+                        xml_escape(&raw.id)
+                    );
+                    let _ = outbound.send(resp).await;
+                } else {
+                    let resp = format!(
+                        "<iq type='error' to='{}' from='{}' id='{}'>\
+                        <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
+                        </iq>",
+                        xml_escape(&raw.from),
+                        bf_jid,
+                        xml_escape(&raw.id)
+                    );
+                    let _ = outbound.send(resp).await;
                 }
+            } else if raw.stanza_type == "set" {
+                let resp = format!(
+                    "<iq type='error' to='{}' from='{}' id='{}'>\
+                    <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
+                    </iq>",
+                    xml_escape(&raw.from),
+                    bf_jid,
+                    xml_escape(&raw.id)
+                );
+                let _ = outbound.send(resp).await;
             }
         }
         "message" => {
