@@ -6,7 +6,7 @@ use reqwest::redirect::Policy;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{mpsc, Notify};
+use tokio::sync::{broadcast, mpsc, Notify};
 use tracing::{error, warn};
 
 pub struct WebhookDispatcher {
@@ -15,6 +15,7 @@ pub struct WebhookDispatcher {
     stanza_tx: mpsc::Sender<String>,
     component_domain: String,
     notifiers: Arc<DashMap<i64, Arc<Notify>>>,
+    ws_senders: Arc<DashMap<i64, broadcast::Sender<Update>>>,
 }
 
 impl WebhookDispatcher {
@@ -36,6 +37,7 @@ impl WebhookDispatcher {
             stanza_tx,
             component_domain,
             notifiers: Arc::new(DashMap::new()),
+            ws_senders: Arc::new(DashMap::new()),
         }
     }
 
@@ -46,8 +48,25 @@ impl WebhookDispatcher {
             .clone()
     }
 
+    pub fn get_ws_sender(&self, bot_id: i64) -> broadcast::Sender<Update> {
+        self.ws_senders
+            .entry(bot_id)
+            .or_insert_with(|| {
+                let (tx, _) = broadcast::channel(256);
+                tx
+            })
+            .clone()
+    }
+
     pub async fn dispatch_update(&self, bot: &BotRecord, update: Update) -> anyhow::Result<()> {
         let json_str = serde_json::to_string(&update)?;
+
+        // 1. Real-time WebSocket streaming to connected clients
+        if let Some(ws_tx) = self.ws_senders.get(&bot.id) {
+            if ws_tx.receiver_count() > 0 {
+                let _ = ws_tx.send(update.clone());
+            }
+        }
 
         if let Some(ref webhook_url) = bot.webhook_url {
             let client = self.client.clone();

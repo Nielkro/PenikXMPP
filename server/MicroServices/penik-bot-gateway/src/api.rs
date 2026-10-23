@@ -6,12 +6,16 @@ use crate::models::{
 use crate::webhook::WebhookDispatcher;
 use crate::xmpp::{generate_jid_hash_id, xml_escape};
 use axum::{
-    extract::{Path, Query, State},
+    extract::{
+        ws::{Message as WsMessage, WebSocket, WebSocketUpgrade},
+        Path, Query, State,
+    },
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
     Json, Router,
 };
+use futures_util::{SinkExt, StreamExt};
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use std::time::Duration;
@@ -37,6 +41,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/bot:token/getUpdates", get(get_updates_get).post(get_updates_post))
         .route("/bot:token/sendPhoto", post(send_photo))
         .route("/bot:token/sendDocument", post(send_document))
+        .route("/bot:token/ws", get(ws_handler))
         .with_state(state)
 }
 
@@ -95,6 +100,122 @@ fn build_markup_xml(markup: &InlineKeyboardMarkup) -> String {
     xml
 }
 
+pub async fn do_send_message(
+    state: &AppState,
+    bot: &BotRecord,
+    chat_id: String,
+    text: String,
+    reply_markup: Option<InlineKeyboardMarkup>,
+) -> Result<Message, String> {
+    let msg_id = format!("msg_{}", Uuid::new_v4().simple());
+    let bot_jid = format!("{}@{}", bot.username, state.component_domain);
+
+    let mut markup_xml = String::new();
+    if let Some(ref mk) = reply_markup {
+        markup_xml = build_markup_xml(mk);
+    }
+
+    let stanza = format!(
+        "<message type='chat' to='{}' from='{}' id='{}'>\
+        <body>{}</body>\
+        {}\
+        </message>",
+        xml_escape(&chat_id),
+        bot_jid,
+        msg_id,
+        xml_escape(&text),
+        markup_xml
+    );
+
+    state
+        .stanza_tx
+        .send(stanza)
+        .await
+        .map_err(|e| format!("Failed to deliver stanza: {}", e))?;
+
+    let result = Message {
+        message_id: msg_id,
+        from: Some(User {
+            id: bot.id,
+            is_bot: true,
+            first_name: bot.title.clone(),
+            username: Some(bot.username.clone()),
+        }),
+        chat: Chat {
+            id: generate_jid_hash_id(&chat_id),
+            r#type: "private".to_string(),
+            username: Some(chat_id),
+            first_name: None,
+            title: None,
+        },
+        date: db::current_timestamp(),
+        text: Some(text),
+        reply_markup,
+    };
+
+    Ok(result)
+}
+
+pub async fn do_edit_message_text(
+    state: &AppState,
+    bot: &BotRecord,
+    chat_id: String,
+    message_id: String,
+    text: String,
+    reply_markup: Option<InlineKeyboardMarkup>,
+) -> Result<Message, String> {
+    let new_msg_id = format!("edit_{}", Uuid::new_v4().simple());
+    let bot_jid = format!("{}@{}", bot.username, state.component_domain);
+
+    let mut markup_xml = String::new();
+    if let Some(ref mk) = reply_markup {
+        markup_xml = build_markup_xml(mk);
+    }
+
+    // XEP-0308 Last Message Correction
+    let stanza = format!(
+        "<message type='chat' to='{}' from='{}' id='{}'>\
+        <body>{}</body>\
+        <replace id='{}' xmlns='urn:xmpp:message-correct:0'/>\
+        {}\
+        </message>",
+        xml_escape(&chat_id),
+        bot_jid,
+        new_msg_id,
+        xml_escape(&text),
+        xml_escape(&message_id),
+        markup_xml
+    );
+
+    state
+        .stanza_tx
+        .send(stanza)
+        .await
+        .map_err(|e| format!("Failed to deliver stanza: {}", e))?;
+
+    let result = Message {
+        message_id,
+        from: Some(User {
+            id: bot.id,
+            is_bot: true,
+            first_name: bot.title.clone(),
+            username: Some(bot.username.clone()),
+        }),
+        chat: Chat {
+            id: generate_jid_hash_id(&chat_id),
+            r#type: "private".to_string(),
+            username: Some(chat_id),
+            first_name: None,
+            title: None,
+        },
+        date: db::current_timestamp(),
+        text: Some(text),
+        reply_markup,
+    };
+
+    Ok(result)
+}
+
 async fn send_message(
     State(state): State<AppState>,
     Path(token): Path<String>,
@@ -105,51 +226,10 @@ async fn send_message(
         Err(resp) => return resp,
     };
 
-    let msg_id = format!("msg_{}", Uuid::new_v4().simple());
-    let bot_jid = format!("{}@{}", bot.username, state.component_domain);
-
-    let mut markup_xml = String::new();
-    if let Some(ref mk) = payload.reply_markup {
-        markup_xml = build_markup_xml(mk);
+    match do_send_message(&state, &bot, payload.chat_id, payload.text, payload.reply_markup).await {
+        Ok(msg) => (StatusCode::OK, Json(ApiResponse::success(msg))).into_response(),
+        Err(e) => api_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
-
-    let stanza = format!(
-        "<message type='chat' to='{}' from='{}' id='{}'>\
-        <body>{}</body>\
-        {}\
-        </message>",
-        xml_escape(&payload.chat_id),
-        bot_jid,
-        msg_id,
-        xml_escape(&payload.text),
-        markup_xml
-    );
-
-    if let Err(e) = state.stanza_tx.send(stanza).await {
-        return api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to deliver stanza: {}", e));
-    }
-
-    let result = Message {
-        message_id: msg_id,
-        from: Some(User {
-            id: bot.id,
-            is_bot: true,
-            first_name: bot.title,
-            username: Some(bot.username),
-        }),
-        chat: Chat {
-            id: generate_jid_hash_id(&payload.chat_id),
-            r#type: "private".to_string(),
-            username: Some(payload.chat_id.clone()),
-            first_name: None,
-            title: None,
-        },
-        date: db::current_timestamp(),
-        text: Some(payload.text),
-        reply_markup: payload.reply_markup,
-    };
-
-    (StatusCode::OK, Json(ApiResponse::success(result))).into_response()
 }
 
 async fn edit_message_text(
@@ -162,54 +242,10 @@ async fn edit_message_text(
         Err(resp) => return resp,
     };
 
-    let new_msg_id = format!("edit_{}", Uuid::new_v4().simple());
-    let bot_jid = format!("{}@{}", bot.username, state.component_domain);
-
-    let mut markup_xml = String::new();
-    if let Some(ref mk) = payload.reply_markup {
-        markup_xml = build_markup_xml(mk);
+    match do_edit_message_text(&state, &bot, payload.chat_id, payload.message_id, payload.text, payload.reply_markup).await {
+        Ok(msg) => (StatusCode::OK, Json(ApiResponse::success(msg))).into_response(),
+        Err(e) => api_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
-
-    // XEP-0308 Last Message Correction
-    let stanza = format!(
-        "<message type='chat' to='{}' from='{}' id='{}'>\
-        <body>{}</body>\
-        <replace id='{}' xmlns='urn:xmpp:message-correct:0'/>\
-        {}\
-        </message>",
-        xml_escape(&payload.chat_id),
-        bot_jid,
-        new_msg_id,
-        xml_escape(&payload.text),
-        xml_escape(&payload.message_id),
-        markup_xml
-    );
-
-    if let Err(e) = state.stanza_tx.send(stanza).await {
-        return api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to deliver stanza: {}", e));
-    }
-
-    let result = Message {
-        message_id: payload.message_id,
-        from: Some(User {
-            id: bot.id,
-            is_bot: true,
-            first_name: bot.title,
-            username: Some(bot.username),
-        }),
-        chat: Chat {
-            id: generate_jid_hash_id(&payload.chat_id),
-            r#type: "private".to_string(),
-            username: Some(payload.chat_id.clone()),
-            first_name: None,
-            title: None,
-        },
-        date: db::current_timestamp(),
-        text: Some(payload.text),
-        reply_markup: payload.reply_markup,
-    };
-
-    (StatusCode::OK, Json(ApiResponse::success(result))).into_response()
 }
 
 async fn set_webhook(
@@ -353,6 +389,112 @@ async fn handle_get_updates(
     (StatusCode::OK, Json(ApiResponse::success(updates))).into_response()
 }
 
+pub async fn do_send_photo(
+    state: &AppState,
+    bot: &BotRecord,
+    chat_id: String,
+    photo: String,
+    caption: Option<String>,
+) -> Result<Message, String> {
+    let msg_id = format!("photo_{}", Uuid::new_v4().simple());
+    let bot_jid = format!("{}@{}", bot.username, state.component_domain);
+
+    let caption_text = caption.as_deref().unwrap_or("");
+    let stanza = format!(
+        "<message type='chat' to='{}' from='{}' id='{}'>\
+        <body>{} {}</body>\
+        <x xmlns='jabber:x:oob'><url>{}</url></x>\
+        </message>",
+        xml_escape(&chat_id),
+        bot_jid,
+        msg_id,
+        xml_escape(caption_text),
+        xml_escape(&photo),
+        xml_escape(&photo)
+    );
+
+    state
+        .stanza_tx
+        .send(stanza)
+        .await
+        .map_err(|e| format!("Delivery failed: {}", e))?;
+
+    let result = Message {
+        message_id: msg_id,
+        from: Some(User {
+            id: bot.id,
+            is_bot: true,
+            first_name: bot.title.clone(),
+            username: Some(bot.username.clone()),
+        }),
+        chat: Chat {
+            id: generate_jid_hash_id(&chat_id),
+            r#type: "private".to_string(),
+            username: Some(chat_id),
+            first_name: None,
+            title: None,
+        },
+        date: db::current_timestamp(),
+        text: Some(caption_text.to_string()),
+        reply_markup: None,
+    };
+
+    Ok(result)
+}
+
+pub async fn do_send_document(
+    state: &AppState,
+    bot: &BotRecord,
+    chat_id: String,
+    document: String,
+    caption: Option<String>,
+) -> Result<Message, String> {
+    let msg_id = format!("doc_{}", Uuid::new_v4().simple());
+    let bot_jid = format!("{}@{}", bot.username, state.component_domain);
+
+    let caption_text = caption.as_deref().unwrap_or("");
+    let stanza = format!(
+        "<message type='chat' to='{}' from='{}' id='{}'>\
+        <body>{} {}</body>\
+        <x xmlns='jabber:x:oob'><url>{}</url></x>\
+        </message>",
+        xml_escape(&chat_id),
+        bot_jid,
+        msg_id,
+        xml_escape(caption_text),
+        xml_escape(&document),
+        xml_escape(&document)
+    );
+
+    state
+        .stanza_tx
+        .send(stanza)
+        .await
+        .map_err(|e| format!("Delivery failed: {}", e))?;
+
+    let result = Message {
+        message_id: msg_id,
+        from: Some(User {
+            id: bot.id,
+            is_bot: true,
+            first_name: bot.title.clone(),
+            username: Some(bot.username.clone()),
+        }),
+        chat: Chat {
+            id: generate_jid_hash_id(&chat_id),
+            r#type: "private".to_string(),
+            username: Some(chat_id),
+            first_name: None,
+            title: None,
+        },
+        date: db::current_timestamp(),
+        text: Some(caption_text.to_string()),
+        reply_markup: None,
+    };
+
+    Ok(result)
+}
+
 async fn send_photo(
     State(state): State<AppState>,
     Path(token): Path<String>,
@@ -363,48 +505,10 @@ async fn send_photo(
         Err(resp) => return resp,
     };
 
-    let msg_id = format!("photo_{}", Uuid::new_v4().simple());
-    let bot_jid = format!("{}@{}", bot.username, state.component_domain);
-
-    let caption_text = payload.caption.as_deref().unwrap_or("");
-    let stanza = format!(
-        "<message type='chat' to='{}' from='{}' id='{}'>\
-        <body>{} {}</body>\
-        <x xmlns='jabber:x:oob'><url>{}</url></x>\
-        </message>",
-        xml_escape(&payload.chat_id),
-        bot_jid,
-        msg_id,
-        xml_escape(caption_text),
-        xml_escape(&payload.photo),
-        xml_escape(&payload.photo)
-    );
-
-    if let Err(e) = state.stanza_tx.send(stanza).await {
-        return api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("Delivery failed: {}", e));
+    match do_send_photo(&state, &bot, payload.chat_id, payload.photo, payload.caption).await {
+        Ok(msg) => (StatusCode::OK, Json(ApiResponse::success(msg))).into_response(),
+        Err(e) => api_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
-
-    let result = Message {
-        message_id: msg_id,
-        from: Some(User {
-            id: bot.id,
-            is_bot: true,
-            first_name: bot.title,
-            username: Some(bot.username),
-        }),
-        chat: Chat {
-            id: generate_jid_hash_id(&payload.chat_id),
-            r#type: "private".to_string(),
-            username: Some(payload.chat_id),
-            first_name: None,
-            title: None,
-        },
-        date: db::current_timestamp(),
-        text: Some(caption_text.to_string()),
-        reply_markup: None,
-    };
-
-    (StatusCode::OK, Json(ApiResponse::success(result))).into_response()
 }
 
 async fn send_document(
@@ -417,46 +521,278 @@ async fn send_document(
         Err(resp) => return resp,
     };
 
-    let msg_id = format!("doc_{}", Uuid::new_v4().simple());
-    let bot_jid = format!("{}@{}", bot.username, state.component_domain);
-
-    let caption_text = payload.caption.as_deref().unwrap_or("");
-    let stanza = format!(
-        "<message type='chat' to='{}' from='{}' id='{}'>\
-        <body>{} {}</body>\
-        <x xmlns='jabber:x:oob'><url>{}</url></x>\
-        </message>",
-        xml_escape(&payload.chat_id),
-        bot_jid,
-        msg_id,
-        xml_escape(caption_text),
-        xml_escape(&payload.document),
-        xml_escape(&payload.document)
-    );
-
-    if let Err(e) = state.stanza_tx.send(stanza).await {
-        return api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("Delivery failed: {}", e));
+    match do_send_document(&state, &bot, payload.chat_id, payload.document, payload.caption).await {
+        Ok(msg) => (StatusCode::OK, Json(ApiResponse::success(msg))).into_response(),
+        Err(e) => api_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
+}
 
-    let result = Message {
-        message_id: msg_id,
-        from: Some(User {
-            id: bot.id,
-            is_bot: true,
-            first_name: bot.title,
-            username: Some(bot.username),
-        }),
-        chat: Chat {
-            id: generate_jid_hash_id(&payload.chat_id),
-            r#type: "private".to_string(),
-            username: Some(payload.chat_id),
-            first_name: None,
-            title: None,
-        },
-        date: db::current_timestamp(),
-        text: Some(caption_text.to_string()),
-        reply_markup: None,
+#[derive(serde::Deserialize, Debug, Default)]
+struct WsRequest {
+    #[serde(default)]
+    id: Option<serde_json::Value>,
+    #[serde(default)]
+    method: Option<String>,
+    #[serde(default)]
+    params: Option<serde_json::Value>,
+    #[serde(default)]
+    chat_id: Option<String>,
+    #[serde(default)]
+    text: Option<String>,
+    #[serde(default)]
+    reply_markup: Option<InlineKeyboardMarkup>,
+    #[serde(default)]
+    photo: Option<String>,
+    #[serde(default)]
+    document: Option<String>,
+    #[serde(default)]
+    caption: Option<String>,
+    #[serde(default)]
+    message_id: Option<String>,
+}
+
+async fn ws_handler(
+    State(state): State<AppState>,
+    Path(token): Path<String>,
+    ws: WebSocketUpgrade,
+) -> Response {
+    let bot = match authenticate_bot(&state.pool, &token).await {
+        Ok(b) => b,
+        Err(resp) => return resp,
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(result))).into_response()
+    ws.on_upgrade(move |socket| handle_bot_ws(socket, bot, state))
+}
+
+async fn handle_bot_ws(socket: WebSocket, bot: BotRecord, state: AppState) {
+    let (mut ws_sender, mut ws_receiver) = socket.split();
+    let mut update_rx = state.dispatcher.get_ws_sender(bot.id).subscribe();
+    let (out_tx, mut out_rx) = mpsc::channel::<WsMessage>(128);
+
+    tracing::info!("Bot @{} (id={}) connected via WebSocket", bot.username, bot.id);
+
+    // Sender task: forwards updates and command replies to the WebSocket
+    let mut send_task = tokio::spawn(async move {
+        loop {
+            tokio::select! {
+                update_res = update_rx.recv() => {
+                    match update_res {
+                        Ok(update) => {
+                            if let Ok(json_str) = serde_json::to_string(&update) {
+                                if ws_sender.send(WsMessage::Text(json_str)).await.is_err() {
+                                    break;
+                                }
+                            }
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Lagged(n)) => {
+                            tracing::warn!("WS subscriber lagged by {} updates", n);
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                            break;
+                        }
+                    }
+                }
+                out_msg = out_rx.recv() => {
+                    match out_msg {
+                        Some(msg) => {
+                            if ws_sender.send(msg).await.is_err() {
+                                break;
+                            }
+                        }
+                        None => break,
+                    }
+                }
+            }
+        }
+    });
+
+    // Receiver task: receives commands and messages from the bot over WebSocket
+    let state_clone = state.clone();
+    let bot_clone = bot.clone();
+    let out_tx_clone = out_tx.clone();
+
+    let mut recv_task = tokio::spawn(async move {
+        while let Some(msg_res) = ws_receiver.next().await {
+            match msg_res {
+                Ok(WsMessage::Text(text)) => {
+                    let trimmed = text.trim();
+                    if trimmed.eq_ignore_ascii_case("ping") {
+                        let _ = out_tx_clone.send(WsMessage::Text(serde_json::json!({"ok": true, "result": "pong"}).to_string())).await;
+                        continue;
+                    }
+                    if let Ok(req) = serde_json::from_str::<WsRequest>(&text) {
+                        let resp = process_ws_request(&state_clone, &bot_clone, req).await;
+                        let _ = out_tx_clone.send(WsMessage::Text(resp.to_string())).await;
+                    } else {
+                        let err_resp = serde_json::json!({
+                            "ok": false,
+                            "error_code": 400,
+                            "description": "Invalid JSON format"
+                        });
+                        let _ = out_tx_clone.send(WsMessage::Text(err_resp.to_string())).await;
+                    }
+                }
+                Ok(WsMessage::Binary(bin)) => {
+                    if let Ok(req) = serde_json::from_slice::<WsRequest>(&bin) {
+                        let resp = process_ws_request(&state_clone, &bot_clone, req).await;
+                        let _ = out_tx_clone.send(WsMessage::Text(resp.to_string())).await;
+                    }
+                }
+                Ok(WsMessage::Ping(payload)) => {
+                    let _ = out_tx_clone.send(WsMessage::Pong(payload)).await;
+                }
+                Ok(WsMessage::Close(_)) => {
+                    break;
+                }
+                Ok(WsMessage::Pong(_)) => {}
+                Err(e) => {
+                    tracing::debug!("WebSocket error for bot @{}: {}", bot_clone.username, e);
+                    break;
+                }
+            }
+        }
+    });
+
+    tokio::select! {
+        _ = (&mut send_task) => recv_task.abort(),
+        _ = (&mut recv_task) => send_task.abort(),
+    }
+
+    tracing::info!("Bot @{} (id={}) WebSocket disconnected", bot.username, bot.id);
+}
+
+async fn process_ws_request(
+    state: &AppState,
+    bot: &BotRecord,
+    mut req: WsRequest,
+) -> serde_json::Value {
+    let req_id = req.id.clone();
+
+    // If params is provided as an object, extract missing fields
+    if let Some(ref params) = req.params {
+        if req.chat_id.is_none() {
+            req.chat_id = params.get("chat_id").and_then(|v| v.as_str()).map(|s| s.to_string());
+        }
+        if req.text.is_none() {
+            req.text = params.get("text").and_then(|v| v.as_str()).map(|s| s.to_string());
+        }
+        if req.message_id.is_none() {
+            req.message_id = params.get("message_id").and_then(|v| v.as_str()).map(|s| s.to_string());
+        }
+        if req.photo.is_none() {
+            req.photo = params.get("photo").and_then(|v| v.as_str()).map(|s| s.to_string());
+        }
+        if req.document.is_none() {
+            req.document = params.get("document").and_then(|v| v.as_str()).map(|s| s.to_string());
+        }
+        if req.caption.is_none() {
+            req.caption = params.get("caption").and_then(|v| v.as_str()).map(|s| s.to_string());
+        }
+        if req.reply_markup.is_none() {
+            if let Some(mk) = params.get("reply_markup") {
+                req.reply_markup = serde_json::from_value(mk.clone()).ok();
+            }
+        }
+    }
+
+    let method = req.method.as_deref().unwrap_or_else(|| {
+        if req.text.is_some() {
+            "sendMessage"
+        } else {
+            ""
+        }
+    });
+
+    let res: Result<serde_json::Value, String> = match method {
+        "getMe" => {
+            let u = User {
+                id: bot.id,
+                is_bot: true,
+                first_name: bot.title.clone(),
+                username: Some(bot.username.clone()),
+            };
+            Ok(serde_json::to_value(u).unwrap_or(serde_json::Value::Null))
+        }
+        "sendMessage" => {
+            let chat_id = match req.chat_id {
+                Some(cid) => cid,
+                None => return make_ws_response(req_id, Err("chat_id is required".to_string())),
+            };
+            let text = match req.text {
+                Some(txt) => txt,
+                None => return make_ws_response(req_id, Err("text is required".to_string())),
+            };
+            match do_send_message(state, bot, chat_id, text, req.reply_markup).await {
+                Ok(msg) => Ok(serde_json::to_value(msg).unwrap_or(serde_json::Value::Null)),
+                Err(e) => Err(e),
+            }
+        }
+        "editMessageText" => {
+            let chat_id = match req.chat_id {
+                Some(cid) => cid,
+                None => return make_ws_response(req_id, Err("chat_id is required".to_string())),
+            };
+            let message_id = match req.message_id {
+                Some(mid) => mid,
+                None => return make_ws_response(req_id, Err("message_id is required".to_string())),
+            };
+            let text = match req.text {
+                Some(txt) => txt,
+                None => return make_ws_response(req_id, Err("text is required".to_string())),
+            };
+            match do_edit_message_text(state, bot, chat_id, message_id, text, req.reply_markup).await {
+                Ok(msg) => Ok(serde_json::to_value(msg).unwrap_or(serde_json::Value::Null)),
+                Err(e) => Err(e),
+            }
+        }
+        "sendPhoto" => {
+            let chat_id = match req.chat_id {
+                Some(cid) => cid,
+                None => return make_ws_response(req_id, Err("chat_id is required".to_string())),
+            };
+            let photo = match req.photo {
+                Some(p) => p,
+                None => return make_ws_response(req_id, Err("photo is required".to_string())),
+            };
+            match do_send_photo(state, bot, chat_id, photo, req.caption).await {
+                Ok(msg) => Ok(serde_json::to_value(msg).unwrap_or(serde_json::Value::Null)),
+                Err(e) => Err(e),
+            }
+        }
+        "sendDocument" => {
+            let chat_id = match req.chat_id {
+                Some(cid) => cid,
+                None => return make_ws_response(req_id, Err("chat_id is required".to_string())),
+            };
+            let document = match req.document {
+                Some(d) => d,
+                None => return make_ws_response(req_id, Err("document is required".to_string())),
+            };
+            match do_send_document(state, bot, chat_id, document, req.caption).await {
+                Ok(msg) => Ok(serde_json::to_value(msg).unwrap_or(serde_json::Value::Null)),
+                Err(e) => Err(e),
+            }
+        }
+        other => Err(format!("Unknown or unsupported method: {}", other)),
+    };
+
+    make_ws_response(req_id, res)
+}
+
+fn make_ws_response(req_id: Option<serde_json::Value>, res: Result<serde_json::Value, String>) -> serde_json::Value {
+    let mut val = match res {
+        Ok(v) => serde_json::json!({
+            "ok": true,
+            "result": v
+        }),
+        Err(err) => serde_json::json!({
+            "ok": false,
+            "error_code": 400,
+            "description": err
+        }),
+    };
+    if let Some(id) = req_id {
+        val["id"] = id;
+    }
+    val
 }
