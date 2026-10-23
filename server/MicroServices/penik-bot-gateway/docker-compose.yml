@@ -1,0 +1,17 @@
+services:
+  penik-bot-gateway:
+    container_name: penik-bot-gateway
+    build: .
+    restart: unless-stopped
+    network_mode: "host"
+    environment:
+      - BOT_GATEWAY_HOST=0.0.0.0
+      - BOT_GATEWAY_PORT=8086
+      - BOT_GATEWAY_DB_PATH=/data/bot_gateway.db
+      - PROSODY_HOST=127.0.0.1
+      - PROSODY_PORT=5347
+      - COMPONENT_DOMAIN=bot.penik.chat
+      - COMPONENT_SECRET=${COMPONENT_SECRET:-penik_component_secret}
+      - PROSODY_UPLOAD_JID=upload.penik.chat
+    volumes:
+      - ./data:/data
