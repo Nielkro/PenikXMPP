@@ -29,6 +29,7 @@ pub fn xml_escape(input: &str) -> String {
     out
 }
 
+#[allow(dead_code)]
 pub fn xml_unescape(input: &str) -> String {
     input
         .replace("&amp;", "&")
@@ -36,6 +37,15 @@ pub fn xml_unescape(input: &str) -> String {
         .replace("&gt;", ">")
         .replace("&quot;", "\"")
         .replace("&apos;", "'")
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IqKind {
+    Ping,
+    DiscoInfo,
+    DiscoItems,
+    VCard,
+    Other,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -48,143 +58,74 @@ pub struct RawStanza {
     pub body: Option<String>,
     pub callback_msg_id: Option<String>,
     pub callback_data: Option<String>,
-    pub is_vcard: bool,
-    pub is_disco_info: bool,
-    pub is_disco_items: bool,
-    pub is_ping: bool,
+    pub iq_kind: IqKind,
 }
 
-/// Parses a single complete XML stanza string into a structured RawStanza
-pub fn parse_stanza(xml: &str) -> Option<RawStanza> {
-    let mut reader = Reader::from_str(xml);
-    reader.config_mut().trim_text(true);
+/// Classifies an IQ query payload by its child element namespace and name
+pub fn classify_iq(root: &roxmltree::Node) -> IqKind {
+    match root.first_element_child() {
+        Some(child) => {
+            let name = child.tag_name().name();
+            let ns = child.tag_name().namespace().unwrap_or_default();
+            match (name, ns) {
+                ("ping", "urn:xmpp:ping") => IqKind::Ping,
+                ("query", "http://jabber.org/protocol/disco#info") => IqKind::DiscoInfo,
+                ("query", "http://jabber.org/protocol/disco#items") => IqKind::DiscoItems,
+                ("vCard", "vcard-temp") => IqKind::VCard,
+                _ => IqKind::Other,
+            }
+        }
+        None => IqKind::Other,
+    }
+}
 
-    let mut stanza = RawStanza {
-        tag: String::new(),
-        to: String::new(),
-        from: String::new(),
-        id: String::new(),
-        stanza_type: String::new(),
-        body: None,
-        callback_msg_id: None,
-        callback_data: None,
-        is_vcard: false,
-        is_disco_info: false,
-        is_disco_items: false,
-        is_ping: false,
+/// Parses a single complete XML stanza string into a structured RawStanza using roxmltree
+pub fn parse_stanza(xml: &str) -> Option<RawStanza> {
+    let doc = roxmltree::Document::parse(xml).ok()?;
+    let root = doc.root_element();
+    let tag = root.tag_name().name().to_string();
+
+    let to = root.attribute("to").unwrap_or_default().to_string();
+    let from = root.attribute("from").unwrap_or_default().to_string();
+    let id = root.attribute("id").unwrap_or_default().to_string();
+    let stanza_type = root.attribute("type").unwrap_or_default().to_string();
+
+    let body = root
+        .children()
+        .find(|n| n.has_tag_name("body"))
+        .and_then(|b| b.text())
+        .map(|s| s.to_string());
+
+    let callback = root.children().find(|n| {
+        n.tag_name().name() == "callback"
+            && n.tag_name().namespace() == Some("penik:bot:markup")
+    });
+
+    let callback_msg_id = callback
+        .and_then(|c| c.attribute("msg_id"))
+        .map(|s| s.to_string());
+
+    let callback_data = callback
+        .and_then(|c| c.attribute("data"))
+        .map(|s| s.to_string());
+
+    let iq_kind = if tag == "iq" {
+        classify_iq(&root)
+    } else {
+        IqKind::Other
     };
 
-    let mut in_body = false;
-    let mut root_parsed = false;
-
-    let mut buf = Vec::new();
-    loop {
-        match reader.read_event_into(&mut buf) {
-            Ok(Event::Start(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                if !root_parsed {
-                    stanza.tag = tag_name.clone();
-                    for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-                        let val = String::from_utf8_lossy(&attr.value).to_string();
-                        match key.as_str() {
-                            "to" => stanza.to = val,
-                            "from" => stanza.from = val,
-                            "id" => stanza.id = val,
-                            "type" => stanza.stanza_type = val,
-                            _ => {}
-                        }
-                    }
-                    root_parsed = true;
-                } else {
-                    match tag_name.as_str() {
-                        "body" => in_body = true,
-                        "vCard" => stanza.is_vcard = true,
-                        "query" => {
-                            for attr in e.attributes().flatten() {
-                                if attr.key.as_ref() == b"xmlns" {
-                                    if attr.value.as_ref() == b"http://jabber.org/protocol/disco#info" {
-                                        stanza.is_disco_info = true;
-                                    } else if attr.value.as_ref() == b"http://jabber.org/protocol/disco#items" {
-                                        stanza.is_disco_items = true;
-                                    }
-                                }
-                            }
-                        }
-                        "ping" => stanza.is_ping = true,
-                        _ => {}
-                    }
-                }
-            }
-            Ok(Event::Empty(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                if !root_parsed {
-                    stanza.tag = tag_name;
-                    for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-                        let val = String::from_utf8_lossy(&attr.value).to_string();
-                        match key.as_str() {
-                            "to" => stanza.to = val,
-                            "from" => stanza.from = val,
-                            "id" => stanza.id = val,
-                            "type" => stanza.stanza_type = val,
-                            _ => {}
-                        }
-                    }
-                    root_parsed = true;
-                } else {
-                    match tag_name.as_str() {
-                        "callback" => {
-                            for attr in e.attributes().flatten() {
-                                let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-                                let val = String::from_utf8_lossy(&attr.value).to_string();
-                                match key.as_str() {
-                                    "msg_id" => stanza.callback_msg_id = Some(val),
-                                    "data" => stanza.callback_data = Some(val),
-                                    _ => {}
-                                }
-                            }
-                        }
-                        "query" => {
-                            for attr in e.attributes().flatten() {
-                                if attr.key.as_ref() == b"xmlns" {
-                                    if attr.value.as_ref() == b"http://jabber.org/protocol/disco#info" {
-                                        stanza.is_disco_info = true;
-                                    } else if attr.value.as_ref() == b"http://jabber.org/protocol/disco#items" {
-                                        stanza.is_disco_items = true;
-                                    }
-                                }
-                            }
-                        }
-                        "ping" => stanza.is_ping = true,
-                        "vCard" => stanza.is_vcard = true,
-                        _ => {}
-                    }
-                }
-            }
-            Ok(Event::Text(ref e)) => {
-                if in_body {
-                    let text = String::from_utf8_lossy(e.as_ref()).to_string();
-                    stanza.body = Some(xml_unescape(&text));
-                }
-            }
-            Ok(Event::End(ref e)) => {
-                if e.name().as_ref() == b"body" {
-                    in_body = false;
-                }
-            }
-            Ok(Event::Eof) => break,
-            Err(_) => break,
-            _ => {}
-        }
-        buf.clear();
-    }
-
-    if root_parsed {
-        Some(stanza)
-    } else {
-        None
-    }
+    Some(RawStanza {
+        tag,
+        to,
+        from,
+        id,
+        stanza_type,
+        body,
+        callback_msg_id,
+        callback_data,
+        iq_kind,
+    })
 }
 
 /// Extracts complete XML stanzas from an incremental stream buffer
@@ -457,50 +398,18 @@ async fn handle_incoming_stanza(
 
     // Case 2: Ping or disco to component domain itself
     if to_jid == component_domain || to_jid.is_empty() {
-        if raw.tag == "iq" && (raw.stanza_type == "get" || raw.stanza_type == "set") {
-            if raw.is_ping {
-                let resp = format!(
-                    "<iq type='result' to='{}' from='{}' id='{}'/>",
-                    xml_escape(&raw.from),
-                    xml_escape(component_domain),
-                    xml_escape(&raw.id)
-                );
-                let _ = outbound.send(resp).await;
-            } else if raw.is_disco_info {
-                let resp = format!(
-                    "<iq type='result' to='{}' from='{}' id='{}'>\
-                    <query xmlns='http://jabber.org/protocol/disco#info'>\
-                        <identity category='component' type='generic' name='Penik Bot Gateway'/>\
-                        <feature var='http://jabber.org/protocol/disco#info'/>\
-                        <feature var='http://jabber.org/protocol/disco#items'/>\
-                        <feature var='urn:xmpp:ping'/>\
-                        <feature var='penik:bot:markup'/>\
-                    </query>\
-                    </iq>",
-                    xml_escape(&raw.from),
-                    xml_escape(component_domain),
-                    xml_escape(&raw.id)
-                );
-                let _ = outbound.send(resp).await;
-            } else if raw.is_disco_items {
-                let resp = format!(
-                    "<iq type='result' to='{}' from='{}' id='{}'><query xmlns='http://jabber.org/protocol/disco#items'/></iq>",
-                    xml_escape(&raw.from),
-                    xml_escape(component_domain),
-                    xml_escape(&raw.id)
-                );
-                let _ = outbound.send(resp).await;
-            } else {
-                let resp = format!(
-                    "<iq type='error' to='{}' from='{}' id='{}'>\
-                    <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
-                    </iq>",
-                    xml_escape(&raw.from),
-                    xml_escape(component_domain),
-                    xml_escape(&raw.id)
-                );
-                let _ = outbound.send(resp).await;
-            }
+        if raw.tag == "iq" {
+            handle_iq_query(
+                &raw,
+                component_domain,
+                outbound,
+                "Penik Bot Gateway",
+                "component",
+                "generic",
+                &["urn:xmpp:ping", "penik:bot:markup"],
+                None,
+            )
+            .await;
         }
         return;
     }
@@ -518,26 +427,33 @@ async fn handle_incoming_stanza(
         Some(b) => b,
         None => {
             // Unknown bot: reply service-unavailable so sender does not time out
-            if raw.tag == "message" && (raw.stanza_type == "chat" || raw.stanza_type.is_empty()) {
-                let err_msg = format!(
-                    "<message type='error' to='{}' from='{}' id='{}'>\
-                    <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
-                    </message>",
-                    xml_escape(&raw.from),
-                    xml_escape(&raw.to),
-                    xml_escape(&raw.id)
-                );
-                let _ = outbound.send(err_msg).await;
-            } else if raw.tag == "iq" && (raw.stanza_type == "get" || raw.stanza_type == "set") {
-                let err_iq = format!(
-                    "<iq type='error' to='{}' from='{}' id='{}'>\
-                    <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
-                    </iq>",
-                    xml_escape(&raw.from),
-                    xml_escape(&raw.to),
-                    xml_escape(&raw.id)
-                );
-                let _ = outbound.send(err_iq).await;
+            let from = &raw.from;
+            let to = &raw.to;
+            let id = &raw.id;
+            match (raw.tag.as_str(), raw.stanza_type.as_str()) {
+                ("message", "chat" | "") => {
+                    let err_msg = format!(
+                        "<message type='error' to='{}' from='{}' id='{}'>\
+                        <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
+                        </message>",
+                        xml_escape(from),
+                        xml_escape(to),
+                        xml_escape(id)
+                    );
+                    let _ = outbound.send(err_msg).await;
+                }
+                ("iq", "get" | "set") => {
+                    let err_iq = format!(
+                        "<iq type='error' to='{}' from='{}' id='{}'>\
+                        <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
+                        </iq>",
+                        xml_escape(from),
+                        xml_escape(to),
+                        xml_escape(id)
+                    );
+                    let _ = outbound.send(err_iq).await;
+                }
+                _ => {}
             }
             return;
         }
@@ -546,106 +462,25 @@ async fn handle_incoming_stanza(
     let bot_full_jid = format!("{}@{}", bot.username, component_domain);
 
     match raw.tag.as_str() {
-        "presence" => {
-            if raw.stanza_type == "subscribe" {
-                // Auto-accept presence subscription
-                let sub_resp = format!(
-                    "<presence type='subscribed' to='{}' from='{}'/>",
-                    xml_escape(&raw.from),
-                    bot_full_jid
-                );
-                let online_resp = format!(
-                    "<presence to='{}' from='{}'><show>chat</show><status>Bot ready</status></presence>",
-                    xml_escape(&raw.from),
-                    bot_full_jid
-                );
-                let _ = outbound.send(sub_resp).await;
-                let _ = outbound.send(online_resp).await;
-            } else if raw.stanza_type.is_empty() || raw.stanza_type == "probe" {
-                // User became online or probed: reply bot presence
-                let online_resp = format!(
-                    "<presence to='{}' from='{}'><show>chat</show><status>Bot ready</status></presence>",
-                    xml_escape(&raw.from),
-                    bot_full_jid
-                );
-                let _ = outbound.send(online_resp).await;
-            }
-        }
+        "presence" => handle_bot_presence(&raw, &bot_full_jid, "Bot ready", outbound).await,
         "iq" => {
-            if raw.stanza_type == "get" {
-                if raw.is_ping {
-                    let resp = format!(
-                        "<iq type='result' to='{}' from='{}' id='{}'/>",
-                        xml_escape(&raw.from),
-                        bot_full_jid,
-                        xml_escape(&raw.id)
-                    );
-                    let _ = outbound.send(resp).await;
-                } else if raw.is_vcard {
-                    let about_text = bot.about.as_deref().unwrap_or("Penik Messenger Bot");
-                    let resp = format!(
-                        "<iq type='result' to='{}' from='{}' id='{}'>\
-                        <vCard xmlns='vcard-temp'>\
-                            <FN>{}</FN>\
-                            <DESC>{}</DESC>\
-                        </vCard>\
-                        </iq>",
-                        xml_escape(&raw.from),
-                        bot_full_jid,
-                        xml_escape(&raw.id),
-                        xml_escape(&bot.title),
-                        xml_escape(about_text)
-                    );
-                    let _ = outbound.send(resp).await;
-                } else if raw.is_disco_info {
-                    let resp = format!(
-                        "<iq type='result' to='{}' from='{}' id='{}'>\
-                        <query xmlns='http://jabber.org/protocol/disco#info'>\
-                            <identity category='client' type='bot' name='{}'/>\
-                            <feature var='http://jabber.org/protocol/disco#info'/>\
-                            <feature var='http://jabber.org/protocol/disco#items'/>\
-                            <feature var='vcard-temp'/>\
-                            <feature var='urn:xmpp:ping'/>\
-                            <feature var='penik:bot:markup'/>\
-                            <feature var='urn:xmpp:message-correct:0'/>\
-                        </query>\
-                        </iq>",
-                        xml_escape(&raw.from),
-                        bot_full_jid,
-                        xml_escape(&raw.id),
-                        xml_escape(&bot.title)
-                    );
-                    let _ = outbound.send(resp).await;
-                } else if raw.is_disco_items {
-                    let resp = format!(
-                        "<iq type='result' to='{}' from='{}' id='{}'><query xmlns='http://jabber.org/protocol/disco#items'/></iq>",
-                        xml_escape(&raw.from),
-                        bot_full_jid,
-                        xml_escape(&raw.id)
-                    );
-                    let _ = outbound.send(resp).await;
-                } else {
-                    let resp = format!(
-                        "<iq type='error' to='{}' from='{}' id='{}'>\
-                        <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
-                        </iq>",
-                        xml_escape(&raw.from),
-                        bot_full_jid,
-                        xml_escape(&raw.id)
-                    );
-                    let _ = outbound.send(resp).await;
-                }
-            } else if raw.stanza_type == "set" {
-                let resp = format!(
-                    "<iq type='error' to='{}' from='{}' id='{}'>\
-                    <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
-                    </iq>",
-                    xml_escape(&raw.from),
-                    bot_full_jid,
-                    xml_escape(&raw.id)
-                );
-                let _ = outbound.send(resp).await;
-            }
+            let desc = bot.about.as_deref().unwrap_or("Penik Messenger Bot");
+            handle_iq_query(
+                &raw,
+                &bot_full_jid,
+                outbound,
+                &bot.title,
+                "client",
+                "bot",
+                &[
+                    "vcard-temp",
+                    "urn:xmpp:ping",
+                    "penik:bot:markup",
+                    "urn:xmpp:message-correct:0",
+                ],
+                Some(desc),
+            )
+            .await;
         }
         "message" => {
             // Build Telegram-compatible Update
@@ -721,6 +556,128 @@ async fn handle_incoming_stanza(
     }
 }
 
+async fn handle_bot_presence(
+    raw: &RawStanza,
+    responder_jid: &str,
+    status_text: &str,
+    outbound: &mpsc::Sender<String>,
+) {
+    let from = &raw.from;
+    match raw.stanza_type.as_str() {
+        "subscribe" => {
+            let sub_resp = format!(
+                "<presence type='subscribed' to='{}' from='{}'/>",
+                xml_escape(from),
+                xml_escape(responder_jid)
+            );
+            let online_resp = format!(
+                "<presence to='{}' from='{}'><show>chat</show><status>{}</status></presence>",
+                xml_escape(from),
+                xml_escape(responder_jid),
+                xml_escape(status_text)
+            );
+            let _ = outbound.send(sub_resp).await;
+            let _ = outbound.send(online_resp).await;
+        }
+        "" | "probe" => {
+            let online_resp = format!(
+                "<presence to='{}' from='{}'><show>chat</show><status>{}</status></presence>",
+                xml_escape(from),
+                xml_escape(responder_jid),
+                xml_escape(status_text)
+            );
+            let _ = outbound.send(online_resp).await;
+        }
+        _ => {}
+    }
+}
+
+async fn handle_iq_query(
+    raw: &RawStanza,
+    responder_jid: &str,
+    outbound: &mpsc::Sender<String>,
+    disco_name: &str,
+    disco_category: &str,
+    disco_type: &str,
+    extra_features: &[&str],
+    vcard_desc: Option<&str>,
+) {
+    let from = &raw.from;
+    let id = &raw.id;
+    match (raw.stanza_type.as_str(), &raw.iq_kind) {
+        ("get", IqKind::Ping) => {
+            let resp = format!(
+                "<iq type='result' to='{}' from='{}' id='{}'/>",
+                xml_escape(from),
+                xml_escape(responder_jid),
+                xml_escape(id)
+            );
+            let _ = outbound.send(resp).await;
+        }
+        ("get", IqKind::DiscoInfo) => {
+            let mut features_xml = String::new();
+            for f in extra_features {
+                features_xml.push_str(&format!("<feature var='{}'/>", f));
+            }
+            let resp = format!(
+                "<iq type='result' to='{}' from='{}' id='{}'>\
+                <query xmlns='http://jabber.org/protocol/disco#info'>\
+                    <identity category='{}' type='{}' name='{}'/>\
+                    <feature var='http://jabber.org/protocol/disco#info'/>\
+                    <feature var='http://jabber.org/protocol/disco#items'/>\
+                    {}\
+                </query>\
+                </iq>",
+                xml_escape(from),
+                xml_escape(responder_jid),
+                xml_escape(id),
+                disco_category,
+                disco_type,
+                xml_escape(disco_name),
+                features_xml
+            );
+            let _ = outbound.send(resp).await;
+        }
+        ("get", IqKind::DiscoItems) => {
+            let resp = format!(
+                "<iq type='result' to='{}' from='{}' id='{}'><query xmlns='http://jabber.org/protocol/disco#items'/></iq>",
+                xml_escape(from),
+                xml_escape(responder_jid),
+                xml_escape(id)
+            );
+            let _ = outbound.send(resp).await;
+        }
+        ("get", IqKind::VCard) if vcard_desc.is_some() => {
+            let resp = format!(
+                "<iq type='result' to='{}' from='{}' id='{}'>\
+                <vCard xmlns='vcard-temp'>\
+                    <FN>{}</FN>\
+                    <DESC>{}</DESC>\
+                </vCard>\
+                </iq>",
+                xml_escape(from),
+                xml_escape(responder_jid),
+                xml_escape(id),
+                xml_escape(disco_name),
+                xml_escape(vcard_desc.unwrap())
+            );
+            let _ = outbound.send(resp).await;
+        }
+        ("get" | "set", _) => {
+            let resp = format!(
+                "<iq type='error' to='{}' from='{}' id='{}'>\
+                <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
+                </iq>",
+                xml_escape(from),
+                xml_escape(responder_jid),
+                xml_escape(id)
+            );
+            let _ = outbound.send(resp).await;
+        }
+        _ => {}
+    }
+}
+
 async fn handle_botfather_stanza(
     raw: &RawStanza,
     botfather: &BotFatherEngine,
@@ -730,81 +687,19 @@ async fn handle_botfather_stanza(
     let bf_jid = format!("botfather@{}", component_domain);
 
     match raw.tag.as_str() {
-        "presence" => {
-            if raw.stanza_type == "subscribe" {
-                let sub_resp = format!("<presence type='subscribed' to='{}' from='{}'/>", xml_escape(&raw.from), bf_jid);
-                let online_resp = format!("<presence to='{}' from='{}'><show>chat</show><status>BotFather ready</status></presence>", xml_escape(&raw.from), bf_jid);
-                let _ = outbound.send(sub_resp).await;
-                let _ = outbound.send(online_resp).await;
-            } else if raw.stanza_type.is_empty() || raw.stanza_type == "probe" {
-                let online_resp = format!("<presence to='{}' from='{}'><show>chat</show><status>BotFather ready</status></presence>", xml_escape(&raw.from), bf_jid);
-                let _ = outbound.send(online_resp).await;
-            }
-        }
+        "presence" => handle_bot_presence(raw, &bf_jid, "BotFather ready", outbound).await,
         "iq" => {
-            if raw.stanza_type == "get" {
-                if raw.is_ping {
-                    let resp = format!("<iq type='result' to='{}' from='{}' id='{}'/>", xml_escape(&raw.from), bf_jid, xml_escape(&raw.id));
-                    let _ = outbound.send(resp).await;
-                } else if raw.is_vcard {
-                    let resp = format!(
-                        "<iq type='result' to='{}' from='{}' id='{}'>\
-                        <vCard xmlns='vcard-temp'>\
-                            <FN>BotFather</FN>\
-                            <DESC>BotFather - the one to rule them all. Use it to create and manage Penik bots.</DESC>\
-                        </vCard>\
-                        </iq>",
-                        xml_escape(&raw.from),
-                        bf_jid,
-                        xml_escape(&raw.id)
-                    );
-                    let _ = outbound.send(resp).await;
-                } else if raw.is_disco_info {
-                    let resp = format!(
-                        "<iq type='result' to='{}' from='{}' id='{}'>\
-                        <query xmlns='http://jabber.org/protocol/disco#info'>\
-                            <identity category='client' type='bot' name='BotFather'/>\
-                            <feature var='http://jabber.org/protocol/disco#info'/>\
-                            <feature var='http://jabber.org/protocol/disco#items'/>\
-                            <feature var='vcard-temp'/>\
-                            <feature var='urn:xmpp:ping'/>\
-                        </query>\
-                        </iq>",
-                        xml_escape(&raw.from),
-                        bf_jid,
-                        xml_escape(&raw.id)
-                    );
-                    let _ = outbound.send(resp).await;
-                } else if raw.is_disco_items {
-                    let resp = format!(
-                        "<iq type='result' to='{}' from='{}' id='{}'><query xmlns='http://jabber.org/protocol/disco#items'/></iq>",
-                        xml_escape(&raw.from),
-                        bf_jid,
-                        xml_escape(&raw.id)
-                    );
-                    let _ = outbound.send(resp).await;
-                } else {
-                    let resp = format!(
-                        "<iq type='error' to='{}' from='{}' id='{}'>\
-                        <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
-                        </iq>",
-                        xml_escape(&raw.from),
-                        bf_jid,
-                        xml_escape(&raw.id)
-                    );
-                    let _ = outbound.send(resp).await;
-                }
-            } else if raw.stanza_type == "set" {
-                let resp = format!(
-                    "<iq type='error' to='{}' from='{}' id='{}'>\
-                    <error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>\
-                    </iq>",
-                    xml_escape(&raw.from),
-                    bf_jid,
-                    xml_escape(&raw.id)
-                );
-                let _ = outbound.send(resp).await;
-            }
+            handle_iq_query(
+                raw,
+                &bf_jid,
+                outbound,
+                "BotFather",
+                "client",
+                "bot",
+                &["vcard-temp", "urn:xmpp:ping"],
+                Some("BotFather - the one to rule them all. Use it to create and manage Penik bots."),
+            )
+            .await;
         }
         "message" => {
             if let Some(ref text) = raw.body {
@@ -865,5 +760,65 @@ mod tests {
         let escaped = xml_escape(raw);
         assert_eq!(escaped, "Hello &lt;World&gt; &amp; &apos;Friends&apos; &quot;123&quot;");
         assert_eq!(xml_unescape(&escaped), raw);
+    }
+
+    #[test]
+    fn test_roxmltree_basics() {
+        let xml = "<iq type='get' id='123' to='bot.snikket.penik.ru'><query xmlns='http://jabber.org/protocol/disco#info'/></iq>";
+        let doc = roxmltree::Document::parse(xml).unwrap();
+        let root = doc.root_element();
+        assert_eq!(root.tag_name().name(), "iq");
+        assert_eq!(root.attribute("type"), Some("get"));
+        assert_eq!(root.attribute("to"), Some("bot.snikket.penik.ru"));
+        
+        let child = root.first_element_child().unwrap();
+        assert_eq!(child.tag_name().name(), "query");
+        assert_eq!(child.tag_name().namespace(), Some("http://jabber.org/protocol/disco#info"));
+
+        let msg_xml = "<message to='bot@domain' from='user@domain' id='m1'><body>Hello &amp; world!</body><callback xmlns='penik:bot:markup' msg_id='42' data='btn:1'/></message>";
+        let msg_doc = roxmltree::Document::parse(msg_xml).unwrap();
+        let msg_root = msg_doc.root_element();
+        let body = msg_root.children().find(|n| n.has_tag_name("body")).unwrap();
+        assert_eq!(body.text(), Some("Hello & world!"));
+
+        let cb = msg_root.children().find(|n| n.has_tag_name("callback")).unwrap();
+        assert_eq!(cb.tag_name().namespace(), Some("penik:bot:markup"));
+        assert_eq!(cb.attribute("msg_id"), Some("42"));
+        assert_eq!(cb.attribute("data"), Some("btn:1"));
+    }
+
+    #[test]
+    fn test_parse_stanza_iq_variants() {
+        // Self-closing disco#info query
+        let xml1 = "<iq type='get' id='1' to='bot.snikket.penik.ru'><query xmlns='http://jabber.org/protocol/disco#info'/></iq>";
+        let s1 = parse_stanza(xml1).unwrap();
+        assert_eq!(s1.tag, "iq");
+        assert_eq!(s1.stanza_type, "get");
+        assert_eq!(s1.iq_kind, IqKind::DiscoInfo);
+
+        // Open/close disco#info query
+        let xml2 = "<iq type='get' id='2' to='bot.snikket.penik.ru'><query xmlns='http://jabber.org/protocol/disco#info'></query></iq>";
+        let s2 = parse_stanza(xml2).unwrap();
+        assert_eq!(s2.iq_kind, IqKind::DiscoInfo);
+
+        // Ping
+        let xml3 = "<iq type='get' id='3' to='bot.snikket.penik.ru'><ping xmlns='urn:xmpp:ping'/></iq>";
+        let s3 = parse_stanza(xml3).unwrap();
+        assert_eq!(s3.iq_kind, IqKind::Ping);
+
+        // vCard
+        let xml4 = "<iq type='get' id='4' to='bot.snikket.penik.ru'><vCard xmlns='vcard-temp'/></iq>";
+        let s4 = parse_stanza(xml4).unwrap();
+        assert_eq!(s4.iq_kind, IqKind::VCard);
+
+        // disco#items
+        let xml5 = "<iq type='get' id='5' to='bot.snikket.penik.ru'><query xmlns='http://jabber.org/protocol/disco#items'/></iq>";
+        let s5 = parse_stanza(xml5).unwrap();
+        assert_eq!(s5.iq_kind, IqKind::DiscoItems);
+
+        // Unknown IQ
+        let xml6 = "<iq type='get' id='6' to='bot.snikket.penik.ru'><unknown xmlns='urn:unknown'/></iq>";
+        let s6 = parse_stanza(xml6).unwrap();
+        assert_eq!(s6.iq_kind, IqKind::Other);
     }
 }

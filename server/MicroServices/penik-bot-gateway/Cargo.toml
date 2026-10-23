@@ -19,6 +19,7 @@ hex = "0.4"
 rand = "0.8"
 dashmap = "6.1"
 quick-xml = "0.37"
+roxmltree = "0.21"
 futures-util = { version = "0.3", default-features = false, features = ["sink"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
