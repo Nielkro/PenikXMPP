@@ -209,6 +209,16 @@ CREATE INDEX idx_pending_bot ON pending_updates(bot_id, id);
   - Запрашивает HTTP Upload слот у Prosody (XEP-0363) через локальный компонент `http_upload`.
   - Загружает файл по полученному PUT URL и возвращает клиенту URL скачивания в OOB-теге.
 
+#### 7. Встроенный системный бот BotFather (`botfather@bot.penik.chat`):
+В отличие от внешних ботов, BotFather не использует Webhook или HTTP API, а исполняется внутри процесса шлюза:
+- **Перехват трафика:** Станзы с `to="botfather@bot.penik.chat"` не перенаправляются в очередь вебхуков, а обрабатываются локальным модулем `BotFatherEngine`.
+- **FSM диалога (в памяти):** Шлюз отслеживает состояние создания бота (`State::WaitingForTitle`, `State::WaitingForUsername`) для каждого проверенного `from` JID пользователя в потокобезопасной `DashMap<Jid, (DialogState, Instant)>`.
+- **Генерация токена и валидация:**
+  - Валидация username (длина 3–32 символа, допустимые символы `a-z0-9_`, обязательный суффикс `_bot`).
+  - Проверка уникальности юзернейма в SQLite.
+  - Генерация токена формата `<bot_id>:<64_hex_random>` с помощью криптостойкого генератора (`rand::rngs::OsRng`).
+  - Выполнение `INSERT INTO bots (username, token, title, owner_jid)` и мгновенная готовность токена в Axum REST API.
+
 ---
 
 ## 5. Протокольный контракт клиент-сервер (XMPP & PXMPP)
