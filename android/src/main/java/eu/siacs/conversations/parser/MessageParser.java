@@ -591,29 +591,57 @@ public class MessageParser extends AbstractParser
                     message.setType(Message.TYPE_STICKER);
                 }
             }
+            final Element cbAnswer = packet.findChild("callback_answer", "penik:bot:markup");
+            if (cbAnswer != null) {
+                final String answerText = cbAnswer.getAttribute("text");
+                final boolean showAlert = "true".equalsIgnoreCase(cbAnswer.getAttribute("show_alert"));
+                if (answerText != null && !answerText.isEmpty()) {
+                    mXmppConnectionService.showBotCallbackAnswer(answerText, showAlert);
+                }
+            }
             final Element markupElement = packet.findChild("markup", "penik:bot:markup");
             if (markupElement != null) {
-                final java.util.List<java.util.List<eu.siacs.conversations.entities.BotMarkup.Button>> rows = new java.util.ArrayList<>();
-                for (final Element rowEl : markupElement.getChildren()) {
-                    if ("row".equals(rowEl.getName())) {
-                        final java.util.List<eu.siacs.conversations.entities.BotMarkup.Button> rowButtons = new java.util.ArrayList<>();
-                        for (final Element btnEl : rowEl.getChildren()) {
-                            if ("button".equals(btnEl.getName())) {
-                                final String text = btnEl.getAttribute("text");
-                                final String data = btnEl.getAttribute("data");
-                                final String url = btnEl.getAttribute("url");
-                                if (text != null && !text.isEmpty()) {
-                                    rowButtons.add(new eu.siacs.conversations.entities.BotMarkup.Button(text, data, url));
+                final String typeAttr = markupElement.getAttribute("type");
+                final boolean isRemove = "remove".equalsIgnoreCase(typeAttr);
+                final boolean isReply = "reply".equalsIgnoreCase(typeAttr);
+                final boolean resize = !"false".equalsIgnoreCase(markupElement.getAttribute("resize"));
+                final boolean oneTime = "true".equalsIgnoreCase(markupElement.getAttribute("one_time"));
+
+                if (isRemove) {
+                    conversation.setBotReplyMarkup(null);
+                    conversation.setShowBotReplyKeyboard(false);
+                } else {
+                    final java.util.List<java.util.List<eu.siacs.conversations.entities.BotMarkup.Button>> rows = new java.util.ArrayList<>();
+                    for (final Element rowEl : markupElement.getChildren()) {
+                        if ("row".equals(rowEl.getName())) {
+                            final java.util.List<eu.siacs.conversations.entities.BotMarkup.Button> rowButtons = new java.util.ArrayList<>();
+                            for (final Element btnEl : rowEl.getChildren()) {
+                                if ("button".equals(btnEl.getName())) {
+                                    final String text = btnEl.getAttribute("text");
+                                    final String data = btnEl.getAttribute("data");
+                                    final String url = btnEl.getAttribute("url");
+                                    if (text != null && !text.isEmpty()) {
+                                        rowButtons.add(new eu.siacs.conversations.entities.BotMarkup.Button(text, data, url));
+                                    }
                                 }
                             }
-                        }
-                        if (!rowButtons.isEmpty()) {
-                            rows.add(rowButtons);
+                            if (!rowButtons.isEmpty()) {
+                                rows.add(rowButtons);
+                            }
                         }
                     }
-                }
-                if (!rows.isEmpty()) {
-                    message.setBotMarkup(new eu.siacs.conversations.entities.BotMarkup(rows));
+                    if (!rows.isEmpty()) {
+                        final eu.siacs.conversations.entities.BotMarkup.Type markupType = isReply
+                                ? eu.siacs.conversations.entities.BotMarkup.Type.REPLY
+                                : eu.siacs.conversations.entities.BotMarkup.Type.INLINE;
+                        final var botMarkup = new eu.siacs.conversations.entities.BotMarkup(markupType, rows, resize, oneTime);
+                        if (isReply) {
+                            conversation.setBotReplyMarkup(botMarkup);
+                            conversation.setShowBotReplyKeyboard(true);
+                        } else {
+                            message.setBotMarkup(botMarkup);
+                        }
+                    }
                 }
             }
             message.markable = packet.hasExtension(Markable.class);

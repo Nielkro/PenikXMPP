@@ -495,7 +495,7 @@ async fn handle_incoming_stanza(
                     update_id,
                     message: None,
                     callback_query: Some(CallbackQuery {
-                        id: raw.id.clone(),
+                        id: format!("{}:{}", user_jid, if raw.id.is_empty() { msg_id.clone() } else { raw.id.clone() }),
                         from: User {
                             id: generate_jid_hash_id(&user_jid),
                             is_bot: false,

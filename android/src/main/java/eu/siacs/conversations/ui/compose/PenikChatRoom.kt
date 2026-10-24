@@ -249,6 +249,20 @@ object PenikChatBridge {
             )
         }
     }
+
+    @JvmStatic
+    fun renderBotReplyKeyboard(
+            view: ComposeView,
+            markup: eu.siacs.conversations.entities.BotMarkup,
+            onButtonClick: java.util.function.Consumer<eu.siacs.conversations.entities.BotMarkup.Button>
+    ) {
+        view.setContent {
+            PenikBotReplyKeyboard(
+                    markup = markup,
+                    onButtonClick = { onButtonClick.accept(it) }
+            )
+        }
+    }
 }
 
 private sealed interface ChatRow {
@@ -987,6 +1001,59 @@ fun PenikBotKeyboard(
     }
 }
 
+@Composable
+fun PenikBotReplyKeyboard(
+        markup: eu.siacs.conversations.entities.BotMarkup,
+        onButtonClick: (eu.siacs.conversations.entities.BotMarkup.Button) -> Unit,
+        modifier: Modifier = Modifier
+) {
+    val rows = markup.rows
+    if (rows.isEmpty()) return
+
+    val panelBackground = colorResource(R.color.penik_background)
+    val buttonBackground = colorResource(R.color.penik_panel_secondary)
+    val textColor = colorResource(R.color.penik_text_primary)
+
+    Column(
+            modifier = modifier
+                    .fillMaxWidth()
+                    .background(panelBackground)
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        for (row in rows) {
+            Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                for (btn in row) {
+                    Box(
+                            modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(buttonBackground)
+                                    .clickable {
+                                        onButtonClick(btn)
+                                    }
+                                    .padding(horizontal = 8.dp),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                                text = btn.text,
+                                color = textColor,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PenikMessageRow(
@@ -1155,7 +1222,7 @@ fun PenikMessageRow(
                     }
 
                     val markup = message.botMarkup
-                    if (markup != null && !markup.isEmpty) {
+                    if (markup != null && !markup.isEmpty && markup.isInline) {
                         PenikBotKeyboard(
                                 markup = markup,
                                 message = message,

@@ -3525,6 +3525,12 @@ public class XmppConnectionService extends Service {
         }
     }
 
+    public void showBotCallbackAnswer(final String text, final boolean showAlert) {
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            android.widget.Toast.makeText(getApplicationContext(), text, showAlert ? android.widget.Toast.LENGTH_LONG : android.widget.Toast.LENGTH_SHORT).show();
+        });
+    }
+
     public void updateConversationUi() {
         for (OnConversationUpdate listener : threadSafeList(this.mOnConversationUpdates)) {
             listener.onConversationUpdate();

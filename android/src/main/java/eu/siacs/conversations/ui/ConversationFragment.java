@@ -3,6 +3,7 @@ package eu.siacs.conversations.ui;
 import static eu.siacs.conversations.ui.XmppActivity.EXTRA_ACCOUNT;
 import static eu.siacs.conversations.ui.XmppActivity.REQUEST_INVITE_TO_CONVERSATION;
 import static eu.siacs.conversations.ui.util.SoftKeyboardUtils.hideSoftKeyboard;
+import static eu.siacs.conversations.ui.util.SoftKeyboardUtils.showKeyboard;
 import static eu.siacs.conversations.utils.PermissionUtils.allGranted;
 import static eu.siacs.conversations.utils.PermissionUtils.audioGranted;
 import static eu.siacs.conversations.utils.PermissionUtils.cameraGranted;
@@ -1531,6 +1532,20 @@ public class ConversationFragment extends XmppFragment
                     hideSoftKeyboard(this.binding.textInput);
                     this.penikChatState.setShowStickerPicker(true);
                 });
+        binding.botKeyboardButton.setOnClickListener(
+                (v) -> {
+                    if (this.conversation != null) {
+                        final boolean show = !this.conversation.isShowBotReplyKeyboard();
+                        this.conversation.setShowBotReplyKeyboard(show);
+                        if (show) {
+                            hideSoftKeyboard(this.binding.textInput);
+                        } else {
+                            this.binding.textInput.requestFocus();
+                            showKeyboard(this.binding.textInput);
+                        }
+                        updateBotReplyKeyboard();
+                    }
+                });
         binding.cancelReplyButton.setOnClickListener((v) -> clearActiveReply());
         binding.attachmentChoicesFlow.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         binding.getRoot().setOnClickListener(null); // TODO why the fuck did we do this?
@@ -1661,6 +1676,49 @@ public class ConversationFragment extends XmppFragment
             if (activity != null && activity.xmppConnectionService != null && account != null) {
                 activity.xmppConnectionService.sendMessagePacket(account, packet);
             }
+        }
+    }
+
+    private void updateBotReplyKeyboard() {
+        if (this.conversation == null || !this.conversation.isBot() || this.binding == null) {
+            if (this.binding != null) {
+                this.binding.botKeyboardButton.setVisibility(View.GONE);
+                this.binding.botReplyKeyboard.setVisibility(View.GONE);
+            }
+            return;
+        }
+        final BotMarkup markup = this.conversation.getBotReplyMarkup();
+        if (markup != null && markup.isReply() && !markup.isEmpty()) {
+            this.binding.botKeyboardButton.setVisibility(View.VISIBLE);
+            if (this.conversation.isShowBotReplyKeyboard()) {
+                this.binding.botReplyKeyboard.setVisibility(View.VISIBLE);
+                PenikChatBridge.renderBotReplyKeyboard(
+                        this.binding.botReplyKeyboard,
+                        markup,
+                        this::onPenikBotReplyButtonClick
+                );
+            } else {
+                this.binding.botReplyKeyboard.setVisibility(View.GONE);
+            }
+        } else {
+            this.binding.botKeyboardButton.setVisibility(View.GONE);
+            this.binding.botReplyKeyboard.setVisibility(View.GONE);
+        }
+    }
+
+    private void onPenikBotReplyButtonClick(final BotMarkup.Button button) {
+        if (this.conversation == null || button == null || button.getText() == null) {
+            return;
+        }
+        final String text = button.getText();
+        final Message message = new Message(conversation, text, conversation.getNextEncryption());
+        Message.configurePrivateMessage(message);
+        sendMessage(message);
+
+        final BotMarkup current = conversation.getBotReplyMarkup();
+        if (current != null && current.isOneTimeKeyboard()) {
+            conversation.setShowBotReplyKeyboard(false);
+            updateBotReplyKeyboard();
         }
     }
 
@@ -3741,6 +3799,20 @@ public class ConversationFragment extends XmppFragment
                 new ArrayList<>(this.messageList),
                 isMuc,
                 showAvatars11);
+        if (this.conversation.isBot() && this.conversation.getBotReplyMarkup() == null) {
+            for (int i = this.messageList.size() - 1; i >= 0; i--) {
+                final Message m = this.messageList.get(i);
+                if (m.getStatus() == Message.STATUS_RECEIVED && m.getBotMarkup() != null) {
+                    if (m.getBotMarkup().isReply()) {
+                        this.conversation.setBotReplyMarkup(m.getBotMarkup());
+                        break;
+                    } else if (m.getBotMarkup().isRemove()) {
+                        break;
+                    }
+                }
+            }
+        }
+        updateBotReplyKeyboard();
     }
 
     public void sendSticker(final Sticker sticker) {

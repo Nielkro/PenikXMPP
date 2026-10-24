@@ -67,6 +67,33 @@ pub struct InlineKeyboardMarkup {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KeyboardButton {
+    pub text: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReplyKeyboardMarkup {
+    pub keyboard: Vec<Vec<KeyboardButton>>,
+    #[serde(default)]
+    pub resize_keyboard: Option<bool>,
+    #[serde(default)]
+    pub one_time_keyboard: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReplyKeyboardRemove {
+    pub remove_keyboard: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ReplyMarkup {
+    Inline(InlineKeyboardMarkup),
+    Reply(ReplyKeyboardMarkup),
+    Remove(ReplyKeyboardRemove),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
     pub message_id: String,
     pub from: Option<User>,
@@ -75,7 +102,7 @@ pub struct Message {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub reply_markup: Option<InlineKeyboardMarkup>,
+    pub reply_markup: Option<ReplyMarkup>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -102,7 +129,16 @@ pub struct SendMessageRequest {
     pub chat_id: String,
     pub text: String,
     #[serde(default)]
-    pub reply_markup: Option<InlineKeyboardMarkup>,
+    pub reply_markup: Option<ReplyMarkup>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AnswerCallbackQueryRequest {
+    pub callback_query_id: String,
+    #[serde(default)]
+    pub text: Option<String>,
+    #[serde(default)]
+    pub show_alert: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

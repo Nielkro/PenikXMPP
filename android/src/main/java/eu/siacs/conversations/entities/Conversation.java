@@ -783,8 +783,27 @@ public class Conversation extends AbstractEntity
         this.attributes.pinnedOnTop = value;
     }
 
+    private transient BotMarkup botReplyMarkup = null;
+    private transient boolean showBotReplyKeyboard = true;
+
     public boolean isBot() {
         return Config.isBot(this.getAddress());
+    }
+
+    public BotMarkup getBotReplyMarkup() {
+        return botReplyMarkup;
+    }
+
+    public void setBotReplyMarkup(BotMarkup markup) {
+        this.botReplyMarkup = markup;
+    }
+
+    public boolean isShowBotReplyKeyboard() {
+        return showBotReplyKeyboard;
+    }
+
+    public void setShowBotReplyKeyboard(boolean show) {
+        this.showBotReplyKeyboard = show;
     }
 
     public int getNextEncryption() {

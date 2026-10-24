@@ -1,7 +1,8 @@
 use crate::db::{self, BotRecord};
 use crate::models::{
-    ApiResponse, Chat, EditMessageTextRequest, GetUpdatesParams, InlineKeyboardMarkup, Message,
-    SendMessageRequest, SetWebhookRequest, Update, User, WebhookInfo, SendPhotoRequest, SendDocumentRequest,
+    AnswerCallbackQueryRequest, ApiResponse, Chat, EditMessageTextRequest, GetUpdatesParams,
+    InlineKeyboardMarkup, Message, ReplyMarkup, SendDocumentRequest, SendMessageRequest,
+    SendPhotoRequest, SetWebhookRequest, Update, User, WebhookInfo,
 };
 use crate::webhook::WebhookDispatcher;
 use crate::xmpp::{generate_jid_hash_id, xml_escape};
@@ -41,6 +42,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/bot:token/getUpdates", get(get_updates_get).post(get_updates_post))
         .route("/bot:token/sendPhoto", post(send_photo))
         .route("/bot:token/sendDocument", post(send_document))
+        .route("/bot:token/answerCallbackQuery", post(answer_callback_query))
         .route("/bot:token/ws", get(ws_handler))
         .with_state(state)
 }
@@ -80,24 +82,48 @@ async fn get_me(
     (StatusCode::OK, Json(ApiResponse::success(user))).into_response()
 }
 
-fn build_markup_xml(markup: &InlineKeyboardMarkup) -> String {
-    let mut xml = String::from("<markup xmlns='penik:bot:markup'>");
-    for row in &markup.inline_keyboard {
-        xml.push_str("<row>");
-        for btn in row {
-            xml.push_str(&format!("<button text='{}'", xml_escape(&btn.text)));
-            if let Some(ref data) = btn.callback_data {
-                xml.push_str(&format!(" data='{}'", xml_escape(data)));
+fn build_reply_markup_xml(markup: &ReplyMarkup) -> String {
+    match markup {
+        ReplyMarkup::Inline(inline) => {
+            let mut xml = String::from("<markup xmlns='penik:bot:markup' type='inline'>");
+            for row in &inline.inline_keyboard {
+                xml.push_str("<row>");
+                for btn in row {
+                    xml.push_str(&format!("<button text='{}'", xml_escape(&btn.text)));
+                    if let Some(data) = &btn.callback_data {
+                        xml.push_str(&format!(" data='{}'", xml_escape(data)));
+                    }
+                    if let Some(url) = &btn.url {
+                        xml.push_str(&format!(" url='{}'", xml_escape(url)));
+                    }
+                    xml.push_str("/>");
+                }
+                xml.push_str("</row>");
             }
-            if let Some(ref url) = btn.url {
-                xml.push_str(&format!(" url='{}'", xml_escape(url)));
-            }
-            xml.push_str("/>");
+            xml.push_str("</markup>");
+            xml
         }
-        xml.push_str("</row>");
+        ReplyMarkup::Reply(reply) => {
+            let resize = reply.resize_keyboard.unwrap_or(true);
+            let one_time = reply.one_time_keyboard.unwrap_or(false);
+            let mut xml = format!(
+                "<markup xmlns='penik:bot:markup' type='reply' resize='{}' one_time='{}'>",
+                resize, one_time
+            );
+            for row in &reply.keyboard {
+                xml.push_str("<row>");
+                for btn in row {
+                    xml.push_str(&format!("<button text='{}'/>", xml_escape(&btn.text)));
+                }
+                xml.push_str("</row>");
+            }
+            xml.push_str("</markup>");
+            xml
+        }
+        ReplyMarkup::Remove(_) => {
+            "<markup xmlns='penik:bot:markup' type='remove'/>".to_string()
+        }
     }
-    xml.push_str("</markup>");
-    xml
 }
 
 pub async fn do_send_message(
@@ -105,14 +131,14 @@ pub async fn do_send_message(
     bot: &BotRecord,
     chat_id: String,
     text: String,
-    reply_markup: Option<InlineKeyboardMarkup>,
+    reply_markup: Option<ReplyMarkup>,
 ) -> Result<Message, String> {
     let msg_id = format!("msg_{}", Uuid::new_v4().simple());
     let bot_jid = format!("{}@{}", bot.username, state.component_domain);
 
     let mut markup_xml = String::new();
     if let Some(ref mk) = reply_markup {
-        markup_xml = build_markup_xml(mk);
+        markup_xml = build_reply_markup_xml(mk);
     }
 
     let stanza = format!(
@@ -169,7 +195,7 @@ pub async fn do_edit_message_text(
 
     let mut markup_xml = String::new();
     if let Some(ref mk) = reply_markup {
-        markup_xml = build_markup_xml(mk);
+        markup_xml = build_reply_markup_xml(&ReplyMarkup::Inline(mk.clone()));
     }
 
     // XEP-0308 Last Message Correction
@@ -210,7 +236,7 @@ pub async fn do_edit_message_text(
         },
         date: db::current_timestamp(),
         text: Some(text),
-        reply_markup,
+        reply_markup: reply_markup.map(ReplyMarkup::Inline),
     };
 
     Ok(result)
@@ -246,6 +272,43 @@ async fn edit_message_text(
         Ok(msg) => (StatusCode::OK, Json(ApiResponse::success(msg))).into_response(),
         Err(e) => api_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
+}
+
+async fn answer_callback_query(
+    State(state): State<AppState>,
+    Path(token): Path<String>,
+    Json(payload): Json<AnswerCallbackQueryRequest>,
+) -> impl IntoResponse {
+    let bot = match authenticate_bot(&state.pool, &token).await {
+        Ok(b) => b,
+        Err(resp) => return resp,
+    };
+
+    let user_jid = if let Some(colon) = payload.callback_query_id.find(':') {
+        &payload.callback_query_id[..colon]
+    } else {
+        &payload.callback_query_id
+    };
+
+    let bot_jid = format!("{}@{}", bot.username, state.component_domain);
+    let alert_text = payload.text.unwrap_or_default();
+    let show_alert = payload.show_alert.unwrap_or(false);
+
+    let stanza = format!(
+        "<message type='chat' to='{}' from='{}'>\
+        <callback_answer xmlns='penik:bot:markup' id='{}' text='{}' show_alert='{}'/>\
+        <no-store xmlns='urn:xmpp:hints'/>\
+        </message>",
+        xml_escape(user_jid),
+        bot_jid,
+        xml_escape(&payload.callback_query_id),
+        xml_escape(&alert_text),
+        show_alert
+    );
+
+    let _ = state.stanza_tx.send(stanza).await;
+
+    (StatusCode::OK, Json(ApiResponse::success(true))).into_response()
 }
 
 async fn set_webhook(
@@ -540,7 +603,7 @@ struct WsRequest {
     #[serde(default)]
     text: Option<String>,
     #[serde(default)]
-    reply_markup: Option<InlineKeyboardMarkup>,
+    reply_markup: Option<ReplyMarkup>,
     #[serde(default)]
     photo: Option<String>,
     #[serde(default)]
@@ -740,7 +803,11 @@ async fn process_ws_request(
                 Some(txt) => txt,
                 None => return make_ws_response(req_id, Err("text is required".to_string())),
             };
-            match do_edit_message_text(state, bot, chat_id, message_id, text, req.reply_markup).await {
+            let inline_markup = match req.reply_markup {
+                Some(ReplyMarkup::Inline(ikm)) => Some(ikm),
+                _ => None,
+            };
+            match do_edit_message_text(state, bot, chat_id, message_id, text, inline_markup).await {
                 Ok(msg) => Ok(serde_json::to_value(msg).unwrap_or(serde_json::Value::Null)),
                 Err(e) => Err(e),
             }
