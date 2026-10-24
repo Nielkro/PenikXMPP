@@ -1,8 +1,9 @@
 use crate::db::{self, BotRecord};
 use crate::models::{
-    AnswerCallbackQueryRequest, ApiResponse, Chat, EditMessageTextRequest, GetUpdatesParams,
-    InlineKeyboardMarkup, Message, ReplyMarkup, SendDocumentRequest, SendMessageRequest,
-    SendPhotoRequest, SetWebhookRequest, Update, User, WebhookInfo,
+    AnswerCallbackQueryRequest, ApiResponse, BotCommand, Chat, EditMessageTextRequest,
+    GetUpdatesParams, InlineKeyboardMarkup, Message, ReplyMarkup, SendDocumentRequest,
+    SendMessageRequest, SendPhotoRequest, SetMyCommandsRequest, SetWebhookRequest, Update, User,
+    WebhookInfo,
 };
 use crate::webhook::WebhookDispatcher;
 use crate::xmpp::{generate_jid_hash_id, xml_escape};
@@ -43,6 +44,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/bot:token/sendPhoto", post(send_photo))
         .route("/bot:token/sendDocument", post(send_document))
         .route("/bot:token/answerCallbackQuery", post(answer_callback_query))
+        .route("/bot:token/setMyCommands", post(set_my_commands))
+        .route("/bot:token/getMyCommands", get(get_my_commands))
         .route("/bot:token/ws", get(ws_handler))
         .with_state(state)
 }
@@ -323,6 +326,45 @@ async fn answer_callback_query(
     let _ = state.stanza_tx.send(stanza).await;
 
     (StatusCode::OK, Json(ApiResponse::success(true))).into_response()
+}
+
+async fn set_my_commands(
+    State(state): State<AppState>,
+    Path(token): Path<String>,
+    Json(payload): Json<SetMyCommandsRequest>,
+) -> impl IntoResponse {
+    let bot = match authenticate_bot(&state.pool, &token).await {
+        Ok(b) => b,
+        Err(resp) => return resp,
+    };
+
+    let json_str = match serde_json::to_string(&payload.commands) {
+        Ok(s) => s,
+        Err(e) => return api_error(StatusCode::BAD_REQUEST, format!("Invalid commands json: {}", e)),
+    };
+
+    if let Err(e) = db::set_bot_commands(&state.pool, bot.id, Some(&json_str)).await {
+        return api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to update commands: {}", e));
+    }
+
+    (StatusCode::OK, Json(ApiResponse::success(true))).into_response()
+}
+
+async fn get_my_commands(
+    State(state): State<AppState>,
+    Path(token): Path<String>,
+) -> impl IntoResponse {
+    let bot = match authenticate_bot(&state.pool, &token).await {
+        Ok(b) => b,
+        Err(resp) => return resp,
+    };
+
+    let commands: Vec<BotCommand> = match bot.commands_json.as_deref() {
+        Some(s) if !s.is_empty() => serde_json::from_str(s).unwrap_or_default(),
+        _ => Vec::new(),
+    };
+
+    (StatusCode::OK, Json(ApiResponse::success(commands))).into_response()
 }
 
 async fn set_webhook(
@@ -894,6 +936,31 @@ async fn process_ws_request(
             );
             let _ = state.stanza_tx.send(stanza).await;
             Ok(serde_json::Value::Bool(true))
+        }
+        "setMyCommands" => {
+            let commands: Vec<BotCommand> = if let Some(params) = req.params.as_ref() {
+                match serde_json::from_value(params.get("commands").cloned().unwrap_or(serde_json::Value::Array(vec![]))) {
+                    Ok(c) => c,
+                    Err(e) => return make_ws_response(req_id, Err(format!("Invalid commands: {}", e))),
+                }
+            } else {
+                vec![]
+            };
+            let json_str = match serde_json::to_string(&commands) {
+                Ok(s) => s,
+                Err(e) => return make_ws_response(req_id, Err(format!("Serialization error: {}", e))),
+            };
+            match db::set_bot_commands(&state.pool, bot.id, Some(&json_str)).await {
+                Ok(_) => Ok(serde_json::Value::Bool(true)),
+                Err(e) => Err(format!("DB error: {}", e)),
+            }
+        }
+        "getMyCommands" => {
+            let commands: Vec<BotCommand> = match bot.commands_json.as_deref() {
+                Some(s) if !s.is_empty() => serde_json::from_str(s).unwrap_or_default(),
+                _ => Vec::new(),
+            };
+            Ok(serde_json::to_value(commands).unwrap_or(serde_json::Value::Array(vec![])))
         }
         other => Err(format!("Unknown or unsupported method: {}", other)),
     };

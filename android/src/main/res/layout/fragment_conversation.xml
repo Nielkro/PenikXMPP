@@ -85,6 +85,12 @@
                 android:layout_alignParentBottom="true"
                 android:orientation="vertical">
 
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/bot_commands_popup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
                 <RelativeLayout
                     android:id="@+id/message_input_box"
                     android:layout_width="match_parent"
@@ -127,6 +133,27 @@
                                 android:minHeight="0dp"
                                 android:contentDescription="Stickers"
                                 app:icon="@drawable/ic_sticker_sentiment_24dp"
+                                app:iconGravity="textStart"
+                                app:iconPadding="0dp"
+                                app:iconSize="20dp"
+                                app:iconTint="?colorOnTertiaryContainer" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/bot_commands_button"
+                                style="?attr/materialIconButtonStyle"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="2dp"
+                                android:padding="0dp"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:insetLeft="0dp"
+                                android:insetRight="0dp"
+                                android:minWidth="0dp"
+                                android:minHeight="0dp"
+                                android:contentDescription="Bot Commands"
+                                android:visibility="gone"
+                                app:icon="@drawable/ic_bot_commands_24dp"
                                 app:iconGravity="textStart"
                                 app:iconPadding="0dp"
                                 app:iconSize="20dp"

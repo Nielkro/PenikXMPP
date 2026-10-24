@@ -1,7 +1,7 @@
 use crate::botfather::BotFatherEngine;
 use crate::config::Config;
 use crate::db;
-use crate::models::{CallbackQuery, Chat, Message, Update, User};
+use crate::models::{BotCommand, CallbackQuery, Chat, Message, Update, User};
 use crate::webhook::WebhookDispatcher;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
@@ -45,6 +45,7 @@ pub enum IqKind {
     DiscoInfo,
     DiscoItems,
     VCard,
+    BotCommands,
     Other,
 }
 
@@ -72,6 +73,7 @@ pub fn classify_iq(root: &roxmltree::Node) -> IqKind {
                 ("query", "http://jabber.org/protocol/disco#info") => IqKind::DiscoInfo,
                 ("query", "http://jabber.org/protocol/disco#items") => IqKind::DiscoItems,
                 ("vCard", "vcard-temp") => IqKind::VCard,
+                ("query", "penik:bot:commands") | ("commands", "penik:bot:commands") => IqKind::BotCommands,
                 _ => IqKind::Other,
             }
         }
@@ -408,6 +410,7 @@ async fn handle_incoming_stanza(
                 "generic",
                 &["urn:xmpp:ping", "penik:bot:markup"],
                 None,
+                None,
             )
             .await;
         }
@@ -476,9 +479,11 @@ async fn handle_incoming_stanza(
                     "vcard-temp",
                     "urn:xmpp:ping",
                     "penik:bot:markup",
+                    "penik:bot:commands",
                     "urn:xmpp:message-correct:0",
                 ],
                 Some(desc),
+                bot.commands_json.as_deref(),
             )
             .await;
         }
@@ -603,6 +608,7 @@ async fn handle_iq_query(
     disco_type: &str,
     extra_features: &[&str],
     vcard_desc: Option<&str>,
+    bot_commands_json: Option<&str>,
 ) {
     let from = &raw.from;
     let id = &raw.id;
@@ -613,6 +619,34 @@ async fn handle_iq_query(
                 xml_escape(from),
                 xml_escape(responder_jid),
                 xml_escape(id)
+            );
+            let _ = outbound.send(resp).await;
+        }
+        ("get", IqKind::BotCommands) => {
+            let mut commands_xml = String::new();
+            let parsed_cmds: Vec<BotCommand> = bot_commands_json
+                .and_then(|s| serde_json::from_str(s).ok())
+                .unwrap_or_else(|| vec![
+                    BotCommand { command: "start".into(), description: "Запустить бота".into() },
+                    BotCommand { command: "help".into(), description: "Справка и возможности".into() },
+                ]);
+
+            for cmd in parsed_cmds {
+                commands_xml.push_str(&format!(
+                    "<command name='{}' description='{}'/>",
+                    xml_escape(&cmd.command),
+                    xml_escape(&cmd.description)
+                ));
+            }
+
+            let resp = format!(
+                "<iq type='result' to='{}' from='{}' id='{}'>\
+                <commands xmlns='penik:bot:commands'>{}</commands>\
+                </iq>",
+                xml_escape(from),
+                xml_escape(responder_jid),
+                xml_escape(id),
+                commands_xml
             );
             let _ = outbound.send(resp).await;
         }
@@ -700,6 +734,7 @@ async fn handle_botfather_stanza(
                 "bot",
                 &["vcard-temp", "urn:xmpp:ping"],
                 Some("BotFather - the one to rule them all. Use it to create and manage Penik bots."),
+                None,
             )
             .await;
         }
@@ -817,6 +852,11 @@ mod tests {
         let xml5 = "<iq type='get' id='5' to='bot.snikket.penik.ru'><query xmlns='http://jabber.org/protocol/disco#items'/></iq>";
         let s5 = parse_stanza(xml5).unwrap();
         assert_eq!(s5.iq_kind, IqKind::DiscoItems);
+
+        // bot commands
+        let xml_cmds = "<iq type='get' id='cmds' to='bot.snikket.penik.ru'><query xmlns='penik:bot:commands'/></iq>";
+        let s_cmds = parse_stanza(xml_cmds).unwrap();
+        assert_eq!(s_cmds.iq_kind, IqKind::BotCommands);
 
         // Unknown IQ
         let xml6 = "<iq type='get' id='6' to='bot.snikket.penik.ru'><unknown xmlns='urn:unknown'/></iq>";

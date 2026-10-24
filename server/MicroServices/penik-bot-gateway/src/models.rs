@@ -32,6 +32,17 @@ impl<T> ApiResponse<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BotCommand {
+    pub command: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SetMyCommandsRequest {
+    pub commands: Vec<BotCommand>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     pub id: i64,
     pub is_bot: bool,

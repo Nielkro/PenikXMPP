@@ -191,6 +191,15 @@ pub async fn create_bot(
     })
 }
 
+pub async fn set_bot_commands(pool: &SqlitePool, bot_id: i64, commands_json: Option<&str>) -> anyhow::Result<()> {
+    sqlx::query("UPDATE bots SET commands_json = ? WHERE id = ?")
+        .bind(commands_json)
+        .bind(bot_id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
 pub async fn set_webhook(pool: &SqlitePool, bot_id: i64, url: Option<&str>) -> anyhow::Result<()> {
     sqlx::query("UPDATE bots SET webhook_url = ?, fail_count = 0 WHERE id = ?")
         .bind(url)

@@ -33,6 +33,7 @@ import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -108,6 +109,7 @@ import eu.siacs.conversations.databinding.FragmentConversationBinding;
 import eu.siacs.conversations.databinding.ItemMediaChoiceBinding;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Blockable;
+import eu.siacs.conversations.entities.BotCommand;
 import eu.siacs.conversations.entities.BotMarkup;
 import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;
@@ -117,6 +119,8 @@ import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.Sticker;
 import eu.siacs.conversations.stickers.StickerManager;
 import eu.siacs.conversations.entities.ReadByMarker;
+import eu.siacs.conversations.ui.compose.PenikBotCommandsBridge;
+import im.conversations.android.xmpp.model.stanza.Iq;
 import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.entities.TransferablePlaceholder;
 import eu.siacs.conversations.http.HttpDownloadConnection;
@@ -1546,6 +1550,7 @@ public class ConversationFragment extends XmppFragment
                         updateBotReplyKeyboard();
                     }
                 });
+        binding.botCommandsButton.setOnClickListener((v) -> toggleBotCommandsPopup());
         binding.cancelReplyButton.setOnClickListener((v) -> clearActiveReply());
         binding.attachmentChoicesFlow.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         binding.getRoot().setOnClickListener(null); // TODO why the fuck did we do this?
@@ -1556,6 +1561,18 @@ public class ConversationFragment extends XmppFragment
 
         binding.textInput.addTextChangedListener(
                 new StylingHelper.MessageEditorStyler(binding.textInput));
+        binding.textInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                onTextInputChanged(s != null ? s.toString() : "");
+            }
+        });
 
         binding.textInput.setOnEditorActionListener(mEditorActionListener);
         binding.textInput.setRichContentListener(new String[] {"image/*"}, mEditorContentListener);
@@ -1682,11 +1699,16 @@ public class ConversationFragment extends XmppFragment
     private void updateBotReplyKeyboard() {
         if (this.conversation == null || !this.conversation.isBot() || this.binding == null) {
             if (this.binding != null) {
+                this.binding.botCommandsButton.setVisibility(View.GONE);
+                this.binding.botCommandsPopup.setVisibility(View.GONE);
                 this.binding.botKeyboardButton.setVisibility(View.GONE);
                 this.binding.botReplyKeyboard.setVisibility(View.GONE);
             }
             return;
         }
+
+        this.binding.botCommandsButton.setVisibility(View.VISIBLE);
+
         final BotMarkup markup = this.conversation.getBotReplyMarkup();
         if (markup != null && markup.isReply() && !markup.isEmpty()) {
             this.binding.botKeyboardButton.setVisibility(View.VISIBLE);
@@ -1704,6 +1726,118 @@ public class ConversationFragment extends XmppFragment
             this.binding.botKeyboardButton.setVisibility(View.GONE);
             this.binding.botReplyKeyboard.setVisibility(View.GONE);
         }
+
+        fetchBotCommandsIfNeeded();
+    }
+
+    private void toggleBotCommandsPopup() {
+        if (this.binding == null || this.conversation == null || !this.conversation.isBot()) {
+            return;
+        }
+        if (this.binding.botCommandsPopup.getVisibility() == View.VISIBLE) {
+            hideBotCommandsPopup();
+        } else {
+            showBotCommandsPopup(this.conversation.getBotCommands());
+        }
+    }
+
+    private void showBotCommandsPopup(final List<BotCommand> commands) {
+        if (this.binding == null || commands == null || commands.isEmpty()) {
+            hideBotCommandsPopup();
+            return;
+        }
+        this.binding.botCommandsPopup.setVisibility(View.VISIBLE);
+        PenikBotCommandsBridge.renderBotCommandsPopup(
+                this.binding.botCommandsPopup,
+                commands,
+                this::onPenikBotCommandClick,
+                this::hideBotCommandsPopup
+        );
+    }
+
+    private void hideBotCommandsPopup() {
+        if (this.binding != null && this.binding.botCommandsPopup.getVisibility() != View.GONE) {
+            this.binding.botCommandsPopup.setVisibility(View.GONE);
+        }
+    }
+
+    private void onPenikBotCommandClick(final BotCommand command) {
+        if (this.conversation == null || command == null || this.binding == null) {
+            return;
+        }
+        hideBotCommandsPopup();
+        final String text = "/" + command.getCommand();
+        final Message message = new Message(conversation, text, conversation.getNextEncryption());
+        Message.configurePrivateMessage(message);
+        sendMessage(message);
+        this.binding.textInput.setText("");
+    }
+
+    private void onTextInputChanged(final String text) {
+        if (this.conversation == null || !this.conversation.isBot() || this.binding == null) {
+            return;
+        }
+        if (text.startsWith("/")) {
+            final String query = text.substring(1).trim().toLowerCase();
+            final List<BotCommand> all = this.conversation.getBotCommands();
+            final List<BotCommand> filtered = new ArrayList<>();
+            for (BotCommand cmd : all) {
+                if (query.isEmpty() || cmd.getCommand().toLowerCase().contains(query) || cmd.getDescription().toLowerCase().contains(query)) {
+                    filtered.add(cmd);
+                }
+            }
+            if (!filtered.isEmpty()) {
+                showBotCommandsPopup(filtered);
+            } else {
+                hideBotCommandsPopup();
+            }
+        } else {
+            hideBotCommandsPopup();
+        }
+    }
+
+    private void fetchBotCommandsIfNeeded() {
+        if (this.conversation == null || !this.conversation.isBot()) {
+            return;
+        }
+        final Account account = this.conversation.getAccount();
+        final eu.siacs.conversations.xmpp.XmppConnection connection = account != null ? account.getXmppConnection() : null;
+        if (connection == null) {
+            return;
+        }
+
+        final Iq iq = new Iq(Iq.Type.GET);
+        iq.setTo(this.conversation.getAddress());
+        iq.addChild("query", "penik:bot:commands");
+
+        connection.sendIqPacket(iq, response -> {
+            if (response.getType() == Iq.Type.RESULT) {
+                final eu.siacs.conversations.xml.Element commandsEl = response.findChild("commands", "penik:bot:commands");
+                if (commandsEl != null) {
+                    final List<BotCommand> parsed = new ArrayList<>();
+                    for (eu.siacs.conversations.xml.Element child : commandsEl.getChildren()) {
+                        if ("command".equals(child.getName())) {
+                            final String name = child.getAttribute("name");
+                            final String desc = child.getAttribute("description");
+                            if (name != null && !name.isEmpty()) {
+                                parsed.add(new BotCommand(name, desc != null ? desc : ""));
+                            }
+                        }
+                    }
+                    if (!parsed.isEmpty()) {
+                        this.conversation.setBotCommands(parsed);
+                        final Activity activity = getActivity();
+                        if (activity != null) {
+                            activity.runOnUiThread(() -> {
+                                if (this.binding != null && this.binding.botCommandsPopup.getVisibility() == View.VISIBLE) {
+                                    showBotCommandsPopup(this.conversation.getBotCommands());
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }, false);
     }
 
     private void onPenikBotReplyButtonClick(final BotMarkup.Button button) {

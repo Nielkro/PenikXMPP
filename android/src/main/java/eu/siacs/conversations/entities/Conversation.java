@@ -785,9 +785,24 @@ public class Conversation extends AbstractEntity
 
     private transient BotMarkup botReplyMarkup = null;
     private transient boolean showBotReplyKeyboard = true;
+    private transient List<BotCommand> botCommands = new ArrayList<>();
 
     public boolean isBot() {
         return Config.isBot(this.getAddress());
+    }
+
+    public synchronized List<BotCommand> getBotCommands() {
+        if ((botCommands == null || botCommands.isEmpty()) && isBot()) {
+            final List<BotCommand> defaults = new ArrayList<>();
+            defaults.add(new BotCommand("start", "Запустить бота"));
+            defaults.add(new BotCommand("help", "Справка и возможности"));
+            return defaults;
+        }
+        return botCommands != null ? Collections.unmodifiableList(botCommands) : Collections.emptyList();
+    }
+
+    public synchronized void setBotCommands(final List<BotCommand> commands) {
+        this.botCommands = commands != null ? new ArrayList<>(commands) : new ArrayList<>();
     }
 
     public BotMarkup getBotReplyMarkup() {
