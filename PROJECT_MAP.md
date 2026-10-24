@@ -260,6 +260,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/conversations.doap` — Project metadata.
 - `android/fastlane/metadata/` — Play Store listings and screenshots (rebrand target).
 - `docs/` — User docs (backup, migration).
+- `docs/PENIK_BOT_AND_BRIDGE_ARCHITECTURE.md` — Complete architecture specification and implementation guide for external bots, puppeting bridges, and `penik-tg-bridge` (XEP-0114, penik:bot:markup, penik:bot:commands, vCard, media pipeline).
 - `docs/PXMPP/` — PenikXMPP (FunXMPP) binary protocol specification & technical docs in English (`README.md`) and Russian (`README_RU.md`).
 - `art/` — Artwork sources.
 - `.woodpecker.yml` — CI pipeline.
