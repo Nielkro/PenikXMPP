@@ -78,12 +78,40 @@ pub async fn init_db(db_path: &str) -> anyhow::Result<SqlitePool> {
         );
 
         CREATE INDEX IF NOT EXISTS idx_pending_bot ON pending_updates(bot_id, id);
+
+        CREATE TABLE IF NOT EXISTS jid_chats (
+            chat_id INTEGER PRIMARY KEY,
+            jid TEXT NOT NULL UNIQUE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_jid_chats_jid ON jid_chats(jid);
         "#,
     )
     .execute(&pool)
     .await?;
 
     Ok(pool)
+}
+
+pub async fn upsert_jid_chat(pool: &SqlitePool, chat_id: i64, jid: &str) -> anyhow::Result<()> {
+    sqlx::query(
+        "INSERT INTO jid_chats (chat_id, jid) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET jid = excluded.jid",
+    )
+    .bind(chat_id)
+    .bind(jid)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn get_jid_by_chat_id(pool: &SqlitePool, chat_id: i64) -> anyhow::Result<Option<String>> {
+    let row: Option<(String,)> = sqlx::query_as("SELECT jid FROM jid_chats WHERE chat_id = ?")
+        .bind(chat_id)
+        .fetch_optional(pool)
+        .await?;
+
+    Ok(row.map(|r| r.0))
 }
 
 pub async fn get_bot_by_token(pool: &SqlitePool, token: &str) -> anyhow::Result<Option<BotRecord>> {

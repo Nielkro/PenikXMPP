@@ -126,6 +126,18 @@ fn build_reply_markup_xml(markup: &ReplyMarkup) -> String {
     }
 }
 
+pub async fn resolve_target_jid(pool: &SqlitePool, chat_id: &str) -> String {
+    if chat_id.contains('@') {
+        return chat_id.to_string();
+    }
+    if let Ok(numeric_id) = chat_id.parse::<i64>() {
+        if let Ok(Some(jid)) = db::get_jid_by_chat_id(pool, numeric_id).await {
+            return jid;
+        }
+    }
+    chat_id.to_string()
+}
+
 pub async fn do_send_message(
     state: &AppState,
     bot: &BotRecord,
@@ -133,6 +145,7 @@ pub async fn do_send_message(
     text: String,
     reply_markup: Option<ReplyMarkup>,
 ) -> Result<Message, String> {
+    let target_jid = resolve_target_jid(&state.pool, &chat_id).await;
     let msg_id = format!("msg_{}", Uuid::new_v4().simple());
     let bot_jid = format!("{}@{}", bot.username, state.component_domain);
 
@@ -146,7 +159,7 @@ pub async fn do_send_message(
         <body>{}</body>\
         {}\
         </message>",
-        xml_escape(&chat_id),
+        xml_escape(&target_jid),
         bot_jid,
         msg_id,
         xml_escape(&text),
@@ -190,6 +203,7 @@ pub async fn do_edit_message_text(
     text: String,
     reply_markup: Option<InlineKeyboardMarkup>,
 ) -> Result<Message, String> {
+    let target_jid = resolve_target_jid(&state.pool, &chat_id).await;
     let new_msg_id = format!("edit_{}", Uuid::new_v4().simple());
     let bot_jid = format!("{}@{}", bot.username, state.component_domain);
 
@@ -205,7 +219,7 @@ pub async fn do_edit_message_text(
         <replace id='{}' xmlns='urn:xmpp:message-correct:0'/>\
         {}\
         </message>",
-        xml_escape(&chat_id),
+        xml_escape(&target_jid),
         bot_jid,
         new_msg_id,
         xml_escape(&text),
@@ -424,6 +438,10 @@ async fn handle_get_updates(
     let limit = params.limit.unwrap_or(100).clamp(1, 100);
     let timeout_secs = params.timeout.unwrap_or(0).min(50);
 
+    let notifier = state.dispatcher.get_notifier(bot.id);
+    let notified = notifier.notified();
+    tokio::pin!(notified);
+
     // Initial check
     let mut records = match db::acknowledge_and_get_updates(&state.pool, bot.id, params.offset, limit).await {
         Ok(r) => r,
@@ -432,8 +450,7 @@ async fn handle_get_updates(
 
     // If no records and long-poll timeout requested, wait on Notify
     if records.is_empty() && timeout_secs > 0 {
-        let notifier = state.dispatcher.get_notifier(bot.id);
-        let _ = tokio::time::timeout(Duration::from_secs(timeout_secs), notifier.notified()).await;
+        let _ = tokio::time::timeout(Duration::from_secs(timeout_secs), &mut notified).await;
 
         records = match db::acknowledge_and_get_updates(&state.pool, bot.id, params.offset, limit).await {
             Ok(r) => r,
@@ -459,6 +476,7 @@ pub async fn do_send_photo(
     photo: String,
     caption: Option<String>,
 ) -> Result<Message, String> {
+    let target_jid = resolve_target_jid(&state.pool, &chat_id).await;
     let msg_id = format!("photo_{}", Uuid::new_v4().simple());
     let bot_jid = format!("{}@{}", bot.username, state.component_domain);
 
@@ -468,7 +486,7 @@ pub async fn do_send_photo(
         <body>{} {}</body>\
         <x xmlns='jabber:x:oob'><url>{}</url></x>\
         </message>",
-        xml_escape(&chat_id),
+        xml_escape(&target_jid),
         bot_jid,
         msg_id,
         xml_escape(caption_text),
@@ -512,6 +530,7 @@ pub async fn do_send_document(
     document: String,
     caption: Option<String>,
 ) -> Result<Message, String> {
+    let target_jid = resolve_target_jid(&state.pool, &chat_id).await;
     let msg_id = format!("doc_{}", Uuid::new_v4().simple());
     let bot_jid = format!("{}@{}", bot.username, state.component_domain);
 
@@ -521,7 +540,7 @@ pub async fn do_send_document(
         <body>{} {}</body>\
         <x xmlns='jabber:x:oob'><url>{}</url></x>\
         </message>",
-        xml_escape(&chat_id),
+        xml_escape(&target_jid),
         bot_jid,
         msg_id,
         xml_escape(caption_text),
@@ -612,6 +631,8 @@ struct WsRequest {
     caption: Option<String>,
     #[serde(default)]
     message_id: Option<String>,
+    #[serde(default)]
+    callback_query_id: Option<String>,
 }
 
 async fn ws_handler(
@@ -839,6 +860,40 @@ async fn process_ws_request(
                 Ok(msg) => Ok(serde_json::to_value(msg).unwrap_or(serde_json::Value::Null)),
                 Err(e) => Err(e),
             }
+        }
+        "answerCallbackQuery" => {
+            let callback_query_id = match req.callback_query_id {
+                Some(cid) => cid,
+                None => match req.params.as_ref().and_then(|p| p.get("callback_query_id").and_then(|v| v.as_str())) {
+                    Some(cid) => cid.to_string(),
+                    None => return make_ws_response(req_id, Err("callback_query_id is required".to_string())),
+                },
+            };
+            let text = req.text.or_else(|| req.params.as_ref().and_then(|p| p.get("text").and_then(|v| v.as_str()).map(|s| s.to_string())));
+            let show_alert = req.params.as_ref().and_then(|p| p.get("show_alert").and_then(|v| v.as_bool())).unwrap_or(false);
+
+            let user_jid = if let Some(colon) = callback_query_id.find(':') {
+                &callback_query_id[..colon]
+            } else {
+                &callback_query_id
+            };
+            let target_jid = resolve_target_jid(&state.pool, user_jid).await;
+            let bot_jid = format!("{}@{}", bot.username, state.component_domain);
+            let alert_text = text.unwrap_or_default();
+
+            let stanza = format!(
+                "<message type='chat' to='{}' from='{}'>\
+                <callback_answer xmlns='penik:bot:markup' id='{}' text='{}' show_alert='{}'/>\
+                <no-store xmlns='urn:xmpp:hints'/>\
+                </message>",
+                xml_escape(&target_jid),
+                bot_jid,
+                xml_escape(&callback_query_id),
+                xml_escape(&alert_text),
+                show_alert
+            );
+            let _ = state.stanza_tx.send(stanza).await;
+            Ok(serde_json::Value::Bool(true))
         }
         other => Err(format!("Unknown or unsupported method: {}", other)),
     };

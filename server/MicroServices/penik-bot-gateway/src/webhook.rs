@@ -109,7 +109,7 @@ impl WebhookDispatcher {
         } else {
             // Long polling mode: save to pending_updates and notify waiters
             db::push_pending_update(&self.pool, bot.id, &json_str).await?;
-            self.get_notifier(bot.id).notify_waiters();
+            self.get_notifier(bot.id).notify_one();
         }
 
         Ok(())

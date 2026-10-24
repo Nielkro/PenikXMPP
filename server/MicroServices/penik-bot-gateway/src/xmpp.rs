@@ -486,6 +486,8 @@ async fn handle_incoming_stanza(
             // Build Telegram-compatible Update
             let user_jid = raw.from.split('/').next().unwrap_or(&raw.from).to_string();
             let user_localpart = user_jid.split('@').next().unwrap_or(&user_jid).to_string();
+            let chat_id_num = generate_jid_hash_id(&user_jid);
+            let _ = db::upsert_jid_chat(pool, chat_id_num, &user_jid).await;
 
             let update_id = db::current_timestamp();
 

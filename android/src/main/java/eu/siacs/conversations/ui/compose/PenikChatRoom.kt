@@ -975,13 +975,18 @@ fun PenikBotKeyboard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 for (btn in row) {
+                    var lastClickTime by remember { mutableStateOf(0L) }
                     Box(
                             modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(Color(0xFF2A85FF).copy(alpha = 0.16f))
                                     .clickable {
-                                        listener.onBotButtonClick(message, btn)
+                                        val now = System.currentTimeMillis()
+                                        if (now - lastClickTime > 350) {
+                                            lastClickTime = now
+                                            listener.onBotButtonClick(message, btn)
+                                        }
                                     }
                                     .padding(vertical = 8.dp, horizontal = 8.dp),
                             contentAlignment = Alignment.Center

@@ -74,6 +74,13 @@ public class Conversations extends Application {
                         p -> p != null && p.equals(Manifest.permission.READ_CONTACTS));
             };
 
+    private static java.lang.ref.WeakReference<Activity> CURRENT_ACTIVITY =
+            new java.lang.ref.WeakReference<>(null);
+
+    public static Activity getCurrentActivity() {
+        return CURRENT_ACTIVITY.get();
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -95,10 +102,16 @@ public class Conversations extends Application {
                     public void onActivityCreated(final Activity activity, final Bundle bundle) {}
 
                     @Override
-                    public void onActivityResumed(final Activity activity) {}
+                    public void onActivityResumed(final Activity activity) {
+                        CURRENT_ACTIVITY = new java.lang.ref.WeakReference<>(activity);
+                    }
 
                     @Override
-                    public void onActivityPaused(final Activity activity) {}
+                    public void onActivityPaused(final Activity activity) {
+                        if (CURRENT_ACTIVITY.get() == activity) {
+                            CURRENT_ACTIVITY = new java.lang.ref.WeakReference<>(null);
+                        }
+                    }
 
                     @Override
                     public void onActivitySaveInstanceState(

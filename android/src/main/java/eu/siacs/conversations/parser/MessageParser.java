@@ -396,6 +396,18 @@ public class MessageParser extends AbstractParser
             bodyIsFallback = false;
         }
 
+        final Element cbAnswer = packet.findChild("callback_answer", "penik:bot:markup");
+        if (cbAnswer != null) {
+            final String answerText = cbAnswer.getAttribute("text");
+            final boolean showAlert = "true".equalsIgnoreCase(cbAnswer.getAttribute("show_alert"));
+            if (answerText != null && !answerText.isEmpty()) {
+                mXmppConnectionService.showBotCallbackAnswer(answerText, showAlert);
+            }
+            if (body == null) {
+                return;
+            }
+        }
+
         if ((body != null && !bodyIsFallback)
                 || pgpEncrypted != null
                 || (axolotlEncrypted != null && axolotlEncrypted.hasExtension(Payload.class))
@@ -591,14 +603,6 @@ public class MessageParser extends AbstractParser
                     message.setType(Message.TYPE_STICKER);
                 }
             }
-            final Element cbAnswer = packet.findChild("callback_answer", "penik:bot:markup");
-            if (cbAnswer != null) {
-                final String answerText = cbAnswer.getAttribute("text");
-                final boolean showAlert = "true".equalsIgnoreCase(cbAnswer.getAttribute("show_alert"));
-                if (answerText != null && !answerText.isEmpty()) {
-                    mXmppConnectionService.showBotCallbackAnswer(answerText, showAlert);
-                }
-            }
             final Element markupElement = packet.findChild("markup", "penik:bot:markup");
             if (markupElement != null) {
                 final String typeAttr = markupElement.getAttribute("type");
@@ -608,6 +612,10 @@ public class MessageParser extends AbstractParser
                 final boolean oneTime = "true".equalsIgnoreCase(markupElement.getAttribute("one_time"));
 
                 if (isRemove) {
+                    final var removeMarkup = new eu.siacs.conversations.entities.BotMarkup(
+                            eu.siacs.conversations.entities.BotMarkup.Type.REMOVE,
+                            java.util.Collections.emptyList(), false, false);
+                    message.setBotMarkup(removeMarkup);
                     conversation.setBotReplyMarkup(null);
                     conversation.setShowBotReplyKeyboard(false);
                 } else {
@@ -635,11 +643,10 @@ public class MessageParser extends AbstractParser
                                 ? eu.siacs.conversations.entities.BotMarkup.Type.REPLY
                                 : eu.siacs.conversations.entities.BotMarkup.Type.INLINE;
                         final var botMarkup = new eu.siacs.conversations.entities.BotMarkup(markupType, rows, resize, oneTime);
+                        message.setBotMarkup(botMarkup);
                         if (isReply) {
                             conversation.setBotReplyMarkup(botMarkup);
                             conversation.setShowBotReplyKeyboard(true);
-                        } else {
-                            message.setBotMarkup(botMarkup);
                         }
                     }
                 }

@@ -16,12 +16,16 @@ Runs on VPS 1 alongside Prosody, connecting via **XEP-0114 Component Protocol** 
   - Secure random token generation (`<bot_id>:<64_hex_random>`).
 - **Telegram Bot API Compatibility:**
   - `GET /bot<token>/getMe`
-  - `POST /bot<token>/sendMessage` (with text and inline keyboard markup)
+  - `POST /bot<token>/sendMessage` (with text, inline keyboards, reply keyboards, and keyboard removal)
   - `POST /bot<token>/editMessageText` (XEP-0308 Last Message Correction `<replace id="..."/>`)
+  - `POST /bot<token>/answerCallbackQuery` (triggers in-app Toast or alert modal on button press)
   - `POST /bot<token>/setWebhook` & `POST /bot<token>/deleteWebhook`
   - `GET /bot<token>/getWebhookInfo`
   - `GET /bot<token>/getUpdates` & `POST /bot<token>/getUpdates` (Long polling with `offset` confirmation)
   - `POST /bot<token>/sendPhoto` & `POST /bot<token>/sendDocument` (XEP-0066 OOB URL attachment)
+  - `GET /bot<token>/ws` (Full-duplex WebSocket stream for real-time updates and RPC)
+- **Demo Bot:**
+  - `examples/demo_bot.py`: Complete Python 3 bot demonstrating inline buttons, bottom reply keyboards, one-time auto-dismiss keyboards, keyboard removal, message editing, and `answerCallbackQuery` alerts without external dependencies.
 - **SSRF & DNS Rebinding Mitigation:**
   - Custom `SafeDnsResolver` implementing `reqwest::dns::Resolve` trait.
   - Filters out all loopback, RFC1918 private, link-local, carrier-grade NAT, and documentation IP addresses.
