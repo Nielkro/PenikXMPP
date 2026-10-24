@@ -20,6 +20,7 @@ public final class Config {
     public static final String CHANNEL_DISCOVERY = "https://search.jabber.network";
     public static final String STICKERS_BASE_URL = "https://stickers.snikket.penik.ru";
     public static final String BOT_DOMAIN = "bot.snikket.penik.ru";
+    public static final String TG_BRIDGE_DOMAIN = "tg.snikket.penik.ru";
 
     public static boolean isBot(final Jid jid) {
         if (jid == null) {
@@ -30,7 +31,20 @@ public final class Config {
             return false;
         }
         final String domain = domainJid.toString();
-        return domain.startsWith("bot.") || domain.equals("bot.snikket.penik.ru") || domain.equals("bot.penik.chat");
+        return domain.startsWith("bot.") || domain.equals("bot.snikket.penik.ru") || domain.equals("bot.penik.chat")
+                || domain.startsWith("tg.") || domain.equals("tg.snikket.penik.ru");
+    }
+
+    public static boolean isTelegramBridge(final Jid jid) {
+        if (jid == null) {
+            return false;
+        }
+        final Jid domainJid = jid.getDomain();
+        if (domainJid == null) {
+            return false;
+        }
+        final String domain = domainJid.toString();
+        return domain.startsWith("tg.") || domain.equals("tg.snikket.penik.ru");
     }
 
     public static final boolean DISALLOW_REGISTRATION_IN_UI = false; // hide the register checkbox

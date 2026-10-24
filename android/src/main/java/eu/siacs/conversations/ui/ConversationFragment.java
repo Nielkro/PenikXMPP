@@ -4327,7 +4327,11 @@ public class ConversationFragment extends XmppFragment
         this.binding.toolbar.setTitle(c.getName());
         loadToolbarAvatar(c);
         if (c.getMode() == Conversation.MODE_SINGLE) {
-            if (c.isBot()) {
+            if (Config.isTelegramBridge(c.getAddress())) {
+                this.binding.toolbar.setSubtitle("Telegram");
+                this.binding.toolbar.setSubtitleTextColor(
+                        ContextCompat.getColor(requireContext(), R.color.penik_accent));
+            } else if (c.isBot()) {
                 this.binding.toolbar.setSubtitle("бот");
                 this.binding.toolbar.setSubtitleTextColor(
                         ContextCompat.getColor(requireContext(), R.color.penik_accent));
