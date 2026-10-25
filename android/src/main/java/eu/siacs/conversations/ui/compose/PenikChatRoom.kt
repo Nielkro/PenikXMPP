@@ -753,10 +753,10 @@ fun penikBareImageUrl(text: String): String? {
     if (trimmed.isEmpty() || trimmed.contains("\n") || trimmed.contains(" ")) {
         return null
     }
-    if (!eu.siacs.conversations.utils.MessageUtils.treatAsDownloadable(trimmed, false)) {
+    val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
+    if (!cleanUrl.startsWith("http://", ignoreCase = true) && !cleanUrl.startsWith("https://", ignoreCase = true)) {
         return null
     }
-    val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
     val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
     return if (lower.endsWith(".jpg") ||
                     lower.endsWith(".jpeg") ||
@@ -764,7 +764,7 @@ fun penikBareImageUrl(text: String): String? {
                     lower.endsWith(".gif") ||
                     lower.endsWith(".webp")
     ) {
-        trimmed
+        cleanUrl
     } else {
         null
     }
@@ -775,10 +775,10 @@ fun penikBareVideoUrl(text: String): String? {
     if (trimmed.isEmpty() || trimmed.contains("\n") || trimmed.contains(" ")) {
         return null
     }
-    if (!eu.siacs.conversations.utils.MessageUtils.treatAsDownloadable(trimmed, false)) {
+    val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
+    if (!cleanUrl.startsWith("http://", ignoreCase = true) && !cleanUrl.startsWith("https://", ignoreCase = true)) {
         return null
     }
-    val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
     val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
     return if (lower.endsWith(".mp4") ||
                     lower.endsWith(".webm") ||
@@ -787,10 +787,48 @@ fun penikBareVideoUrl(text: String): String? {
                     lower.endsWith(".3gp") ||
                     lower.endsWith(".avi")
     ) {
-        trimmed
+        cleanUrl
     } else {
         null
     }
+}
+
+fun penikBareAudioUrl(text: String): String? {
+    val trimmed = text.trim()
+    if (trimmed.isEmpty() || trimmed.contains("\n") || trimmed.contains(" ")) {
+        return null
+    }
+    val cleanUrl = (if (trimmed.startsWith("aesgcm://", ignoreCase = true)) trimmed.substring("aesgcm://".length) else trimmed).substringBefore("|").trim()
+    if (!cleanUrl.startsWith("http://", ignoreCase = true) && !cleanUrl.startsWith("https://", ignoreCase = true)) {
+        return null
+    }
+    val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
+    return if (lower.endsWith(".ogg") ||
+                    lower.endsWith(".opus") ||
+                    lower.endsWith(".m4a") ||
+                    lower.endsWith(".mp3") ||
+                    lower.endsWith(".wav") ||
+                    lower.endsWith(".aac")
+    ) {
+        cleanUrl
+    } else {
+        null
+    }
+}
+
+fun penikIsAudio(message: Message): Boolean {
+    if (message.isGeoUri) return false
+    val mime = message.mimeType ?: ""
+    if (mime.startsWith("audio/") || mime == "application/ogg") return true
+    val body = message.body ?: ""
+    val cleanUrl = (if (body.startsWith("aesgcm://", ignoreCase = true)) body.substring("aesgcm://".length) else body).substringBefore("|").trim()
+    val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
+    return lower.endsWith(".ogg") ||
+            lower.endsWith(".opus") ||
+            lower.endsWith(".m4a") ||
+            lower.endsWith(".mp3") ||
+            lower.endsWith(".wav") ||
+            lower.endsWith(".aac")
 }
 
 fun penikIsVideo(message: Message): Boolean {
@@ -1184,7 +1222,8 @@ fun PenikMessageRow(
                             )
                         } else {
                             val bareVideoUrl = remember(body) { penikBareVideoUrl(body) }
-                            if (bareVideoUrl != null) {
+                            val bareAudioUrl = remember(body) { penikBareAudioUrl(body) }
+                            if (bareVideoUrl != null || bareAudioUrl != null) {
                                 PenikAttachmentRow(
                                         message = message,
                                         status = status,
@@ -3267,7 +3306,7 @@ fun PenikAttachmentRow(
             }
         } else {
             val bubbleShape = PenikBubbleShape(isSentByMe = isSentByMe)
-            val isVoice = mime.startsWith("audio/")
+            val isVoice = penikIsAudio(message)
             val bubbleBg = bgColor
             val effectiveFgColor = fgColor
             val effectiveMutedColor = if (isSentByMe) fgColor.copy(alpha = 0.7f) else textMuted
