@@ -8,7 +8,7 @@ Complete technical specification and developer manual for creating external bots
 
 Penik uses modern XMPP (Prosody) as its real-time message bus with custom high-performance extensions:
 * **FunXMPP (PXMPP):** Tokenized binary streaming protocol between Penik mobile clients and Prosody.
-* **XEP-0114 (Jabber Component Protocol):** Direct TCP connection for external daemon services (bridges, gateways, bots) over port `5347`.
+* **XEP-0114 Direct TLS (Jabber Component Protocol):** Secure Direct TLS 1.3 connection for external daemon services (bridges, gateways, bots) over port `5348` (plaintext port `5347` is restricted to localhost `127.0.0.1`).
 * **vCard-temp / PEP:** Profile synchronization (avatars, display names).
 * **Penik Bot Markup (`penik:bot:markup`):** Telegram-compatible rich UI inside native chat bubbles (inline buttons, reply keyboards, toasts, alert dialogs).
 * **Penik Bot Commands (`penik:bot:commands`):** Dynamic command discovery for interactive menus and `/` autocomplete.
@@ -23,17 +23,17 @@ Penik uses modern XMPP (Prosody) as its real-time message bus with custom high-p
 +--------------------------------------------------------------------------------+
 |                     penik-tg-bridge (External Daemon)                          |
 |  - SQLite WAL (sessions, bridged_chats)                                        |
-|  - Auth FSM (bot@tg.snikket.penik.ru)                                          |
-|  - Dynamic JID router (u_{id}@..., g_{id}@...)                                  |
+|  - Auth & Settings Bot (@tgbridgebot on bot.snikket.penik.ru via WS)           |
+|  - Virtual XMPP entity router (u_{id}@..., g_{id}@...) via Direct TLS 5348    |
 +--------------------------------------------------------------------------------+
-                                       ▲
-                                       │ XEP-0114 Component Protocol (TCP :5347)
-                                       ▼
+             │                                              ▲
+             │ WS /bot:token/ws                             │ XEP-0114 Direct TLS :5348
+             ▼                                              ▼
 +--------------------------------------------------------------------------------+
 |                             Prosody Core (VPS)                                 |
 |  - VirtualHost "snikket.penik.ru"                                              |
-|  - Component "tg.snikket.penik.ru" (secret: penik_tg_bridge_secret_2026)       |
-|  - Component "bot.snikket.penik.ru" (secret: penik_bot_gateway_secret_2026)    |
+|  - Component "tg.snikket.penik.ru" (configured secret in Prosody)              |
+|  - Component "bot.snikket.penik.ru" (Bot Gateway: @tgbridgebot)                |
 |  - Component "share.snikket.penik.ru" (HTTP Upload XEP-0363)                  |
 +--------------------------------------------------------------------------------+
                                        ▲
@@ -48,16 +48,19 @@ Penik uses modern XMPP (Prosody) as its real-time message bus with custom high-p
 
 ## 2. Server Connection Parameters (`tg.snikket.penik.ru`)
 
-The Prosody component is already provisioned on the server:
-* **Component Domain:** `tg.snikket.penik.ru`
-* **Prosody Host:** `127.0.0.1` (local inside server/docker network) or `2.26.100.168`
-* **XEP-0114 Port:** `5347` (TCP, plaintext handshake inside private network)
-* **Component Secret:** `penik_tg_bridge_secret_2026`
-* **Web/Reverse-Proxy Domain:** `tg.snikket.penik.ru` (routed via Vane/Caddy to `127.0.0.1:8087` for optional dashboard / webhook)
+The bot and bridge run on a **dedicated separate server** and connect to the Penik cluster over the network:
 
-### 2.1. Handshake Flow (RFC 3921 / XEP-0114)
-1. Bridge connects via TCP to `127.0.0.1:5347`.
-2. Bridge sends stream header:
+* **Component Domain:** `tg.snikket.penik.ru`
+* **Prosody Host:** `snikket.penik.ru`
+* **XEP-0114 Direct TLS Port:** `5348` (TCP with Direct TLS 1.3, open on firewall).
+  > Plaintext port `5347` is restricted to localhost (`127.0.0.1`) for local microservices only (`bot.snikket.penik.ru`).
+* **Component Secret:** Configured in Prosody (`push.cfg.lua`)
+* **Bot Gateway WebSocket URL:** `wss://bot.snikket.penik.ru/bot:token/ws` (for `@tgbridgebot` FSM and interactive chat picker)
+* **HTTP Upload Domain:** `https://share.snikket.penik.ru` (XEP-0363 upload service for photos and audio)
+
+### 2.1. Handshake Flow (RFC 3921 / XEP-0114 with Direct TLS)
+1. Bridge establishes TCP connection to `snikket.penik.ru:5348` and immediately performs TLS 1.3 handshake with SNI `snikket.penik.ru`.
+2. Over the encrypted TLS socket, Bridge sends stream header:
    ```xml
    <stream:stream xmlns='jabber:component:accept' xmlns:stream='http://etherx.jabber.org/streams' to='tg.snikket.penik.ru'>
    ```
@@ -67,7 +70,7 @@ The Prosody component is already provisioned on the server:
    ```
 4. Bridge computes SHA1 digest:
    ```text
-   auth_token = SHA1(STREAM_ID_12345 + "penik_tg_bridge_secret_2026")
+   auth_token = SHA1(STREAM_ID_12345 + component_secret)
    ```
 5. Bridge sends handshake stanza:
    ```xml
@@ -85,12 +88,12 @@ The Prosody component is already provisioned on the server:
 
 The bridge dynamically provisions virtual XMPP entities on the fly:
 
-| Entity Type | JID Pattern | Example | Purpose |
+| Entity Type | JID Pattern | Domain / Host | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Control Bot** | `bot@tg.snikket.penik.ru` | `bot@tg.snikket.penik.ru` | Authentication FSM, `/chats` menu, `/add`, status |
-| **Direct Contact (1:1)** | `u_{tg_user_id}@tg.snikket.penik.ru` | `u_123456789@tg.snikket.penik.ru` | Virtual 1:1 contact mirroring TG user |
-| **Group / Supergroup** | `g_{tg_chat_id}@tg.snikket.penik.ru` | `g_1001234567@tg.snikket.penik.ru` | Virtual MUC room mirroring TG group |
-| **Broadcast Channel** | `c_{tg_channel_id}@tg.snikket.penik.ru` | `c_1009876543@tg.snikket.penik.ru` | Read-only MUC mirroring TG channel |
+| **Control Bot** | `tgbridgebot@bot.snikket.penik.ru` | `bot.snikket.penik.ru` (Bot Gateway) | Regular Penik Bot (`@tgbridgebot`): Login FSM, `/chats` menu, `/add`, `/list` |
+| **Direct Contact (1:1)** | `u_{tg_user_id}@tg.snikket.penik.ru` | `tg.snikket.penik.ru` (Component) | Virtual 1:1 contact mirroring TG user |
+| **Group / Supergroup** | `g_{tg_chat_id}@tg.snikket.penik.ru` | `tg.snikket.penik.ru` (Component) | Virtual MUC room mirroring TG group |
+| **Broadcast Channel** | `c_{tg_channel_id}@tg.snikket.penik.ru` | `tg.snikket.penik.ru` (Component) | Read-only MUC mirroring TG channel |
 
 > [!NOTE]
 > All JIDs under `tg.snikket.penik.ru` automatically receive the `Telegram` subtitle badge in the Penik client header.
@@ -262,16 +265,18 @@ To prevent hitting Telegram `FloodWait` and avoid cluttering the contact list, t
 * `AUTHENTICATED` -> session saved, ready for `/chats`
 
 ### 8.2. Interactive Selection (`/chats`)
-1. User sends `/chats` to `bot@tg.snikket.penik.ru`.
-2. Bridge fetches top 20 dialogs via MTProto `client.get_dialogs()`.
+1. User interacts with `@tgbridgebot` (`tgbridgebot@bot.snikket.penik.ru`) via Penik Bot API (WebSocket `wss://bot.snikket.penik.ru/bot:token/ws`).
+2. Bridge fetches recent dialogs via MTProto `client.get_dialogs()`.
 3. Bridge looks up SQLite table `bridged_chats (user_jid, tg_chat_id, enabled)`.
-4. Bridge sends message with inline keyboard rows:
-   * `[ ⬜ Павел Дуров ] (callback: toggle:12345)`
-   * `[ ✅ Команда Penik ] (callback: toggle:98765)`
+4. Bridge sends message with Telegram-compatible inline keyboard rows via `sendMessage`:
+   * `[ ⬜ Павел Дуров ] (callback_data: toggle:12345)`
+   * `[ ✅ Команда Penik ] (callback_data: toggle:98765)`
 5. When user clicks `toggle:12345`:
+   * Penik client dispatches callback query.
    * Bridge flips state in SQLite (`enabled = true`).
-   * Bridge edits message in place via XEP-0308 updating button text to `[ ✅ Павел Дуров ]`.
-   * Bridge sends roster push / presence probe for `u_12345@tg.snikket.penik.ru`.
+   * Bridge calls `answerCallbackQuery(text='Чат подключен!', show_alert=false)` -> displays toast.
+   * Bridge calls `editMessageText` updating button text to `[ ✅ Павел Дуров ]`.
+   * Bridge sends roster push / presence from `u_12345@tg.snikket.penik.ru` into the user's Penik chat list.
    * Only enabled chats deliver incoming messages and poll for updates.
 
 ---
@@ -309,12 +314,10 @@ To prevent hitting Telegram `FloodWait` and avoid cluttering the contact list, t
 
 ## 10. Summary Checklist for Implementing `penik-tg-bridge`
 
-1. **Connect:** Establish TCP stream to `127.0.0.1:5347`, perform XEP-0114 handshake with `tg.snikket.penik.ru` and `penik_tg_bridge_secret_2026`.
-2. **Handle Inbound XMPP Stanzas:**
-   * Route stanzas addressed to `bot@tg.snikket.penik.ru` to Auth & Chat Selection FSM.
-   * Route stanzas addressed to `u_{id}@...` to Telegram MTProto send API.
-   * Respond to ping (`urn:xmpp:ping`), disco info, and `penik:bot:commands`.
-3. **Handle MTProto Events:**
-   * Listen for incoming updates from Telegram client.
-   * If `chat_id` is marked `enabled` in SQLite, forward to Penik user as `u_{id}@tg.snikket.penik.ru`.
-4. **Deploy:** Pack as lightweight Docker image connecting to host network (`127.0.0.1:5347`).
+1. **Register Bot:** Create `@tgbridgebot` via Penik BotFather (`botfather@bot.snikket.penik.ru`) to get bot token.
+2. **Connect Bot API:** Connect to `wss://bot.snikket.penik.ru/bot:token/ws` for handling user onboarding (`/start`, `login`, `/chats`, inline buttons).
+3. **Connect XMPP Component:** Establish Direct TLS 1.3 TCP stream to `snikket.penik.ru:5348` (SNI `snikket.penik.ru`), perform XEP-0114 handshake with `tg.snikket.penik.ru` and component secret.
+4. **Route Virtual Entities:**
+   * Incoming messages from Penik to `u_{id}@tg.snikket.penik.ru` -> send to Telegram via MTProto.
+   * Inbound updates from Telegram for `enabled` chats -> forward as `u_{id}@tg.snikket.penik.ru` to Penik user.
+5. **Deploy:** Package as lightweight Docker image (`rust:slim` binary, ~20MB RAM) on the dedicated bridge server.

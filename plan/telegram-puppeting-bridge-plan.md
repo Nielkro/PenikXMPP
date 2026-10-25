@@ -5,17 +5,16 @@ Full-duplex puppeting bridge connecting a user's personal Telegram account direc
 Allows receiving, sending, and managing Telegram 1:1 direct chats, group chats, channels, media, voice notes, stickers, and reactions directly inside Penik.
 
 ## 2. Virtual Entities Mapping
-- 1:1 Direct Chats: `u_{telegram_user_id}@tg.snikket.penik.ru` (vCard avatar, display name, presence/typing)
-- Group / Supergroup Chats: `g_{chat_id}@tg.snikket.penik.ru` (XMPP MUC emulation)
-- Broadcast Channels: `c_{channel_id}@tg.snikket.penik.ru` (Read-only MUC)
-- Control Bot: `bot@tg.snikket.penik.ru` (Login FSM, interactive chat picker `/chats` with inline toggles, `/add @username`, `/remove`)
+- Control Bot: `@tgbridgebot` on `bot.snikket.penik.ru` (Standard Penik Bot via WS API: Login FSM, `/chats` menu with inline toggles, `/add`, `/list`)
+- Virtual Contacts: `u_{telegram_user_id}@tg.snikket.penik.ru` (XEP-0114 Component `tg.snikket.penik.ru`)
+- Virtual Groups: `g_{chat_id}@tg.snikket.penik.ru` (XEP-0114 Component `tg.snikket.penik.ru`)
 - Selective Sync: User explicitly picks which TG chats to bridge to Penik instead of auto-importing everything.
 
 ## 3. Technology Stack
 - Language: Rust (Tokio, async-await)
 - MTProto: `grammers` (lightweight pure Rust async MTProto client) or `tdlib-rs`
 - Storage: SQLite WAL with encrypted auth keys
-- Server Protocol: XEP-0114 External Component to Prosody (`127.0.0.1:5347`)
+- Server Protocol: XEP-0114 External Component to Prosody over Direct TLS 1.3 (`snikket.penik.ru:5348`)
 
 ## 4. Key Protocol Mapping
 - Messages: `<message type='chat'>` bidirectional
