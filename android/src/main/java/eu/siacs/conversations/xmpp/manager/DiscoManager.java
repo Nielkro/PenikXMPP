@@ -307,8 +307,18 @@ public class DiscoManager extends AbstractManager {
                 items -> {
                     Collection<ListenableFuture<InfoQuery>> infoFutures =
                             Collections2.transform(
-                                    items, i -> info(Entity.discoItem(i.getJid()), i.getNode()));
-                    return Futures.allAsList(infoFutures);
+                                    items,
+                                    i ->
+                                            Futures.catching(
+                                                    info(Entity.discoItem(i.getJid()), i.getNode()),
+                                                    Exception.class,
+                                                    t -> null,
+                                                    MoreExecutors.directExecutor()));
+                    return Futures.transform(
+                            Futures.allAsList(infoFutures),
+                            queries ->
+                                    Collections2.filter(queries, Objects::nonNull).stream().toList(),
+                            MoreExecutors.directExecutor());
                 },
                 MoreExecutors.directExecutor());
     }

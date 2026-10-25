@@ -2416,14 +2416,14 @@ public class XmppConnection implements Runnable {
 
         if (mWaitForDisco.get()) {
             final ListenableFuture<Void> discoComplete =
-                    Futures.whenAllComplete(serverInfoFuture, accountInfoFuture, itemsFuture)
+                    Futures.whenAllComplete(catchingServerFuture, accountInfoFuture)
                             .call(() -> null, MoreExecutors.directExecutor());
             Futures.addCallback(
                     discoComplete,
                     new FutureCallback<>() {
                         @Override
                         public void onSuccess(Void result) {
-                            if (timeout(serverInfoFuture, accountInfoFuture, itemsFuture)) {
+                            if (timeout(catchingServerFuture, accountInfoFuture)) {
                                 Log.d(
                                         Config.LOGTAG,
                                         account.getJid().asBareJid()
