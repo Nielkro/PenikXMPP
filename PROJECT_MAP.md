@@ -260,6 +260,8 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/conversations.doap` — Project metadata.
 - `android/fastlane/metadata/` — Play Store listings and screenshots (rebrand target).
 - `docs/` — User docs (backup, migration).
+- `docs/PRIVACY.md` — Privacy Policy for the Penik service (`ru.penik.xmpp`, `penik.ru`): TLS in-transit security, absence of E2EE/OMEMO (cloud MAM), phone directory pseudonymization and public profile visibility, data retention and 14-day backup isolation purge rules.
+- `docs/TERMS.md` — Terms of Service for the Penik service: licensing, acceptable use policy, anti-scraping rules for phone directory API, transparent account suspension grounds and appeal procedures.
 - `docs/PENIK_BOT_AND_BRIDGE_ARCHITECTURE.md` — Complete architecture specification and implementation guide for external bots, puppeting bridges, and `penik-tg-bridge` (XEP-0114, penik:bot:markup, penik:bot:commands, vCard, media pipeline).
 - `docs/PXMPP/` — PenikXMPP (FunXMPP) binary protocol specification & technical docs in English (`README.md`) and Russian (`README_RU.md`).
 - `art/` — Artwork sources.
