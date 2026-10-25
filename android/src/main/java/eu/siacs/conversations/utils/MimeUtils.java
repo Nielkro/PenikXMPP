@@ -79,7 +79,7 @@ public final class MimeUtils {
         add("application/mathematica", "nb");
         add("application/msaccess", "mdb");
         add("application/oda", "oda");
-        add("application/ogg", "ogg");
+        add("audio/ogg", "ogg");
         add("application/pdf", "pdf");
         add("application/pgp-keys", "key");
         add("application/pgp-signature", "pgp");
