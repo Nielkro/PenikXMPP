@@ -41,7 +41,7 @@ public class FunReader {
     }
 
     public static Element decodeNode(final DataInputStream stream, final String parentNamespace) throws IOException {
-        final String tagName = readTokenOrString(stream);
+        String tagName = readTokenOrString(stream);
         if (tagName == null) {
             return null;
         }
@@ -60,6 +60,13 @@ public class FunReader {
         String ns = attrs.get("xmlns");
         if (ns == null) {
             ns = parentNamespace;
+        }
+
+        if (tagName.startsWith("stream:")) {
+            tagName = tagName.substring(7);
+            ns = eu.siacs.conversations.xml.Namespace.STREAMS;
+        } else if ("stream".equals(tagName)) {
+            ns = eu.siacs.conversations.xml.Namespace.STREAMS;
         }
 
         if (ns != null && ns.equals(parentNamespace)) {

@@ -203,7 +203,7 @@ public final class FunTokens {
             read += r;
         }
         if (!java.util.Arrays.equals(magic, MAGIC_DIRECT_PXMPP)) {
-            throw new java.io.IOException("Invalid Direct PXMPP magic from server");
+            throw new java.io.IOException("Invalid Direct PXMPP magic from server: " + java.util.Arrays.toString(magic) + " (ASCII: '" + new String(magic, java.nio.charset.StandardCharsets.ISO_8859_1) + "')");
         }
         final int version = in.read();
         if (version != (DIRECT_PXMPP_VERSION & 0xFF)) {

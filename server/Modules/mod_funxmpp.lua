@@ -482,7 +482,15 @@ local function decode_node(data, pos, parent_ns, session)
             local expected_end_pos = pos + child_len;
             local child_stanza = decode_node(data, pos, ns, session);
             if child_stanza then
-                table.insert(stanza, child_stanza);
+                if stanza.add_direct_child then
+                    stanza:add_direct_child(child_stanza);
+                elseif stanza.add_child then
+                    stanza:add_child(child_stanza);
+                else
+                    if not stanza.tags then stanza.tags = {}; end
+                    table.insert(stanza.tags, child_stanza);
+                    table.insert(stanza, child_stanza);
+                end
             end
             pos = expected_end_pos;
         end
@@ -651,6 +659,18 @@ local function funxmpp_stanzas_out(stanza, session)
     return stanza;
 end
 
+local function funxmpp_bytes_out(data, session)
+    if not session.funxmpp_direct then
+        return data;
+    end
+    if type(data) == "string" then
+        if data:sub(1, 5) == "<?xml" or data:sub(1, 14) == "<stream:stream" then
+            return "";
+        end
+    end
+    return data;
+end
+
 -- Hook: Stream features
 -- NOTE: Advertises latest version and hash, plus min_compat for older clients.
 module:hook("stream-features", function(event)
@@ -754,10 +774,10 @@ local function handle_direct_pxmpp(session, data)
 
     -- Send 10-byte Server Stream Header: "PXMP\x01\x00" .. ActiveDictHash (4 bytes)
     local server_header = "PXMP\x01\x00" .. hex_to_bytes(selected_dict.hash);
-    if session.send then
-        session.send(server_header);
-    elseif session.conn and session.conn.write then
+    if session.conn and session.conn.write then
         session.conn:write(server_header);
+    elseif session.send then
+        session.send(server_header);
     end
 
     -- In Direct PXMPP, intercept session.send to drop textual XML stream headers
@@ -776,6 +796,7 @@ local function handle_direct_pxmpp(session, data)
 
     -- Register symmetric stream filters
     filters.add_filter(session, "bytes/in", funxmpp_bytes_in, 100);
+    filters.add_filter(session, "bytes/out", funxmpp_bytes_out, -10000);
     filters.add_filter(session, "stanzas/out", funxmpp_stanzas_stash_out, -999);
     filters.add_filter(session, "stanzas/out", funxmpp_stanzas_out, -10000);
 
@@ -804,10 +825,12 @@ end
 local function setup_c2s_sniffing(session)
     if session.funxmpp_sniff_installed then return end
     session.funxmpp_sniff_installed = true;
+    module:log("info", "Direct PXMPP: setup_c2s_sniffing installed for session %s", tostring(session.id or session));
     local original_data = session.data;
 
     session.data = function(data)
         if not data then return end
+        module:log("info", "Direct PXMPP: incoming chunk len=%d, 1st byte=0x%02x, prefix=%s", #data, data:byte(1) or 0, data:sub(1, 4));
 
         if session.funxmpp_direct or session.funxmpp_enabled then
             if original_data then
@@ -859,7 +882,9 @@ local function setup_c2s_sniffing(session)
     end
 end
 
-module:hook("c2s-connected", function(event)
+local hook_c2s = module.hook_global or function(self, name, fn, prio) return self:hook(name, fn, prio) end;
+
+hook_c2s(module, "c2s-connected", function(event)
     if event.session then
         setup_c2s_sniffing(event.session);
     end
@@ -883,6 +908,7 @@ local function handle_session_cleanup(event)
         session.funxmpp_in_buf = nil;
         session.funxmpp_last_out = nil;
         pcall(filters.remove_filter, session, "bytes/in", funxmpp_bytes_in);
+        pcall(filters.remove_filter, session, "bytes/out", funxmpp_bytes_out);
         pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_stash_out);
         pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_out);
         module:log("info", "FunXMPP stream state reset on disconnect/hibernation for %s",
@@ -890,8 +916,27 @@ local function handle_session_cleanup(event)
     end
 end
 
-module:hook("c2s-closed", handle_session_cleanup, 100);
-module:hook("c2s-destroyed", handle_session_cleanup, 100);
+hook_c2s(module, "c2s-closed", handle_session_cleanup, 100);
+hook_c2s(module, "c2s-destroyed", handle_session_cleanup, 100);
 module:hook("smacks-hibernation-start", handle_session_cleanup, 100);
+
+-- Automatically re-open stream in Prosody runner for post-auth stream features upon SASL success
+hook_c2s(module, "authentication-success", function(event)
+    local session = event.session;
+    if session and session.funxmpp_direct then
+        module:log("info", "Direct PXMPP: auth successful, auto-restarting authenticated stream for %s", tostring(session.username or session.host));
+        if session.thread then
+            session.thread:run({
+                event = "streamopened",
+                attr = {
+                    to = session.host or "snikket.penik.ru",
+                    version = "1.0",
+                    ["xmlns:stream"] = "http://etherx.jabber.org/streams",
+                    xmlns = "jabber:client"
+                }
+            });
+        end
+    end
+end, -10);
 
 module:log("info", "mod_funxmpp initialized for high-performance mobile binary framing");

@@ -34,7 +34,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/xmpp/OnKeyStatusUpdated.java` — Callback for OMEMO key status changes.
 - `android/src/main/java/eu/siacs/conversations/xmpp/OnAdvancedStreamFeaturesLoaded.java` — Callback after disco features are known.
 - `android/src/main/java/eu/siacs/conversations/xmpp/PreconditionNotMetException.java` — Stream precondition errors.
-- `android/src/main/java/eu/siacs/conversations/xmpp/fun/` — FunXMPP binary tokenized protocol: FunTokens (multi-version dictionary: LTS v1 68a7596d + v2 3a145c7a with bot tokens), FunWriter (TLV encoder with negotiated dictionary and literal fallback), FunReader (safe TLV decoder).
+- `android/src/main/java/eu/siacs/conversations/xmpp/fun/` — FunXMPP binary tokenized protocol: FunTokens (multi-version dictionary: LTS v1 68a7596d + v2 3a145c7a with bot tokens), FunWriter (TLV encoder with negotiated dictionary and literal fallback), FunReader (safe TLV decoder with direct stream feature recognition). Direct PXMPP over TLS ALPN (`pxmpp-1`).
 
 ### Stanza Managers (`xmpp/manager/`)
 

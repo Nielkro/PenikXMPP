@@ -640,7 +640,21 @@ public class XmppConnection implements Runnable {
             final String alpn = SSLSockets.getApplicationProtocol(sslSocket);
             if ("pxmpp-1".equals(alpn)) {
                 Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": Direct PXMPP ALPN negotiated!");
-                return startDirectPxmpp(sslSocket);
+                try {
+                    return startDirectPxmpp(sslSocket);
+                } catch (Exception e) {
+                    Log.w(
+                            Config.LOGTAG,
+                            account.getJid().asBareJid()
+                                    + ": Direct PXMPP handshake failed ("
+                                    + e.getMessage()
+                                    + "), falling back to standard XML stream");
+                    this.isDirectPxmpp = false;
+                    this.tagWriter = new TagWriter();
+                    this.tagWriter.setOutputStream(socket.getOutputStream());
+                    this.tagReader = new XmlReader();
+                    this.tagReader.setInputStream(socket.getInputStream());
+                }
             }
         }
 
@@ -1054,13 +1068,17 @@ public class XmppConnection implements Runnable {
         mXmppConnectionService.databaseBackend.updateAccount(account);
         this.quickStartInProgress = false;
         if (version == SaslMechanism.Version.SASL) {
-            tagReader.reset();
-            sendStartStream(false, true);
-            final Tag tag = tagReader.readTag();
-            if (tag instanceof Tag.Start startTag && startTag.is(Stream.class)) {
+            if (this.isDirectPxmpp) {
                 processStream();
             } else {
-                throw new StateChangingException(Account.State.STREAM_OPENING_ERROR);
+                tagReader.reset();
+                sendStartStream(false, true);
+                final Tag tag = tagReader.readTag();
+                if (tag instanceof Tag.Start startTag && startTag.is(Stream.class)) {
+                    processStream();
+                } else {
+                    throw new StateChangingException(Account.State.STREAM_OPENING_ERROR);
+                }
             }
         }
     }

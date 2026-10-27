@@ -9,6 +9,9 @@ module = {
     hook = function(self, name, handler)
         hooks[name] = handler;
     end,
+    hook_global = function(self, name, handler)
+        hooks[name] = handler;
+    end,
     hook_tag = function(self, ns, tag, handler)
         hooks[ns .. ":" .. tag] = handler;
     end,
@@ -48,16 +51,43 @@ package.loaded["util.filters"] = mock_filters;
 local stanza_mt = {
     __index = {
         tag = function(self, name, attr)
-            local child = setmetatable({ name = name, attr = attr or {} }, getmetatable(self));
+            local child = setmetatable({ name = name, attr = attr or {}, tags = {}, parent = self }, getmetatable(self));
+            if not self.tags then self.tags = {} end
+            table.insert(self.tags, child);
             table.insert(self, child);
             return child;
+        end,
+        add_child = function(self, child)
+            if not self.tags then self.tags = {} end
+            if type(child) == "table" and child.name then
+                table.insert(self.tags, child);
+            end
+            table.insert(self, child);
+            return self;
+        end,
+        add_direct_child = function(self, child)
+            if not self.tags then self.tags = {} end
+            if type(child) == "table" and child.name then
+                table.insert(self.tags, child);
+            end
+            table.insert(self, child);
+            return self;
         end,
         text = function(self, str)
             table.insert(self, str);
             return self;
         end,
-        up = function(self) return self end,
-        get_child = function(self, name, ns) return nil end
+        up = function(self) return self.parent or self end,
+        get_child = function(self, name, ns)
+            if self.tags then
+                for _, tag in ipairs(self.tags) do
+                    if (not name or tag.name == name) and (not ns or tag.attr.xmlns == ns) then
+                        return tag;
+                    end
+                end
+            end
+            return nil;
+        end
     },
     __tostring = function(self)
         local parts = { "<" .. self.name };
@@ -457,6 +487,39 @@ do
 
     assert_eq(xml_session.funxmpp_direct, nil, "Direct mode not enabled for XML");
     assert_eq(xml_data_received, raw_xml, "Raw XML passed through to standard handler untouched");
+end
+
+-- Test 14: Decoded IQ stanzas must properly populate stanza.tags for Prosody IQ routing
+do
+    local iq_session;
+    iq_session = {
+        type = "c2s",
+        full_jid = "iq_user@snikket.penik.ru/mobile",
+        send_queue = {},
+        send = function(s) table.insert(iq_session.send_queue, s) end
+    };
+    enable_handler(iq_session, mock_stanza.stanza("enable", { xmlns = "penik:protocol:funxmpp", dict = "3a145c7a" }));
+
+    local iq = mock_stanza.stanza("iq", { type = "get", id = "disco-1", to = "snikket.penik.ru" })
+        :tag("query", { xmlns = "http://jabber.org/protocol/disco#info" }):up();
+    stash_filter(iq, iq_session);
+    local wrapped = out_filter(iq, iq_session);
+    local bin = tostring(wrapped);
+
+    local processed_stanza = nil;
+    prosody.core_process_stanza = function(s, st_obj)
+        processed_stanza = st_obj;
+    end
+    local in_filter = filters_map["bytes/in"][1].fn;
+    in_filter(bin, iq_session);
+
+    assert_true(processed_stanza ~= nil, "IQ stanza decoded via bytes/in filter");
+    assert_eq(processed_stanza.name, "iq", "Root is IQ");
+    assert_eq(processed_stanza.attr.type, "get", "Type is get");
+    assert_true(processed_stanza.tags ~= nil, "stanza.tags table exists");
+    assert_eq(#processed_stanza.tags, 1, "stanza.tags has exactly 1 child tag");
+    assert_eq(processed_stanza.tags[1].name, "query", "Child tag name is query");
+    assert_eq(processed_stanza.tags[1].attr.xmlns, "http://jabber.org/protocol/disco#info", "Child tag namespace is disco#info");
 end
 
 print("ALL MOD_FUNXMPP TESTS PASSED SUCCESSFULLY!");
