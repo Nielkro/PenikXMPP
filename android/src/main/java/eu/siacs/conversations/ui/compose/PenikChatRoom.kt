@@ -66,6 +66,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -435,12 +437,6 @@ fun PenikChatRoom(
             listState.firstVisibleItemIndex > 2
         }
     }
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val lastIdx = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            rows.isNotEmpty() && lastIdx >= rows.size - 5
-        }
-    }
     val isAtBottom by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex == 0
@@ -456,9 +452,18 @@ fun PenikChatRoom(
             listener.onBottomVisible(newestUuid)
         }
     }
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore) {
-            listener.onLoadMore()
+    LaunchedEffect(listState, state.messages.size) {
+        snapshotFlow {
+            val layoutInfo = listState.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            totalItems > 0 && lastVisibleIndex >= totalItems - 8
+        }
+        .distinctUntilChanged()
+        .collect { shouldLoad ->
+            if (shouldLoad) {
+                listener.onLoadMore()
+            }
         }
     }
     LaunchedEffect(isAtBottom, newestUuid) {
