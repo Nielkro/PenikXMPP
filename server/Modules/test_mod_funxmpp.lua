@@ -225,4 +225,135 @@ do
     assert_eq(session.funxmpp_last_out, nil, "funxmpp_last_out reset to nil");
 end
 
+-- Test 7: Stream features advertises latest dict hash and min_compat for v1
+do
+    local features_hook = hooks["stream-features"];
+    assert(type(features_hook) == "function", "stream-features hook registered");
+
+    local test_features = mock_stanza.stanza("stream:features");
+    local test_session = { type = "c2s", funxmpp_enabled = false };
+    features_hook({ origin = test_session, features = test_features });
+
+    local fun_tag = nil;
+    for _, child in ipairs(test_features) do
+        if child.name == "funxmpp" then fun_tag = child break end
+    end
+    assert_true(fun_tag ~= nil, "funxmpp tag advertised in features");
+    assert_eq(fun_tag.attr.version, "2", "features advertises version 2");
+    assert_eq(fun_tag.attr.dict, "3a145c7a", "features advertises latest v2 dict hash");
+    assert_eq(fun_tag.attr.min_compat, "68a7596d", "features advertises LTS v1 min_compat hash");
+end
+
+-- Test 8: Client requests LTS v1 dictionary -> Server activates v1, falls back to literal string for v2 tokens
+do
+    local v1_session;
+    v1_session = {
+        type = "c2s",
+        full_jid = "legacy_user@snikket.penik.ru/phone",
+        send_queue = {},
+        send = function(s) table.insert(v1_session.send_queue, s) end
+    };
+    enable_handler(v1_session, mock_stanza.stanza("enable", { xmlns = "penik:protocol:funxmpp", dict = "68a7596d" }));
+    assert_true(v1_session.funxmpp_enabled, "FunXMPP enabled for v1 client");
+    assert_eq(#v1_session.send_queue, 1, "Enabled ack sent");
+    assert_eq(v1_session.send_queue[1].attr.dict, "68a7596d", "Ack echoes back negotiated v1 dict");
+    assert_eq(v1_session.funxmpp_dict.version, 1, "v1 dictionary active on session");
+
+    -- Send message with child <markup xmlns="penik:bot:markup"/>
+    -- "markup" is token 148 in v2, but does NOT exist in v1!
+    local bot_msg = mock_stanza.stanza("message", { id = "b1", to = "user@snikket.penik.ru" });
+    local bot_markup = mock_stanza.stanza("markup", { xmlns = "penik:bot:markup" });
+    table.insert(bot_msg, bot_markup);
+
+    stash_filter(bot_msg, v1_session);
+    local wrapped = out_filter(bot_msg, v1_session);
+    local bin = tostring(wrapped);
+    assert_true(#bin > 0, "Binary frame generated for v1 client");
+
+    -- For v1, "markup" and "penik:bot:markup" MUST be encoded as string literals (0xFA prefix), NOT single-byte tokens 148/152
+    local found_literal_tag = false;
+    for i = 1, #bin - 6 do
+        if bin:byte(i) == 0xFA and bin:sub(i + 2, i + 7) == "markup" then
+            found_literal_tag = true;
+            break;
+        end
+    end
+    assert_true(found_literal_tag, "v2 token 'markup' correctly fell back to string literal (0xFA) for v1 client");
+
+    -- Verify that incoming filter decodes it back identically
+    local last_processed = nil;
+    prosody.core_process_stanza = function(s, st_obj)
+        last_processed = st_obj;
+    end
+    local in_filter = filters_map["bytes/in"][1].fn;
+    in_filter(bin, v1_session);
+
+    assert_true(last_processed ~= nil, "Stanza decoded and processed via bytes/in filter");
+    assert_eq(last_processed.name, "message", "Decoded stanza name is message");
+    assert_eq(#last_processed, 1, "Child markup preserved");
+    assert_eq(last_processed[1].name, "markup", "Child name is markup");
+    assert_eq(last_processed[1].attr.xmlns, "penik:bot:markup", "Child xmlns is penik:bot:markup");
+end
+
+-- Test 9: Client requests v2 dictionary -> Server activates v2, encodes bot tokens as single-byte tokens
+do
+    local v2_session;
+    v2_session = {
+        type = "c2s",
+        full_jid = "v2_user@snikket.penik.ru/desktop",
+        send_queue = {},
+        send = function(s) table.insert(v2_session.send_queue, s) end
+    };
+    enable_handler(v2_session, mock_stanza.stanza("enable", { xmlns = "penik:protocol:funxmpp", dict = "3a145c7a" }));
+    assert_true(v2_session.funxmpp_enabled, "FunXMPP enabled for v2 client");
+    assert_eq(#v2_session.send_queue, 1, "Enabled ack sent");
+    assert_eq(v2_session.send_queue[1].attr.dict, "3a145c7a", "Ack echoes back negotiated v2 dict");
+    assert_eq(v2_session.funxmpp_dict.version, 2, "v2 dictionary active on session");
+
+    local bot_msg = mock_stanza.stanza("message", { id = "b2", to = "user@snikket.penik.ru" });
+    local bot_markup = mock_stanza.stanza("markup", { xmlns = "penik:bot:markup" });
+    table.insert(bot_msg, bot_markup);
+
+    stash_filter(bot_msg, v2_session);
+    local wrapped = out_filter(bot_msg, v2_session);
+    local bin = tostring(wrapped);
+
+    -- In v2, token 148 is "markup" and token 152 is "penik:bot:markup"
+    local found_token_148 = false;
+    for i = 1, #bin do
+        if bin:byte(i) == 148 then found_token_148 = true break end
+    end
+    assert_true(found_token_148, "v2 token 148 ('markup') is encoded as 1-byte token for v2 client");
+
+    -- Verify that incoming filter decodes it back identically
+    local last_processed = nil;
+    prosody.core_process_stanza = function(s, st_obj)
+        last_processed = st_obj;
+    end
+    local in_filter = filters_map["bytes/in"][1].fn;
+    in_filter(bin, v2_session);
+
+    assert_true(last_processed ~= nil, "Stanza decoded and processed via bytes/in filter for v2");
+    assert_eq(last_processed.name, "message", "Decoded stanza name is message");
+    assert_eq(last_processed[1].name, "markup", "Child name is markup");
+    assert_eq(last_processed[1].attr.xmlns, "penik:bot:markup", "Child xmlns is penik:bot:markup");
+end
+
+-- Test 10: Unknown client dictionary gracefully falls back to LTS v1 instead of failing
+do
+    local unknown_session;
+    unknown_session = {
+        type = "c2s",
+        full_jid = "foreign_user@snikket.penik.ru/custom",
+        send_queue = {},
+        send = function(s) table.insert(unknown_session.send_queue, s) end
+    };
+    enable_handler(unknown_session, mock_stanza.stanza("enable", { xmlns = "penik:protocol:funxmpp", dict = "unknown999" }));
+    assert_true(unknown_session.funxmpp_enabled, "FunXMPP gracefully enabled with fallback");
+    assert_eq(#unknown_session.send_queue, 1, "Ack sent");
+    assert_eq(unknown_session.send_queue[1].name, "enabled", "Response is <enabled/>, not <failed/>");
+    assert_eq(unknown_session.send_queue[1].attr.dict, "68a7596d", "Fallback to LTS v1 dict hash");
+    assert_eq(unknown_session.funxmpp_dict.version, 1, "LTS v1 dictionary bound to session");
+end
+
 print("ALL MOD_FUNXMPP TESTS PASSED SUCCESSFULLY!");

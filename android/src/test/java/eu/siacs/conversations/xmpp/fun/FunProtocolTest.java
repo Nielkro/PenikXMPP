@@ -1,6 +1,7 @@
 package eu.siacs.conversations.xmpp.fun;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -123,7 +124,41 @@ public class FunProtocolTest {
 
     @Test
     public void testDictionaryHashDeterministic() {
-        assertEquals("68a7596d", FunTokens.DICTIONARY_HASH);
+        assertEquals("3a145c7a", FunTokens.DICTIONARY_HASH);
+        assertEquals("68a7596d", FunTokens.LTS_V1_HASH);
+        assertTrue(FunTokens.isSupportedDict("68a7596d"));
+        assertTrue(FunTokens.isSupportedDict("3a145c7a"));
+        assertFalse(FunTokens.isSupportedDict("unknown_hash"));
+    }
+
+    @Test
+    public void testDictionaryEvolutionFallbackForV1Client() throws Exception {
+        final Element message = new Element("message");
+        message.setAttribute("id", "bot-msg-1");
+        final Element markup = message.addChild("markup", "penik:bot:markup");
+        markup.addChild("row");
+
+        // 1. Encode with LTS v1 dictionary: markup and penik:bot:markup MUST fall back to string literals
+        final byte[] v1Bytes = FunWriter.encodeNode(message, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, FunTokens.LTS_V1_HASH);
+        final FunReader v1Reader = new FunReader(new ByteArrayInputStream(v1Bytes));
+        final Element v1Decoded = v1Reader.readElement();
+        assertNotNull(v1Decoded);
+        assertEquals("message", v1Decoded.getName());
+        assertEquals(1, v1Decoded.getChildren().size());
+        assertEquals("markup", v1Decoded.getChildren().get(0).getName());
+        assertEquals("penik:bot:markup", v1Decoded.getChildren().get(0).getNamespace());
+
+        // 2. Encode with v2 dictionary: tokens 148 ("markup") and 152 ("penik:bot:markup") are 1-byte tokens
+        final byte[] v2Bytes = FunWriter.encodeNode(message, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, FunTokens.V2_HASH);
+        final FunReader v2Reader = new FunReader(new ByteArrayInputStream(v2Bytes));
+        final Element v2Decoded = v2Reader.readElement();
+        assertNotNull(v2Decoded);
+        assertEquals("message", v2Decoded.getName());
+        assertEquals("markup", v2Decoded.getChildren().get(0).getName());
+
+        // Tokenized v2 MUST be strictly more compact than v1 with string literals
+        assertTrue("v2 tokenized payload (" + v2Bytes.length + ") must be smaller than v1 literal fallback (" + v1Bytes.length + ")",
+                v2Bytes.length < v1Bytes.length);
     }
 
     @Test

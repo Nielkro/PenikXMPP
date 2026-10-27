@@ -2263,14 +2263,27 @@ public class XmppConnection implements Runnable {
     private void sendFunXmppEnable() {
         final var features = this.streamFeatures != null ? this.streamFeatures : this.boundStreamFeatures;
         final String serverDict = features != null ? features.funxmppDict() : null;
-        if (serverDict != null && !serverDict.equals(FunTokens.DICTIONARY_HASH)) {
+        final String minCompat = features != null ? features.funxmppMinCompat() : null;
+
+        final String chosenDict;
+        if (serverDict == null || FunTokens.DICTIONARY_HASH.equals(serverDict)) {
+            chosenDict = FunTokens.DICTIONARY_HASH;
+        } else if (FunTokens.LTS_V1_HASH.equals(serverDict) || FunTokens.LTS_V1_HASH.equals(minCompat)) {
+            chosenDict = FunTokens.LTS_V1_HASH;
+        } else if (FunTokens.isSupportedDict(serverDict)) {
+            chosenDict = serverDict;
+        } else {
             Log.w(
                     Config.LOGTAG,
                     account.getJid().asBareJid()
                             + ": FunXMPP server dictionary hash mismatch (server="
                             + serverDict
-                            + ", client="
+                            + ", minCompat="
+                            + minCompat
+                            + ", client latest="
                             + FunTokens.DICTIONARY_HASH
+                            + ", client LTS="
+                            + FunTokens.LTS_V1_HASH
                             + "), falling back to standard XML");
             if (!this.isFunXmppResuming) {
                 sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
@@ -2282,22 +2295,20 @@ public class XmppConnection implements Runnable {
                 Config.LOGTAG,
                 account.getJid().asBareJid()
                         + ": requesting FunXMPP binary protocol (dict="
-                        + FunTokens.DICTIONARY_HASH
+                        + chosenDict
                         + ")");
-        final var enable = new im.conversations.android.xmpp.model.fun.Enable(FunTokens.DICTIONARY_HASH);
+        final var enable = new im.conversations.android.xmpp.model.fun.Enable(chosenDict);
         tagWriter.writeStanzaAsync(enable);
     }
 
     private void processFunEnabled(final im.conversations.android.xmpp.model.fun.Enabled enabled) {
         final String dict = enabled != null ? enabled.getDict() : null;
-        if (dict != null && !dict.equals(FunTokens.DICTIONARY_HASH)) {
+        if (dict != null && !FunTokens.isSupportedDict(dict)) {
             Log.w(
                     Config.LOGTAG,
                     account.getJid().asBareJid()
-                            + ": FunXMPP server enabled with mismatched dict ("
+                            + ": FunXMPP server enabled with unsupported dict ("
                             + dict
-                            + " vs "
-                            + FunTokens.DICTIONARY_HASH
                             + "), aborting FunXMPP and falling back to standard XML");
             if (!this.isFunXmppResuming) {
                 sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
@@ -2305,14 +2316,15 @@ public class XmppConnection implements Runnable {
             this.isFunXmppResuming = false;
             return;
         }
+        final String activeDict = dict != null ? dict : FunTokens.DICTIONARY_HASH;
         Log.d(
                 Config.LOGTAG,
                 account.getJid().asBareJid()
                         + ": FunXMPP binary protocol activated! (dict="
-                        + (dict != null ? dict : "unspecified")
+                        + activeDict
                         + ")");
         try {
-            this.tagWriter.setFunWriter(new eu.siacs.conversations.xmpp.fun.FunWriter(socket.getOutputStream()));
+            this.tagWriter.setFunWriter(new eu.siacs.conversations.xmpp.fun.FunWriter(socket.getOutputStream(), activeDict));
             this.tagReader.setFunReader(new eu.siacs.conversations.xmpp.fun.FunReader(socket.getInputStream()));
         } catch (IOException e) {
             Log.e(Config.LOGTAG, account.getJid().asBareJid() + ": failed to initialize FunXMPP streams", e);

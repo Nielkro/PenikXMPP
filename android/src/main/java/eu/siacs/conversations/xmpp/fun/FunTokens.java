@@ -107,7 +107,26 @@ public final class FunTokens {
         return TOKEN_LOOKUP.get(string);
     }
 
-    public static final String DICTIONARY_HASH = computeDictHash();
+    public static Integer getToken(final String string, final String negotiatedDict) {
+        final Integer token = getToken(string);
+        if (token == null) {
+            return null;
+        }
+        if (LTS_V1_HASH.equals(negotiatedDict) && token >= V1_TOKEN_COUNT) {
+            return null; // Force literal string fallback for tokens added in v2+
+        }
+        return token;
+    }
+
+    public static final String LTS_V1_HASH = "68a7596d";
+    public static final int V1_TOKEN_COUNT = 147;
+
+    public static final String V2_HASH = computeDictHash();
+    public static final String DICTIONARY_HASH = V2_HASH;
+
+    public static boolean isSupportedDict(final String dict) {
+        return LTS_V1_HASH.equals(dict) || V2_HASH.equals(dict);
+    }
 
     private static String computeDictHash() {
         int hash = 0x811c9dc5;
@@ -128,5 +147,12 @@ public final class FunTokens {
             return TOKENS[tokenId];
         }
         return null;
+    }
+
+    public static String getString(final int tokenId, final String negotiatedDict) {
+        if (LTS_V1_HASH.equals(negotiatedDict) && tokenId >= V1_TOKEN_COUNT) {
+            return null;
+        }
+        return getString(tokenId);
     }
 }

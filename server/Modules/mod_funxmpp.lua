@@ -18,7 +18,7 @@ local CONTENT_TEXT = 0x01;
 local CONTENT_CHILDREN = 0x02;
 local CONTENT_MIXED = 0x03;
 
-local TOKENS = {
+local TOKENS_V1 = {
     -- Core Stanzas & Elements (0..19)
     [0] = "message", [1] = "presence", [2] = "iq", [3] = "body", [4] = "error",
     [5] = "text", [6] = "status", [7] = "show", [8] = "priority", [9] = "query",
@@ -91,20 +91,34 @@ local TOKENS = {
     [144] = "groups.snikket.penik.ru",
     [145] = "share.snikket.penik.ru",
     [146] = "push.snikket.penik.ru",
-
-    -- Bot Platform (147..152)
-    [147] = "bot.snikket.penik.ru",
-    [148] = "markup",
-    [149] = "row",
-    [150] = "button",
-    [151] = "callback",
-    [152] = "penik:bot:markup",
 };
 
-local TOKEN_LOOKUP = {};
-for id, str in pairs(TOKENS) do
-    TOKEN_LOOKUP[str] = id;
+local TOKENS_V2 = {};
+for i = 0, 146 do
+    TOKENS_V2[i] = TOKENS_V1[i];
 end
+-- Bot Platform tokens (147..152) added in v2
+TOKENS_V2[147] = "bot.snikket.penik.ru";
+TOKENS_V2[148] = "markup";
+TOKENS_V2[149] = "row";
+TOKENS_V2[150] = "button";
+TOKENS_V2[151] = "callback";
+TOKENS_V2[152] = "penik:bot:markup";
+
+local function build_lookup(tokens)
+    local lookup = {};
+    for id, str in pairs(tokens) do
+        lookup[str] = id;
+    end
+    return lookup;
+end
+
+local LOOKUP_V1 = build_lookup(TOKENS_V1);
+local LOOKUP_V2 = build_lookup(TOKENS_V2);
+
+-- Default global fallback for backwards compatibility
+local TOKENS = TOKENS_V2;
+local TOKEN_LOOKUP = LOOKUP_V2;
 
 -- Deterministic 32-bit FNV-1a dictionary checksum matching client algorithm
 local function compute_dict_hash(tokens)
@@ -165,12 +179,33 @@ local function compute_dict_hash(tokens)
     return string.format("%08x", hash);
 end
 
-local DICTIONARY_HASH = compute_dict_hash(TOKENS);
+local DICT_V1_HASH = compute_dict_hash(TOKENS_V1);
+local DICT_V2_HASH = compute_dict_hash(TOKENS_V2);
+
+local DICTIONARIES = {
+    [DICT_V1_HASH] = {
+        version = 1,
+        hash = DICT_V1_HASH,
+        tokens = TOKENS_V1,
+        lookup = LOOKUP_V1,
+    },
+    [DICT_V2_HASH] = {
+        version = 2,
+        hash = DICT_V2_HASH,
+        tokens = TOKENS_V2,
+        lookup = LOOKUP_V2,
+    },
+};
+
+local LATEST_DICT_HASH = DICT_V2_HASH;
+local LTS_V1_HASH = DICT_V1_HASH;
+local DICTIONARY_HASH = LATEST_DICT_HASH;
 
 -- Helper: encode string or token with 8/16/32-bit length
-local function write_token_or_string(buf, str)
+local function write_token_or_string(buf, str, lookup)
+    lookup = lookup or TOKEN_LOOKUP;
     str = str or "";
-    local token = TOKEN_LOOKUP[str];
+    local token = lookup[str];
     if token and token >= 0 and token < 240 then
         table.insert(buf, string.char(token));
         return;
@@ -182,23 +217,23 @@ local function write_token_or_string(buf, str)
         if not slash_pos then
             local user = str:sub(1, at_pos - 1);
             local domain = str:sub(at_pos + 1);
-            local domain_token = TOKEN_LOOKUP[domain];
+            local domain_token = lookup[domain];
             if domain_token and domain_token >= 0 and domain_token < 240 then
                 table.insert(buf, string.char(JID_BARE));
-                write_token_or_string(buf, user);
+                write_token_or_string(buf, user, lookup);
                 table.insert(buf, string.char(domain_token));
                 return;
             end
         else
             local user = str:sub(1, at_pos - 1);
             local domain = str:sub(at_pos + 1, slash_pos - 1);
-            local domain_token = TOKEN_LOOKUP[domain];
+            local domain_token = lookup[domain];
             if domain_token and domain_token >= 0 and domain_token < 240 then
                 local resource = str:sub(slash_pos + 1);
                 table.insert(buf, string.char(JID_FULL));
-                write_token_or_string(buf, user);
+                write_token_or_string(buf, user, lookup);
                 table.insert(buf, string.char(domain_token));
-                write_token_or_string(buf, resource);
+                write_token_or_string(buf, resource, lookup);
                 return;
             end
         end
@@ -224,7 +259,8 @@ local function write_token_or_string(buf, str)
 end
 
 -- Helper: read token or string with 8/16/32-bit length
-local function read_token_or_string(data, pos)
+local function read_token_or_string(data, pos, tokens_tab)
+    tokens_tab = tokens_tab or TOKENS;
     if pos > #data then return nil, pos end
     local b = data:byte(pos);
     pos = pos + 1;
@@ -251,24 +287,24 @@ local function read_token_or_string(data, pos)
         return s, pos + len;
     elseif b == JID_BARE then
         local user;
-        user, pos = read_token_or_string(data, pos);
+        user, pos = read_token_or_string(data, pos, tokens_tab);
         if pos > #data then return (user or "") .. "@unknown", pos end
         local domain_token = data:byte(pos);
         pos = pos + 1;
-        local domain = TOKENS[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
+        local domain = tokens_tab[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
         return (user or "") .. "@" .. domain, pos;
     elseif b == JID_FULL then
         local user;
-        user, pos = read_token_or_string(data, pos);
+        user, pos = read_token_or_string(data, pos, tokens_tab);
         if pos > #data then return (user or "") .. "@unknown", pos end
         local domain_token = data:byte(pos);
         pos = pos + 1;
-        local domain = TOKENS[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
+        local domain = tokens_tab[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
         local resource;
-        resource, pos = read_token_or_string(data, pos);
+        resource, pos = read_token_or_string(data, pos, tokens_tab);
         return (user or "") .. "@" .. domain .. "/" .. (resource or ""), pos;
     else
-        local token = TOKENS[b];
+        local token = tokens_tab[b];
         if token then
             return token, pos;
         else
@@ -278,11 +314,12 @@ local function read_token_or_string(data, pos)
 end
 
 -- Encode Stanza to FunXMPP binary node
-local function encode_stanza(stanza, parent_ns)
+local function encode_stanza(stanza, parent_ns, session)
+    local lookup = (session and session.funxmpp_dict and session.funxmpp_dict.lookup) or TOKEN_LOOKUP;
     local body_buf = {};
 
     -- 1. Tag name
-    write_token_or_string(body_buf, stanza.name);
+    write_token_or_string(body_buf, stanza.name, lookup);
 
     -- Current namespace resolution
     local current_ns = stanza.attr.xmlns or parent_ns or "jabber:client";
@@ -306,8 +343,8 @@ local function encode_stanza(stanza, parent_ns)
     end
     table.insert(body_buf, string.char(#attr_list));
     for _, attr in ipairs(attr_list) do
-        write_token_or_string(body_buf, attr[1]);
-        write_token_or_string(body_buf, attr[2]);
+        write_token_or_string(body_buf, attr[1], lookup);
+        write_token_or_string(body_buf, attr[2], lookup);
     end
 
     -- 3. Content: Children vs Text vs Mixed vs Empty
@@ -345,7 +382,7 @@ local function encode_stanza(stanza, parent_ns)
         local lo = #child_tags % 256;
         table.insert(body_buf, string.char(hi, lo));
         for _, child in ipairs(child_tags) do
-            local child_bin = encode_stanza(child, current_ns);
+            local child_bin = encode_stanza(child, current_ns, session);
             if not child_bin then return nil; end
             table.insert(body_buf, child_bin);
         end
@@ -355,7 +392,7 @@ local function encode_stanza(stanza, parent_ns)
         local lo = #child_tags % 256;
         table.insert(body_buf, string.char(hi, lo));
         for _, child in ipairs(child_tags) do
-            local child_bin = encode_stanza(child, current_ns);
+            local child_bin = encode_stanza(child, current_ns, session);
             if not child_bin then return nil; end
             table.insert(body_buf, child_bin);
         end
@@ -397,11 +434,12 @@ end
 local MAX_FRAME_SIZE = module:get_option_number("funxmpp_max_frame_size", 1024 * 1024); -- 1 MB limit (guards against expansion attacks)
 
 -- Decode FunXMPP binary node to Prosody Stanza
-local function decode_node(data, pos, parent_ns)
+local function decode_node(data, pos, parent_ns, session)
+    local tokens_tab = (session and session.funxmpp_dict and session.funxmpp_dict.tokens) or TOKENS;
     if pos > #data then return nil, pos end
 
     local tag_name;
-    tag_name, pos = read_token_or_string(data, pos);
+    tag_name, pos = read_token_or_string(data, pos, tokens_tab);
     if not tag_name then return nil, pos end
 
     local attr_count = data:byte(pos) or 0;
@@ -409,8 +447,8 @@ local function decode_node(data, pos, parent_ns)
     local attr = {};
     for _ = 1, attr_count do
         local k, v;
-        k, pos = read_token_or_string(data, pos);
-        v, pos = read_token_or_string(data, pos);
+        k, pos = read_token_or_string(data, pos, tokens_tab);
+        v, pos = read_token_or_string(data, pos, tokens_tab);
         if k and v then
             attr[k] = v;
         end
@@ -442,9 +480,9 @@ local function decode_node(data, pos, parent_ns)
                 pos = pos + 4;
             end
             local expected_end_pos = pos + child_len;
-            local child_stanza = decode_node(data, pos, ns);
+            local child_stanza = decode_node(data, pos, ns, session);
             if child_stanza then
-                stanza:add_child(child_stanza);
+                table.insert(stanza, child_stanza);
             end
             pos = expected_end_pos;
         end
@@ -516,7 +554,7 @@ local function funxmpp_bytes_in(data, session)
             session.funxmpp_stats.in_frames = session.funxmpp_stats.in_frames + 1;
         end
 
-        local stanza = decode_node(frame, 1, "jabber:client");
+        local stanza = decode_node(frame, 1, "jabber:client", session);
         if stanza then
             -- Run through incoming stanza filters (mod_smacks counts stanzas here!)
             local filtered = stanza;
@@ -524,7 +562,7 @@ local function funxmpp_bytes_in(data, session)
                 filtered = session.filter("stanzas/in", stanza);
             end
             if filtered then
-                core_process_stanza(session, filtered);
+                (prosody.core_process_stanza or core_process_stanza)(session, filtered);
             end
         end
     end
@@ -565,7 +603,7 @@ local function funxmpp_stanzas_out(stanza, session)
             __index = stanza,
             __tostring = function()
                 if not memoized_bin then
-                    memoized_bin = encode_stanza(stanza) or "";
+                    memoized_bin = encode_stanza(stanza, nil, session) or "";
                     if memoized_bin ~= "" and session.funxmpp_stats then
                         session.funxmpp_stats.out_bytes = session.funxmpp_stats.out_bytes + #memoized_bin;
                         session.funxmpp_stats.out_frames = session.funxmpp_stats.out_frames + 1;
@@ -589,8 +627,8 @@ local function funxmpp_stanzas_out(stanza, session)
         local sm_ns = suffix:match("^%s*<r%s+xmlns=['\"](urn:xmpp:sm:[23])['\"]%s*/>%s*$");
         if sm_ns then
             local r_stanza = st.stanza("r", { xmlns = sm_ns });
-            local bin1 = encode_stanza(stashed);
-            local bin2 = encode_stanza(r_stanza);
+            local bin1 = encode_stanza(stashed, nil, session);
+            local bin2 = encode_stanza(r_stanza, nil, session);
             if bin1 and bin2 then
                 if session.funxmpp_stats then
                     session.funxmpp_stats.out_bytes = session.funxmpp_stats.out_bytes + #bin1 + #bin2;
@@ -609,12 +647,17 @@ local function funxmpp_stanzas_out(stanza, session)
 end
 
 -- Hook: Stream features
--- NOTE: Advertises version="1" with negotiated dictionary checksum (dict attribute).
+-- NOTE: Advertises latest version and hash, plus min_compat for older clients.
 module:hook("stream-features", function(event)
     local origin, features = event.origin, event.features;
     if origin and not origin.funxmpp_enabled and (origin.type == "c2s" or origin.type == "c2s_unauthed") then
         if not features:get_child("funxmpp", FUN_NS) then
-            features:tag("funxmpp", { xmlns = FUN_NS, version = "1", dict = DICTIONARY_HASH }):up();
+            features:tag("funxmpp", {
+                xmlns = FUN_NS,
+                version = "2",
+                dict = LATEST_DICT_HASH,
+                min_compat = LTS_V1_HASH,
+            }):up();
         end
     end
 end);
@@ -631,20 +674,30 @@ local function handle_enable(origin, stanza)
     end
 
     local client_dict = stanza and stanza.attr and stanza.attr.dict;
-    if client_dict and client_dict ~= DICTIONARY_HASH then
-        module:log("warn", "FunXMPP dictionary mismatch for %s: client=%s, server=%s",
-            session.full_jid or session.ip or "unknown", client_dict, DICTIONARY_HASH);
-        session.send(st.stanza("failed", { xmlns = FUN_NS })
-            :tag("dictionary-mismatch"):up());
-        return true;
+    local selected_dict = nil;
+    local selected_hash = nil;
+
+    if client_dict and DICTIONARIES[client_dict] then
+        selected_dict = DICTIONARIES[client_dict];
+        selected_hash = client_dict;
+    elseif not client_dict then
+        selected_dict = DICTIONARIES[LATEST_DICT_HASH];
+        selected_hash = LATEST_DICT_HASH;
+    else
+        -- Unknown client dictionary: gracefully fall back to LTS v1 instead of failing
+        module:log("warn", "FunXMPP dictionary unknown for %s: client=%s, falling back to LTS v1 (%s)",
+            session.full_jid or session.ip or "unknown", client_dict, LTS_V1_HASH);
+        selected_dict = DICTIONARIES[LTS_V1_HASH];
+        selected_hash = LTS_V1_HASH;
     end
 
-    module:log("info", "Client requested FunXMPP binary protocol: %s (dict=%s)",
-        session.full_jid or session.ip or "unknown", client_dict or "unspecified");
+    session.funxmpp_dict = selected_dict;
+    module:log("info", "Client requested FunXMPP binary protocol: %s (dict=%s, version=%d)",
+        session.full_jid or session.ip or "unknown", selected_hash, selected_dict.version);
     session.funxmpp_stats = { in_bytes = 0, out_bytes = 0, in_frames = 0, out_frames = 0 };
 
-    -- Send XML acknowledgment first
-    session.send(st.stanza("enabled", { xmlns = FUN_NS, dict = DICTIONARY_HASH }));
+    -- Send XML acknowledgment first with negotiated dict hash
+    session.send(st.stanza("enabled", { xmlns = FUN_NS, dict = selected_hash }));
     session.funxmpp_enabled = true;
 
     -- Register symmetric stream filters without breaking mod_smacks queue
@@ -663,6 +716,7 @@ local function handle_session_cleanup(event)
     local session = event.origin or event.session;
     if session and session.funxmpp_enabled then
         session.funxmpp_enabled = false;
+        session.funxmpp_dict = nil;
         session.funxmpp_in_buf = nil;
         session.funxmpp_last_out = nil;
         pcall(filters.remove_filter, session, "bytes/in", funxmpp_bytes_in);
