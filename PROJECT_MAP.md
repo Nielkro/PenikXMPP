@@ -275,6 +275,9 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `plan/stickers-rust-service-plan.md` — Implementation plan for Telegram-compatible stickers via standalone Rust microservice, XMPP stanza extensions, and Compose UI.
 - `plan/penik-bot-platform-plan.md` — Architectural blueprint and implementation plan for Telegram-style Bot API platform via XEP-0114 External Component on VPS 1, PXMPP binary transport, and Compose UI.
 - `plan/telegram-puppeting-bridge-plan.md` — Architecture plan and phased roadmap for Telegram MTProto puppeting bridge (`tg.snikket.penik.ru`) with selective chat sync.
+- `plan/penik-desktop-client-plan.md` — Architectural plan for modular desktop client in Qt 6 (C++/QML) and Rust core with PXMPP support, 1:1 Android UI, rich media, and stickers.
+- `plan/direct-pxmpp-architecture-plan.md` — Architecture plan for Direct PXMPP (implicit binary framing over TLS via ALPN `pxmpp-1`, 1-RTT resumption, SCRAM-SHA-256-PLUS) with 100% legacy client compatibility.
+- `plan/pxmpp-dictionary-evolution-plan.md` — Architectural plan for PXMPP token dictionary evolution via server multi-dictionary registry, append-only monotonic expansion, virtual session domains, and string literal fallback.
 - `landing/` — Static landing page: `index.html` (hero, features, protocol terminal demo, comparison, FAQ, download links), `logo_fixed.svg` / `logo_fixed.webp`; note `landing/penik.apk` stays untracked via the `*.apk` gitignore rule.
 - `server/Modules/` — Prosody/Snikket Lua plugins: `mod_funxmpp.lua` (FunXMPP binary tokenized protocol plugin: symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks), `test_mod_funxmpp.lua` (standalone Lua test suite), `mod_stickers_auth.lua` (Prosody HMAC-SHA256 Bearer token issuer for stickers service via IQ `penik:stickers:auth:0`), `test_mod_stickers_auth.lua`.
 - `server/MicroServices/` — Standalone backend microservices:
