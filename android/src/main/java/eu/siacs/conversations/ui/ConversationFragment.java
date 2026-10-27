@@ -4042,13 +4042,18 @@ public class ConversationFragment extends XmppFragment
             if (conversation != null
                     && conversation.messagesLoaded.compareAndSet(true, false)
                     && !messageList.isEmpty()) {
-                long timestamp;
-                if (messageList.get(0).getType() == Message.TYPE_STATUS
-                        && messageList.size() >= 2) {
-                    timestamp = messageList.get(1).getTimeSent();
-                } else {
-                    timestamp = messageList.get(0).getTimeSent();
+                Message oldestMessage = null;
+                for (final Message m : this.messageList) {
+                    if (m.getType() != Message.TYPE_STATUS && m.getTimeSent() > 0) {
+                        oldestMessage = m;
+                        break;
+                    }
                 }
+                if (oldestMessage == null) {
+                    conversation.messagesLoaded.set(true);
+                    return;
+                }
+                final long timestamp = oldestMessage.getTimeSent();
                 requireXmppActivity()
                         .xmppConnectionService
                         .loadMoreMessages(conversation, timestamp, onMoreMessagesLoaded);

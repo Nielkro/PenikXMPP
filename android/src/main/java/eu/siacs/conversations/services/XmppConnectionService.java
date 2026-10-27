@@ -2061,12 +2061,19 @@ public class XmppConnectionService extends Service {
             final Conversation conversation,
             final long timestamp,
             final OnMoreMessagesLoaded callback) {
-        final var connection = conversation.getAccount().getXmppConnection();
+        final var account = conversation.getAccount();
+        if (account == null || account.getXmppConnection() == null) {
+            callback.onMoreMessagesLoaded(0, conversation);
+            return;
+        }
+        final var connection = account.getXmppConnection();
         if (connection
                 .getManager(MessageArchiveManager.class)
                 .queryInProgress(conversation, callback)) {
+            callback.onMoreMessagesLoaded(0, conversation);
             return;
         } else if (timestamp == 0) {
+            callback.onMoreMessagesLoaded(0, conversation);
             return;
         }
         Log.d(
@@ -2077,7 +2084,6 @@ public class XmppConnectionService extends Service {
                         + MessageGenerator.getTimestamp(timestamp));
         final Runnable runnable =
                 () -> {
-                    final Account account = conversation.getAccount();
                     List<Message> messages =
                             databaseBackend.getMessages(conversation, 50, timestamp);
                     final var lastClear = conversation.getLastClearHistory();
@@ -2111,8 +2117,14 @@ public class XmppConnectionService extends Service {
                             if (query != null) {
                                 query.setCallback(callback);
                                 callback.informUser(R.string.fetching_history_from_server);
+                            } else {
+                                callback.onMoreMessagesLoaded(0, conversation);
                             }
+                        } else {
+                            callback.onMoreMessagesLoaded(0, conversation);
                         }
+                    } else {
+                        callback.onMoreMessagesLoaded(0, conversation);
                     }
                 };
         DATABASE_READER.execute(runnable);
