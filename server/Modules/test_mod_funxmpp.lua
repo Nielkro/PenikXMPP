@@ -356,4 +356,107 @@ do
     assert_eq(unknown_session.funxmpp_dict.version, 1, "LTS v1 dictionary bound to session");
 end
 
+-- Test 11: Direct PXMPP handshake over ALPN "pxmpp-1"
+do
+    local c2s_connected_hook = hooks["c2s-connected"];
+    assert(type(c2s_connected_hook) == "function", "c2s-connected hook registered");
+
+    local thread_events = {};
+    local direct_session;
+    direct_session = {
+        type = "c2s_unauthed",
+        host = "snikket.penik.ru",
+        send_queue = {},
+        send = function(s) table.insert(direct_session.send_queue, s) end,
+        thread = {
+            run = function(self, ev) table.insert(thread_events, ev) end
+        },
+        conn = {
+            selected_alpn = function(self) return "pxmpp-1" end
+        },
+        data = function(data)
+            error("Default XML data handler should not be called when ALPN is pxmpp-1");
+        end
+    };
+
+    c2s_connected_hook({ session = direct_session, conn = direct_session.conn });
+
+    -- Client sends Magic Header: "PXMP" (4B) + \x01 (version) + \x00 (flags) + dict_bytes (4B) + domain token 143 (snikket.penik.ru)
+    local hex_to_bytes = function(h) return (h:gsub("..", function(cc) return string.char(tonumber(cc, 16)) end)) end
+    local client_header = "PXMP\x01\x00" .. hex_to_bytes("3a145c7a") .. string.char(143);
+
+    direct_session.data(client_header);
+
+    assert_true(direct_session.funxmpp_direct, "Session marked funxmpp_direct");
+    assert_true(direct_session.funxmpp_enabled, "Session marked funxmpp_enabled");
+    assert_eq(#direct_session.send_queue, 1, "Server sent Server Stream Header");
+
+    local resp = direct_session.send_queue[1];
+    assert_eq(resp:sub(1, 4), "PXMP", "Server response starts with PXMP");
+    assert_eq(resp:byte(5), 1, "Server response version 1");
+    assert_eq(resp:byte(6), 0, "Server response flags 0");
+    assert_eq(resp:sub(7, 10), hex_to_bytes("3a145c7a"), "Server echoed active dict hash in binary header");
+
+    assert_eq(#thread_events, 1, "Streamopened event triggered");
+    assert_eq(thread_events[1].event, "streamopened", "Event is streamopened");
+    assert_eq(thread_events[1].attr.to, "snikket.penik.ru", "Target domain is snikket.penik.ru");
+end
+
+-- Test 12: Direct PXMPP sniffing branch without ALPN (Magic Header detection)
+do
+    local c2s_connected_hook = hooks["c2s-connected"];
+    local thread_events = {};
+    local sniff_session;
+    sniff_session = {
+        type = "c2s_unauthed",
+        host = "snikket.penik.ru",
+        send_queue = {},
+        send = function(s) table.insert(sniff_session.send_queue, s) end,
+        thread = {
+            run = function(self, ev) table.insert(thread_events, ev) end
+        },
+        conn = {}, -- No ALPN
+        data = function(data)
+            error("Default data handler should not be called when sniffing detects PXMP");
+        end
+    };
+
+    c2s_connected_hook({ session = sniff_session, conn = sniff_session.conn });
+
+    local hex_to_bytes = function(h) return (h:gsub("..", function(cc) return string.char(tonumber(cc, 16)) end)) end
+    local client_header = "PXMP\x01\x00" .. hex_to_bytes("68a7596d") .. string.char(143);
+
+    -- Simulate fragmented TCP arrival: send 2 bytes first, then rest
+    sniff_session.data("PX");
+    assert_eq(sniff_session.funxmpp_direct, nil, "Wait for full magic header");
+    sniff_session.data(client_header:sub(3));
+
+    assert_true(sniff_session.funxmpp_direct, "Direct mode activated after buffer complete");
+    assert_eq(#sniff_session.send_queue, 1, "Server response sent");
+    assert_eq(sniff_session.send_queue[1]:sub(7, 10), hex_to_bytes("68a7596d"), "Active dict LTS v1 selected");
+end
+
+-- Test 13: Sniffing branch preserves standard XML stream transparently
+do
+    local c2s_connected_hook = hooks["c2s-connected"];
+    local xml_data_received = nil;
+    local xml_session;
+    xml_session = {
+        type = "c2s_unauthed",
+        host = "snikket.penik.ru",
+        conn = {},
+        data = function(data)
+            xml_data_received = data;
+        end
+    };
+
+    c2s_connected_hook({ session = xml_session, conn = xml_session.conn });
+
+    local raw_xml = "<stream:stream xmlns='jabber:client' to='snikket.penik.ru'>";
+    xml_session.data(raw_xml);
+
+    assert_eq(xml_session.funxmpp_direct, nil, "Direct mode not enabled for XML");
+    assert_eq(xml_data_received, raw_xml, "Raw XML passed through to standard handler untouched");
+end
+
 print("ALL MOD_FUNXMPP TESTS PASSED SUCCESSFULLY!");

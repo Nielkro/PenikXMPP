@@ -596,6 +596,11 @@ local function funxmpp_stanzas_out(stanza, session)
     if not session.funxmpp_enabled then
         return stanza;
     end
+    if session.funxmpp_direct and type(stanza) == "string" and not session.funxmpp_last_out then
+        if stanza:sub(1, 5) == "<?xml" or stanza:sub(1, 14) == "<stream:stream" then
+            return nil;
+        end
+    end
     if type(stanza) == "table" and stanza.name then
         session.funxmpp_last_out = nil;
         local memoized_bin = nil;
@@ -709,13 +714,171 @@ end
 
 module:hook_tag(FUN_NS, "enable", handle_enable);
 
+-- Direct PXMPP Helpers
+local function hex_to_bytes(hex)
+    return (hex:gsub("..", function(cc)
+        return string.char(tonumber(cc, 16))
+    end))
+end
+
+local function bytes_to_hex(b)
+    return (b:gsub(".", function(c)
+        return string.format("%02x", string.byte(c))
+    end))
+end
+
+local function handle_direct_pxmpp(session, data)
+    if not data or #data < 10 then
+        return;
+    end
+    local magic = data:sub(1, 4);
+    if magic ~= "PXMP" then
+        return;
+    end
+    local version = data:byte(5);
+    local flags = data:byte(6);
+    local client_dict_bytes = data:sub(7, 10);
+    local client_dict_hash = bytes_to_hex(client_dict_bytes);
+
+    local domain, next_pos = read_token_or_string(data, 11, TOKENS);
+    domain = domain or session.host or "snikket.penik.ru";
+
+    local selected_dict = DICTIONARIES[client_dict_hash] or DICTIONARIES[LTS_V1_HASH];
+    session.funxmpp_dict = selected_dict;
+    session.funxmpp_enabled = true;
+    session.funxmpp_direct = true;
+    session.funxmpp_stats = { in_bytes = 0, out_bytes = 0, in_frames = 0, out_frames = 0 };
+
+    module:log("info", "Direct PXMPP stream negotiated for %s (dict=%s, domain=%s)",
+        session.full_jid or session.ip or "unknown", selected_dict.hash, domain);
+
+    -- Send 10-byte Server Stream Header: "PXMP\x01\x00" .. ActiveDictHash (4 bytes)
+    local server_header = "PXMP\x01\x00" .. hex_to_bytes(selected_dict.hash);
+    if session.send then
+        session.send(server_header);
+    elseif session.conn and session.conn.write then
+        session.conn:write(server_header);
+    end
+
+    -- In Direct PXMPP, intercept session.send to drop textual XML stream headers
+    local original_send = session.send;
+    if original_send then
+        session.funxmpp_original_send = original_send;
+        session.send = function(stanza)
+            if session.funxmpp_direct and type(stanza) == "string" then
+                if stanza:sub(1, 5) == "<?xml" or stanza:sub(1, 14) == "<stream:stream" then
+                    return true;
+                end
+            end
+            return original_send(stanza);
+        end
+    end
+
+    -- Register symmetric stream filters
+    filters.add_filter(session, "bytes/in", funxmpp_bytes_in, 100);
+    filters.add_filter(session, "stanzas/out", funxmpp_stanzas_stash_out, -999);
+    filters.add_filter(session, "stanzas/out", funxmpp_stanzas_out, -10000);
+
+    -- Trigger streamopened in Prosody session runner
+    if session.thread then
+        session.thread:run({
+            event = "streamopened",
+            attr = {
+                to = domain,
+                version = "1.0",
+                ["xmlns:stream"] = "http://etherx.jabber.org/streams",
+                xmlns = "jabber:client"
+            }
+        });
+    end
+
+    -- Process any remaining pipelined bytes (e.g. <resume/> or <auth/>)
+    if next_pos and next_pos <= #data then
+        local leftover = data:sub(next_pos);
+        if #leftover > 0 then
+            funxmpp_bytes_in(leftover, session);
+        end
+    end
+end
+
+local function setup_c2s_sniffing(session)
+    if session.funxmpp_sniff_installed then return end
+    session.funxmpp_sniff_installed = true;
+    local original_data = session.data;
+
+    session.data = function(data)
+        if not data then return end
+
+        if session.funxmpp_direct or session.funxmpp_enabled then
+            if original_data then
+                return original_data(data);
+            end
+            return;
+        end
+
+        local conn = session.conn;
+        local alpn = conn and conn.selected_alpn and conn:selected_alpn();
+        if alpn == "pxmpp-1" then
+            session.data = original_data;
+            return handle_direct_pxmpp(session, data);
+        end
+
+        local sniff = (session.funxmpp_sniff_buf or "") .. data;
+        session.funxmpp_sniff_buf = sniff;
+
+        if sniff:byte(1) == 0x3C then -- '<' (classical XML)
+            session.funxmpp_sniff_buf = nil;
+            session.data = original_data;
+            if original_data then
+                return original_data(sniff);
+            end
+        elseif sniff:byte(1) == 0x50 then -- 'P' (potential PXMP)
+            if #sniff >= 4 then
+                if sniff:sub(1, 4) == "PXMP" then
+                    session.funxmpp_sniff_buf = nil;
+                    session.data = original_data;
+                    return handle_direct_pxmpp(session, sniff);
+                else
+                    session.funxmpp_sniff_buf = nil;
+                    session.data = original_data;
+                    if original_data then
+                        return original_data(sniff);
+                    end
+                end
+            else
+                -- Wait for more bytes to verify PXMP
+                return;
+            end
+        else
+            session.funxmpp_sniff_buf = nil;
+            session.data = original_data;
+            if original_data then
+                return original_data(sniff);
+            end
+        end
+    end
+end
+
+module:hook("c2s-connected", function(event)
+    if event.session then
+        setup_c2s_sniffing(event.session);
+    end
+end, 100);
+
 -- Hook: Stream Management hibernation / disconnect cleanup
 -- When a connection drops or hibernates, reset funxmpp stream state so that
 -- reconnected/resumed sessions do not attempt binary I/O on fresh un-negotiated sockets.
 local function handle_session_cleanup(event)
     local session = event.origin or event.session;
     if session and session.funxmpp_enabled then
+        if session.funxmpp_original_send then
+            session.send = session.funxmpp_original_send;
+            session.funxmpp_original_send = nil;
+        end
         session.funxmpp_enabled = false;
+        session.funxmpp_direct = false;
+        session.funxmpp_sniff_buf = nil;
+        session.funxmpp_sniff_installed = nil;
         session.funxmpp_dict = nil;
         session.funxmpp_in_buf = nil;
         session.funxmpp_last_out = nil;

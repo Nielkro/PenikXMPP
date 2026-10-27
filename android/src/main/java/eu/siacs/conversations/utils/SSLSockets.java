@@ -83,6 +83,26 @@ public class SSLSockets {
         }
     }
 
+    public static void setApplicationProtocols(final SSLSocket socket, final String[] protocols) {
+        if (Conscrypt.isConscrypt(socket)) {
+            Conscrypt.setApplicationProtocols(socket, protocols);
+        } else if (protocols != null && protocols.length > 0) {
+            setApplicationProtocolReflection(socket, protocols[0]);
+        }
+    }
+
+    public static String getApplicationProtocol(final SSLSocket socket) {
+        if (Conscrypt.isConscrypt(socket)) {
+            return Conscrypt.getApplicationProtocol(socket);
+        }
+        try {
+            final Method method = socket.getClass().getMethod("getApplicationProtocol");
+            return (String) method.invoke(socket);
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
     public static SSLContext getSSLContext() throws NoSuchAlgorithmException {
         try {
             return SSLContext.getInstance("TLSv1.3");

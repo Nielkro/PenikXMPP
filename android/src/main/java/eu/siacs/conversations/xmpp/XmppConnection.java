@@ -69,7 +69,9 @@ import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xml.Tag;
 import eu.siacs.conversations.xml.TagWriter;
 import eu.siacs.conversations.xml.XmlReader;
+import eu.siacs.conversations.xmpp.fun.FunReader;
 import eu.siacs.conversations.xmpp.fun.FunTokens;
+import eu.siacs.conversations.xmpp.fun.FunWriter;
 import eu.siacs.conversations.xmpp.manager.AbstractManager;
 import eu.siacs.conversations.xmpp.manager.BlockingManager;
 import eu.siacs.conversations.xmpp.manager.CarbonsManager;
@@ -197,6 +199,7 @@ public class XmppConnection implements Runnable {
     private boolean postBindWaitForDisco = false;
     private boolean postBindNegotiatedCarbons = false;
     private boolean isFunXmppResuming = false;
+    private boolean isDirectPxmpp = false;
     private boolean offlineMessagesRetrieved = false;
     private im.conversations.android.xmpp.model.streams.Features streamFeatures;
     private im.conversations.android.xmpp.model.streams.Features boundStreamFeatures;
@@ -632,6 +635,15 @@ public class XmppConnection implements Runnable {
         this.tagWriter = new TagWriter();
         this.tagWriter.setOutputStream(socket.getOutputStream());
         this.tagReader.setInputStream(socket.getInputStream());
+
+        if (socket instanceof SSLSocket sslSocket) {
+            final String alpn = SSLSockets.getApplicationProtocol(sslSocket);
+            if ("pxmpp-1".equals(alpn)) {
+                Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": Direct PXMPP ALPN negotiated!");
+                return startDirectPxmpp(sslSocket);
+            }
+        }
+
         this.tagWriter.beginDocument();
         final boolean quickStart;
         if (socket instanceof SSLSocket sslSocket) {
@@ -661,6 +673,39 @@ public class XmppConnection implements Runnable {
             this.quickStartInProgress = true;
         }
         return success;
+    }
+
+    private boolean startDirectPxmpp(final SSLSocket sslSocket) throws IOException, InterruptedException {
+        final boolean canResume = this.streamId != null;
+        final byte[] header = FunTokens.createDirectStreamHeader(FunTokens.DICTIONARY_HASH, account.getServer(), canResume);
+        final java.io.OutputStream out = sslSocket.getOutputStream();
+        out.write(header);
+
+        if (canResume) {
+            final String sId = this.streamId.id;
+            final Resume resume = new Resume(sId, stanzasReceived);
+            prepareForResume(sId);
+            this.isFunXmppResuming = true;
+            final byte[] resumeFrame = FunWriter.encodeNode(
+                    resume, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, FunTokens.LTS_V1_HASH);
+            out.write(resumeFrame);
+        }
+        out.flush();
+
+        final String activeDict = FunTokens.readServerStreamHeader(sslSocket.getInputStream());
+        Log.d(
+                Config.LOGTAG,
+                account.getJid().asBareJid()
+                        + ": Direct PXMPP stream active (dict="
+                        + activeDict
+                        + ")");
+
+        this.tagWriter.setFunWriter(new FunWriter(sslSocket.getOutputStream(), activeDict));
+        this.tagReader.setFunReader(new FunReader(sslSocket.getInputStream()));
+        this.features.encryptionEnabled = true;
+        this.isDirectPxmpp = true;
+
+        return true;
     }
 
     private SSLSocketFactory getSSLSocketFactory()
@@ -1564,7 +1609,7 @@ public class XmppConnection implements Runnable {
             throw new StateChangingException(Account.State.TLS_ERROR_PROTOCOL);
         }
         SSLSockets.setHostname(sslSocket, IDN.toASCII(account.getServer()));
-        SSLSockets.setApplicationProtocol(sslSocket, "xmpp-client");
+        SSLSockets.setApplicationProtocols(sslSocket, new String[] {"pxmpp-1", "xmpp-client"});
         final XmppDomainVerifier xmppDomainVerifier = new XmppDomainVerifier();
         try {
             sslSocket.startHandshake();
@@ -2261,6 +2306,13 @@ public class XmppConnection implements Runnable {
     }
 
     private void sendFunXmppEnable() {
+        if (this.isDirectPxmpp) {
+            if (!this.isFunXmppResuming) {
+                sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+            }
+            this.isFunXmppResuming = false;
+            return;
+        }
         final var features = this.streamFeatures != null ? this.streamFeatures : this.boundStreamFeatures;
         final String serverDict = features != null ? features.funxmppDict() : null;
         final String minCompat = features != null ? features.funxmppMinCompat() : null;
@@ -2852,6 +2904,7 @@ public class XmppConnection implements Runnable {
     }
 
     private void forceCloseSocket() {
+        this.isDirectPxmpp = false;
         FileBackend.close(this.socket);
         FileBackend.close(this.tagReader);
     }
@@ -2912,6 +2965,7 @@ public class XmppConnection implements Runnable {
         this.pendingResumeId.clear();
         this.streamId = null;
         this.boundStreamFeatures = null;
+        this.isDirectPxmpp = false;
     }
 
     public <M extends AbstractManager> M getManager(final Class<M> clazz) {

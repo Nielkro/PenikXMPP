@@ -248,4 +248,50 @@ public class FunProtocolTest {
         writer.writeElement(valid);
         assertTrue("Valid stanza must be written after dropped stanza", out.size() > 0);
     }
+
+    @Test
+    public void testDirectPxmppStreamHeaderGenerationAndParsing() throws Exception {
+        final String clientHash = FunTokens.V2_HASH;
+        final byte[] clientHeader = FunTokens.createDirectStreamHeader(clientHash, "snikket.penik.ru", false);
+
+        assertNotNull(clientHeader);
+        assertTrue(clientHeader.length >= 10);
+        // Magic
+        assertEquals((byte) 'P', clientHeader[0]);
+        assertEquals((byte) 'X', clientHeader[1]);
+        assertEquals((byte) 'M', clientHeader[2]);
+        assertEquals((byte) 'P', clientHeader[3]);
+        // Version
+        assertEquals(1, clientHeader[4]);
+        // Flags (resume = false)
+        assertEquals(0, clientHeader[5]);
+        // Dict Hash
+        final byte[] expectedHashBytes = FunTokens.hexToBytes(clientHash);
+        for (int i = 0; i < 4; i++) {
+            assertEquals(expectedHashBytes[i], clientHeader[6 + i]);
+        }
+
+        // Simulate server response: "PXMP\x01\x00" + selected dict hash
+        final ByteArrayOutputStream serverHeaderOut = new ByteArrayOutputStream();
+        serverHeaderOut.write(FunTokens.MAGIC_DIRECT_PXMPP);
+        serverHeaderOut.write(FunTokens.DIRECT_PXMPP_VERSION);
+        serverHeaderOut.write(0); // flags
+        serverHeaderOut.write(expectedHashBytes);
+
+        final ByteArrayInputStream in = new ByteArrayInputStream(serverHeaderOut.toByteArray());
+        final String serverActiveDict = FunTokens.readServerStreamHeader(in);
+        assertEquals(clientHash, serverActiveDict);
+    }
+
+    @Test
+    public void testDirectPxmppHeaderWithResumeFlag() throws Exception {
+        final byte[] resumeHeader = FunTokens.createDirectStreamHeader(FunTokens.LTS_V1_HASH, "snikket.penik.ru", true);
+        assertEquals(FunTokens.FLAG_DIRECT_RESUME, resumeHeader[5]);
+
+        final byte[] serverResponse = new byte[] {
+            'P', 'X', 'M', 'P', 0x01, 0x00, 0x68, (byte) 0xa7, 0x59, 0x6d
+        };
+        final String activeDict = FunTokens.readServerStreamHeader(new ByteArrayInputStream(serverResponse));
+        assertEquals("68a7596d", activeDict);
+    }
 }
