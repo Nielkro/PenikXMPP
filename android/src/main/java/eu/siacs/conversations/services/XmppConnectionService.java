@@ -2246,6 +2246,30 @@ public class XmppConnectionService extends Service {
     public Conversation findConversationByUuidReliable(final String uuid) {
         final var cached = findConversationByUuid(uuid);
         if (cached != null) {
+            if (cached.getStatus() == Conversation.STATUS_ARCHIVED) {
+                final var loadMessagesFromDb = restoreFromArchive(cached);
+                DATABASE_READER.execute(
+                        () ->
+                                postProcessConversation(
+                                        cached,
+                                        loadMessagesFromDb,
+                                        cached.getMode() == Conversational.MODE_MULTI,
+                                        null));
+                synchronized (this.conversations) {
+                    if (!this.conversations.contains(cached)) {
+                        this.conversations.add(cached);
+                    }
+                }
+                if (cached.getMode() == Conversational.MODE_MULTI) {
+                    final var account = cached.getAccount();
+                    if (account != null) {
+                        account.getXmppConnection()
+                                .getManager(BookmarkManager.class)
+                                .ensureBookmarkIsAutoJoin(cached);
+                    }
+                }
+                updateConversationUi();
+            }
             return cached;
         }
         final var existing = databaseBackend.findConversation(uuid);
@@ -3647,10 +3671,23 @@ public class XmppConnectionService extends Service {
         return null;
     }
 
-    public Conversation findConversationByUuid(String uuid) {
-        for (Conversation conversation : getConversations()) {
-            if (conversation.getUuid().equals(uuid)) {
-                return conversation;
+    public Conversation findConversationByUuid(final String uuid) {
+        if (uuid == null) {
+            return null;
+        }
+        synchronized (this.conversations) {
+            for (final Conversation conversation : this.conversations) {
+                if (conversation.getUuid().equals(uuid)) {
+                    return conversation;
+                }
+            }
+        }
+        final var existing = databaseBackend.findConversation(uuid);
+        if (existing != null) {
+            final var account = findAccountByUuid(existing.getAccountUuid());
+            if (account != null) {
+                existing.setAccount(account);
+                return existing;
             }
         }
         return null;

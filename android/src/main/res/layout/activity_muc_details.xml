@@ -334,7 +334,9 @@
                             android:id="@+id/no_users_hints"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/no_users_hint_channel"
+                            android:visibility="gone"
+                            tools:text="@string/no_users_hint_channel"
+                            tools:visibility="visible"
                             android:textAppearance="?textAppearanceBodyMedium"
                             android:textColor="@color/penik_text_muted" />
 
@@ -357,6 +359,8 @@
                                 style="@style/Widget.Material3.Button.TextButton"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:visibility="gone"
+                                tools:visibility="visible"
                                 android:text="@string/invite" />
 
                             <Button
