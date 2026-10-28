@@ -386,6 +386,16 @@ public class ConferenceDetailsActivity extends XmppActivity
         dialog.show();
     }
 
+    private void showErrorState(final String message) {
+        runOnUiThread(() -> {
+            this.binding.contentScrollView.setVisibility(View.GONE);
+            this.binding.errorLayout.setVisibility(View.VISIBLE);
+            if (message != null) {
+                this.binding.errorText.setText(message);
+            }
+        });
+    }
+
     @Override
     protected void onBackendConnected() {
         if (mPendingConferenceInvite != null) {
@@ -402,6 +412,8 @@ public class ConferenceDetailsActivity extends XmppActivity
         if (this.uuid != null) {
             this.mConversation = xmppConnectionService.findConversationByUuid(this.uuid);
             if (this.mConversation != null) {
+                this.binding.contentScrollView.setVisibility(View.VISIBLE);
+                this.binding.errorLayout.setVisibility(View.GONE);
                 if (Compatibility.hasStoragePermission(this)) {
                     final int limit = GridManager.getCurrentColumnCount(this.binding.media);
                     xmppConnectionService.getAttachments(this.mConversation, limit, this);
@@ -409,13 +421,18 @@ public class ConferenceDetailsActivity extends XmppActivity
                             (v) -> MediaBrowserActivity.launch(this, mConversation));
                 }
                 updateView();
+            } else {
+                showErrorState("Не удалось найти беседу в приложении (UUID: " + this.uuid + "). Это внутренняя ошибка приложения. Повторные попытки перезахода не помогут.");
             }
+        } else {
+            showErrorState("Идентификатор беседы не был передан при открытии экрана. Это внутренняя ошибка приложения.");
         }
     }
 
     private void updateView() {
         invalidateOptionsMenu();
         if (mConversation == null) {
+            showErrorState("Беседа недоступна. Это внутренняя ошибка приложения.");
             return;
         }
         final MucOptions mucOptions = mConversation.getMucOptions();
