@@ -18,7 +18,7 @@ local CONTENT_TEXT = 0x01;
 local CONTENT_CHILDREN = 0x02;
 local CONTENT_MIXED = 0x03;
 
-local TOKENS = {
+local TOKENS_V1 = {
     -- Core Stanzas & Elements (0..19)
     [0] = "message", [1] = "presence", [2] = "iq", [3] = "body", [4] = "error",
     [5] = "text", [6] = "status", [7] = "show", [8] = "priority", [9] = "query",
@@ -91,20 +91,34 @@ local TOKENS = {
     [144] = "groups.snikket.penik.ru",
     [145] = "share.snikket.penik.ru",
     [146] = "push.snikket.penik.ru",
-
-    -- Bot Platform (147..152)
-    [147] = "bot.snikket.penik.ru",
-    [148] = "markup",
-    [149] = "row",
-    [150] = "button",
-    [151] = "callback",
-    [152] = "penik:bot:markup",
 };
 
-local TOKEN_LOOKUP = {};
-for id, str in pairs(TOKENS) do
-    TOKEN_LOOKUP[str] = id;
+local TOKENS_V2 = {};
+for i = 0, 146 do
+    TOKENS_V2[i] = TOKENS_V1[i];
 end
+-- Bot Platform tokens (147..152) added in v2
+TOKENS_V2[147] = "bot.snikket.penik.ru";
+TOKENS_V2[148] = "markup";
+TOKENS_V2[149] = "row";
+TOKENS_V2[150] = "button";
+TOKENS_V2[151] = "callback";
+TOKENS_V2[152] = "penik:bot:markup";
+
+local function build_lookup(tokens)
+    local lookup = {};
+    for id, str in pairs(tokens) do
+        lookup[str] = id;
+    end
+    return lookup;
+end
+
+local LOOKUP_V1 = build_lookup(TOKENS_V1);
+local LOOKUP_V2 = build_lookup(TOKENS_V2);
+
+-- Default global fallback for backwards compatibility
+local TOKENS = TOKENS_V2;
+local TOKEN_LOOKUP = LOOKUP_V2;
 
 -- Deterministic 32-bit FNV-1a dictionary checksum matching client algorithm
 local function compute_dict_hash(tokens)
@@ -146,9 +160,21 @@ local function compute_dict_hash(tokens)
         end
     end
 
+    -- 32-bit FNV prime multiplication safe from 53-bit IEEE-754 double precision loss in Lua 5.1/5.2
+    local function mul_fnv(h)
+        if h < 0 then h = (h % 4294967296); end
+        local h_lo = h % 65536;
+        local h_hi = math.floor(h / 65536);
+        local p_lo = 0x0193;
+        local p_hi = 0x0100;
+
+        local low = h_lo * p_lo;
+        local mid = h_lo * p_hi + h_hi * p_lo;
+        local high = (math.floor(low / 65536) + mid) % 65536;
+        return (high * 65536 + (low % 65536)) % 4294967296;
+    end
+
     local hash = 0x811c9dc5;
-    local FNV_PRIME = 0x01000193;
-    local MOD32 = 0x100000000;
 
     local i = 0;
     while tokens[i] ~= nil do
@@ -156,21 +182,42 @@ local function compute_dict_hash(tokens)
         for j = 1, #token do
             local b = token:byte(j);
             hash = bxor(hash, b);
-            hash = (hash * FNV_PRIME) % MOD32;
+            hash = mul_fnv(hash);
         end
         hash = bxor(hash, 10);
-        hash = (hash * FNV_PRIME) % MOD32;
+        hash = mul_fnv(hash);
         i = i + 1;
     end
     return string.format("%08x", hash);
 end
 
-local DICTIONARY_HASH = compute_dict_hash(TOKENS);
+local DICT_V1_HASH = compute_dict_hash(TOKENS_V1);
+local DICT_V2_HASH = compute_dict_hash(TOKENS_V2);
+
+local DICTIONARIES = {
+    [DICT_V1_HASH] = {
+        version = 1,
+        hash = DICT_V1_HASH,
+        tokens = TOKENS_V1,
+        lookup = LOOKUP_V1,
+    },
+    [DICT_V2_HASH] = {
+        version = 2,
+        hash = DICT_V2_HASH,
+        tokens = TOKENS_V2,
+        lookup = LOOKUP_V2,
+    },
+};
+
+local LATEST_DICT_HASH = DICT_V2_HASH;
+local LTS_V1_HASH = DICT_V1_HASH;
+local DICTIONARY_HASH = LATEST_DICT_HASH;
 
 -- Helper: encode string or token with 8/16/32-bit length
-local function write_token_or_string(buf, str)
+local function write_token_or_string(buf, str, lookup)
+    lookup = lookup or TOKEN_LOOKUP;
     str = str or "";
-    local token = TOKEN_LOOKUP[str];
+    local token = lookup[str];
     if token and token >= 0 and token < 240 then
         table.insert(buf, string.char(token));
         return;
@@ -182,23 +229,23 @@ local function write_token_or_string(buf, str)
         if not slash_pos then
             local user = str:sub(1, at_pos - 1);
             local domain = str:sub(at_pos + 1);
-            local domain_token = TOKEN_LOOKUP[domain];
+            local domain_token = lookup[domain];
             if domain_token and domain_token >= 0 and domain_token < 240 then
                 table.insert(buf, string.char(JID_BARE));
-                write_token_or_string(buf, user);
+                write_token_or_string(buf, user, lookup);
                 table.insert(buf, string.char(domain_token));
                 return;
             end
         else
             local user = str:sub(1, at_pos - 1);
             local domain = str:sub(at_pos + 1, slash_pos - 1);
-            local domain_token = TOKEN_LOOKUP[domain];
+            local domain_token = lookup[domain];
             if domain_token and domain_token >= 0 and domain_token < 240 then
                 local resource = str:sub(slash_pos + 1);
                 table.insert(buf, string.char(JID_FULL));
-                write_token_or_string(buf, user);
+                write_token_or_string(buf, user, lookup);
                 table.insert(buf, string.char(domain_token));
-                write_token_or_string(buf, resource);
+                write_token_or_string(buf, resource, lookup);
                 return;
             end
         end
@@ -224,7 +271,8 @@ local function write_token_or_string(buf, str)
 end
 
 -- Helper: read token or string with 8/16/32-bit length
-local function read_token_or_string(data, pos)
+local function read_token_or_string(data, pos, tokens_tab)
+    tokens_tab = tokens_tab or TOKENS;
     if pos > #data then return nil, pos end
     local b = data:byte(pos);
     pos = pos + 1;
@@ -235,54 +283,60 @@ local function read_token_or_string(data, pos)
         local s = data:sub(pos, pos + len - 1);
         return s, pos + len;
     elseif b == LITERAL_STRING_16 then
-        if pos + 1 > #data then return "", pos end
+        if pos + 1 > #data then return nil, pos end
         local hi = data:byte(pos);
         local lo = data:byte(pos + 1);
         local len = hi * 256 + lo;
         pos = pos + 2;
+        if pos + len - 1 > #data then return nil, pos end
         local s = data:sub(pos, pos + len - 1);
         return s, pos + len;
     elseif b == LITERAL_STRING_32 then
-        if pos + 3 > #data then return "", pos end
+        if pos + 3 > #data then return nil, pos end
         local b1, b2, b3, b4 = data:byte(pos, pos + 3);
         local len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
         pos = pos + 4;
+        if pos + len - 1 > #data then return nil, pos end
         local s = data:sub(pos, pos + len - 1);
         return s, pos + len;
     elseif b == JID_BARE then
         local user;
-        user, pos = read_token_or_string(data, pos);
-        if pos > #data then return (user or "") .. "@unknown", pos end
+        user, pos = read_token_or_string(data, pos, tokens_tab);
+        if not user or pos > #data then return nil, pos end
         local domain_token = data:byte(pos);
         pos = pos + 1;
-        local domain = TOKENS[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
-        return (user or "") .. "@" .. domain, pos;
+        local domain = tokens_tab[domain_token];
+        if not domain then return nil, pos end
+        return user .. "@" .. domain, pos;
     elseif b == JID_FULL then
         local user;
-        user, pos = read_token_or_string(data, pos);
-        if pos > #data then return (user or "") .. "@unknown", pos end
+        user, pos = read_token_or_string(data, pos, tokens_tab);
+        if not user or pos > #data then return nil, pos end
         local domain_token = data:byte(pos);
         pos = pos + 1;
-        local domain = TOKENS[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
+        local domain = tokens_tab[domain_token];
+        if not domain then return nil, pos end
         local resource;
-        resource, pos = read_token_or_string(data, pos);
-        return (user or "") .. "@" .. domain .. "/" .. (resource or ""), pos;
+        resource, pos = read_token_or_string(data, pos, tokens_tab);
+        if not resource then return nil, pos end
+        return user .. "@" .. domain .. "/" .. resource, pos;
     else
-        local token = TOKENS[b];
+        local token = tokens_tab[b];
         if token then
             return token, pos;
         else
-            return "unknown_0x" .. string.format("%x", b), pos;
+            return nil, pos;
         end
     end
 end
 
 -- Encode Stanza to FunXMPP binary node
-local function encode_stanza(stanza, parent_ns)
+local function encode_stanza(stanza, parent_ns, session)
+    local lookup = (session and session.funxmpp_dict and session.funxmpp_dict.lookup) or TOKEN_LOOKUP;
     local body_buf = {};
 
     -- 1. Tag name
-    write_token_or_string(body_buf, stanza.name);
+    write_token_or_string(body_buf, stanza.name, lookup);
 
     -- Current namespace resolution
     local current_ns = stanza.attr.xmlns or parent_ns or "jabber:client";
@@ -306,8 +360,8 @@ local function encode_stanza(stanza, parent_ns)
     end
     table.insert(body_buf, string.char(#attr_list));
     for _, attr in ipairs(attr_list) do
-        write_token_or_string(body_buf, attr[1]);
-        write_token_or_string(body_buf, attr[2]);
+        write_token_or_string(body_buf, attr[1], lookup);
+        write_token_or_string(body_buf, attr[2], lookup);
     end
 
     -- 3. Content: Children vs Text vs Mixed vs Empty
@@ -323,6 +377,10 @@ local function encode_stanza(stanza, parent_ns)
 
     local has_children = #child_tags > 0;
     local has_text = #text_parts > 0;
+    if #child_tags > 65535 then
+        module:log("error", "FunXMPP: stanza %s has %d children (> 65535), dropping", tostring(stanza.name), #child_tags);
+        return nil;
+    end
 
     if has_children and has_text then
         table.insert(body_buf, string.char(CONTENT_MIXED));
@@ -345,7 +403,7 @@ local function encode_stanza(stanza, parent_ns)
         local lo = #child_tags % 256;
         table.insert(body_buf, string.char(hi, lo));
         for _, child in ipairs(child_tags) do
-            local child_bin = encode_stanza(child, current_ns);
+            local child_bin = encode_stanza(child, current_ns, session);
             if not child_bin then return nil; end
             table.insert(body_buf, child_bin);
         end
@@ -355,7 +413,7 @@ local function encode_stanza(stanza, parent_ns)
         local lo = #child_tags % 256;
         table.insert(body_buf, string.char(hi, lo));
         for _, child in ipairs(child_tags) do
-            local child_bin = encode_stanza(child, current_ns);
+            local child_bin = encode_stanza(child, current_ns, session);
             if not child_bin then return nil; end
             table.insert(body_buf, child_bin);
         end
@@ -397,11 +455,17 @@ end
 local MAX_FRAME_SIZE = module:get_option_number("funxmpp_max_frame_size", 1024 * 1024); -- 1 MB limit (guards against expansion attacks)
 
 -- Decode FunXMPP binary node to Prosody Stanza
-local function decode_node(data, pos, parent_ns)
+local function decode_node(data, pos, parent_ns, session, depth)
+    depth = depth or 0;
+    if depth > 64 then
+        module:log("warn", "FunXMPP: max node depth exceeded (64), aborting decode");
+        return nil, pos;
+    end
+    local tokens_tab = (session and session.funxmpp_dict and session.funxmpp_dict.tokens) or TOKENS;
     if pos > #data then return nil, pos end
 
     local tag_name;
-    tag_name, pos = read_token_or_string(data, pos);
+    tag_name, pos = read_token_or_string(data, pos, tokens_tab);
     if not tag_name then return nil, pos end
 
     local attr_count = data:byte(pos) or 0;
@@ -409,11 +473,12 @@ local function decode_node(data, pos, parent_ns)
     local attr = {};
     for _ = 1, attr_count do
         local k, v;
-        k, pos = read_token_or_string(data, pos);
-        v, pos = read_token_or_string(data, pos);
-        if k and v then
-            attr[k] = v;
+        k, pos = read_token_or_string(data, pos, tokens_tab);
+        v, pos = read_token_or_string(data, pos, tokens_tab);
+        if not k or not v then
+            return nil, pos;
         end
+        attr[k] = v;
     end
 
     local ns = attr.xmlns or parent_ns or "jabber:client";
@@ -441,10 +506,22 @@ local function decode_node(data, pos, parent_ns)
                 child_len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
                 pos = pos + 4;
             end
+            if child_len <= 0 or (pos + child_len - 1) > #data then
+                module:log("warn", "FunXMPP: invalid child length %d at pos %d, aborting child read", child_len, pos);
+                break;
+            end
             local expected_end_pos = pos + child_len;
-            local child_stanza = decode_node(data, pos, ns);
+            local child_stanza = decode_node(data, pos, ns, session, depth + 1);
             if child_stanza then
-                stanza:add_child(child_stanza);
+                if stanza.add_direct_child then
+                    stanza:add_direct_child(child_stanza);
+                elseif stanza.add_child then
+                    stanza:add_child(child_stanza);
+                else
+                    if not stanza.tags then stanza.tags = {}; end
+                    table.insert(stanza.tags, child_stanza);
+                    table.insert(stanza, child_stanza);
+                end
             end
             pos = expected_end_pos;
         end
@@ -459,6 +536,10 @@ local function decode_node(data, pos, parent_ns)
             local b1, b2, b3, b4 = data:byte(pos, pos + 3);
             text_len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
             pos = pos + 4;
+        end
+        if text_len < 0 or (pos + text_len - 1) > #data then
+            module:log("warn", "FunXMPP: invalid text length %d, aborting text read", text_len);
+            return;
         end
         local text = data:sub(pos, pos + text_len - 1);
         pos = pos + text_len;
@@ -482,21 +563,30 @@ local function funxmpp_bytes_in(data, session)
     if not session.funxmpp_enabled then
         return data;
     end
-    session.funxmpp_in_buf = (session.funxmpp_in_buf or "") .. data;
-    while #session.funxmpp_in_buf >= 2 do
-        local len = session.funxmpp_in_buf:byte(1) * 256 + session.funxmpp_in_buf:byte(2);
+    local buf = session.funxmpp_in_buf;
+    if buf and buf ~= "" then
+        buf = buf .. data;
+    else
+        buf = data;
+    end
+
+    local pos = 1;
+    local total_len = #buf;
+    while total_len - pos + 1 >= 2 do
+        local b1, b2 = buf:byte(pos, pos + 1);
+        local len = b1 * 256 + b2;
         local header_size = 2;
         if len == 0xFFFF then
-            if #session.funxmpp_in_buf < 6 then break end
-            local b1, b2, b3, b4 = session.funxmpp_in_buf:byte(3, 6);
-            len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
+            if total_len - pos + 1 < 6 then break end
+            local b3, b4, b5, b6 = buf:byte(pos + 2, pos + 5);
+            len = b3 * 16777216 + b4 * 65536 + b5 * 256 + b6;
             header_size = 6;
         end
 
         if len > MAX_FRAME_SIZE then
             module:log("warn", "FunXMPP frame size limit exceeded (%d > %d) from %s, terminating session",
                 len, MAX_FRAME_SIZE, session.full_jid or session.ip or "unknown");
-            session.funxmpp_in_buf = "";
+            session.funxmpp_in_buf = nil;
             session.funxmpp_enabled = false;
             session:close({
                 condition = "policy-violation",
@@ -505,18 +595,18 @@ local function funxmpp_bytes_in(data, session)
             return "";
         end
 
-        if #session.funxmpp_in_buf < header_size + len then
+        if total_len - pos + 1 < header_size + len then
             break;
         end
-        local frame = session.funxmpp_in_buf:sub(header_size + 1, header_size + len);
-        session.funxmpp_in_buf = session.funxmpp_in_buf:sub(header_size + len + 1);
+        local frame = buf:sub(pos + header_size, pos + header_size + len - 1);
+        pos = pos + header_size + len;
 
         if session.funxmpp_stats then
             session.funxmpp_stats.in_bytes = session.funxmpp_stats.in_bytes + header_size + len;
             session.funxmpp_stats.in_frames = session.funxmpp_stats.in_frames + 1;
         end
 
-        local stanza = decode_node(frame, 1, "jabber:client");
+        local stanza = decode_node(frame, 1, "jabber:client", session, 0);
         if stanza then
             -- Run through incoming stanza filters (mod_smacks counts stanzas here!)
             local filtered = stanza;
@@ -524,9 +614,17 @@ local function funxmpp_bytes_in(data, session)
                 filtered = session.filter("stanzas/in", stanza);
             end
             if filtered then
-                core_process_stanza(session, filtered);
+                (prosody.core_process_stanza or core_process_stanza)(session, filtered);
             end
         end
+    end
+
+    if pos > total_len then
+        session.funxmpp_in_buf = nil;
+    elseif pos > 1 then
+        session.funxmpp_in_buf = buf:sub(pos);
+    else
+        session.funxmpp_in_buf = buf;
     end
     return ""; -- Swallow binary bytes so Expat parser receives nothing
 end
@@ -558,6 +656,11 @@ local function funxmpp_stanzas_out(stanza, session)
     if not session.funxmpp_enabled then
         return stanza;
     end
+    if session.funxmpp_direct and type(stanza) == "string" and not session.funxmpp_last_out then
+        if stanza:sub(1, 5) == "<?xml" or stanza:sub(1, 14) == "<stream:stream" then
+            return nil;
+        end
+    end
     if type(stanza) == "table" and stanza.name then
         session.funxmpp_last_out = nil;
         local memoized_bin = nil;
@@ -565,7 +668,7 @@ local function funxmpp_stanzas_out(stanza, session)
             __index = stanza,
             __tostring = function()
                 if not memoized_bin then
-                    memoized_bin = encode_stanza(stanza) or "";
+                    memoized_bin = encode_stanza(stanza, nil, session) or "";
                     if memoized_bin ~= "" and session.funxmpp_stats then
                         session.funxmpp_stats.out_bytes = session.funxmpp_stats.out_bytes + #memoized_bin;
                         session.funxmpp_stats.out_frames = session.funxmpp_stats.out_frames + 1;
@@ -589,8 +692,8 @@ local function funxmpp_stanzas_out(stanza, session)
         local sm_ns = suffix:match("^%s*<r%s+xmlns=['\"](urn:xmpp:sm:[23])['\"]%s*/>%s*$");
         if sm_ns then
             local r_stanza = st.stanza("r", { xmlns = sm_ns });
-            local bin1 = encode_stanza(stashed);
-            local bin2 = encode_stanza(r_stanza);
+            local bin1 = encode_stanza(stashed, nil, session);
+            local bin2 = encode_stanza(r_stanza, nil, session);
             if bin1 and bin2 then
                 if session.funxmpp_stats then
                     session.funxmpp_stats.out_bytes = session.funxmpp_stats.out_bytes + #bin1 + #bin2;
@@ -608,13 +711,30 @@ local function funxmpp_stanzas_out(stanza, session)
     return stanza;
 end
 
+local function funxmpp_bytes_out(data, session)
+    if not session.funxmpp_direct then
+        return data;
+    end
+    if type(data) == "string" then
+        if data:sub(1, 5) == "<?xml" or data:sub(1, 14) == "<stream:stream" then
+            return "";
+        end
+    end
+    return data;
+end
+
 -- Hook: Stream features
--- NOTE: Advertises version="1" with negotiated dictionary checksum (dict attribute).
+-- NOTE: Advertises latest version and hash, plus min_compat for older clients.
 module:hook("stream-features", function(event)
     local origin, features = event.origin, event.features;
     if origin and not origin.funxmpp_enabled and (origin.type == "c2s" or origin.type == "c2s_unauthed") then
         if not features:get_child("funxmpp", FUN_NS) then
-            features:tag("funxmpp", { xmlns = FUN_NS, version = "1", dict = DICTIONARY_HASH }):up();
+            features:tag("funxmpp", {
+                xmlns = FUN_NS,
+                version = "2",
+                dict = LATEST_DICT_HASH,
+                min_compat = LTS_V1_HASH,
+            }):up();
         end
     end
 end);
@@ -631,20 +751,30 @@ local function handle_enable(origin, stanza)
     end
 
     local client_dict = stanza and stanza.attr and stanza.attr.dict;
-    if client_dict and client_dict ~= DICTIONARY_HASH then
-        module:log("warn", "FunXMPP dictionary mismatch for %s: client=%s, server=%s",
-            session.full_jid or session.ip or "unknown", client_dict, DICTIONARY_HASH);
-        session.send(st.stanza("failed", { xmlns = FUN_NS })
-            :tag("dictionary-mismatch"):up());
-        return true;
+    local selected_dict = nil;
+    local selected_hash = nil;
+
+    if client_dict and DICTIONARIES[client_dict] then
+        selected_dict = DICTIONARIES[client_dict];
+        selected_hash = client_dict;
+    elseif not client_dict then
+        selected_dict = DICTIONARIES[LATEST_DICT_HASH];
+        selected_hash = LATEST_DICT_HASH;
+    else
+        -- Unknown client dictionary: gracefully fall back to LTS v1 instead of failing
+        module:log("warn", "FunXMPP dictionary unknown for %s: client=%s, falling back to LTS v1 (%s)",
+            session.full_jid or session.ip or "unknown", client_dict, LTS_V1_HASH);
+        selected_dict = DICTIONARIES[LTS_V1_HASH];
+        selected_hash = LTS_V1_HASH;
     end
 
-    module:log("info", "Client requested FunXMPP binary protocol: %s (dict=%s)",
-        session.full_jid or session.ip or "unknown", client_dict or "unspecified");
+    session.funxmpp_dict = selected_dict;
+    module:log("info", "Client requested FunXMPP binary protocol: %s (dict=%s, version=%d)",
+        session.full_jid or session.ip or "unknown", selected_hash, selected_dict.version);
     session.funxmpp_stats = { in_bytes = 0, out_bytes = 0, in_frames = 0, out_frames = 0 };
 
-    -- Send XML acknowledgment first
-    session.send(st.stanza("enabled", { xmlns = FUN_NS, dict = DICTIONARY_HASH }));
+    -- Send XML acknowledgment first with negotiated dict hash
+    session.send(st.stanza("enabled", { xmlns = FUN_NS, dict = selected_hash }));
     session.funxmpp_enabled = true;
 
     -- Register symmetric stream filters without breaking mod_smacks queue
@@ -656,16 +786,192 @@ end
 
 module:hook_tag(FUN_NS, "enable", handle_enable);
 
+-- Direct PXMPP Helpers
+local function hex_to_bytes(hex)
+    return (hex:gsub("..", function(cc)
+        return string.char(tonumber(cc, 16))
+    end))
+end
+
+local function bytes_to_hex(b)
+    return (b:gsub(".", function(c)
+        return string.format("%02x", string.byte(c))
+    end))
+end
+
+local function handle_direct_pxmpp(session, data)
+    if not data or #data < 10 then
+        return;
+    end
+    local magic = data:sub(1, 4);
+    if magic ~= "PXMP" then
+        return;
+    end
+    local version = data:byte(5);
+    local flags = data:byte(6);
+    local client_dict_bytes = data:sub(7, 10);
+    local client_dict_hash = bytes_to_hex(client_dict_bytes);
+
+    local domain, next_pos = read_token_or_string(data, 11, TOKENS);
+    domain = domain or session.host or "snikket.penik.ru";
+
+    local selected_dict = DICTIONARIES[client_dict_hash] or DICTIONARIES[LTS_V1_HASH];
+    session.funxmpp_dict = selected_dict;
+    session.funxmpp_enabled = true;
+    session.funxmpp_direct = true;
+    session.funxmpp_stats = { in_bytes = 0, out_bytes = 0, in_frames = 0, out_frames = 0 };
+
+    module:log("info", "Direct PXMPP stream negotiated for %s (dict=%s, domain=%s)",
+        session.full_jid or session.ip or "unknown", selected_dict.hash, domain);
+
+    -- Send 10-byte Server Stream Header: "PXMP" .. \001\000 .. ActiveDictHash (4 bytes)
+    local server_header = "PXMP\001\000" .. hex_to_bytes(selected_dict.hash);
+    if session.conn and session.conn.write then
+        session.conn:write(server_header);
+    elseif session.send then
+        session.send(server_header);
+    end
+
+    -- In Direct PXMPP, intercept session.send to drop textual XML stream headers
+    local original_send = session.send;
+    if original_send then
+        session.funxmpp_original_send = original_send;
+        session.send = function(stanza)
+            if session.funxmpp_direct and type(stanza) == "string" then
+                if stanza:sub(1, 5) == "<?xml" or stanza:sub(1, 14) == "<stream:stream" then
+                    return true;
+                end
+            end
+            return original_send(stanza);
+        end
+    end
+
+    -- Register symmetric stream filters
+    filters.add_filter(session, "bytes/in", funxmpp_bytes_in, 100);
+    filters.add_filter(session, "bytes/out", funxmpp_bytes_out, -10000);
+    filters.add_filter(session, "stanzas/out", funxmpp_stanzas_stash_out, -999);
+    filters.add_filter(session, "stanzas/out", funxmpp_stanzas_out, -10000);
+
+    -- Trigger streamopened in Prosody session runner
+    if session.thread then
+        session.thread:run({
+            event = "streamopened",
+            attr = {
+                to = domain,
+                version = "1.0",
+                ["xmlns:stream"] = "http://etherx.jabber.org/streams",
+                xmlns = "jabber:client"
+            }
+        });
+    end
+
+    -- Process any remaining pipelined bytes (e.g. <resume/> or <auth/>)
+    if next_pos and next_pos <= #data then
+        local leftover = data:sub(next_pos);
+        if #leftover > 0 then
+            funxmpp_bytes_in(leftover, session);
+        end
+    end
+end
+
+local function setup_c2s_sniffing(session)
+    if session.funxmpp_sniff_installed then return end
+    session.funxmpp_sniff_installed = true;
+    module:log("debug", "Direct PXMPP: setup_c2s_sniffing installed for session %s", tostring(session.id or session));
+    local original_data = session.data;
+
+    session.data = function(data)
+        if not data then return end
+        module:log("debug", "Direct PXMPP: incoming chunk len=%d, 1st byte=0x%02x", #data, data:byte(1) or 0);
+
+        if session.funxmpp_direct or session.funxmpp_enabled then
+            if original_data then
+                return original_data(data);
+            end
+            return;
+        end
+
+        local conn = session.conn;
+        local alpn = conn and conn.selected_alpn and conn:selected_alpn();
+        local sniff = (session.funxmpp_sniff_buf or "") .. data;
+        session.funxmpp_sniff_buf = sniff;
+
+        if alpn == "pxmpp-1" or sniff:byte(1) == 0x50 then -- 'P' (potential PXMP)
+            if #sniff >= 4 and sniff:sub(1, 4) ~= "PXMP" and alpn ~= "pxmpp-1" then
+                session.funxmpp_sniff_buf = nil;
+                session.data = original_data;
+                if original_data then
+                    return original_data(sniff);
+                end
+                return;
+            end
+
+            if #sniff >= 10 then
+                if sniff:sub(1, 4) == "PXMP" then
+                    -- Verify if the domain token / literal string has also arrived completely
+                    local _, next_pos = read_token_or_string(sniff, 11, TOKENS);
+                    if next_pos then
+                        session.funxmpp_sniff_buf = nil;
+                        session.data = original_data;
+                        return handle_direct_pxmpp(session, sniff);
+                    else
+                        -- Need more bytes to finish reading domain
+                        return;
+                    end
+                else
+                    session.funxmpp_sniff_buf = nil;
+                    session.data = original_data;
+                    if original_data then
+                        return original_data(sniff);
+                    end
+                end
+            else
+                -- Waiting for at least 10 bytes of PXMP header
+                return;
+            end
+        elseif sniff:byte(1) == 0x3C then -- '<' (classical XML)
+            session.funxmpp_sniff_buf = nil;
+            session.data = original_data;
+            if original_data then
+                return original_data(sniff);
+            end
+        else
+            session.funxmpp_sniff_buf = nil;
+            session.data = original_data;
+            if original_data then
+                return original_data(sniff);
+            end
+        end
+    end
+end
+
+local hook_c2s = module.hook_global or function(self, name, fn, prio) return self:hook(name, fn, prio) end;
+
+hook_c2s(module, "c2s-connected", function(event)
+    if event.session then
+        setup_c2s_sniffing(event.session);
+    end
+end, 100);
+
 -- Hook: Stream Management hibernation / disconnect cleanup
 -- When a connection drops or hibernates, reset funxmpp stream state so that
 -- reconnected/resumed sessions do not attempt binary I/O on fresh un-negotiated sockets.
 local function handle_session_cleanup(event)
     local session = event.origin or event.session;
     if session and session.funxmpp_enabled then
+        if session.funxmpp_original_send then
+            session.send = session.funxmpp_original_send;
+            session.funxmpp_original_send = nil;
+        end
         session.funxmpp_enabled = false;
+        session.funxmpp_direct = false;
+        session.funxmpp_sniff_buf = nil;
+        session.funxmpp_sniff_installed = nil;
+        session.funxmpp_dict = nil;
         session.funxmpp_in_buf = nil;
         session.funxmpp_last_out = nil;
         pcall(filters.remove_filter, session, "bytes/in", funxmpp_bytes_in);
+        pcall(filters.remove_filter, session, "bytes/out", funxmpp_bytes_out);
         pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_stash_out);
         pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_out);
         module:log("info", "FunXMPP stream state reset on disconnect/hibernation for %s",
@@ -673,8 +979,27 @@ local function handle_session_cleanup(event)
     end
 end
 
-module:hook("c2s-closed", handle_session_cleanup, 100);
-module:hook("c2s-destroyed", handle_session_cleanup, 100);
+hook_c2s(module, "c2s-closed", handle_session_cleanup, 100);
+hook_c2s(module, "c2s-destroyed", handle_session_cleanup, 100);
 module:hook("smacks-hibernation-start", handle_session_cleanup, 100);
+
+-- Automatically re-open stream in Prosody runner for post-auth stream features upon SASL success
+hook_c2s(module, "authentication-success", function(event)
+    local session = event.session;
+    if session and session.funxmpp_direct then
+        module:log("info", "Direct PXMPP: auth successful, auto-restarting authenticated stream for %s", tostring(session.username or session.host));
+        if session.thread then
+            session.thread:run({
+                event = "streamopened",
+                attr = {
+                    to = session.host or "snikket.penik.ru",
+                    version = "1.0",
+                    ["xmlns:stream"] = "http://etherx.jabber.org/streams",
+                    xmlns = "jabber:client"
+                }
+            });
+        end
+    end
+end, -10);
 
 module:log("info", "mod_funxmpp initialized for high-performance mobile binary framing");

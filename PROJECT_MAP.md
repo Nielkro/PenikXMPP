@@ -2,8 +2,12 @@
 
 Map of core source files for the PenikXMPP project (Conversations XMPP fork, rebranded to Penik). Paths are relative to the project root; cache, logs, vendor code, auto-generated build artifacts, and the read-only UI donor `libs/Penik` are excluded (see note at the bottom).
 
-## App Entry & Build Configuration
+## App Entry, CI/CD & Build Configuration
 
+- `.github/workflows/` — Automated CI/CD pipeline:
+  - `ci-fast.yml` — Fast CI on feature/fix branches and PRs (Lua test suites, Rust `cargo check`, Android Kotlin & Java compilation).
+  - `dev-integration.yml` — Full integration suite on `dev` (Lua tests, Rust `cargo test` & `clippy`, Android unit tests, full APK build, debug artifact upload).
+  - `release-cd.yml` — Production release & deployment pipeline on `main`/`master` (test gate, APK artifact packaging, automated Snikket SSH deployment).
 - `android/build.gradle` — Main Gradle build: `namespace eu.siacs.conversations` / `applicationId ru.penik.xmpp` (`appName Penik`), Compose BOM + navigation/coil deps (Compose compiler plugin, `compose = true`), `minSdk 26`, flavors (`conversations`, `quicksy` x `free`, `playstore`), sourceSets, signing, R8, dataBinding.
 - `android/settings.gradle` — Gradle modules: `libs:annotation`, `libs:annotation-processor`; `rootProject.name`.
 - `android/gradle.properties` — AndroidX, non-transitive R class, heap, R8 flags.
@@ -34,7 +38,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/xmpp/OnKeyStatusUpdated.java` — Callback for OMEMO key status changes.
 - `android/src/main/java/eu/siacs/conversations/xmpp/OnAdvancedStreamFeaturesLoaded.java` — Callback after disco features are known.
 - `android/src/main/java/eu/siacs/conversations/xmpp/PreconditionNotMetException.java` — Stream precondition errors.
-- `android/src/main/java/eu/siacs/conversations/xmpp/fun/` — FunXMPP binary tokenized protocol: FunTokens (dictionary + domain tokens 143..146), FunWriter (TLV encoder with JID_BARE/JID_FULL tokenization), FunReader (safe TLV decoder).
+- `android/src/main/java/eu/siacs/conversations/xmpp/fun/` — FunXMPP binary tokenized protocol: FunTokens (multi-version dictionary: LTS v1 68a7596d + v2 3a145c7a with bot tokens), FunWriter (TLV encoder with negotiated dictionary and literal fallback), FunReader (safe TLV decoder with direct stream feature recognition). Direct PXMPP over TLS ALPN (`pxmpp-1`).
 
 ### Stanza Managers (`xmpp/manager/`)
 
@@ -200,6 +204,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 
 ### Resources (Penik rebrand targets)
 
+- `android/src/main/res/anim/` — Telegram-style smooth slide transitions (`penik_slide_in_right`, `penik_slide_out_left`, `penik_slide_in_left`, `penik_slide_out_right`).
 - `android/src/main/res/layout/` — ~70 screens: `activity_conversations`, `fragment_conversation`, `fragment_conversations_overview`, `activity_rtp_session`, `activity_edit_account`, `item_message_*`, `item_conversation`, `dialog_*`.
 - `android/src/main/res/values/themes.xml` — `Theme.Conversations3` (+ Dark, Splash, Dialog, FullScreen); rebrand target `Theme.Penik`.
 - `android/src/main/res/values/strings.xml` — `app_name` and all user strings.
@@ -275,8 +280,11 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `plan/stickers-rust-service-plan.md` — Implementation plan for Telegram-compatible stickers via standalone Rust microservice, XMPP stanza extensions, and Compose UI.
 - `plan/penik-bot-platform-plan.md` — Architectural blueprint and implementation plan for Telegram-style Bot API platform via XEP-0114 External Component on VPS 1, PXMPP binary transport, and Compose UI.
 - `plan/telegram-puppeting-bridge-plan.md` — Architecture plan and phased roadmap for Telegram MTProto puppeting bridge (`tg.snikket.penik.ru`) with selective chat sync.
+- `plan/penik-desktop-client-plan.md` — Architectural plan for modular desktop client in Qt 6 (C++/QML) and Rust core with PXMPP support, 1:1 Android UI, rich media, and stickers.
+- `plan/direct-pxmpp-architecture-plan.md` — Architecture plan for Direct PXMPP (implicit binary framing over TLS via ALPN `pxmpp-1`, 1-RTT resumption, SCRAM-SHA-256-PLUS) with 100% legacy client compatibility.
+- `plan/pxmpp-dictionary-evolution-plan.md` — Architectural plan for PXMPP token dictionary evolution via server multi-dictionary registry, append-only monotonic expansion, virtual session domains, and string literal fallback.
 - `landing/` — Static landing page: `index.html` (hero, features, protocol terminal demo, comparison, FAQ, download links), `logo_fixed.svg` / `logo_fixed.webp`; note `landing/penik.apk` stays untracked via the `*.apk` gitignore rule.
-- `server/Modules/` — Prosody/Snikket Lua plugins: `mod_funxmpp.lua` (FunXMPP binary tokenized protocol plugin: symmetric TLV parser, JID_BARE/JID_FULL tokenization, filter hooks), `test_mod_funxmpp.lua` (standalone Lua test suite), `mod_stickers_auth.lua` (Prosody HMAC-SHA256 Bearer token issuer for stickers service via IQ `penik:stickers:auth:0`), `test_mod_stickers_auth.lua`.
+- `server/Modules/` — Prosody/Snikket Lua plugins: `mod_funxmpp.lua` (FunXMPP binary tokenized protocol plugin: Direct PXMPP over TLS ALPN `pxmpp-1` and sniffing fallback, symmetric TLV parser, multi-dictionary registry v1/v2, min_compat feature advertisement, literal fallback for older clients, filter hooks), `test_mod_funxmpp.lua` (standalone Lua test suite with multi-version negotiation and Direct PXMPP tests), `mod_stickers_auth.lua` (Prosody HMAC-SHA256 Bearer token issuer for stickers service via IQ `penik:stickers:auth:0`), `test_mod_stickers_auth.lua`, `mod_penik_silent_muc.lua` (Prosody silent MUC supergroup plugin: suppresses join/leave/status presence broadcasts to room occupants, provides persistent members IQ query via `ru:penik:muc:members:1`), `test_mod_penik_silent_muc.lua`.
 - `server/MicroServices/` — Standalone backend microservices:
   - `server/MicroServices/penik-service-rs/` — High-performance Rust backend companion service (Axum 0.7, SQLite WAL, Tokio, Reqwest, GPL-3.0-only): Telegram Bot API sticker pack importer, WebM VP9 with alpha to Animated WebP converter via FFmpeg (`-c:v libvpx-vp9`), 128x128 thumbnail generator, pre-built `bundle.zip` packager, and secure phone directory with HMAC-SHA256 Bearer auth. Endpoints: `POST /api/v1/phone-directory` (register/update phone & SHA-256 hash), `POST /api/v1/phone-directory/lookup` ($k$-anonymity 3-hex-char prefix bucket lookup returning `{jid, phone_hash}` without plain numbers), and targeted `GET /api/v1/phone-directory/:jid` (strict single-JID plain phone fetch with mutual contact verification).
   - `server/MicroServices/penik-bot-gateway/` — High-performance Rust Telegram Bot API gateway (Axum 0.7, Tokio, SQLite WAL, roxmltree + quick-xml, GPL-3.0-only): connects to Prosody on VPS 1 via XEP-0114 External Component protocol managing `bot.penik.chat` / `bot.snikket.penik.ru`. Features: in-process BotFather FSM dialog engine (`botfather@...`), REST endpoints (`getMe`, `sendMessage`, `editMessageText` via XEP-0308, `setWebhook`, `getUpdates` with offset ack and Notify, `sendPhoto`, `sendDocument`), full-duplex WebSocket stream (`/bot:token/ws`) for real-time updates and bidirectional RPC/commands, SSRF & DNS-rebinding protection (`reqwest::dns::Resolve`), 50-error circuit breaker, and automatic presence/vCard responses. Includes `examples/demo_bot.py` showcasing inline keyboards, reply keyboards, one-time keyboards, and `answerCallbackQuery` alerts.

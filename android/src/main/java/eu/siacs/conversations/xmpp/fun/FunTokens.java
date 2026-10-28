@@ -107,7 +107,26 @@ public final class FunTokens {
         return TOKEN_LOOKUP.get(string);
     }
 
-    public static final String DICTIONARY_HASH = computeDictHash();
+    public static Integer getToken(final String string, final String negotiatedDict) {
+        final Integer token = getToken(string);
+        if (token == null) {
+            return null;
+        }
+        if (LTS_V1_HASH.equals(negotiatedDict) && token >= V1_TOKEN_COUNT) {
+            return null; // Force literal string fallback for tokens added in v2+
+        }
+        return token;
+    }
+
+    public static final String LTS_V1_HASH = "68a7596d";
+    public static final int V1_TOKEN_COUNT = 147;
+
+    public static final String V2_HASH = computeDictHash();
+    public static final String DICTIONARY_HASH = V2_HASH;
+
+    public static boolean isSupportedDict(final String dict) {
+        return LTS_V1_HASH.equals(dict) || V2_HASH.equals(dict);
+    }
 
     private static String computeDictHash() {
         int hash = 0x811c9dc5;
@@ -128,5 +147,76 @@ public final class FunTokens {
             return TOKENS[tokenId];
         }
         return null;
+    }
+
+    public static String getString(final int tokenId, final String negotiatedDict) {
+        if (LTS_V1_HASH.equals(negotiatedDict) && tokenId >= V1_TOKEN_COUNT) {
+            return null;
+        }
+        return getString(tokenId);
+    }
+
+    public static final byte[] MAGIC_DIRECT_PXMPP = new byte[] {0x50, 0x58, 0x4D, 0x50}; // "PXMP"
+    public static final byte DIRECT_PXMPP_VERSION = 0x01;
+    public static final byte FLAG_DIRECT_RESUME = 0x01;
+
+    public static byte[] hexToBytes(final String hex) {
+        if (hex == null || hex.length() != 8) {
+            return new byte[4];
+        }
+        final byte[] bytes = new byte[4];
+        for (int i = 0; i < 4; i++) {
+            bytes[i] = (byte) Integer.parseInt(hex.substring(i * 2, i * 2 + 2), 16);
+        }
+        return bytes;
+    }
+
+    public static String bytesToHex(final byte[] bytes) {
+        if (bytes == null) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (final byte b : bytes) {
+            sb.append(String.format(java.util.Locale.US, "%02x", b & 0xff));
+        }
+        return sb.toString();
+    }
+
+    public static byte[] createDirectStreamHeader(final String dictHash, final String domain, final boolean resume) throws java.io.IOException {
+        final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        out.write(MAGIC_DIRECT_PXMPP);
+        out.write(DIRECT_PXMPP_VERSION);
+        out.write(resume ? FLAG_DIRECT_RESUME : 0x00);
+        out.write(hexToBytes(dictHash != null ? dictHash : DICTIONARY_HASH));
+        final java.io.DataOutputStream data = new java.io.DataOutputStream(out);
+        FunWriter.writeTokenOrString(data, domain, dictHash);
+        data.flush();
+        return out.toByteArray();
+    }
+
+    public static String readServerStreamHeader(final java.io.InputStream in) throws java.io.IOException {
+        final byte[] magic = new byte[4];
+        int read = 0;
+        while (read < 4) {
+            final int r = in.read(magic, read, 4 - read);
+            if (r == -1) throw new java.io.EOFException("Premature EOF reading Direct PXMPP magic");
+            read += r;
+        }
+        if (!java.util.Arrays.equals(magic, MAGIC_DIRECT_PXMPP)) {
+            throw new java.io.IOException("Invalid Direct PXMPP magic from server: " + java.util.Arrays.toString(magic) + " (ASCII: '" + new String(magic, java.nio.charset.StandardCharsets.ISO_8859_1) + "')");
+        }
+        final int version = in.read();
+        if (version != (DIRECT_PXMPP_VERSION & 0xFF)) {
+            throw new java.io.IOException("Unsupported Direct PXMPP version: " + version);
+        }
+        final int flags = in.read();
+        final byte[] hashBytes = new byte[4];
+        read = 0;
+        while (read < 4) {
+            final int r = in.read(hashBytes, read, 4 - read);
+            if (r == -1) throw new java.io.EOFException("Premature EOF reading Direct PXMPP dict hash");
+            read += r;
+        }
+        return bytesToHex(hashBytes);
     }
 }
