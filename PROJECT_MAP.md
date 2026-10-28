@@ -200,6 +200,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 
 ### Resources (Penik rebrand targets)
 
+- `android/src/main/res/anim/` — Telegram-style smooth slide transitions (`penik_slide_in_right`, `penik_slide_out_left`, `penik_slide_in_left`, `penik_slide_out_right`).
 - `android/src/main/res/layout/` — ~70 screens: `activity_conversations`, `fragment_conversation`, `fragment_conversations_overview`, `activity_rtp_session`, `activity_edit_account`, `item_message_*`, `item_conversation`, `dialog_*`.
 - `android/src/main/res/values/themes.xml` — `Theme.Conversations3` (+ Dark, Splash, Dialog, FullScreen); rebrand target `Theme.Penik`.
 - `android/src/main/res/values/strings.xml` — `app_name` and all user strings.

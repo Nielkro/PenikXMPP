@@ -613,9 +613,57 @@ public abstract class XmppActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        enableHighRefreshRate();
         metrics = getResources().getDisplayMetrics();
         this.isCameraFeatureAvailable =
                 getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY);
+    }
+
+    private void enableHighRefreshRate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                final android.view.Window window = getWindow();
+                if (window == null) {
+                    return;
+                }
+                final android.view.Display display;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    display = getDisplay();
+                } else {
+                    display = getWindowManager().getDefaultDisplay();
+                }
+                if (display != null) {
+                    final android.view.Display.Mode[] modes = display.getSupportedModes();
+                    android.view.Display.Mode highestMode = null;
+                    float highestRate = 0f;
+                    for (final android.view.Display.Mode mode : modes) {
+                        if (mode.getRefreshRate() > highestRate) {
+                            highestRate = mode.getRefreshRate();
+                            highestMode = mode;
+                        }
+                    }
+                    if (highestMode != null && highestRate >= 80f) {
+                        final android.view.WindowManager.LayoutParams params = window.getAttributes();
+                        params.preferredDisplayModeId = highestMode.getModeId();
+                        params.preferredRefreshRate = highestRate;
+                        try {
+                            final java.lang.reflect.Field minRateField = params.getClass().getField("preferredMinDisplayRefreshRate");
+                            final java.lang.reflect.Field maxRateField = params.getClass().getField("preferredMaxDisplayRefreshRate");
+                            minRateField.setFloat(params, highestRate);
+                            maxRateField.setFloat(params, highestRate);
+                        } catch (Throwable ignored) {
+                        }
+                        window.setAttributes(params);
+                    }
+                }
+                try {
+                    final java.lang.reflect.Method method = window.getClass().getMethod("setFrameRateCategory", int.class);
+                    method.invoke(window, 1); // 1 = FRAME_RATE_CATEGORY_HIGH
+                } catch (Throwable ignored) {
+                }
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     protected boolean isCameraFeatureAvailable() {

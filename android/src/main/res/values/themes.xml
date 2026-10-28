@@ -114,6 +114,7 @@
         <item name="colorSurfaceContainerHigh">@color/penik_recv_message_bg</item>
         <item name="colorSurfaceContainerHighest">@color/penik_recv_message_bg</item>
         <item name="preferenceTheme">@style/MaterialPreferenceThemeOverlay</item>
+        <item name="android:windowAnimationStyle">@style/Animation.Penik.Activity</item>
     </style>
 
     <style name="Theme.Penik.Dark" parent="Theme.Material3.Dark.NoActionBar">
@@ -145,6 +146,14 @@
         <item name="colorSurfaceContainerHigh">@color/penik_recv_message_bg</item>
         <item name="colorSurfaceContainerHighest">@color/penik_recv_message_bg</item>
         <item name="preferenceTheme">@style/MaterialPreferenceThemeOverlay</item>
+        <item name="android:windowAnimationStyle">@style/Animation.Penik.Activity</item>
+    </style>
+
+    <style name="Animation.Penik.Activity" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/penik_slide_in_right</item>
+        <item name="android:activityOpenExitAnimation">@anim/penik_slide_out_left</item>
+        <item name="android:activityCloseEnterAnimation">@anim/penik_slide_in_left</item>
+        <item name="android:activityCloseExitAnimation">@anim/penik_slide_out_right</item>
     </style>
 
     <style name="Theme.Penik.FullScreen" parent="@style/Theme.Penik">

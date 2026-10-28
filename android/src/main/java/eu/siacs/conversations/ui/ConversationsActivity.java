@@ -436,6 +436,11 @@ public class ConversationsActivity extends QrCodeProcessingActivity
             } else {
                 conversationFragment = new ConversationFragment();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.setCustomAnimations(
+                        R.anim.penik_slide_in_right,
+                        R.anim.penik_slide_out_left,
+                        R.anim.penik_slide_in_left,
+                        R.anim.penik_slide_out_right);
                 fragmentTransaction.replace(R.id.main_fragment, conversationFragment);
                 fragmentTransaction.addToBackStack(null);
                 fragmentTransaction.commitAllowingStateLoss();
@@ -545,6 +550,11 @@ public class ConversationsActivity extends QrCodeProcessingActivity
             remove.remove(optional.get());
             remove.commitNow();
             final var transaction = fragmentManager.beginTransaction();
+            transaction.setCustomAnimations(
+                    R.anim.penik_slide_in_right,
+                    R.anim.penik_slide_out_left,
+                    R.anim.penik_slide_in_left,
+                    R.anim.penik_slide_out_right);
             transaction.replace(R.id.main_fragment, optional.get());
             transaction.addToBackStack(null);
             transaction.commitAllowingStateLoss();
