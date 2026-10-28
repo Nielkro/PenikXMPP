@@ -411,9 +411,9 @@ do
 
     c2s_connected_hook({ session = direct_session, conn = direct_session.conn });
 
-    -- Client sends Magic Header: "PXMP" (4B) + \x01 (version) + \x00 (flags) + dict_bytes (4B) + domain token 143 (snikket.penik.ru)
+    -- Client sends Magic Header: "PXMP" (4B) + \001 (version) + \000 (flags) + dict_bytes (4B) + domain token 143 (snikket.penik.ru)
     local hex_to_bytes = function(h) return (h:gsub("..", function(cc) return string.char(tonumber(cc, 16)) end)) end
-    local client_header = "PXMP\x01\x00" .. hex_to_bytes("3a145c7a") .. string.char(143);
+    local client_header = "PXMP\001\000" .. hex_to_bytes("3a145c7a") .. string.char(143);
 
     direct_session.data(client_header);
 
@@ -454,7 +454,7 @@ do
     c2s_connected_hook({ session = sniff_session, conn = sniff_session.conn });
 
     local hex_to_bytes = function(h) return (h:gsub("..", function(cc) return string.char(tonumber(cc, 16)) end)) end
-    local client_header = "PXMP\x01\x00" .. hex_to_bytes("68a7596d") .. string.char(143);
+    local client_header = "PXMP\001\000" .. hex_to_bytes("68a7596d") .. string.char(143);
 
     -- Simulate fragmented TCP arrival: send 2 bytes first, then rest
     sniff_session.data("PX");

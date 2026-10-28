@@ -160,9 +160,21 @@ local function compute_dict_hash(tokens)
         end
     end
 
+    -- 32-bit FNV prime multiplication safe from 53-bit IEEE-754 double precision loss in Lua 5.1/5.2
+    local function mul_fnv(h)
+        if h < 0 then h = (h % 4294967296); end
+        local h_lo = h % 65536;
+        local h_hi = math.floor(h / 65536);
+        local p_lo = 0x0193;
+        local p_hi = 0x0100;
+
+        local low = h_lo * p_lo;
+        local mid = h_lo * p_hi + h_hi * p_lo;
+        local high = (math.floor(low / 65536) + mid) % 65536;
+        return (high * 65536 + (low % 65536)) % 4294967296;
+    end
+
     local hash = 0x811c9dc5;
-    local FNV_PRIME = 0x01000193;
-    local MOD32 = 0x100000000;
 
     local i = 0;
     while tokens[i] ~= nil do
@@ -170,10 +182,10 @@ local function compute_dict_hash(tokens)
         for j = 1, #token do
             local b = token:byte(j);
             hash = bxor(hash, b);
-            hash = (hash * FNV_PRIME) % MOD32;
+            hash = mul_fnv(hash);
         end
         hash = bxor(hash, 10);
-        hash = (hash * FNV_PRIME) % MOD32;
+        hash = mul_fnv(hash);
         i = i + 1;
     end
     return string.format("%08x", hash);
@@ -812,8 +824,8 @@ local function handle_direct_pxmpp(session, data)
     module:log("info", "Direct PXMPP stream negotiated for %s (dict=%s, domain=%s)",
         session.full_jid or session.ip or "unknown", selected_dict.hash, domain);
 
-    -- Send 10-byte Server Stream Header: "PXMP\x01\x00" .. ActiveDictHash (4 bytes)
-    local server_header = "PXMP\x01\x00" .. hex_to_bytes(selected_dict.hash);
+    -- Send 10-byte Server Stream Header: "PXMP" .. \001\000 .. ActiveDictHash (4 bytes)
+    local server_header = "PXMP\001\000" .. hex_to_bytes(selected_dict.hash);
     if session.conn and session.conn.write then
         session.conn:write(server_header);
     elseif session.send then
