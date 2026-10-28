@@ -2,8 +2,12 @@
 
 Map of core source files for the PenikXMPP project (Conversations XMPP fork, rebranded to Penik). Paths are relative to the project root; cache, logs, vendor code, auto-generated build artifacts, and the read-only UI donor `libs/Penik` are excluded (see note at the bottom).
 
-## App Entry & Build Configuration
+## App Entry, CI/CD & Build Configuration
 
+- `.github/workflows/` — Automated CI/CD pipeline:
+  - `ci-fast.yml` — Fast CI on feature/fix branches and PRs (Lua test suites, Rust `cargo check`, Android Kotlin & Java compilation).
+  - `dev-integration.yml` — Full integration suite on `dev` (Lua tests, Rust `cargo test` & `clippy`, Android unit tests, full APK build, debug artifact upload).
+  - `release-cd.yml` — Production release & deployment pipeline on `main`/`master` (test gate, APK artifact packaging, automated Snikket SSH deployment).
 - `android/build.gradle` — Main Gradle build: `namespace eu.siacs.conversations` / `applicationId ru.penik.xmpp` (`appName Penik`), Compose BOM + navigation/coil deps (Compose compiler plugin, `compose = true`), `minSdk 26`, flavors (`conversations`, `quicksy` x `free`, `playstore`), sourceSets, signing, R8, dataBinding.
 - `android/settings.gradle` — Gradle modules: `libs:annotation`, `libs:annotation-processor`; `rootProject.name`.
 - `android/gradle.properties` — AndroidX, non-transitive R class, heap, R8 flags.
