@@ -641,10 +641,7 @@ fun PenikChatsTab(
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(
                         items = filtered,
-                        key = {
-                            val latest = it.latestMessage
-                            "${it.uuid}_${it.contact?.avatar}_${it.mucOptions?.avatar}_${it.isPinnedOnTop}_${it.unreadCount()}_${latest?.uuid}_${latest?.timeSent}_${latest?.body?.hashCode()}_${it.isMuted}_$rev"
-                        }
+                        key = { it.uuid }
                     ) { conversation ->
                         PenikConversationRow(
                                 conversation = conversation,
@@ -704,7 +701,7 @@ fun PenikChatsTab(
                 }
 
                 // 2. Self Chat ("Избранное")
-                item(key = "self_chat_$rev") {
+                item(key = "self_chat") {
                     PenikSelfRow(
                             selfChat = state.selfChat,
                             activity = activity,
@@ -731,10 +728,7 @@ fun PenikChatsTab(
                 } else {
                     items(
                         items = filtered,
-                        key = {
-                            val latest = it.latestMessage
-                            "${it.uuid}_${it.contact?.avatar}_${it.mucOptions?.avatar}_${it.isPinnedOnTop}_${it.unreadCount()}_${latest?.uuid}_${latest?.timeSent}_${latest?.body?.hashCode()}_${it.isMuted}_$rev"
-                        }
+                        key = { it.uuid }
                     ) { conversation ->
                         PenikConversationRow(
                                 conversation = conversation,
@@ -1214,7 +1208,7 @@ fun PenikConversationRow(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                             text = conversation.name.toString(),
-                            color = if (avatarBitmap != null) textPrimary else penikInitialsColor(conversation.name.toString()),
+                            color = textPrimary,
                             fontWeight = if (conversation.isRead) FontWeight.Medium else FontWeight.Bold,
                             fontSize = 16.sp,
                             maxLines = 1,
@@ -1317,31 +1311,54 @@ fun PenikConversationRow(
     }
 }
 
+fun hasCustomAvatar(conversation: Conversation): Boolean {
+    return if (conversation.mode == Conversation.MODE_SINGLE) {
+        val contact = conversation.contact
+        contact != null && (contact.avatar != null || contact.profilePhoto != null)
+    } else {
+        val muc = conversation.mucOptions
+        muc != null && (muc.avatar != null || (muc.isPrivateAndNonAnonymous && muc.usersPreviewWithFallback.size > 1))
+    }
+}
+
 @Composable
 fun penikAvatarBitmap(conversation: Conversation, activity: XmppActivity): Bitmap? {
+    if (!hasCustomAvatar(conversation)) {
+        return null
+    }
     val density = LocalDensity.current
     val avatarService = activity.avatarService()
     val contactAvatar = runCatching { conversation.contact?.avatar }.getOrNull()
+    val contactPhoto = runCatching { conversation.contact?.profilePhoto }.getOrNull()
     val mucAvatar = runCatching { conversation.mucOptions?.avatar }.getOrNull()
-    val avatarKey = remember(conversation.uuid, contactAvatar, mucAvatar) {
-        "${conversation.uuid}_${contactAvatar ?: mucAvatar ?: ""}"
+    val avatarKey = remember(conversation.uuid, contactAvatar, contactPhoto, mucAvatar) {
+        "${conversation.uuid}_${contactAvatar ?: contactPhoto ?: mucAvatar ?: ""}"
     }
-    var bitmap by remember(avatarKey) { mutableStateOf<Bitmap?>(null) }
+    val sizePx = with(density) { 48.dp.roundToPx() }
+    val cachedBitmap = remember(avatarKey) {
+        try {
+            avatarService?.get(conversation, sizePx, true)
+        } catch (e: Exception) {
+            null
+        }
+    }
+    var bitmap by remember(avatarKey) { mutableStateOf(cachedBitmap) }
     LaunchedEffect(avatarKey) {
         if (avatarService == null) {
             return@LaunchedEffect
         }
-        val sizePx = with(density) { 48.dp.roundToPx() }
-        bitmap =
-                withContext(Dispatchers.IO) {
-                    try {
-                        avatarService.get(conversation, sizePx, false)
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
+        val loaded = withContext(Dispatchers.IO) {
+            try {
+                avatarService.get(conversation, sizePx, false)
+            } catch (e: Exception) {
+                null
+            }
+        }
+        if (loaded != null) {
+            bitmap = loaded
+        }
     }
-    return bitmap
+    return bitmap ?: cachedBitmap
 }
 
 @Composable
@@ -1359,8 +1376,9 @@ fun PenikAvatarImage(
         )
     } else {
         val panelSecondary = colorResource(R.color.penik_panel_secondary)
-        val tint = if (name.isEmpty()) panelSecondary else penikInitialsColor(name)
-        val initial = name.firstOrNull()?.uppercase() ?: "?"
+        val cleanName = name.trim()
+        val tint = if (cleanName.isEmpty()) panelSecondary else penikInitialsColor(cleanName)
+        val initial = cleanName.firstOrNull()?.uppercase() ?: "?"
         val fontSize = (size.value * 0.42f).sp
         Box(
                 modifier = modifier.size(size).clip(CircleShape).background(tint),
