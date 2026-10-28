@@ -441,7 +441,10 @@ public class ConversationsActivity extends QrCodeProcessingActivity
                         R.anim.penik_slide_out_left,
                         R.anim.penik_slide_in_left,
                         R.anim.penik_slide_out_right);
-                fragmentTransaction.replace(R.id.main_fragment, conversationFragment);
+                if (mainFragment != null) {
+                    fragmentTransaction.hide(mainFragment);
+                }
+                fragmentTransaction.add(R.id.main_fragment, conversationFragment);
                 fragmentTransaction.addToBackStack(null);
                 fragmentTransaction.commitAllowingStateLoss();
             }
@@ -598,9 +601,10 @@ public class ConversationsActivity extends QrCodeProcessingActivity
 
     @Override
     public void onConversationsListItemUpdated() {
-        final var fragment = getSupportFragmentManager().findFragmentById(R.id.main_fragment);
-        if (fragment instanceof ConversationsOverviewFragment overviewFragment) {
-            overviewFragment.refresh();
+        for (final Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof ConversationsOverviewFragment overviewFragment) {
+                overviewFragment.refresh();
+            }
         }
     }
 

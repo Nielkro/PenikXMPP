@@ -5,6 +5,6 @@
     <translate
         android:fromXDelta="100%p"
         android:toXDelta="0"
-        android:duration="260"
+        android:duration="220"
         android:interpolator="@android:interpolator/fast_out_slow_in" />
 </set>
