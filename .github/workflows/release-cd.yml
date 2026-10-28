@@ -81,9 +81,9 @@ jobs:
       - name: Deploy to Server via SSH
         env:
           SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
-          SERVER_HOST: ${{ secrets.SNIKKET_HOST || 'snikket.penik.ru' }}
+          SERVER_HOST: ${{ secrets.SNIKKET_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
-        if: env.SSH_KEY != ''
+        if: env.SSH_KEY != '' && env.SERVER_HOST != ''
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/id_rsa
