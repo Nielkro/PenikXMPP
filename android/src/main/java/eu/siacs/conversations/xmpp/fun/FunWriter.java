@@ -60,9 +60,9 @@ public class FunWriter {
 
         // 2. Attributes
         final Map<String, String> attrs = new java.util.HashMap<>(element.getAttributes());
-        if (elemNs != null && !elemNs.equals(parentNamespace) && !eu.siacs.conversations.xml.Namespace.JABBER_CLIENT.equals(elemNs)) {
+        if (elemNs != null && !elemNs.equals(parentNamespace)) {
             attrs.put("xmlns", elemNs);
-        } else if (eu.siacs.conversations.xml.Namespace.JABBER_CLIENT.equals(elemNs) || (parentNamespace != null && parentNamespace.equals(elemNs))) {
+        } else {
             attrs.remove("xmlns");
         }
         final java.util.List<Map.Entry<String, String>> attrList = new java.util.ArrayList<>(attrs.entrySet());
@@ -78,6 +78,9 @@ public class FunWriter {
 
         // 3. Content: Children vs Text vs Mixed vs Empty
         final List<Element> children = element.getChildren();
+        if (children.size() > 65535) {
+            throw new IllegalArgumentException("FunXMPP element has more than 65535 children: " + element.getName());
+        }
         final String text = element.getContent();
         final boolean hasChildren = !children.isEmpty();
         final boolean hasText = text != null && !text.isEmpty();
@@ -157,7 +160,7 @@ public class FunWriter {
         }
 
         final int atPos = str.indexOf('@');
-        if (atPos > 0) {
+        if (atPos > 0 && str.indexOf('@', atPos + 1) == -1) {
             final int slashPos = str.indexOf('/', atPos + 1);
             final String user = str.substring(0, atPos);
             final String domain = slashPos == -1 ? str.substring(atPos + 1) : str.substring(atPos + 1, slashPos);

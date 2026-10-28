@@ -294,4 +294,63 @@ public class FunProtocolTest {
         final String activeDict = FunTokens.readServerStreamHeader(new ByteArrayInputStream(serverResponse));
         assertEquals("68a7596d", activeDict);
     }
+
+    @Test
+    public void testNestedJabberClientNamespacePreserved() throws Exception {
+        final Element forwarded = new Element("forwarded", "urn:xmpp:forward:0");
+        final Element message = forwarded.addChild("message", eu.siacs.conversations.xml.Namespace.JABBER_CLIENT);
+        message.setAttribute("to", "bob@snikket.penik.ru");
+        message.addChild("body").setContent("Forwarded text");
+
+        final byte[] encoded = FunWriter.encodeNode(forwarded);
+        assertNotNull(encoded);
+
+        final ByteArrayInputStream in = new ByteArrayInputStream(encoded);
+        final FunReader reader = new FunReader(in);
+        final Element decoded = reader.readElement();
+
+        assertNotNull(decoded);
+        assertEquals("forwarded", decoded.getName());
+        assertEquals("urn:xmpp:forward:0", decoded.getNamespace());
+
+        final Element childMessage = decoded.findChild("message");
+        assertNotNull(childMessage);
+        assertEquals("message", childMessage.getName());
+        assertEquals(eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, childMessage.getNamespace());
+    }
+
+    @Test(expected = java.io.IOException.class)
+    public void testFunReaderRejectsNegativeOrOutOfBoundsLength() throws Exception {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final DataOutputStream data = new DataOutputStream(out);
+        data.writeShort(10); // Frame length
+        // Token for tag
+        data.writeByte(FunTokens.getToken("message"));
+        data.writeByte(0); // 0 attrs
+        data.writeByte(FunTokens.CONTENT_TEXT);
+        data.writeShort(0xFFFF); // 32-bit length marker
+        data.writeInt(0x7FFFFFFF); // Out of bounds 2 GB length!
+        data.flush();
+
+        final FunReader reader = new FunReader(new ByteArrayInputStream(out.toByteArray()));
+        reader.readElement();
+    }
+
+    @Test
+    public void testMultipleAtSignsFallsBackToLiteral() throws Exception {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final DataOutputStream dataOut = new DataOutputStream(out);
+
+        final String text = "mailto:user@snikket.penik.ru?body=test@snikket.penik.ru";
+        FunWriter.writeTokenOrString(dataOut, text);
+        dataOut.flush();
+
+        final byte[] bytes = out.toByteArray();
+        // Since there is more than one '@', it must not be parsed as JID_BARE or JID_FULL
+        assertTrue(bytes[0] == FunTokens.LITERAL_STRING_8 || bytes[0] == FunTokens.LITERAL_STRING_16);
+
+        final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
+        final String decoded = FunReader.readTokenOrString(in);
+        assertEquals(text, decoded);
+    }
 }

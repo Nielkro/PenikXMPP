@@ -522,4 +522,28 @@ do
     assert_eq(processed_stanza.tags[1].attr.xmlns, "http://jabber.org/protocol/disco#info", "Child tag namespace is disco#info");
 end
 
+-- Test 15: Malformed frame with invalid child length does not cause infinite loop
+do
+    local session = {
+        type = "c2s",
+        full_jid = "test@snikket.penik.ru",
+        send_queue = {},
+        send = function(s) end
+    };
+    enable_handler(session, mock_stanza.stanza("enable", { xmlns = "penik:protocol:funxmpp", dict = "3a145c7a" }));
+
+    -- Craft node: tag 'message' (token 0), 0 attrs, CONTENT_CHILDREN, count 5, child_len 0
+    local malformed_node = string.char(
+        0, -- token 0 = "message"
+        0, -- 0 attrs
+        1, -- CONTENT_CHILDREN
+        0, 5, -- count = 5
+        0, 0  -- child_len = 0 (malformed)
+    );
+    local frame = string.char(0, #malformed_node) .. malformed_node;
+    local in_filter = filters_map["bytes/in"][1].fn;
+    -- Must finish cleanly without hang
+    in_filter(frame, session);
+end
+
 print("ALL MOD_FUNXMPP TESTS PASSED SUCCESSFULLY!");

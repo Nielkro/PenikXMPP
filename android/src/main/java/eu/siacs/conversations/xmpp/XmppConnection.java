@@ -715,7 +715,7 @@ public class XmppConnection implements Runnable {
                         + ")");
 
         this.tagWriter.setFunWriter(new FunWriter(sslSocket.getOutputStream(), activeDict));
-        this.tagReader.setFunReader(new FunReader(sslSocket.getInputStream()));
+        this.tagReader.setFunReader(new FunReader(sslSocket.getInputStream(), activeDict));
         this.features.encryptionEnabled = true;
         this.isDirectPxmpp = true;
 
@@ -2395,7 +2395,7 @@ public class XmppConnection implements Runnable {
                         + ")");
         try {
             this.tagWriter.setFunWriter(new eu.siacs.conversations.xmpp.fun.FunWriter(socket.getOutputStream(), activeDict));
-            this.tagReader.setFunReader(new eu.siacs.conversations.xmpp.fun.FunReader(socket.getInputStream()));
+            this.tagReader.setFunReader(new eu.siacs.conversations.xmpp.fun.FunReader(socket.getInputStream(), activeDict));
         } catch (IOException e) {
             Log.e(Config.LOGTAG, account.getJid().asBareJid() + ": failed to initialize FunXMPP streams", e);
         }

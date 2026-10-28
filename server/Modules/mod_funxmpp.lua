@@ -271,44 +271,49 @@ local function read_token_or_string(data, pos, tokens_tab)
         local s = data:sub(pos, pos + len - 1);
         return s, pos + len;
     elseif b == LITERAL_STRING_16 then
-        if pos + 1 > #data then return "", pos end
+        if pos + 1 > #data then return nil, pos end
         local hi = data:byte(pos);
         local lo = data:byte(pos + 1);
         local len = hi * 256 + lo;
         pos = pos + 2;
+        if pos + len - 1 > #data then return nil, pos end
         local s = data:sub(pos, pos + len - 1);
         return s, pos + len;
     elseif b == LITERAL_STRING_32 then
-        if pos + 3 > #data then return "", pos end
+        if pos + 3 > #data then return nil, pos end
         local b1, b2, b3, b4 = data:byte(pos, pos + 3);
         local len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
         pos = pos + 4;
+        if pos + len - 1 > #data then return nil, pos end
         local s = data:sub(pos, pos + len - 1);
         return s, pos + len;
     elseif b == JID_BARE then
         local user;
         user, pos = read_token_or_string(data, pos, tokens_tab);
-        if pos > #data then return (user or "") .. "@unknown", pos end
+        if not user or pos > #data then return nil, pos end
         local domain_token = data:byte(pos);
         pos = pos + 1;
-        local domain = tokens_tab[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
-        return (user or "") .. "@" .. domain, pos;
+        local domain = tokens_tab[domain_token];
+        if not domain then return nil, pos end
+        return user .. "@" .. domain, pos;
     elseif b == JID_FULL then
         local user;
         user, pos = read_token_or_string(data, pos, tokens_tab);
-        if pos > #data then return (user or "") .. "@unknown", pos end
+        if not user or pos > #data then return nil, pos end
         local domain_token = data:byte(pos);
         pos = pos + 1;
-        local domain = tokens_tab[domain_token] or ("unknown_0x" .. string.format("%x", domain_token));
+        local domain = tokens_tab[domain_token];
+        if not domain then return nil, pos end
         local resource;
         resource, pos = read_token_or_string(data, pos, tokens_tab);
-        return (user or "") .. "@" .. domain .. "/" .. (resource or ""), pos;
+        if not resource then return nil, pos end
+        return user .. "@" .. domain .. "/" .. resource, pos;
     else
         local token = tokens_tab[b];
         if token then
             return token, pos;
         else
-            return "unknown_0x" .. string.format("%x", b), pos;
+            return nil, pos;
         end
     end
 end
@@ -360,6 +365,10 @@ local function encode_stanza(stanza, parent_ns, session)
 
     local has_children = #child_tags > 0;
     local has_text = #text_parts > 0;
+    if #child_tags > 65535 then
+        module:log("error", "FunXMPP: stanza %s has %d children (> 65535), dropping", tostring(stanza.name), #child_tags);
+        return nil;
+    end
 
     if has_children and has_text then
         table.insert(body_buf, string.char(CONTENT_MIXED));
@@ -434,7 +443,12 @@ end
 local MAX_FRAME_SIZE = module:get_option_number("funxmpp_max_frame_size", 1024 * 1024); -- 1 MB limit (guards against expansion attacks)
 
 -- Decode FunXMPP binary node to Prosody Stanza
-local function decode_node(data, pos, parent_ns, session)
+local function decode_node(data, pos, parent_ns, session, depth)
+    depth = depth or 0;
+    if depth > 64 then
+        module:log("warn", "FunXMPP: max node depth exceeded (64), aborting decode");
+        return nil, pos;
+    end
     local tokens_tab = (session and session.funxmpp_dict and session.funxmpp_dict.tokens) or TOKENS;
     if pos > #data then return nil, pos end
 
@@ -449,9 +463,10 @@ local function decode_node(data, pos, parent_ns, session)
         local k, v;
         k, pos = read_token_or_string(data, pos, tokens_tab);
         v, pos = read_token_or_string(data, pos, tokens_tab);
-        if k and v then
-            attr[k] = v;
+        if not k or not v then
+            return nil, pos;
         end
+        attr[k] = v;
     end
 
     local ns = attr.xmlns or parent_ns or "jabber:client";
@@ -479,8 +494,12 @@ local function decode_node(data, pos, parent_ns, session)
                 child_len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
                 pos = pos + 4;
             end
+            if child_len <= 0 or (pos + child_len - 1) > #data then
+                module:log("warn", "FunXMPP: invalid child length %d at pos %d, aborting child read", child_len, pos);
+                break;
+            end
             local expected_end_pos = pos + child_len;
-            local child_stanza = decode_node(data, pos, ns, session);
+            local child_stanza = decode_node(data, pos, ns, session, depth + 1);
             if child_stanza then
                 if stanza.add_direct_child then
                     stanza:add_direct_child(child_stanza);
@@ -506,6 +525,10 @@ local function decode_node(data, pos, parent_ns, session)
             text_len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
             pos = pos + 4;
         end
+        if text_len < 0 or (pos + text_len - 1) > #data then
+            module:log("warn", "FunXMPP: invalid text length %d, aborting text read", text_len);
+            return;
+        end
         local text = data:sub(pos, pos + text_len - 1);
         pos = pos + text_len;
         stanza:text(text);
@@ -528,21 +551,30 @@ local function funxmpp_bytes_in(data, session)
     if not session.funxmpp_enabled then
         return data;
     end
-    session.funxmpp_in_buf = (session.funxmpp_in_buf or "") .. data;
-    while #session.funxmpp_in_buf >= 2 do
-        local len = session.funxmpp_in_buf:byte(1) * 256 + session.funxmpp_in_buf:byte(2);
+    local buf = session.funxmpp_in_buf;
+    if buf and buf ~= "" then
+        buf = buf .. data;
+    else
+        buf = data;
+    end
+
+    local pos = 1;
+    local total_len = #buf;
+    while total_len - pos + 1 >= 2 do
+        local b1, b2 = buf:byte(pos, pos + 1);
+        local len = b1 * 256 + b2;
         local header_size = 2;
         if len == 0xFFFF then
-            if #session.funxmpp_in_buf < 6 then break end
-            local b1, b2, b3, b4 = session.funxmpp_in_buf:byte(3, 6);
-            len = b1 * 16777216 + b2 * 65536 + b3 * 256 + b4;
+            if total_len - pos + 1 < 6 then break end
+            local b3, b4, b5, b6 = buf:byte(pos + 2, pos + 5);
+            len = b3 * 16777216 + b4 * 65536 + b5 * 256 + b6;
             header_size = 6;
         end
 
         if len > MAX_FRAME_SIZE then
             module:log("warn", "FunXMPP frame size limit exceeded (%d > %d) from %s, terminating session",
                 len, MAX_FRAME_SIZE, session.full_jid or session.ip or "unknown");
-            session.funxmpp_in_buf = "";
+            session.funxmpp_in_buf = nil;
             session.funxmpp_enabled = false;
             session:close({
                 condition = "policy-violation",
@@ -551,18 +583,18 @@ local function funxmpp_bytes_in(data, session)
             return "";
         end
 
-        if #session.funxmpp_in_buf < header_size + len then
+        if total_len - pos + 1 < header_size + len then
             break;
         end
-        local frame = session.funxmpp_in_buf:sub(header_size + 1, header_size + len);
-        session.funxmpp_in_buf = session.funxmpp_in_buf:sub(header_size + len + 1);
+        local frame = buf:sub(pos + header_size, pos + header_size + len - 1);
+        pos = pos + header_size + len;
 
         if session.funxmpp_stats then
             session.funxmpp_stats.in_bytes = session.funxmpp_stats.in_bytes + header_size + len;
             session.funxmpp_stats.in_frames = session.funxmpp_stats.in_frames + 1;
         end
 
-        local stanza = decode_node(frame, 1, "jabber:client", session);
+        local stanza = decode_node(frame, 1, "jabber:client", session, 0);
         if stanza then
             -- Run through incoming stanza filters (mod_smacks counts stanzas here!)
             local filtered = stanza;
@@ -573,6 +605,14 @@ local function funxmpp_bytes_in(data, session)
                 (prosody.core_process_stanza or core_process_stanza)(session, filtered);
             end
         end
+    end
+
+    if pos > total_len then
+        session.funxmpp_in_buf = nil;
+    elseif pos > 1 then
+        session.funxmpp_in_buf = buf:sub(pos);
+    else
+        session.funxmpp_in_buf = buf;
     end
     return ""; -- Swallow binary bytes so Expat parser receives nothing
 end
@@ -825,12 +865,12 @@ end
 local function setup_c2s_sniffing(session)
     if session.funxmpp_sniff_installed then return end
     session.funxmpp_sniff_installed = true;
-    module:log("info", "Direct PXMPP: setup_c2s_sniffing installed for session %s", tostring(session.id or session));
+    module:log("debug", "Direct PXMPP: setup_c2s_sniffing installed for session %s", tostring(session.id or session));
     local original_data = session.data;
 
     session.data = function(data)
         if not data then return end
-        module:log("info", "Direct PXMPP: incoming chunk len=%d, 1st byte=0x%02x, prefix=%s", #data, data:byte(1) or 0, data:sub(1, 4));
+        module:log("debug", "Direct PXMPP: incoming chunk len=%d, 1st byte=0x%02x", #data, data:byte(1) or 0);
 
         if session.funxmpp_direct or session.funxmpp_enabled then
             if original_data then
@@ -841,26 +881,31 @@ local function setup_c2s_sniffing(session)
 
         local conn = session.conn;
         local alpn = conn and conn.selected_alpn and conn:selected_alpn();
-        if alpn == "pxmpp-1" then
-            session.data = original_data;
-            return handle_direct_pxmpp(session, data);
-        end
-
         local sniff = (session.funxmpp_sniff_buf or "") .. data;
         session.funxmpp_sniff_buf = sniff;
 
-        if sniff:byte(1) == 0x3C then -- '<' (classical XML)
-            session.funxmpp_sniff_buf = nil;
-            session.data = original_data;
-            if original_data then
-                return original_data(sniff);
+        if alpn == "pxmpp-1" or sniff:byte(1) == 0x50 then -- 'P' (potential PXMP)
+            if #sniff >= 4 and sniff:sub(1, 4) ~= "PXMP" and alpn ~= "pxmpp-1" then
+                session.funxmpp_sniff_buf = nil;
+                session.data = original_data;
+                if original_data then
+                    return original_data(sniff);
+                end
+                return;
             end
-        elseif sniff:byte(1) == 0x50 then -- 'P' (potential PXMP)
-            if #sniff >= 4 then
+
+            if #sniff >= 10 then
                 if sniff:sub(1, 4) == "PXMP" then
-                    session.funxmpp_sniff_buf = nil;
-                    session.data = original_data;
-                    return handle_direct_pxmpp(session, sniff);
+                    -- Verify if the domain token / literal string has also arrived completely
+                    local _, next_pos = read_token_or_string(sniff, 11, TOKENS);
+                    if next_pos then
+                        session.funxmpp_sniff_buf = nil;
+                        session.data = original_data;
+                        return handle_direct_pxmpp(session, sniff);
+                    else
+                        -- Need more bytes to finish reading domain
+                        return;
+                    end
                 else
                     session.funxmpp_sniff_buf = nil;
                     session.data = original_data;
@@ -869,8 +914,14 @@ local function setup_c2s_sniffing(session)
                     end
                 end
             else
-                -- Wait for more bytes to verify PXMP
+                -- Waiting for at least 10 bytes of PXMP header
                 return;
+            end
+        elseif sniff:byte(1) == 0x3C then -- '<' (classical XML)
+            session.funxmpp_sniff_buf = nil;
+            session.data = original_data;
+            if original_data then
+                return original_data(sniff);
             end
         else
             session.funxmpp_sniff_buf = nil;
