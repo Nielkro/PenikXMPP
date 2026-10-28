@@ -4,9 +4,21 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'plan/**'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
     branches:
       - dev
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'plan/**'
+      - '.gitignore'
+      - 'LICENSE'
 
 concurrency:
   group: dev-integration-${{ github.ref }}
@@ -23,7 +35,7 @@ jobs:
       - name: Install Lua
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua5.2
+          sudo apt-get install -y lua5.4
 
       - name: Run Lua test suites
         run: |

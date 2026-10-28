@@ -273,7 +273,6 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `.woodpecker.yml` — CI pipeline.
 - `.gitmodules` — `libs/Penik` submodule (read-only UI donor, branch `feat/cloud-chats`).
 - `scripts/install_phone.sh` — Automated build and installation of Penik debug APK (free or playstore/FCM) to connected Android devices via ADB.
-- `scripts/deploy_server.sh` — Deployment script for Prosody Lua modules (`mod_funxmpp`, `mod_stickers_auth`) and Rust microservice to remote Snikket/Prosody servers.
 - `plan/penik-xmpp-ui-port-plan.md` — Plan to port Penik UI and rebrand to `ru.penik.xmpp`.
 - `plan/xmpp-stanza-diet-plan.md` — Plan to cut XMPP stanza overhead (245 → 193 bytes): omit outbound `from` per RFC 6120, short 12-char ids, chat-state composing throttle (8s), MAM page 20, preserving Monal/Dino interoperability (markable/request receipts).
 - `plan/funxmpp-fixes-plan.md` — Plan for FunXMPP review follow-ups: P0 outgoing mod_smacks piggyback `<r/>` string bypassing binary framing, P1 `CONTENT_MIXED` child order (v2 sequence, breaking), P2 buffer/length/counter polish, plus items verified as-is (incoming SM routing, JID `@` scan).

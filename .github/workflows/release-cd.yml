@@ -5,6 +5,12 @@ on:
     branches:
       - main
       - master
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'plan/**'
+      - '.gitignore'
+      - 'LICENSE'
     tags:
       - 'v*'
   workflow_dispatch:
@@ -24,7 +30,7 @@ jobs:
       - name: Install Lua
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua5.2
+          sudo apt-get install -y lua5.4
 
       - name: Run Lua tests
         run: |
@@ -90,6 +96,12 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-          export SNIKKET_HOST="$SERVER_HOST"
-          export SERVER_USER="$SERVER_USER"
-          bash scripts/deploy_server.sh snikket
+          echo "[*] Creating remote modules directory..."
+          ssh "$SERVER_USER@$SERVER_HOST" "mkdir -p /etc/snikket/modules"
+
+          echo "[*] Uploading Lua modules..."
+          scp server/Modules/mod_funxmpp.lua server/Modules/mod_stickers_auth.lua server/Modules/mod_penik_silent_muc.lua "$SERVER_USER@$SERVER_HOST:/etc/snikket/modules/"
+
+          echo "[*] Reloading Prosody container..."
+          ssh "$SERVER_USER@$SERVER_HOST" "cd /etc/snikket && (docker compose restart snikket || docker restart snikket || true)"
+          echo "[+] Deployment to Snikket completed successfully!"

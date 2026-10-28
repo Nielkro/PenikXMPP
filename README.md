@@ -162,8 +162,7 @@ The resulting APKs are generated under `android/build/outputs/apk/`.
 ├── docs/
 │   └── PXMPP/              # PXMPP binary protocol specifications (EN / RU)
 ├── scripts/
-│   ├── install_phone.sh    # Automated ADB build & install script
-│   └── deploy_server.sh    # Prosody & microservices deployment script
+│   └── install_phone.sh    # Automated ADB build & install script
 ├── server/
 │   ├── Modules/            # Prosody / Snikket Lua plugins
 │   │   ├── mod_funxmpp.lua      # Binary protocol plugin

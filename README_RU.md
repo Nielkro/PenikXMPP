@@ -163,8 +163,7 @@ bash ./gradlew testConversationsFreeDebugUnitTest
 ├── docs/
 │   └── PXMPP/              # Спецификации протокола PXMPP (RU / EN)
 ├── scripts/
-│   ├── install_phone.sh    # Скрипт сборки и быстрой установки через ADB
-│   └── deploy_server.sh    # Скрипт развертывания Prosody и микросервисов
+│   └── install_phone.sh    # Скрипт сборки и быстрой установки через ADB
 ├── server/
 │   ├── Modules/            # Плагины для Prosody / Snikket на Lua
 │   │   ├── mod_funxmpp.lua      # Плагин бинарного протокола
