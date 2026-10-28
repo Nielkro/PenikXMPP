@@ -421,11 +421,39 @@ public class ConferenceDetailsActivity extends XmppActivity
                             (v) -> MediaBrowserActivity.launch(this, mConversation));
                 }
                 updateView();
+                fetchDiscoInfo();
             } else {
                 showErrorState("Не удалось найти беседу в приложении (UUID: " + this.uuid + "). Это внутренняя ошибка приложения. Повторные попытки перезахода не помогут.");
             }
         } else {
             showErrorState("Идентификатор беседы не был передан при открытии экрана. Это внутренняя ошибка приложения.");
+        }
+    }
+
+    private void fetchDiscoInfo() {
+        if (this.mConversation == null) {
+            return;
+        }
+        final var account = this.mConversation.getAccount();
+        final var connection = account != null ? account.getXmppConnection() : null;
+        if (connection != null && account.getStatus() == eu.siacs.conversations.entities.Account.State.ONLINE) {
+            final var future =
+                    connection.getManager(eu.siacs.conversations.xmpp.manager.MultiUserChatManager.class)
+                            .fetchDiscoInfo(this.mConversation);
+            Futures.addCallback(
+                    future,
+                    new FutureCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            runOnUiThread(() -> updateView());
+                        }
+
+                        @Override
+                        public void onFailure(@NonNull Throwable t) {
+                            Log.d(Config.LOGTAG, "failed to fetch disco info for " + mConversation.getAddress(), t);
+                        }
+                    },
+                    ContextCompat.getMainExecutor(getApplication()));
         }
     }
 
@@ -530,8 +558,19 @@ public class ConferenceDetailsActivity extends XmppActivity
                 getResources().getQuantityString(R.plurals.view_users, userCount, userCount));
         if (isArchived) {
             this.binding.usersWrapper.setVisibility(View.VISIBLE);
-            this.binding.noUsersHints.setText("Чат находится в архиве");
+            if (userCount > 0) {
+                this.binding.noUsersHints.setText(
+                        "Чат в архиве • "
+                                + getResources()
+                                        .getQuantityString(
+                                                R.plurals.view_users, userCount, userCount));
+            } else {
+                this.binding.noUsersHints.setText("Чат находится в архиве");
+            }
             this.binding.noUsersHints.setVisibility(View.VISIBLE);
+            this.binding.invite.setVisibility(View.GONE);
+            this.binding.btnActionInvite.setVisibility(View.GONE);
+            this.binding.showUsers.setVisibility(View.GONE);
         } else {
             this.binding.usersWrapper.setVisibility(
                     userCount > 0 || canInvite ? View.VISIBLE : View.GONE);

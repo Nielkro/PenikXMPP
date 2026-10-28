@@ -597,10 +597,26 @@ public class MucOptions {
         }
     }
 
+    public Integer getOccupantsCount() {
+        final var roomInfo = getRoomInfoForm();
+        if (roomInfo == null) {
+            return null;
+        }
+        final Field field = roomInfo.getFieldByName("muc#roominfo_occupants");
+        if (field == null || Strings.isNullOrEmpty(field.getValue())) {
+            return null;
+        }
+        return Ints.tryParse(field.getValue());
+    }
+
     public int getUserCount() {
         synchronized (users) {
-            return users.size();
+            if (!users.isEmpty()) {
+                return users.size();
+            }
         }
+        final Integer occupants = getOccupantsCount();
+        return occupants != null ? occupants : 0;
     }
 
     private String getProposedNick() {
