@@ -14,6 +14,10 @@ public class Funxmpp extends StreamFeature {
         return this.getAttribute("dict");
     }
 
+    public String getMinCompat() {
+        return this.getAttribute("min_compat");
+    }
+
     public String getVersion() {
         return this.getAttribute("version");
     }

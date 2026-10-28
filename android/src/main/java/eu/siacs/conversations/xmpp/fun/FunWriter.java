@@ -14,15 +14,21 @@ import java.util.Map;
 public class FunWriter {
 
     private final OutputStream out;
+    private final String negotiatedDict;
 
     public FunWriter(final OutputStream out) {
+        this(out, FunTokens.DICTIONARY_HASH);
+    }
+
+    public FunWriter(final OutputStream out, final String negotiatedDict) {
         this.out = out;
+        this.negotiatedDict = negotiatedDict != null ? negotiatedDict : FunTokens.DICTIONARY_HASH;
     }
 
     public synchronized void writeElement(final Element element) throws IOException {
         final byte[] payload;
         try {
-            payload = encodeNode(element);
+            payload = encodeNode(element, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, negotiatedDict);
         } catch (IllegalArgumentException e) {
             Log.e(Config.LOGTAG, "FunXMPP: dropping malformed stanza: " + e.getMessage());
             return;
@@ -34,15 +40,19 @@ public class FunWriter {
     }
 
     public static byte[] encodeNode(final Element element) throws IOException {
-        return encodeNode(element, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT);
+        return encodeNode(element, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, FunTokens.DICTIONARY_HASH);
     }
 
     public static byte[] encodeNode(final Element element, final String parentNamespace) throws IOException {
+        return encodeNode(element, parentNamespace, FunTokens.DICTIONARY_HASH);
+    }
+
+    public static byte[] encodeNode(final Element element, final String parentNamespace, final String negotiatedDict) throws IOException {
         final ByteArrayOutputStream nodeBytes = new ByteArrayOutputStream();
         final DataOutputStream data = new DataOutputStream(nodeBytes);
 
         // 1. Tag name
-        writeTokenOrString(data, element.getName());
+        writeTokenOrString(data, element.getName(), negotiatedDict);
 
         // Current namespace resolution
         final String elemNs = element.getNamespace();
@@ -50,9 +60,9 @@ public class FunWriter {
 
         // 2. Attributes
         final Map<String, String> attrs = new java.util.HashMap<>(element.getAttributes());
-        if (elemNs != null && !elemNs.equals(parentNamespace) && !eu.siacs.conversations.xml.Namespace.JABBER_CLIENT.equals(elemNs)) {
+        if (elemNs != null && !elemNs.equals(parentNamespace)) {
             attrs.put("xmlns", elemNs);
-        } else if (eu.siacs.conversations.xml.Namespace.JABBER_CLIENT.equals(elemNs) || (parentNamespace != null && parentNamespace.equals(elemNs))) {
+        } else {
             attrs.remove("xmlns");
         }
         final java.util.List<Map.Entry<String, String>> attrList = new java.util.ArrayList<>(attrs.entrySet());
@@ -62,12 +72,15 @@ public class FunWriter {
         }
         data.writeByte(attrList.size());
         for (final Map.Entry<String, String> entry : attrList) {
-            writeTokenOrString(data, entry.getKey());
-            writeTokenOrString(data, entry.getValue());
+            writeTokenOrString(data, entry.getKey(), negotiatedDict);
+            writeTokenOrString(data, entry.getValue(), negotiatedDict);
         }
 
         // 3. Content: Children vs Text vs Mixed vs Empty
         final List<Element> children = element.getChildren();
+        if (children.size() > 65535) {
+            throw new IllegalArgumentException("FunXMPP element has more than 65535 children: " + element.getName());
+        }
         final String text = element.getContent();
         final boolean hasChildren = !children.isEmpty();
         final boolean hasText = text != null && !text.isEmpty();
@@ -84,14 +97,14 @@ public class FunWriter {
             data.write(utf8);
             data.writeShort(children.size());
             for (final Element child : children) {
-                final byte[] childBytes = encodeNode(child, currentNs);
+                final byte[] childBytes = encodeNode(child, currentNs, negotiatedDict);
                 data.write(childBytes);
             }
         } else if (hasChildren) {
             data.writeByte(FunTokens.CONTENT_CHILDREN);
             data.writeShort(children.size());
             for (final Element child : children) {
-                final byte[] childBytes = encodeNode(child, currentNs);
+                final byte[] childBytes = encodeNode(child, currentNs, negotiatedDict);
                 data.write(childBytes);
             }
         } else if (hasText) {
@@ -131,35 +144,39 @@ public class FunWriter {
     }
 
     public static void writeTokenOrString(final DataOutputStream data, final String str) throws IOException {
+        writeTokenOrString(data, str, FunTokens.DICTIONARY_HASH);
+    }
+
+    public static void writeTokenOrString(final DataOutputStream data, final String str, final String negotiatedDict) throws IOException {
         if (str == null) {
             data.writeByte(FunTokens.LITERAL_STRING_8);
             data.writeByte(0);
             return;
         }
-        final Integer token = FunTokens.getToken(str);
+        final Integer token = FunTokens.getToken(str, negotiatedDict);
         if (token != null && token >= 0 && token < 240) {
             data.writeByte(token);
             return;
         }
 
         final int atPos = str.indexOf('@');
-        if (atPos > 0) {
+        if (atPos > 0 && str.indexOf('@', atPos + 1) == -1) {
             final int slashPos = str.indexOf('/', atPos + 1);
             final String user = str.substring(0, atPos);
             final String domain = slashPos == -1 ? str.substring(atPos + 1) : str.substring(atPos + 1, slashPos);
-            final Integer domainToken = FunTokens.getToken(domain);
+            final Integer domainToken = FunTokens.getToken(domain, negotiatedDict);
             if (domainToken != null && domainToken >= 0 && domainToken < 240) {
                 if (slashPos == -1) {
                     data.writeByte(FunTokens.JID_BARE);
-                    writeTokenOrString(data, user);
+                    writeTokenOrString(data, user, negotiatedDict);
                     data.writeByte(domainToken);
                     return;
                 } else {
                     final String resource = str.substring(slashPos + 1);
                     data.writeByte(FunTokens.JID_FULL);
-                    writeTokenOrString(data, user);
+                    writeTokenOrString(data, user, negotiatedDict);
                     data.writeByte(domainToken);
-                    writeTokenOrString(data, resource);
+                    writeTokenOrString(data, resource, negotiatedDict);
                     return;
                 }
             }

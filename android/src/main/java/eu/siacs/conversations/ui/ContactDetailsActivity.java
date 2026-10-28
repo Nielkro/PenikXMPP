@@ -641,7 +641,7 @@ public class ContactDetailsActivity extends OmemoActivity
         binding.toolbar.setTitle("");
         binding.detailsContactName.setText(contact.getDisplayName());
         final boolean isBot = contact.isBot();
-        binding.badgeBot.setVisibility(isBot ? View.VISIBLE : View.GONE);
+        binding.badgeBot.setVisibility(View.GONE);
         if (isBot) {
             binding.btnActionCall.setVisibility(View.GONE);
             binding.btnActionVideo.setVisibility(View.GONE);

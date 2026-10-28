@@ -71,6 +71,7 @@ public class Resolver {
     public static final int XMPP_PORT_STARTTLS = 5222;
     private static final int XMPP_PORT_DIRECT_TLS = 5223;
 
+    private static final String DIRECT_PXMPP_SERVICE = "_pxmpps-client";
     private static final String DIRECT_TLS_SERVICE = "_xmpps-client";
     private static final String STARTTLS_SERVICE = "_xmpp-client";
 
@@ -108,10 +109,11 @@ public class Resolver {
             return ipResults;
         }
 
-        final var startTls = resolveSrvAsFuture(domain, false);
-        final var directTls = resolveSrvAsFuture(domain, true);
+        final var pxmppDirect = resolveSrvAsFuture(domain, DIRECT_PXMPP_SERVICE, true);
+        final var directTls = resolveSrvAsFuture(domain, DIRECT_TLS_SERVICE, true);
+        final var startTls = resolveSrvAsFuture(domain, STARTTLS_SERVICE, false);
 
-        final var combined = FutureMerger.successfulAsList(ImmutableList.of(startTls, directTls));
+        final var combined = FutureMerger.successfulAsList(ImmutableList.of(pxmppDirect, directTls, startTls));
 
         final var combinedWithFallback =
                 Futures.transformAsync(
@@ -157,10 +159,10 @@ public class Resolver {
     }
 
     private static ListenableFuture<List<Result>> resolveSrvAsFuture(
-            final String domain, final boolean directTls) {
+            final String domain, final String service, final boolean directTls) {
         final DnsName dnsName =
                 DnsName.from(
-                        (directTls ? DIRECT_TLS_SERVICE : STARTTLS_SERVICE) + "._tcp." + domain);
+                        service + "._tcp." + domain);
         final var resultFuture = resolveAsFuture(dnsName, SRV.class);
         return Futures.transformAsync(
                 resultFuture,

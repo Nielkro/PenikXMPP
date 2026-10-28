@@ -144,6 +144,16 @@ public class ConferenceDetailsActivity extends XmppActivity
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            this.uuid = savedInstanceState.getString("uuid");
+        }
+        if (this.uuid == null && getIntent() != null) {
+            if (getIntent().hasExtra("uuid")) {
+                this.uuid = getIntent().getStringExtra("uuid");
+            } else if (getIntent().getExtras() != null) {
+                this.uuid = getIntent().getExtras().getString("uuid");
+            }
+        }
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_muc_details);
         Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
         setSupportActionBar(binding.toolbar);
@@ -159,8 +169,11 @@ public class ConferenceDetailsActivity extends XmppActivity
         this.binding.rowNotifications.setOnClickListener(v -> toggleMute());
         this.binding.yourPhoto.setOnClickListener(
                 v -> {
+                    if (mConversation == null) {
+                        return;
+                    }
                     final MucOptions mucOptions = mConversation.getMucOptions();
-                    if (!mucOptions.hasVCards()) {
+                    if (mucOptions == null || !mucOptions.hasVCards()) {
                         Toast.makeText(
                                         this,
                                         R.string.host_does_not_support_group_chat_avatars,
@@ -168,7 +181,8 @@ public class ConferenceDetailsActivity extends XmppActivity
                                 .show();
                         return;
                     }
-                    if (!mucOptions.getSelf().ranks(Affiliation.OWNER)) {
+                    final User self = mucOptions.getSelf();
+                    if (self == null || !self.ranks(Affiliation.OWNER)) {
                         Toast.makeText(
                                         this,
                                         R.string.only_the_owner_can_change_group_chat_avatar,
@@ -204,6 +218,14 @@ public class ConferenceDetailsActivity extends XmppActivity
                     intent.putExtra("uuid", mConversation.getUuid());
                     startActivity(intent);
                 });
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull final Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (this.uuid != null) {
+            outState.putString("uuid", this.uuid);
+        }
     }
 
     @Override
@@ -280,8 +302,10 @@ public class ConferenceDetailsActivity extends XmppActivity
             menuItemSaveBookmark.setVisible(mConversation.getBookmark() == null);
         }
         if (menuItemDestroyRoom != null) {
+            final MucOptions mucOptions = mConversation.getMucOptions();
+            final User self = mucOptions != null ? mucOptions.getSelf() : null;
             menuItemDestroyRoom.setVisible(
-                    mConversation.getMucOptions().getSelf().ranks(Affiliation.OWNER));
+                    self != null && self.ranks(Affiliation.OWNER));
         }
         return true;
     }
@@ -362,18 +386,34 @@ public class ConferenceDetailsActivity extends XmppActivity
         dialog.show();
     }
 
+    private void showErrorState(final String message) {
+        runOnUiThread(() -> {
+            this.binding.contentScrollView.setVisibility(View.GONE);
+            this.binding.errorLayout.setVisibility(View.VISIBLE);
+            if (message != null) {
+                this.binding.errorText.setText(message);
+            }
+        });
+    }
+
     @Override
     protected void onBackendConnected() {
         if (mPendingConferenceInvite != null) {
             mPendingConferenceInvite.execute(this);
             mPendingConferenceInvite = null;
         }
-        if (getIntent().getAction().equals(ACTION_VIEW_MUC)) {
-            this.uuid = getIntent().getExtras().getString("uuid");
+        if (this.uuid == null && getIntent() != null) {
+            if (getIntent().hasExtra("uuid")) {
+                this.uuid = getIntent().getStringExtra("uuid");
+            } else if (getIntent().getExtras() != null) {
+                this.uuid = getIntent().getExtras().getString("uuid");
+            }
         }
-        if (uuid != null) {
-            this.mConversation = xmppConnectionService.findConversationByUuid(uuid);
+        if (this.uuid != null) {
+            this.mConversation = xmppConnectionService.findConversationByUuid(this.uuid);
             if (this.mConversation != null) {
+                this.binding.contentScrollView.setVisibility(View.VISIBLE);
+                this.binding.errorLayout.setVisibility(View.GONE);
                 if (Compatibility.hasStoragePermission(this)) {
                     final int limit = GridManager.getCurrentColumnCount(this.binding.media);
                     xmppConnectionService.getAttachments(this.mConversation, limit, this);
@@ -381,36 +421,69 @@ public class ConferenceDetailsActivity extends XmppActivity
                             (v) -> MediaBrowserActivity.launch(this, mConversation));
                 }
                 updateView();
+                fetchDiscoInfo();
+            } else {
+                showErrorState("Не удалось найти беседу в приложении (UUID: " + this.uuid + "). Это внутренняя ошибка приложения. Повторные попытки перезахода не помогут.");
             }
+        } else {
+            showErrorState("Идентификатор беседы не был передан при открытии экрана. Это внутренняя ошибка приложения.");
         }
     }
 
+    private void fetchDiscoInfo() {
+        if (this.mConversation == null) {
+            return;
+        }
+        final var account = this.mConversation.getAccount();
+        final var connection = account != null ? account.getXmppConnection() : null;
+        if (connection != null && account.getStatus() == eu.siacs.conversations.entities.Account.State.ONLINE) {
+            final var future =
+                    connection.getManager(eu.siacs.conversations.xmpp.manager.MultiUserChatManager.class)
+                            .fetchDiscoInfo(this.mConversation);
+            Futures.addCallback(
+                    future,
+                    new FutureCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            runOnUiThread(() -> updateView());
+                        }
 
+                        @Override
+                        public void onFailure(@NonNull Throwable t) {
+                            Log.d(Config.LOGTAG, "failed to fetch disco info for " + mConversation.getAddress(), t);
+                        }
+                    },
+                    ContextCompat.getMainExecutor(getApplication()));
+        }
+    }
 
     private void updateView() {
         invalidateOptionsMenu();
         if (mConversation == null) {
+            showErrorState("Беседа недоступна. Это внутренняя ошибка приложения.");
             return;
         }
         final MucOptions mucOptions = mConversation.getMucOptions();
-        final User self = mucOptions.getSelf();
-        if (self == null) {
-            return;
-        }
+        final User self = mucOptions != null ? mucOptions.getSelf() : null;
+
         setTitle("");
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("");
         }
         this.binding.toolbar.setTitle("");
 
-        this.binding.editMucNameButton.setVisibility(
-                (self.ranks(Affiliation.OWNER) || mucOptions.canChangeSubject())
-                        ? View.VISIBLE
-                        : View.GONE);
+        final boolean isArchived = mConversation.getStatus() == Conversation.STATUS_ARCHIVED;
+        final boolean canEdit =
+                !isArchived
+                        && self != null
+                        && (self.ranks(Affiliation.OWNER)
+                                || (mucOptions != null && mucOptions.canChangeSubject()));
+        this.binding.editMucNameButton.setVisibility(canEdit ? View.VISIBLE : View.GONE);
+
         AvatarWorkerTask.loadAvatar(
                 mConversation, binding.yourPhoto, R.dimen.avatar_on_details_screen_size);
-        String roomName = mucOptions.getName();
-        String subject = mucOptions.getSubject();
+        String roomName = mucOptions != null ? mucOptions.getName() : null;
+        String subject = mucOptions != null ? mucOptions.getSubject() : null;
         final boolean hasTitle;
         if (Bookmark.printableValue(roomName)) {
             this.binding.mucTitle.setText(roomName);
@@ -421,11 +494,12 @@ public class ConferenceDetailsActivity extends XmppActivity
             hasTitle = true;
             this.binding.mucTitle.setVisibility(View.VISIBLE);
         } else {
-            hasTitle = false;
-            this.binding.mucTitle.setVisibility(View.GONE);
+            this.binding.mucTitle.setText(mConversation.getName());
+            hasTitle = true;
+            this.binding.mucTitle.setVisibility(View.VISIBLE);
         }
 
-        final var userCount = mucOptions.getUserCount();
+        final var userCount = mucOptions != null ? mucOptions.getUserCount() : 0;
         if (userCount > 0) {
             this.binding.mucMembersCount.setText(
                     getResources().getQuantityString(R.plurals.view_users, userCount, userCount));
@@ -467,27 +541,48 @@ public class ConferenceDetailsActivity extends XmppActivity
             this.binding.notificationStatusText.setText("Включены");
         }
 
-        this.binding.users.post(
-                () -> {
-                    final var list =
-                            mucOptions.getUsersPreview(
-                                    GridManager.getCurrentColumnCount(binding.users));
-                    this.mUserPreviewAdapter.submitList(list);
-                });
-        this.binding.invite.setVisibility(mucOptions.canInvite() ? View.VISIBLE : View.GONE);
+        final boolean canInvite = !isArchived && mucOptions != null && mucOptions.canInvite();
+        if (mucOptions != null && userCount > 0) {
+            this.binding.users.post(
+                    () -> {
+                        final var list =
+                                mucOptions.getUsersPreview(
+                                        GridManager.getCurrentColumnCount(binding.users));
+                        this.mUserPreviewAdapter.submitList(list);
+                    });
+        }
+        this.binding.invite.setVisibility(canInvite ? View.VISIBLE : View.GONE);
+        this.binding.btnActionInvite.setVisibility(canInvite ? View.VISIBLE : View.GONE);
         this.binding.showUsers.setVisibility(userCount == 0 ? View.GONE : View.VISIBLE);
         this.binding.showUsers.setText(
                 getResources().getQuantityString(R.plurals.view_users, userCount, userCount));
-        this.binding.usersWrapper.setVisibility(
-                userCount > 0 || mucOptions.canInvite() ? View.VISIBLE : View.GONE);
-        if (userCount == 0) {
-            this.binding.noUsersHints.setText(
-                    mucOptions.isPrivateAndNonAnonymous()
-                            ? R.string.no_users_hint_group_chat
-                            : R.string.no_users_hint_channel);
+        if (isArchived) {
+            this.binding.usersWrapper.setVisibility(View.VISIBLE);
+            if (userCount > 0) {
+                this.binding.noUsersHints.setText(
+                        "Чат в архиве • "
+                                + getResources()
+                                        .getQuantityString(
+                                                R.plurals.view_users, userCount, userCount));
+            } else {
+                this.binding.noUsersHints.setText("Чат находится в архиве");
+            }
             this.binding.noUsersHints.setVisibility(View.VISIBLE);
+            this.binding.invite.setVisibility(View.GONE);
+            this.binding.btnActionInvite.setVisibility(View.GONE);
+            this.binding.showUsers.setVisibility(View.GONE);
         } else {
-            this.binding.noUsersHints.setVisibility(View.GONE);
+            this.binding.usersWrapper.setVisibility(
+                    userCount > 0 || canInvite ? View.VISIBLE : View.GONE);
+            if (userCount == 0) {
+                this.binding.noUsersHints.setText(
+                        (mucOptions != null && mucOptions.isPrivateAndNonAnonymous())
+                                ? R.string.no_users_hint_group_chat
+                                : R.string.no_users_hint_channel);
+                this.binding.noUsersHints.setVisibility(View.VISIBLE);
+            } else {
+                this.binding.noUsersHints.setVisibility(View.GONE);
+            }
         }
     }
 

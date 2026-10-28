@@ -69,7 +69,9 @@ import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xml.Tag;
 import eu.siacs.conversations.xml.TagWriter;
 import eu.siacs.conversations.xml.XmlReader;
+import eu.siacs.conversations.xmpp.fun.FunReader;
 import eu.siacs.conversations.xmpp.fun.FunTokens;
+import eu.siacs.conversations.xmpp.fun.FunWriter;
 import eu.siacs.conversations.xmpp.manager.AbstractManager;
 import eu.siacs.conversations.xmpp.manager.BlockingManager;
 import eu.siacs.conversations.xmpp.manager.CarbonsManager;
@@ -197,6 +199,7 @@ public class XmppConnection implements Runnable {
     private boolean postBindWaitForDisco = false;
     private boolean postBindNegotiatedCarbons = false;
     private boolean isFunXmppResuming = false;
+    private boolean isDirectPxmpp = false;
     private boolean offlineMessagesRetrieved = false;
     private im.conversations.android.xmpp.model.streams.Features streamFeatures;
     private im.conversations.android.xmpp.model.streams.Features boundStreamFeatures;
@@ -632,6 +635,29 @@ public class XmppConnection implements Runnable {
         this.tagWriter = new TagWriter();
         this.tagWriter.setOutputStream(socket.getOutputStream());
         this.tagReader.setInputStream(socket.getInputStream());
+
+        if (socket instanceof SSLSocket sslSocket) {
+            final String alpn = SSLSockets.getApplicationProtocol(sslSocket);
+            if ("pxmpp-1".equals(alpn)) {
+                Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": Direct PXMPP ALPN negotiated!");
+                try {
+                    return startDirectPxmpp(sslSocket);
+                } catch (Exception e) {
+                    Log.w(
+                            Config.LOGTAG,
+                            account.getJid().asBareJid()
+                                    + ": Direct PXMPP handshake failed ("
+                                    + e.getMessage()
+                                    + "), falling back to standard XML stream");
+                    this.isDirectPxmpp = false;
+                    this.tagWriter = new TagWriter();
+                    this.tagWriter.setOutputStream(socket.getOutputStream());
+                    this.tagReader = new XmlReader();
+                    this.tagReader.setInputStream(socket.getInputStream());
+                }
+            }
+        }
+
         this.tagWriter.beginDocument();
         final boolean quickStart;
         if (socket instanceof SSLSocket sslSocket) {
@@ -661,6 +687,39 @@ public class XmppConnection implements Runnable {
             this.quickStartInProgress = true;
         }
         return success;
+    }
+
+    private boolean startDirectPxmpp(final SSLSocket sslSocket) throws IOException, InterruptedException {
+        final boolean canResume = this.streamId != null;
+        final byte[] header = FunTokens.createDirectStreamHeader(FunTokens.DICTIONARY_HASH, account.getServer(), canResume);
+        final java.io.OutputStream out = sslSocket.getOutputStream();
+        out.write(header);
+
+        if (canResume) {
+            final String sId = this.streamId.id;
+            final Resume resume = new Resume(sId, stanzasReceived);
+            prepareForResume(sId);
+            this.isFunXmppResuming = true;
+            final byte[] resumeFrame = FunWriter.encodeNode(
+                    resume, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, FunTokens.LTS_V1_HASH);
+            out.write(resumeFrame);
+        }
+        out.flush();
+
+        final String activeDict = FunTokens.readServerStreamHeader(sslSocket.getInputStream());
+        Log.d(
+                Config.LOGTAG,
+                account.getJid().asBareJid()
+                        + ": Direct PXMPP stream active (dict="
+                        + activeDict
+                        + ")");
+
+        this.tagWriter.setFunWriter(new FunWriter(sslSocket.getOutputStream(), activeDict));
+        this.tagReader.setFunReader(new FunReader(sslSocket.getInputStream(), activeDict));
+        this.features.encryptionEnabled = true;
+        this.isDirectPxmpp = true;
+
+        return true;
     }
 
     private SSLSocketFactory getSSLSocketFactory()
@@ -1009,13 +1068,17 @@ public class XmppConnection implements Runnable {
         mXmppConnectionService.databaseBackend.updateAccount(account);
         this.quickStartInProgress = false;
         if (version == SaslMechanism.Version.SASL) {
-            tagReader.reset();
-            sendStartStream(false, true);
-            final Tag tag = tagReader.readTag();
-            if (tag instanceof Tag.Start startTag && startTag.is(Stream.class)) {
+            if (this.isDirectPxmpp) {
                 processStream();
             } else {
-                throw new StateChangingException(Account.State.STREAM_OPENING_ERROR);
+                tagReader.reset();
+                sendStartStream(false, true);
+                final Tag tag = tagReader.readTag();
+                if (tag instanceof Tag.Start startTag && startTag.is(Stream.class)) {
+                    processStream();
+                } else {
+                    throw new StateChangingException(Account.State.STREAM_OPENING_ERROR);
+                }
             }
         }
     }
@@ -1564,7 +1627,7 @@ public class XmppConnection implements Runnable {
             throw new StateChangingException(Account.State.TLS_ERROR_PROTOCOL);
         }
         SSLSockets.setHostname(sslSocket, IDN.toASCII(account.getServer()));
-        SSLSockets.setApplicationProtocol(sslSocket, "xmpp-client");
+        SSLSockets.setApplicationProtocols(sslSocket, new String[] {"pxmpp-1", "xmpp-client"});
         final XmppDomainVerifier xmppDomainVerifier = new XmppDomainVerifier();
         try {
             sslSocket.startHandshake();
@@ -2261,16 +2324,36 @@ public class XmppConnection implements Runnable {
     }
 
     private void sendFunXmppEnable() {
+        if (this.isDirectPxmpp) {
+            if (!this.isFunXmppResuming) {
+                sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
+            }
+            this.isFunXmppResuming = false;
+            return;
+        }
         final var features = this.streamFeatures != null ? this.streamFeatures : this.boundStreamFeatures;
         final String serverDict = features != null ? features.funxmppDict() : null;
-        if (serverDict != null && !serverDict.equals(FunTokens.DICTIONARY_HASH)) {
+        final String minCompat = features != null ? features.funxmppMinCompat() : null;
+
+        final String chosenDict;
+        if (serverDict == null || FunTokens.DICTIONARY_HASH.equals(serverDict)) {
+            chosenDict = FunTokens.DICTIONARY_HASH;
+        } else if (FunTokens.LTS_V1_HASH.equals(serverDict) || FunTokens.LTS_V1_HASH.equals(minCompat)) {
+            chosenDict = FunTokens.LTS_V1_HASH;
+        } else if (FunTokens.isSupportedDict(serverDict)) {
+            chosenDict = serverDict;
+        } else {
             Log.w(
                     Config.LOGTAG,
                     account.getJid().asBareJid()
                             + ": FunXMPP server dictionary hash mismatch (server="
                             + serverDict
-                            + ", client="
+                            + ", minCompat="
+                            + minCompat
+                            + ", client latest="
                             + FunTokens.DICTIONARY_HASH
+                            + ", client LTS="
+                            + FunTokens.LTS_V1_HASH
                             + "), falling back to standard XML");
             if (!this.isFunXmppResuming) {
                 sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
@@ -2282,22 +2365,20 @@ public class XmppConnection implements Runnable {
                 Config.LOGTAG,
                 account.getJid().asBareJid()
                         + ": requesting FunXMPP binary protocol (dict="
-                        + FunTokens.DICTIONARY_HASH
+                        + chosenDict
                         + ")");
-        final var enable = new im.conversations.android.xmpp.model.fun.Enable(FunTokens.DICTIONARY_HASH);
+        final var enable = new im.conversations.android.xmpp.model.fun.Enable(chosenDict);
         tagWriter.writeStanzaAsync(enable);
     }
 
     private void processFunEnabled(final im.conversations.android.xmpp.model.fun.Enabled enabled) {
         final String dict = enabled != null ? enabled.getDict() : null;
-        if (dict != null && !dict.equals(FunTokens.DICTIONARY_HASH)) {
+        if (dict != null && !FunTokens.isSupportedDict(dict)) {
             Log.w(
                     Config.LOGTAG,
                     account.getJid().asBareJid()
-                            + ": FunXMPP server enabled with mismatched dict ("
+                            + ": FunXMPP server enabled with unsupported dict ("
                             + dict
-                            + " vs "
-                            + FunTokens.DICTIONARY_HASH
                             + "), aborting FunXMPP and falling back to standard XML");
             if (!this.isFunXmppResuming) {
                 sendPostBindInitialization(this.postBindWaitForDisco, this.postBindNegotiatedCarbons);
@@ -2305,15 +2386,16 @@ public class XmppConnection implements Runnable {
             this.isFunXmppResuming = false;
             return;
         }
+        final String activeDict = dict != null ? dict : FunTokens.DICTIONARY_HASH;
         Log.d(
                 Config.LOGTAG,
                 account.getJid().asBareJid()
                         + ": FunXMPP binary protocol activated! (dict="
-                        + (dict != null ? dict : "unspecified")
+                        + activeDict
                         + ")");
         try {
-            this.tagWriter.setFunWriter(new eu.siacs.conversations.xmpp.fun.FunWriter(socket.getOutputStream()));
-            this.tagReader.setFunReader(new eu.siacs.conversations.xmpp.fun.FunReader(socket.getInputStream()));
+            this.tagWriter.setFunWriter(new eu.siacs.conversations.xmpp.fun.FunWriter(socket.getOutputStream(), activeDict));
+            this.tagReader.setFunReader(new eu.siacs.conversations.xmpp.fun.FunReader(socket.getInputStream(), activeDict));
         } catch (IOException e) {
             Log.e(Config.LOGTAG, account.getJid().asBareJid() + ": failed to initialize FunXMPP streams", e);
         }
@@ -2840,6 +2922,7 @@ public class XmppConnection implements Runnable {
     }
 
     private void forceCloseSocket() {
+        this.isDirectPxmpp = false;
         FileBackend.close(this.socket);
         FileBackend.close(this.tagReader);
     }
@@ -2900,6 +2983,7 @@ public class XmppConnection implements Runnable {
         this.pendingResumeId.clear();
         this.streamId = null;
         this.boundStreamFeatures = null;
+        this.isDirectPxmpp = false;
     }
 
     public <M extends AbstractManager> M getManager(final Class<M> clazz) {

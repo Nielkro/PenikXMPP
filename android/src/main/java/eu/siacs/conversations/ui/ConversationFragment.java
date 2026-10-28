@@ -319,7 +319,10 @@ public class ConversationFragment extends XmppFragment
                     if (up) {
                         binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_back_24dp);
                         binding.toolbar.setNavigationOnClickListener(
-                                v -> getParentFragmentManager().popBackStack());
+                                v -> {
+                                    hideSoftKeyboard(binding.textInput);
+                                    getParentFragmentManager().popBackStack();
+                                });
                     } else {
                         binding.toolbar.setNavigationIcon(null);
                         binding.toolbar.setNavigationOnClickListener(null);

@@ -219,6 +219,14 @@ public class ConversationsOverviewFragment extends XmppFragment {
         }
     }
 
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) {
+            refresh();
+        }
+    }
+
     public void onArchiveConversation(final Conversation c) {
         c.setStatus(Conversation.STATUS_ARCHIVED);
         requireXmppActivity().xmppConnectionService.archiveConversation(c);

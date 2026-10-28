@@ -2246,6 +2246,30 @@ public class XmppConnectionService extends Service {
     public Conversation findConversationByUuidReliable(final String uuid) {
         final var cached = findConversationByUuid(uuid);
         if (cached != null) {
+            if (cached.getStatus() == Conversation.STATUS_ARCHIVED) {
+                final var loadMessagesFromDb = restoreFromArchive(cached);
+                DATABASE_READER.execute(
+                        () ->
+                                postProcessConversation(
+                                        cached,
+                                        loadMessagesFromDb,
+                                        cached.getMode() == Conversational.MODE_MULTI,
+                                        null));
+                synchronized (this.conversations) {
+                    if (!this.conversations.contains(cached)) {
+                        this.conversations.add(cached);
+                    }
+                }
+                if (cached.getMode() == Conversational.MODE_MULTI) {
+                    final var account = cached.getAccount();
+                    if (account != null) {
+                        account.getXmppConnection()
+                                .getManager(BookmarkManager.class)
+                                .ensureBookmarkIsAutoJoin(cached);
+                    }
+                }
+                updateConversationUi();
+            }
             return cached;
         }
         final var existing = databaseBackend.findConversation(uuid);
@@ -2336,31 +2360,29 @@ public class XmppConnectionService extends Service {
     public void archiveConversation(
             Conversation conversation, final boolean maySynchronizeWithBookmarks) {
         final var account = conversation.getAccount();
-        final var connection = account.getXmppConnection();
+        final var connection = account != null ? account.getXmppConnection() : null;
         getNotificationService().clear(conversation);
         conversation.setStatus(Conversation.STATUS_ARCHIVED);
         conversation.setNextMessage(null);
         synchronized (this.conversations) {
-            connection.getManager(MessageArchiveManager.class).kill(conversation);
+            if (connection != null) {
+                connection.getManager(MessageArchiveManager.class).kill(conversation);
+            }
             if (conversation.getMode() == Conversation.MODE_MULTI) {
-                // TODO always clean up bookmarks no matter if we are currently connected
-                // TODO always delete reference to conversation in bookmark
-                if (conversation.getAccount().getStatus() == Account.State.ONLINE) {
-                    final Bookmark existing = conversation.getBookmark();
-                    if (maySynchronizeWithBookmarks && existing != null) {
-                        if (conversation.getMucOptions().getError() == MucOptions.Error.DESTROYED) {
+                // In Telegram-like archive, we stay in the MUC so the conversation remains intact.
+                // We only leave if the room was explicitly destroyed.
+                if (conversation.getMucOptions() != null
+                        && conversation.getMucOptions().getError() == MucOptions.Error.DESTROYED) {
+                    if (account != null && account.getStatus() == Account.State.ONLINE) {
+                        final Bookmark existing = conversation.getBookmark();
+                        if (maySynchronizeWithBookmarks && existing != null) {
                             deleteBookmark(account, existing);
-                        } else if (existing.isAutoJoin()) {
-                            final var bookmark =
-                                    ImmutableBookmark.builder()
-                                            .from(existing)
-                                            .isAutoJoin(false)
-                                            .build();
-                            createBookmark(bookmark.getAccount(), bookmark);
                         }
                     }
+                    if (connection != null) {
+                        connection.getManager(MultiUserChatManager.class).leave(conversation);
+                    }
                 }
-                connection.getManager(MultiUserChatManager.class).leave(conversation);
             } else {
                 if (conversation
                         .getContact()
@@ -3647,10 +3669,23 @@ public class XmppConnectionService extends Service {
         return null;
     }
 
-    public Conversation findConversationByUuid(String uuid) {
-        for (Conversation conversation : getConversations()) {
-            if (conversation.getUuid().equals(uuid)) {
-                return conversation;
+    public Conversation findConversationByUuid(final String uuid) {
+        if (uuid == null) {
+            return null;
+        }
+        synchronized (this.conversations) {
+            for (final Conversation conversation : this.conversations) {
+                if (conversation.getUuid().equals(uuid)) {
+                    return conversation;
+                }
+            }
+        }
+        final var existing = databaseBackend.findConversation(uuid);
+        if (existing != null) {
+            final var account = findAccountByUuid(existing.getAccountUuid());
+            if (account != null) {
+                existing.setAccount(account);
+                return existing;
             }
         }
         return null;

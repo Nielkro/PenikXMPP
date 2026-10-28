@@ -1,6 +1,7 @@
 package eu.siacs.conversations.xmpp.fun;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -123,7 +124,41 @@ public class FunProtocolTest {
 
     @Test
     public void testDictionaryHashDeterministic() {
-        assertEquals("68a7596d", FunTokens.DICTIONARY_HASH);
+        assertEquals("3a145c7a", FunTokens.DICTIONARY_HASH);
+        assertEquals("68a7596d", FunTokens.LTS_V1_HASH);
+        assertTrue(FunTokens.isSupportedDict("68a7596d"));
+        assertTrue(FunTokens.isSupportedDict("3a145c7a"));
+        assertFalse(FunTokens.isSupportedDict("unknown_hash"));
+    }
+
+    @Test
+    public void testDictionaryEvolutionFallbackForV1Client() throws Exception {
+        final Element message = new Element("message");
+        message.setAttribute("id", "bot-msg-1");
+        final Element markup = message.addChild("markup", "penik:bot:markup");
+        markup.addChild("row");
+
+        // 1. Encode with LTS v1 dictionary: markup and penik:bot:markup MUST fall back to string literals
+        final byte[] v1Bytes = FunWriter.encodeNode(message, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, FunTokens.LTS_V1_HASH);
+        final FunReader v1Reader = new FunReader(new ByteArrayInputStream(v1Bytes));
+        final Element v1Decoded = v1Reader.readElement();
+        assertNotNull(v1Decoded);
+        assertEquals("message", v1Decoded.getName());
+        assertEquals(1, v1Decoded.getChildren().size());
+        assertEquals("markup", v1Decoded.getChildren().get(0).getName());
+        assertEquals("penik:bot:markup", v1Decoded.getChildren().get(0).getNamespace());
+
+        // 2. Encode with v2 dictionary: tokens 148 ("markup") and 152 ("penik:bot:markup") are 1-byte tokens
+        final byte[] v2Bytes = FunWriter.encodeNode(message, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, FunTokens.V2_HASH);
+        final FunReader v2Reader = new FunReader(new ByteArrayInputStream(v2Bytes));
+        final Element v2Decoded = v2Reader.readElement();
+        assertNotNull(v2Decoded);
+        assertEquals("message", v2Decoded.getName());
+        assertEquals("markup", v2Decoded.getChildren().get(0).getName());
+
+        // Tokenized v2 MUST be strictly more compact than v1 with string literals
+        assertTrue("v2 tokenized payload (" + v2Bytes.length + ") must be smaller than v1 literal fallback (" + v1Bytes.length + ")",
+                v2Bytes.length < v1Bytes.length);
     }
 
     @Test
@@ -212,5 +247,110 @@ public class FunProtocolTest {
         valid.setAttribute("id", "pres-1");
         writer.writeElement(valid);
         assertTrue("Valid stanza must be written after dropped stanza", out.size() > 0);
+    }
+
+    @Test
+    public void testDirectPxmppStreamHeaderGenerationAndParsing() throws Exception {
+        final String clientHash = FunTokens.V2_HASH;
+        final byte[] clientHeader = FunTokens.createDirectStreamHeader(clientHash, "snikket.penik.ru", false);
+
+        assertNotNull(clientHeader);
+        assertTrue(clientHeader.length >= 10);
+        // Magic
+        assertEquals((byte) 'P', clientHeader[0]);
+        assertEquals((byte) 'X', clientHeader[1]);
+        assertEquals((byte) 'M', clientHeader[2]);
+        assertEquals((byte) 'P', clientHeader[3]);
+        // Version
+        assertEquals(1, clientHeader[4]);
+        // Flags (resume = false)
+        assertEquals(0, clientHeader[5]);
+        // Dict Hash
+        final byte[] expectedHashBytes = FunTokens.hexToBytes(clientHash);
+        for (int i = 0; i < 4; i++) {
+            assertEquals(expectedHashBytes[i], clientHeader[6 + i]);
+        }
+
+        // Simulate server response: "PXMP\x01\x00" + selected dict hash
+        final ByteArrayOutputStream serverHeaderOut = new ByteArrayOutputStream();
+        serverHeaderOut.write(FunTokens.MAGIC_DIRECT_PXMPP);
+        serverHeaderOut.write(FunTokens.DIRECT_PXMPP_VERSION);
+        serverHeaderOut.write(0); // flags
+        serverHeaderOut.write(expectedHashBytes);
+
+        final ByteArrayInputStream in = new ByteArrayInputStream(serverHeaderOut.toByteArray());
+        final String serverActiveDict = FunTokens.readServerStreamHeader(in);
+        assertEquals(clientHash, serverActiveDict);
+    }
+
+    @Test
+    public void testDirectPxmppHeaderWithResumeFlag() throws Exception {
+        final byte[] resumeHeader = FunTokens.createDirectStreamHeader(FunTokens.LTS_V1_HASH, "snikket.penik.ru", true);
+        assertEquals(FunTokens.FLAG_DIRECT_RESUME, resumeHeader[5]);
+
+        final byte[] serverResponse = new byte[] {
+            'P', 'X', 'M', 'P', 0x01, 0x00, 0x68, (byte) 0xa7, 0x59, 0x6d
+        };
+        final String activeDict = FunTokens.readServerStreamHeader(new ByteArrayInputStream(serverResponse));
+        assertEquals("68a7596d", activeDict);
+    }
+
+    @Test
+    public void testNestedJabberClientNamespacePreserved() throws Exception {
+        final Element forwarded = new Element("forwarded", "urn:xmpp:forward:0");
+        final Element message = forwarded.addChild("message", eu.siacs.conversations.xml.Namespace.JABBER_CLIENT);
+        message.setAttribute("to", "bob@snikket.penik.ru");
+        message.addChild("body").setContent("Forwarded text");
+
+        final byte[] encoded = FunWriter.encodeNode(forwarded);
+        assertNotNull(encoded);
+
+        final ByteArrayInputStream in = new ByteArrayInputStream(encoded);
+        final FunReader reader = new FunReader(in);
+        final Element decoded = reader.readElement();
+
+        assertNotNull(decoded);
+        assertEquals("forwarded", decoded.getName());
+        assertEquals("urn:xmpp:forward:0", decoded.getNamespace());
+
+        final Element childMessage = decoded.findChild("message");
+        assertNotNull(childMessage);
+        assertEquals("message", childMessage.getName());
+        assertEquals(eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, childMessage.getNamespace());
+    }
+
+    @Test(expected = java.io.IOException.class)
+    public void testFunReaderRejectsNegativeOrOutOfBoundsLength() throws Exception {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final DataOutputStream data = new DataOutputStream(out);
+        data.writeShort(10); // Frame length
+        // Token for tag
+        data.writeByte(FunTokens.getToken("message"));
+        data.writeByte(0); // 0 attrs
+        data.writeByte(FunTokens.CONTENT_TEXT);
+        data.writeShort(0xFFFF); // 32-bit length marker
+        data.writeInt(0x7FFFFFFF); // Out of bounds 2 GB length!
+        data.flush();
+
+        final FunReader reader = new FunReader(new ByteArrayInputStream(out.toByteArray()));
+        reader.readElement();
+    }
+
+    @Test
+    public void testMultipleAtSignsFallsBackToLiteral() throws Exception {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final DataOutputStream dataOut = new DataOutputStream(out);
+
+        final String text = "mailto:user@snikket.penik.ru?body=test@snikket.penik.ru";
+        FunWriter.writeTokenOrString(dataOut, text);
+        dataOut.flush();
+
+        final byte[] bytes = out.toByteArray();
+        // Since there is more than one '@', it must not be parsed as JID_BARE or JID_FULL
+        assertTrue(bytes[0] == FunTokens.LITERAL_STRING_8 || bytes[0] == FunTokens.LITERAL_STRING_16);
+
+        final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
+        final String decoded = FunReader.readTokenOrString(in);
+        assertEquals(text, decoded);
     }
 }

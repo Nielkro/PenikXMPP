@@ -51,3 +51,7 @@ for_ai.txt
 .directory
 fpush/
 scripts/deploy_server.sh
+
+# Desktop build artifacts
+desktop/target/
+desktop/build/
