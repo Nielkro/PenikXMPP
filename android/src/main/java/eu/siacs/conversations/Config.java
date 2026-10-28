@@ -63,7 +63,7 @@ public final class Config {
     // Notification settings
     public static final boolean HIDE_MESSAGE_TEXT_IN_NOTIFICATION = false;
     public static final boolean ALWAYS_NOTIFY_BY_DEFAULT = false;
-    public static final boolean SUPPRESS_ERROR_NOTIFICATION = false;
+    public static final boolean SUPPRESS_ERROR_NOTIFICATION = true;
 
     public static final int PING_MAX_INTERVAL = 300;
     public static final int IDLE_PING_INTERVAL = 600; // 540 is minimum according to docs;

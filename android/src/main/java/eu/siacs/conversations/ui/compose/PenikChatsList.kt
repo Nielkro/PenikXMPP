@@ -377,7 +377,19 @@ fun PenikMainScreen(
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (state.connectionState != PenikConnectionState.ONLINE) {
-                ConnectionBanner(state = state.connectionState)
+                ConnectionBanner(
+                        state = state.connectionState,
+                        onReconnect = {
+                            activity.xmppConnectionService?.let { service ->
+                                for (account in service.accounts) {
+                                    if (account.isEnabled) {
+                                        account.xmppConnection?.resetAttemptCount()
+                                        service.reconnectAccountInBackground(account)
+                                    }
+                                }
+                            }
+                        }
+                )
             }
             Box(modifier = Modifier.weight(1f)) {
                 when (tab) {
@@ -547,7 +559,10 @@ fun PenikMainScreen(
 }
 
 @Composable
-fun ConnectionBanner(state: PenikConnectionState) {
+fun ConnectionBanner(
+        state: PenikConnectionState,
+        onReconnect: () -> Unit = {}
+) {
     val warning = colorResource(R.color.penik_warning)
     val danger = colorResource(R.color.penik_danger)
     var dots by remember(state) { mutableStateOf(0) }
@@ -561,9 +576,17 @@ fun ConnectionBanner(state: PenikConnectionState) {
     }
     val isConnecting = state == PenikConnectionState.CONNECTING
     val color = if (isConnecting) warning else danger
-    val text = if (isConnecting) "Подключение" + ".".repeat(dots) else "Нет соединения"
+    val text = if (isConnecting) "Подключение" + ".".repeat(dots) else "Нет соединения • Нажмите для подключения"
     Box(
-            modifier = Modifier.fillMaxWidth().background(color.copy(alpha = 0.15f)).padding(vertical = 6.dp),
+            modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color.copy(alpha = 0.15f))
+                    .then(
+                            if (!isConnecting) {
+                                Modifier.clickable(onClick = onReconnect)
+                            } else Modifier
+                    )
+                    .padding(vertical = 6.dp),
             contentAlignment = Alignment.Center
     ) {
         Text(text = text, color = color, fontSize = 13.sp)
@@ -1198,22 +1221,6 @@ fun PenikConversationRow(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f, fill = false)
                     )
-                    if (conversation.isBot) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Box(
-                                modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(accent.copy(alpha = 0.16f))
-                                        .padding(horizontal = 4.dp, vertical = 1.dp)
-                        ) {
-                            Text(
-                                    text = "BOT",
-                                    color = accent,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
                 }
                 if (preview != null && (preview.sender.isNotEmpty() || preview.text.isNotEmpty() || preview.iconRes != null)) {
                     Spacer(modifier = Modifier.height(2.dp))
