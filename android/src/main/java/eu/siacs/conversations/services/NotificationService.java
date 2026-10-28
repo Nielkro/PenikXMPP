@@ -399,7 +399,7 @@ public class NotificationService {
     private boolean notifyMessage(final Message message) {
         final var appSettings = new AppSettings(mXmppConnectionService.getApplicationContext());
         final Conversation conversation = (Conversation) message.getConversation();
-        if (conversation.isSelf()) {
+        if (conversation.isSelf() || conversation.getStatus() == Conversation.STATUS_ARCHIVED) {
             return false;
         }
         return message.getStatus() == Message.STATUS_RECEIVED
@@ -411,7 +411,7 @@ public class NotificationService {
 
     private boolean notifyMissedCall(final Message message) {
         final Conversation conversation = (Conversation) message.getConversation();
-        if (conversation.isSelf()) {
+        if (conversation.isSelf() || conversation.getStatus() == Conversation.STATUS_ARCHIVED) {
             return false;
         }
         return message.getType() == Message.TYPE_RTP_SESSION

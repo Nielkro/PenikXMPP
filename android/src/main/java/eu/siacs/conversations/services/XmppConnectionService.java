@@ -2360,31 +2360,29 @@ public class XmppConnectionService extends Service {
     public void archiveConversation(
             Conversation conversation, final boolean maySynchronizeWithBookmarks) {
         final var account = conversation.getAccount();
-        final var connection = account.getXmppConnection();
+        final var connection = account != null ? account.getXmppConnection() : null;
         getNotificationService().clear(conversation);
         conversation.setStatus(Conversation.STATUS_ARCHIVED);
         conversation.setNextMessage(null);
         synchronized (this.conversations) {
-            connection.getManager(MessageArchiveManager.class).kill(conversation);
+            if (connection != null) {
+                connection.getManager(MessageArchiveManager.class).kill(conversation);
+            }
             if (conversation.getMode() == Conversation.MODE_MULTI) {
-                // TODO always clean up bookmarks no matter if we are currently connected
-                // TODO always delete reference to conversation in bookmark
-                if (conversation.getAccount().getStatus() == Account.State.ONLINE) {
-                    final Bookmark existing = conversation.getBookmark();
-                    if (maySynchronizeWithBookmarks && existing != null) {
-                        if (conversation.getMucOptions().getError() == MucOptions.Error.DESTROYED) {
+                // In Telegram-like archive, we stay in the MUC so the conversation remains intact.
+                // We only leave if the room was explicitly destroyed.
+                if (conversation.getMucOptions() != null
+                        && conversation.getMucOptions().getError() == MucOptions.Error.DESTROYED) {
+                    if (account != null && account.getStatus() == Account.State.ONLINE) {
+                        final Bookmark existing = conversation.getBookmark();
+                        if (maySynchronizeWithBookmarks && existing != null) {
                             deleteBookmark(account, existing);
-                        } else if (existing.isAutoJoin()) {
-                            final var bookmark =
-                                    ImmutableBookmark.builder()
-                                            .from(existing)
-                                            .isAutoJoin(false)
-                                            .build();
-                            createBookmark(bookmark.getAccount(), bookmark);
                         }
                     }
+                    if (connection != null) {
+                        connection.getManager(MultiUserChatManager.class).leave(conversation);
+                    }
                 }
-                connection.getManager(MultiUserChatManager.class).leave(conversation);
             } else {
                 if (conversation
                         .getContact()
