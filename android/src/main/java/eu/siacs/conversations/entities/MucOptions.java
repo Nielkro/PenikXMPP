@@ -266,9 +266,12 @@ public class MucOptions {
     }
 
     public boolean canInvite() {
+        if (!online() || self == null) {
+            return false;
+        }
         final boolean hasPermission =
                 !membersOnly() || self.ranks(Role.MODERATOR) || allowInvites();
-        return hasPermission && online();
+        return hasPermission;
     }
 
     public boolean allowInvites() {
@@ -281,7 +284,7 @@ public class MucOptions {
     }
 
     public boolean canChangeSubject() {
-        return self.ranks(Role.MODERATOR) || participantsCanChangeSubject();
+        return (self != null && self.ranks(Role.MODERATOR)) || participantsCanChangeSubject();
     }
 
     public boolean participantsCanChangeSubject() {

@@ -85,6 +85,8 @@
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:padding="4dp"
                             android:src="@drawable/ic_edit_24dp"
+                            android:visibility="gone"
+                            tools:visibility="visible"
                             app:tint="@color/penik_text_muted" />
                     </LinearLayout>
 

@@ -159,8 +159,11 @@ public class ConferenceDetailsActivity extends XmppActivity
         this.binding.rowNotifications.setOnClickListener(v -> toggleMute());
         this.binding.yourPhoto.setOnClickListener(
                 v -> {
+                    if (mConversation == null) {
+                        return;
+                    }
                     final MucOptions mucOptions = mConversation.getMucOptions();
-                    if (!mucOptions.hasVCards()) {
+                    if (mucOptions == null || !mucOptions.hasVCards()) {
                         Toast.makeText(
                                         this,
                                         R.string.host_does_not_support_group_chat_avatars,
@@ -168,7 +171,8 @@ public class ConferenceDetailsActivity extends XmppActivity
                                 .show();
                         return;
                     }
-                    if (!mucOptions.getSelf().ranks(Affiliation.OWNER)) {
+                    final User self = mucOptions.getSelf();
+                    if (self == null || !self.ranks(Affiliation.OWNER)) {
                         Toast.makeText(
                                         this,
                                         R.string.only_the_owner_can_change_group_chat_avatar,
@@ -280,8 +284,10 @@ public class ConferenceDetailsActivity extends XmppActivity
             menuItemSaveBookmark.setVisible(mConversation.getBookmark() == null);
         }
         if (menuItemDestroyRoom != null) {
+            final MucOptions mucOptions = mConversation.getMucOptions();
+            final User self = mucOptions != null ? mucOptions.getSelf() : null;
             menuItemDestroyRoom.setVisible(
-                    mConversation.getMucOptions().getSelf().ranks(Affiliation.OWNER));
+                    self != null && self.ranks(Affiliation.OWNER));
         }
         return true;
     }
@@ -393,24 +399,24 @@ public class ConferenceDetailsActivity extends XmppActivity
             return;
         }
         final MucOptions mucOptions = mConversation.getMucOptions();
-        final User self = mucOptions.getSelf();
-        if (self == null) {
-            return;
-        }
+        final User self = mucOptions != null ? mucOptions.getSelf() : null;
+
         setTitle("");
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("");
         }
         this.binding.toolbar.setTitle("");
 
-        this.binding.editMucNameButton.setVisibility(
-                (self.ranks(Affiliation.OWNER) || mucOptions.canChangeSubject())
-                        ? View.VISIBLE
-                        : View.GONE);
+        final boolean canEdit =
+                self != null
+                        && (self.ranks(Affiliation.OWNER)
+                                || (mucOptions != null && mucOptions.canChangeSubject()));
+        this.binding.editMucNameButton.setVisibility(canEdit ? View.VISIBLE : View.GONE);
+
         AvatarWorkerTask.loadAvatar(
                 mConversation, binding.yourPhoto, R.dimen.avatar_on_details_screen_size);
-        String roomName = mucOptions.getName();
-        String subject = mucOptions.getSubject();
+        String roomName = mucOptions != null ? mucOptions.getName() : null;
+        String subject = mucOptions != null ? mucOptions.getSubject() : null;
         final boolean hasTitle;
         if (Bookmark.printableValue(roomName)) {
             this.binding.mucTitle.setText(roomName);
@@ -421,11 +427,12 @@ public class ConferenceDetailsActivity extends XmppActivity
             hasTitle = true;
             this.binding.mucTitle.setVisibility(View.VISIBLE);
         } else {
-            hasTitle = false;
-            this.binding.mucTitle.setVisibility(View.GONE);
+            this.binding.mucTitle.setText(mConversation.getName());
+            hasTitle = true;
+            this.binding.mucTitle.setVisibility(View.VISIBLE);
         }
 
-        final var userCount = mucOptions.getUserCount();
+        final var userCount = mucOptions != null ? mucOptions.getUserCount() : 0;
         if (userCount > 0) {
             this.binding.mucMembersCount.setText(
                     getResources().getQuantityString(R.plurals.view_users, userCount, userCount));
@@ -467,24 +474,31 @@ public class ConferenceDetailsActivity extends XmppActivity
             this.binding.notificationStatusText.setText("Включены");
         }
 
-        this.binding.users.post(
-                () -> {
-                    final var list =
-                            mucOptions.getUsersPreview(
-                                    GridManager.getCurrentColumnCount(binding.users));
-                    this.mUserPreviewAdapter.submitList(list);
-                });
-        this.binding.invite.setVisibility(mucOptions.canInvite() ? View.VISIBLE : View.GONE);
+        final boolean canInvite = mucOptions != null && mucOptions.canInvite();
+        if (mucOptions != null && userCount > 0) {
+            this.binding.users.post(
+                    () -> {
+                        final var list =
+                                mucOptions.getUsersPreview(
+                                        GridManager.getCurrentColumnCount(binding.users));
+                        this.mUserPreviewAdapter.submitList(list);
+                    });
+        }
+        this.binding.invite.setVisibility(canInvite ? View.VISIBLE : View.GONE);
         this.binding.showUsers.setVisibility(userCount == 0 ? View.GONE : View.VISIBLE);
         this.binding.showUsers.setText(
                 getResources().getQuantityString(R.plurals.view_users, userCount, userCount));
         this.binding.usersWrapper.setVisibility(
-                userCount > 0 || mucOptions.canInvite() ? View.VISIBLE : View.GONE);
+                userCount > 0 || canInvite ? View.VISIBLE : View.GONE);
         if (userCount == 0) {
-            this.binding.noUsersHints.setText(
-                    mucOptions.isPrivateAndNonAnonymous()
-                            ? R.string.no_users_hint_group_chat
-                            : R.string.no_users_hint_channel);
+            if (mConversation.getStatus() == Conversation.STATUS_ARCHIVED) {
+                this.binding.noUsersHints.setText("Чат находится в архиве");
+            } else {
+                this.binding.noUsersHints.setText(
+                        (mucOptions != null && mucOptions.isPrivateAndNonAnonymous())
+                                ? R.string.no_users_hint_group_chat
+                                : R.string.no_users_hint_channel);
+            }
             this.binding.noUsersHints.setVisibility(View.VISIBLE);
         } else {
             this.binding.noUsersHints.setVisibility(View.GONE);
