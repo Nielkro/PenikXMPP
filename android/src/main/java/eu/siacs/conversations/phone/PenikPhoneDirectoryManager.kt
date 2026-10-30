@@ -45,7 +45,8 @@ data class PhoneDirectoryDetails(
     val jid: String,
     val phone: String,
     val phoneHash: String,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val phonePublic: Boolean = false
 )
 
 // Backwards-compatibility alias
@@ -152,7 +153,12 @@ object PenikPhoneDirectoryManager {
         return StickerManager.createAuthToken(jid)
     }
 
-    fun uploadPhoneAsync(jid: String, phoneNumber: String, authToken: String? = null) {
+    fun uploadPhoneAsync(
+        jid: String,
+        phoneNumber: String,
+        authToken: String? = null,
+        phonePublic: Boolean = false
+    ) {
         val cleanJid = jid.trim().lowercase()
         activeUserJid = cleanJid
         CoroutineScope(Dispatchers.IO).launch {
@@ -163,6 +169,7 @@ object PenikPhoneDirectoryManager {
 
                 val json = JSONObject().apply {
                     put("phone", normalized)
+                    put("phone_public", phonePublic)
                 }.toString()
 
                 val request = Request.Builder()
@@ -291,7 +298,8 @@ object PenikPhoneDirectoryManager {
                     jid = data.getString("jid"),
                     phone = data.getString("phone"),
                     phoneHash = data.optString("phone_hash", ""),
-                    updatedAt = data.optLong("updated_at", 0L)
+                    updatedAt = data.optLong("updated_at", 0L),
+                    phonePublic = data.optBoolean("phone_public", false)
                 )
                 cachedJidToPhone[details.jid] = details.phone
                 val digits = normalizePhoneDigits(details.phone)

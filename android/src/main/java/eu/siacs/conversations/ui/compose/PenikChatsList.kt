@@ -53,6 +53,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -1652,6 +1653,9 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
     var phoneNumber by remember(account.uuid) {
         mutableStateOf(prefs.getString("phone_number", null) ?: "")
     }
+    var phonePublic by remember(account.uuid) {
+        mutableStateOf(prefs.getBoolean("phone_public", false))
+    }
     var currentDisplayName by remember(account.uuid) {
         mutableStateOf(account.displayName ?: "")
     }
@@ -1960,6 +1964,7 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
 
     if (showEditPhoneDialog) {
         var tempPhone by remember { mutableStateOf(phoneNumber) }
+        var tempPhonePublic by remember { mutableStateOf(phonePublic) }
         AlertDialog(
             onDismissRequest = { showEditPhoneDialog = false },
             containerColor = panel,
@@ -1993,6 +1998,30 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Показывать номер другим пользователям",
+                                color = textPrimary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "По умолчанию номер виден только вам",
+                                color = textMuted,
+                                fontSize = 12.sp
+                            )
+                        }
+                        Switch(
+                            checked = tempPhonePublic,
+                            onCheckedChange = { tempPhonePublic = it }
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -2000,14 +2029,19 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                     onClick = {
                         val norm = PenikPhoneDirectoryManager.normalizePhoneNumber(tempPhone.trim())
                         phoneNumber = norm
-                        prefs.edit().putString("phone_number", norm).apply()
+                        phonePublic = tempPhonePublic
+                        prefs.edit()
+                            .putString("phone_number", norm)
+                            .putBoolean("phone_public", tempPhonePublic)
+                            .apply()
                         val service = activity.xmppConnectionService
                         if (service != null) {
                             service.publishPhoneNumber(account, norm)
                         }
                         PenikPhoneDirectoryManager.uploadPhoneAsync(
                             account.jid.asBareJid().toString(),
-                            norm
+                            norm,
+                            phonePublic = tempPhonePublic
                         )
                         showEditPhoneDialog = false
                     }

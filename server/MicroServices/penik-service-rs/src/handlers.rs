@@ -464,13 +464,15 @@ pub async fn get_phone_by_jid(
     let target = target_jid.trim().to_lowercase();
     let requester = requester_jid.trim().to_lowercase();
 
-    // TODO: Verify that requester and target are mutual contacts in XMPP roster.
-    // (Prosody roster checking will be integrated once the backend is linked with Prosody auth / storage).
+    // A mutual-roster check is future work. Owner access and the opt-in
+    // phone_public flag are the current visibility gate.
     info!("Phone lookup for {} requested by {}", target, requester);
 
     match db::get_phone_by_jid(&state.pool, &target).await {
-        Ok(Some(entry)) => Ok(Json(ApiResponse::success(entry))),
-        Ok(None) => Err((
+        Ok(Some(entry)) if requester == target || entry.phone_public => {
+            Ok(Json(ApiResponse::success(entry)))
+        }
+        Ok(_) => Err((
             StatusCode::NOT_FOUND,
             Json(ApiResponse::err("User not found in phone directory")),
         )),
@@ -498,7 +500,7 @@ pub async fn update_phone(
         ));
     }
 
-    match db::save_phone(&state.pool, &clean_jid, phone).await {
+    match db::save_phone(&state.pool, &clean_jid, phone, payload.phone_public).await {
         Ok(()) => {
             info!("Updated phone for {}", clean_jid);
             Ok(Json(ApiResponse::success(())))
