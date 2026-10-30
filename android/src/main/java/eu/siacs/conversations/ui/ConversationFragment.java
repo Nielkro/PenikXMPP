@@ -117,6 +117,7 @@ import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.Sticker;
+import eu.siacs.conversations.stickers.PenikServiceTokenProvider;
 import eu.siacs.conversations.stickers.StickerManager;
 import eu.siacs.conversations.entities.ReadByMarker;
 import eu.siacs.conversations.ui.compose.PenikBotCommandsBridge;
@@ -3928,9 +3929,17 @@ public class ConversationFragment extends XmppFragment
         final boolean isMuc = this.conversation.getMode() == Conversational.MODE_MULTI;
         final boolean showAvatars11 = new AppSettings(requireContext()).isShowAvatars11();
         if (this.conversation.getAccount() != null && this.conversation.getAccount().getJid() != null) {
-            final String accountJid = this.conversation.getAccount().getJid().asBareJid().toString();
+            final Account account = this.conversation.getAccount();
             this.penikChatState.setStickerServerUrl(Config.STICKERS_BASE_URL);
-            this.penikChatState.setStickerAuthToken(StickerManager.Companion.createAuthToken(accountJid, "penik_secret_shared_key"));
+            final String cachedToken = PenikServiceTokenProvider.getCachedToken(account);
+            this.penikChatState.setStickerAuthToken(cachedToken != null ? cachedToken : "");
+            PenikServiceTokenProvider.fetchTokenAsync(
+                    account,
+                    token -> {
+                        if (token != null) {
+                            this.penikChatState.setStickerAuthToken(token);
+                        }
+                    });
         }
         this.penikChatState.update(
                 new ArrayList<>(this.messageList),

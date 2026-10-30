@@ -66,6 +66,7 @@ pub struct PhoneDirectoryDetails {
     pub jid: String,
     pub phone: String,
     pub phone_hash: String,
+    pub phone_public: bool,
     pub updated_at: i64,
 }
 
@@ -76,6 +77,8 @@ pub struct PhoneDirectoryEntry {
     pub phone: String,
     #[serde(default)]
     pub phone_hash: String,
+    #[serde(default)]
+    pub phone_public: bool,
     pub updated_at: i64,
 }
 
@@ -83,6 +86,8 @@ pub struct PhoneDirectoryEntry {
 pub struct UpdatePhoneRequest {
     pub jid: Option<String>,
     pub phone: String,
+    #[serde(default)]
+    pub phone_public: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

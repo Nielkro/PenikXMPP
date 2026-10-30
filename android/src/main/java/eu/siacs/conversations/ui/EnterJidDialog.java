@@ -180,7 +180,13 @@ public class EnterJidDialog extends DialogFragment implements OnBackendConnected
         final String digitsOnly = rawTrimmed.replaceAll("[^0-9]", "");
 
         if (rawTrimmed.startsWith("+") || (!rawTrimmed.contains("@") && digitsOnly.length() >= 7)) {
+            final eu.siacs.conversations.services.XmppConnectionService phoneLookupService =
+                    getActivity() instanceof XmppActivity
+                            ? ((XmppActivity) getActivity()).xmppConnectionService
+                            : null;
             eu.siacs.conversations.phone.PenikPhoneDirectoryManager.lookupJidByPhone(
+                    phoneLookupService,
+                    accountJid.asBareJid().toString(),
                     rawTrimmed,
                     jidStr -> {
                         if (jidStr != null) {

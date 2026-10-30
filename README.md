@@ -35,7 +35,7 @@ It combines the decentralized power and security of open standards with the poli
   - Client normalizes phone numbers to E.164 and computes their SHA-256 hashes.
   - Only short 3-hex-char prefixes are transmitted to the server (`POST /api/v1/phone-directory/lookup`), implementing a strict $k$-anonymity bucket model.
   - Server returns matching `{jid, phone_hash}` tuples; full hash comparison happens strictly on the local client device.
-  - Plain phone numbers are never bulk-broadcasted: targeted `GET /api/v1/phone-directory/:jid` resolution is guarded by Bearer HMAC-SHA256 tokens and only fulfilled for mutual authorized contacts.
+  - Plain phone numbers are never bulk-broadcasted: targeted `GET /api/v1/phone-directory/:jid` resolution is guarded by Bearer HMAC-SHA256 tokens and is available to the number's owner by default. Another authenticated user can resolve the number only when its owner has enabled phone visibility.
 - **Privacy & Encryption**
   - End-to-end encryption (OMEMO) is **disabled by default**: messages and files are stored on the server unencrypted and can be read by the server operator.
   - OMEMO remains available as an optional per-chat setting, but it is not enabled out of the box.
