@@ -83,13 +83,20 @@ jobs:
           SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           SERVER_HOST: ${{ secrets.SNIKKET_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
-        if: env.SSH_KEY != '' && env.SERVER_HOST != ''
+          DEPLOY_SCRIPT: ${{ secrets.DEPLOY_SCRIPT_B64 }}
+          STICKERS_SHARED_SECRET: ${{ secrets.STICKERS_SHARED_SECRET }}
+        if: env.SSH_KEY != '' && env.SERVER_HOST != '' && env.DEPLOY_SCRIPT != ''
         run: |
-          mkdir -p ~/.ssh
+          mkdir -p ~/.ssh scripts
           echo "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
+          # Unpack private deployment script from secret
+          echo "$DEPLOY_SCRIPT" | base64 -d > scripts/deploy_server.sh
+          chmod +x scripts/deploy_server.sh
+
           export SNIKKET_HOST="$SERVER_HOST"
           export SERVER_USER="$SERVER_USER"
+          export STICKERS_SHARED_SECRET="$STICKERS_SHARED_SECRET"
           bash scripts/deploy_server.sh snikket
