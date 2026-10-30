@@ -13,6 +13,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -98,8 +100,11 @@ import eu.siacs.conversations.ui.XmppActivity
 import eu.siacs.conversations.utils.JidHelper
 import eu.siacs.conversations.utils.UIHelper
 import java.time.Instant
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 
 interface PenikChatsListener {
     fun onConversationClick(conversation: Conversation)
@@ -129,6 +134,74 @@ class PenikChatsState {
 
     fun bumpRevision() {
         revision++
+    }
+}
+
+data class PenikChatFolder(
+        val id: String,
+        val name: String,
+        val members: Set<String>
+)
+
+// User-created chat folders, stored locally as a JSON array in SharedPreferences:
+// [{"id": "...", "name": "...", "members": ["conversation-uuid", ...]}, ...]
+object PenikChatFolderStore {
+    private const val PREFS_NAME = "penik_chat_folders"
+
+    private fun key(accountUuid: String?): String = "folders_" + (accountUuid ?: "default")
+
+    fun load(context: Context, accountUuid: String?): List<PenikChatFolder> {
+        return try {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val raw = prefs.getString(key(accountUuid), null) ?: return emptyList()
+            val array = JSONArray(raw)
+            val result = ArrayList<PenikChatFolder>(array.length())
+            for (i in 0 until array.length()) {
+                val obj = array.optJSONObject(i) ?: continue
+                val id = obj.optString("id")
+                val name = obj.optString("name")
+                if (id.isBlank() || name.isBlank()) {
+                    continue
+                }
+                val membersArray = obj.optJSONArray("members")
+                val members = LinkedHashSet<String>()
+                if (membersArray != null) {
+                    for (j in 0 until membersArray.length()) {
+                        val uuid = membersArray.optString(j)
+                        if (uuid.isNotBlank()) {
+                            members.add(uuid)
+                        }
+                    }
+                }
+                result.add(PenikChatFolder(id = id, name = name, members = members))
+            }
+            result
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun save(context: Context, accountUuid: String?, folders: List<PenikChatFolder>) {
+        try {
+            val array = JSONArray()
+            for (folder in folders) {
+                val obj = JSONObject()
+                obj.put("id", folder.id)
+                obj.put("name", folder.name)
+                val members = JSONArray()
+                for (uuid in folder.members) {
+                    members.put(uuid)
+                }
+                obj.put("members", members)
+                array.put(obj)
+            }
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                    .edit()
+                    .putString(key(accountUuid), array.toString())
+                    .apply()
+        } catch (e: Exception) {
+            // A broken folders store must never break the chat list itself.
+        }
     }
 }
 
@@ -682,6 +755,232 @@ fun PenikSwipeableRow(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun PenikFolderChip(
+        title: String,
+        selected: Boolean,
+        onClick: () -> Unit,
+        onLongClick: (() -> Unit)? = null
+) {
+    val accent = colorResource(R.color.penik_accent)
+    val panelSecondary = colorResource(R.color.penik_panel_secondary)
+    val textPrimary = colorResource(R.color.penik_text_primary)
+    val clickModifier =
+            if (onLongClick != null) {
+                Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            } else {
+                Modifier.clickable(onClick = onClick)
+            }
+    Box(
+            modifier =
+                    Modifier.clip(RoundedCornerShape(16.dp))
+                            .background(if (selected) accent else panelSecondary)
+                            .then(clickModifier)
+                            .padding(horizontal = 14.dp, vertical = 7.dp)
+    ) {
+        Text(
+                text = title,
+                color = if (selected) Color.White else textPrimary,
+                fontSize = 14.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                maxLines = 1
+        )
+    }
+}
+
+@Composable
+fun PenikFolderNameDialog(
+        title: String,
+        initialName: String,
+        confirm: String,
+        onConfirm: (String) -> Unit,
+        onDismiss: () -> Unit
+) {
+    val panel = colorResource(R.color.penik_panel)
+    val textPrimary = colorResource(R.color.penik_text_primary)
+    val textMuted = colorResource(R.color.penik_text_muted)
+    val accent = colorResource(R.color.penik_accent)
+    var name by remember { mutableStateOf(initialName) }
+    AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(text = title, color = textPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text(text = "Название папки", color = textMuted) },
+                        singleLine = true,
+                        colors =
+                                OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = accent,
+                                        unfocusedBorderColor =
+                                                colorResource(R.color.penik_border),
+                                        cursorColor = accent
+                                )
+                )
+            },
+            confirmButton = {
+                TextButton(
+                        onClick = { onConfirm(name.trim()) },
+                        enabled = name.isNotBlank()
+                ) {
+                    Text(text = confirm, color = accent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text(text = "Отмена", color = textMuted) }
+            },
+            containerColor = panel,
+            shape = RoundedCornerShape(16.dp)
+    )
+}
+
+@Composable
+fun PenikFolderMenuDialog(
+        folder: PenikChatFolder,
+        onRename: () -> Unit,
+        onDelete: () -> Unit,
+        onDismiss: () -> Unit
+) {
+    val panel = colorResource(R.color.penik_panel)
+    val textPrimary = colorResource(R.color.penik_text_primary)
+    val textMuted = colorResource(R.color.penik_text_muted)
+    val danger = colorResource(R.color.penik_danger)
+    AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(text = folder.name, color = textPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Row(
+                            modifier =
+                                    Modifier.fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable(onClick = onRename)
+                                            .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Переименовать", color = textPrimary, fontSize = 16.sp)
+                    }
+                    Row(
+                            modifier =
+                                    Modifier.fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable(onClick = onDelete)
+                                            .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Удалить папку", color = danger, fontSize = 16.sp)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text(text = "Отмена", color = textMuted) }
+            },
+            containerColor = panel,
+            shape = RoundedCornerShape(16.dp)
+    )
+}
+
+@Composable
+fun PenikFolderPickerDialog(
+        conversation: Conversation,
+        folders: List<PenikChatFolder>,
+        onToggleMembership: (PenikChatFolder, Boolean) -> Unit,
+        onCreateFolder: (String) -> Unit,
+        onDismiss: () -> Unit
+) {
+    val panel = colorResource(R.color.penik_panel)
+    val textPrimary = colorResource(R.color.penik_text_primary)
+    val textMuted = colorResource(R.color.penik_text_muted)
+    val accent = colorResource(R.color.penik_accent)
+    var newFolderName by remember { mutableStateOf("") }
+    AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(text = "В папку…", color = textPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    if (folders.isEmpty()) {
+                        Text(
+                                text =
+                                        "Папок пока нет. Создайте первую папку ниже — чат сразу попадёт в неё.",
+                                color = textMuted,
+                                fontSize = 14.sp
+                        )
+                    } else {
+                        folders.forEach { folder ->
+                            val checked = folder.members.contains(conversation.uuid)
+                            Row(
+                                    modifier =
+                                            Modifier.fillMaxWidth()
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .clickable {
+                                                        onToggleMembership(folder, !checked)
+                                                    }
+                                                    .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                        checked = checked,
+                                        onCheckedChange = { onToggleMembership(folder, it) },
+                                        colors =
+                                                CheckboxDefaults.colors(
+                                                        checkedColor = accent,
+                                                        checkmarkColor = panel
+                                                )
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                        text = folder.name,
+                                        color = textPrimary,
+                                        fontSize = 15.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                                value = newFolderName,
+                                onValueChange = { newFolderName = it },
+                                modifier = Modifier.weight(1f),
+                                placeholder = { Text(text = "Новая папка", color = textMuted) },
+                                singleLine = true,
+                                colors =
+                                        OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = accent,
+                                                unfocusedBorderColor =
+                                                        colorResource(R.color.penik_border),
+                                                cursorColor = accent
+                                        )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        TextButton(
+                                onClick = {
+                                    onCreateFolder(newFolderName.trim())
+                                    newFolderName = ""
+                                },
+                                enabled = newFolderName.isNotBlank()
+                        ) {
+                            Text(text = "Создать", color = accent, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(text = "Готово", color = accent, fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = panel,
+            shape = RoundedCornerShape(16.dp)
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PenikChatsTab(
@@ -704,6 +1003,25 @@ fun PenikChatsTab(
     var isArchiveHidden by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val rev = state.revision
 
+    // Custom chat folders (local only, see PenikChatFolderStore)
+    val context = LocalContext.current
+    val accountUuid = state.account?.uuid
+    var folders by remember { mutableStateOf<List<PenikChatFolder>>(emptyList()) }
+    var selectedFolderId by remember { mutableStateOf<String?>(null) }
+    var folderPickerConversation by remember { mutableStateOf<Conversation?>(null) }
+    var showCreateFolderDialog by remember { mutableStateOf(false) }
+    var folderMenuTarget by remember { mutableStateOf<PenikChatFolder?>(null) }
+    var folderRenameTarget by remember { mutableStateOf<PenikChatFolder?>(null) }
+    var folderDeleteTarget by remember { mutableStateOf<PenikChatFolder?>(null) }
+    LaunchedEffect(accountUuid, rev) {
+        folders = PenikChatFolderStore.load(context, accountUuid)
+    }
+    fun persistFolders(updated: List<PenikChatFolder>) {
+        folders = updated
+        PenikChatFolderStore.save(context, accountUuid, updated)
+    }
+    val selectedFolder = folders.firstOrNull { it.id == selectedFolderId }
+
     val feed =
             if (isArchiveOpen) {
                 state.archived
@@ -720,7 +1038,58 @@ fun PenikChatsTab(
                                     true
                 }
             }
+    val visible =
+            if (!isArchiveOpen && selectedFolder != null) {
+                filtered.filter { selectedFolder.members.contains(it.uuid) }
+            } else {
+                filtered
+            }
     Column(modifier = Modifier.fillMaxSize().background(background)) {
+        if (!isArchiveOpen) {
+            LazyRow(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item(key = "folder_all") {
+                    PenikFolderChip(
+                            title = "Все чаты",
+                            selected = selectedFolder == null,
+                            onClick = { selectedFolderId = null }
+                    )
+                }
+                items(items = folders, key = { it.id }) { folder ->
+                    val count = state.conversations.count { folder.members.contains(it.uuid) }
+                    PenikFolderChip(
+                            title = if (count > 0) "${folder.name} · $count" else folder.name,
+                            selected = selectedFolder?.id == folder.id,
+                            onClick = { selectedFolderId = folder.id },
+                            onLongClick = { folderMenuTarget = folder }
+                    )
+                }
+                item(key = "folder_add") {
+                    Box(
+                            modifier =
+                                    Modifier.size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                    colorResource(
+                                                            R.color.penik_panel_secondary
+                                                    )
+                                            )
+                                            .clickable { showCreateFolderDialog = true },
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = textMuted,
+                                modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
         if (isArchiveOpen) {
             if (filtered.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -753,7 +1122,7 @@ fun PenikChatsTab(
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 // 1. Archive folder placed above "Избранное"
-                if (state.archived.isNotEmpty() && searchQuery.isBlank()) {
+                if (state.archived.isNotEmpty() && searchQuery.isBlank() && selectedFolder == null) {
                     if (!isArchiveHidden) {
                         item(key = "archive_folder") {
                             PenikArchiveRow(
@@ -798,25 +1167,32 @@ fun PenikChatsTab(
                 }
 
                 // 2. Self Chat ("Избранное")
-                item(key = "self_chat") {
-                    PenikSelfRow(
-                            selfChat = state.selfChat,
-                            activity = activity,
-                            revision = rev,
-                            onClick = { listener.onOpenSelfChat() }
-                    )
-                    HorizontalDivider(color = border, modifier = Modifier.padding(horizontal = 16.dp))
+                if (selectedFolder == null) {
+                    item(key = "self_chat") {
+                        PenikSelfRow(
+                                selfChat = state.selfChat,
+                                activity = activity,
+                                revision = rev,
+                                onClick = { listener.onOpenSelfChat() }
+                        )
+                        HorizontalDivider(color = border, modifier = Modifier.padding(horizontal = 16.dp))
+                    }
                 }
 
                 // 3. Conversation rows
-                if (filtered.isEmpty()) {
+                if (visible.isEmpty()) {
                     item(key = "empty_placeholder") {
                         Box(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
                                 contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                    text = "Нет переписок",
+                                    text =
+                                            if (selectedFolder != null) {
+                                                "В этой папке пока нет чатов"
+                                            } else {
+                                                "Нет переписок"
+                                            },
                                     color = textMuted,
                                     fontSize = 16.sp
                             )
@@ -824,7 +1200,7 @@ fun PenikChatsTab(
                     }
                 } else {
                     items(
-                        items = filtered,
+                        items = visible,
                         key = { it.uuid }
                     ) { conversation ->
                         PenikSwipeableRow(
@@ -954,6 +1330,17 @@ fun PenikChatsTab(
                     )
                 }
 
+                // Add to folder
+                PenikSheetActionItem(
+                        iconRes = R.drawable.ic_folder_open_24dp,
+                        title = "В папку…",
+                        onClick = {
+                            val conv = selected
+                            selectedConversation = null
+                            folderPickerConversation = conv
+                        }
+                )
+
                 // Delete chat / Leave conversation
                 val isGroup = selected?.mode == Conversation.MODE_MULTI
                 PenikSheetActionItem(
@@ -1012,6 +1399,120 @@ fun PenikChatsTab(
                     pendingDeleteConversation = null
                 },
                 onDismiss = { pendingDeleteConversation = null }
+        )
+    }
+
+    // Create folder dialog (from the "+" chip)
+    if (showCreateFolderDialog) {
+        PenikFolderNameDialog(
+                title = "Новая папка",
+                initialName = "",
+                confirm = "Создать",
+                onConfirm = { name ->
+                    persistFolders(
+                            folders +
+                                    PenikChatFolder(
+                                            id = UUID.randomUUID().toString(),
+                                            name = name,
+                                            members = emptySet()
+                                    )
+                    )
+                    showCreateFolderDialog = false
+                },
+                onDismiss = { showCreateFolderDialog = false }
+        )
+    }
+
+    // Folder chip menu (rename / delete)
+    val menuFolder = folderMenuTarget
+    if (menuFolder != null) {
+        PenikFolderMenuDialog(
+                folder = menuFolder,
+                onRename = {
+                    folderMenuTarget = null
+                    folderRenameTarget = menuFolder
+                },
+                onDelete = {
+                    folderMenuTarget = null
+                    folderDeleteTarget = menuFolder
+                },
+                onDismiss = { folderMenuTarget = null }
+        )
+    }
+
+    // Rename folder dialog
+    val renameFolder = folderRenameTarget
+    if (renameFolder != null) {
+        PenikFolderNameDialog(
+                title = "Переименовать папку",
+                initialName = renameFolder.name,
+                confirm = "Сохранить",
+                onConfirm = { name ->
+                    persistFolders(
+                            folders.map {
+                                if (it.id == renameFolder.id) it.copy(name = name) else it
+                            }
+                    )
+                    folderRenameTarget = null
+                },
+                onDismiss = { folderRenameTarget = null }
+        )
+    }
+
+    // Delete folder confirmation (chats themselves are never deleted)
+    val deleteFolder = folderDeleteTarget
+    if (deleteFolder != null) {
+        PenikConfirmDialog(
+                title = "Удалить папку",
+                text = "Папка «${deleteFolder.name}» будет удалена. Сами чаты останутся на месте.",
+                confirm = "Удалить",
+                confirmColor = danger,
+                onConfirm = {
+                    persistFolders(folders.filterNot { it.id == deleteFolder.id })
+                    if (selectedFolderId == deleteFolder.id) {
+                        selectedFolderId = null
+                    }
+                    folderDeleteTarget = null
+                },
+                onDismiss = { folderDeleteTarget = null }
+        )
+    }
+
+    // Folder membership picker for a long-pressed conversation
+    val pickerConversation = folderPickerConversation
+    if (pickerConversation != null) {
+        PenikFolderPickerDialog(
+                conversation = pickerConversation,
+                folders = folders,
+                onToggleMembership = { folder, checked ->
+                    persistFolders(
+                            folders.map {
+                                if (it.id == folder.id) {
+                                    it.copy(
+                                            members =
+                                                    if (checked) {
+                                                        it.members + pickerConversation.uuid
+                                                    } else {
+                                                        it.members - pickerConversation.uuid
+                                                    }
+                                    )
+                                } else {
+                                    it
+                                }
+                            }
+                    )
+                },
+                onCreateFolder = { name ->
+                    persistFolders(
+                            folders +
+                                    PenikChatFolder(
+                                            id = UUID.randomUUID().toString(),
+                                            name = name,
+                                            members = setOf(pickerConversation.uuid)
+                                    )
+                    )
+                },
+                onDismiss = { folderPickerConversation = null }
         )
     }
 }
