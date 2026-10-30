@@ -74,8 +74,10 @@ object PenikPhoneDirectoryManager {
     private val cachedPhoneToJid = ConcurrentHashMap<String, String>()
     // full phone hash -> JID
     private val cachedHashToJid = ConcurrentHashMap<String, String>()
-    // JID -> normalized phone
-    private val cachedJidToPhone = ConcurrentHashMap<String, String>()
+    // Note: there is deliberately no JID -> phone cache. Whether a number may
+    // be shown for a JID is decided by the server (owner or phone_public) on
+    // every authorized request; a local cache would bypass that check and
+    // could leak numbers across accounts on the same device.
     // Cached lookup entries from prefix queries
     private val cachedLookupEntries = ConcurrentHashMap<String, PhoneDirectoryLookupEntry>()
 
@@ -170,7 +172,6 @@ object PenikPhoneDirectoryManager {
                             val hash = hashPhone(normalized)
                             cachedPhoneToJid[digits] = cleanJid
                             cachedHashToJid[hash] = cleanJid
-                            cachedJidToPhone[cleanJid] = normalized
                         } else {
                             Log.w(TAG, "Failed to upload phone: HTTP ${response.code}")
                         }
@@ -248,17 +249,6 @@ object PenikPhoneDirectoryManager {
         authToken: String
     ): Result<PhoneDirectoryDetails> = withContext(Dispatchers.IO) {
         val cleanJid = targetJid.trim().lowercase()
-        val cachedPhone = cachedJidToPhone[cleanJid]
-        if (cachedPhone != null) {
-            return@withContext Result.success(
-                PhoneDirectoryDetails(
-                    jid = cleanJid,
-                    phone = cachedPhone,
-                    phoneHash = hashPhone(cachedPhone),
-                    updatedAt = System.currentTimeMillis() / 1000
-                )
-            )
-        }
 
         try {
             val cleanBase = Config.STICKERS_BASE_URL.trimEnd('/')
@@ -287,7 +277,6 @@ object PenikPhoneDirectoryManager {
                     updatedAt = data.optLong("updated_at", 0L),
                     phonePublic = data.optBoolean("phone_public", false)
                 )
-                cachedJidToPhone[details.jid] = details.phone
                 val digits = normalizePhoneDigits(details.phone)
                 cachedPhoneToJid[digits] = details.jid
                 if (details.phoneHash.isNotEmpty()) {
@@ -303,12 +292,6 @@ object PenikPhoneDirectoryManager {
 
     @JvmStatic
     fun fetchPhoneForJidAsync(account: Account, targetJid: String, callback: PhoneLookupCallback) {
-        val cachedPhone = cachedJidToPhone[targetJid.trim().lowercase()]
-        if (cachedPhone != null) {
-            callback.onResult(cachedPhone)
-            return
-        }
-
         CoroutineScope(Dispatchers.IO).launch {
             val token = PenikServiceTokenProvider.getToken(account)
             val details = if (token != null) fetchPhoneByJid(targetJid, token).getOrNull() else null
@@ -418,7 +401,6 @@ object PenikPhoneDirectoryManager {
                             cachedPhoneToJid[localRec.digits.takeLast(10)] = targetJidStr
                         }
                         cachedHashToJid[localRec.hash] = targetJidStr
-                        cachedJidToPhone[targetJidStr] = localRec.normPhone
 
                         val contact = account.roster.getContact(targetJid)
                         if (!contact.isSelf) {
@@ -556,7 +538,6 @@ object PenikPhoneDirectoryManager {
                     matchedJid = match.jid
                     cachedPhoneToJid[digits] = matchedJid
                     cachedHashToJid[hash] = matchedJid
-                    cachedJidToPhone[matchedJid] = norm
                 }
             }
 
