@@ -2,7 +2,6 @@ package eu.siacs.conversations.phone
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -13,12 +12,11 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import eu.siacs.conversations.Config
-import eu.siacs.conversations.Conversations
 import eu.siacs.conversations.android.PenikPhoneContact
+import eu.siacs.conversations.entities.Account
 import eu.siacs.conversations.entities.Contact
-import eu.siacs.conversations.persistance.DatabaseBackend
 import eu.siacs.conversations.services.XmppConnectionService
-import eu.siacs.conversations.stickers.StickerManager
+import eu.siacs.conversations.stickers.PenikServiceTokenProvider
 import eu.siacs.conversations.ui.XmppActivity
 import eu.siacs.conversations.xmpp.Jid
 import kotlinx.coroutines.CoroutineScope
@@ -70,9 +68,6 @@ object PenikPhoneDirectoryManager {
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(10, TimeUnit.SECONDS)
         .build()
-
-    @Volatile
-    private var activeUserJid: String? = null
 
     // Cache of resolved matches:
     // phone digits -> JID
@@ -140,54 +135,45 @@ object PenikPhoneDirectoryManager {
         return phone
     }
 
-    fun getAuthToken(preferredJid: String? = null): String {
-        val jid = preferredJid
-            ?: activeUserJid
-            ?: try {
-                val ctx = Conversations.getContext()
-                if (ctx != null) {
-                    DatabaseBackend.getInstance(ctx).accounts.firstOrNull { it.isEnabled }?.jid?.asBareJid()?.toString()
-                } else null
-            } catch (_: Exception) { null }
-            ?: "anonymous@penik.ru"
-        return StickerManager.createAuthToken(jid)
-    }
-
     fun uploadPhoneAsync(
-        jid: String,
+        account: Account,
         phoneNumber: String,
-        authToken: String? = null,
         phonePublic: Boolean = false
     ) {
-        val cleanJid = jid.trim().lowercase()
-        activeUserJid = cleanJid
+        val cleanJid = account.jid.asBareJid().toString()
         CoroutineScope(Dispatchers.IO).launch {
+            val token = PenikServiceTokenProvider.getToken(account)
+            if (token == null) {
+                Log.w(TAG, "No service auth token; skipping phone upload for $cleanJid")
+                return@launch
+            }
             try {
-                val cleanBase = Config.STICKERS_BASE_URL.trimEnd('/')
-                val normalized = normalizePhoneNumber(phoneNumber)
-                val token = if (!authToken.isNullOrBlank()) authToken else getAuthToken(cleanJid)
+                withContext(Dispatchers.IO) {
+                    val cleanBase = Config.STICKERS_BASE_URL.trimEnd('/')
+                    val normalized = normalizePhoneNumber(phoneNumber)
 
-                val json = JSONObject().apply {
-                    put("phone", normalized)
-                    put("phone_public", phonePublic)
-                }.toString()
+                    val json = JSONObject().apply {
+                        put("phone", normalized)
+                        put("phone_public", phonePublic)
+                    }.toString()
 
-                val request = Request.Builder()
-                    .url("$cleanBase/api/v1/phone-directory")
-                    .addHeader("Authorization", "Bearer $token")
-                    .post(json.toRequestBody("application/json".toMediaType()))
-                    .build()
+                    val request = Request.Builder()
+                        .url("$cleanBase/api/v1/phone-directory")
+                        .addHeader("Authorization", "Bearer $token")
+                        .post(json.toRequestBody("application/json".toMediaType()))
+                        .build()
 
-                httpClient.newCall(request).execute().use { response ->
-                    if (response.isSuccessful) {
-                        Log.d(TAG, "Uploaded phone for $cleanJid successfully")
-                        val digits = normalizePhoneDigits(normalized)
-                        val hash = hashPhone(normalized)
-                        cachedPhoneToJid[digits] = cleanJid
-                        cachedHashToJid[hash] = cleanJid
-                        cachedJidToPhone[cleanJid] = normalized
-                    } else {
-                        Log.w(TAG, "Failed to upload phone: HTTP ${response.code}")
+                    httpClient.newCall(request).execute().use { response ->
+                        if (response.isSuccessful) {
+                            Log.d(TAG, "Uploaded phone for $cleanJid successfully")
+                            val digits = normalizePhoneDigits(normalized)
+                            val hash = hashPhone(normalized)
+                            cachedPhoneToJid[digits] = cleanJid
+                            cachedHashToJid[hash] = cleanJid
+                            cachedJidToPhone[cleanJid] = normalized
+                        } else {
+                            Log.w(TAG, "Failed to upload phone: HTTP ${response.code}")
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -316,7 +302,7 @@ object PenikPhoneDirectoryManager {
     }
 
     @JvmStatic
-    fun fetchPhoneForJidAsync(targetJid: String, userJid: String, callback: PhoneLookupCallback) {
+    fun fetchPhoneForJidAsync(account: Account, targetJid: String, callback: PhoneLookupCallback) {
         val cachedPhone = cachedJidToPhone[targetJid.trim().lowercase()]
         if (cachedPhone != null) {
             callback.onResult(cachedPhone)
@@ -324,8 +310,8 @@ object PenikPhoneDirectoryManager {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            val token = getAuthToken(userJid)
-            val details = fetchPhoneByJid(targetJid, token).getOrNull()
+            val token = PenikServiceTokenProvider.getToken(account)
+            val details = if (token != null) fetchPhoneByJid(targetJid, token).getOrNull() else null
             Handler(Looper.getMainLooper()).post {
                 callback.onResult(details?.phone)
             }
@@ -356,10 +342,6 @@ object PenikPhoneDirectoryManager {
             onComplete?.let { Handler(Looper.getMainLooper()).post(it) }
             return
         }
-        val userJid = account.jid.asBareJid().toString()
-        activeUserJid = userJid
-        val authToken = getAuthToken(userJid)
-
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val projection = arrayOf(
@@ -413,7 +395,12 @@ object PenikPhoneDirectoryManager {
 
                 // Collect k-anonymity prefixes (first 3 hex characters)
                 val prefixes = localContactsByHash.keys.map { it.take(3) }.distinct()
-                val lookupResult = lookupHashesByPrefixes(prefixes, authToken).getOrNull() ?: emptyList()
+                val authToken = PenikServiceTokenProvider.getToken(account)
+                val lookupResult = if (authToken != null) {
+                    lookupHashesByPrefixes(prefixes, authToken).getOrNull() ?: emptyList()
+                } else {
+                    emptyList()
+                }
 
                 var matchedCount = 0
                 for (entry in lookupResult) {
@@ -455,7 +442,15 @@ object PenikPhoneDirectoryManager {
     }
 
     @JvmStatic
-    fun lookupJidByPhone(phone: String, callback: PhoneLookupCallback) {
+    fun lookupJidByPhone(
+        service: XmppConnectionService?,
+        accountJid: String,
+        phone: String,
+        callback: PhoneLookupCallback
+    ) {
+        val account = service?.accounts?.firstOrNull {
+            it.isEnabled && it.jid.asBareJid().toString() == accountJid
+        } ?: service?.accounts?.firstOrNull { it.isEnabled }
         val norm = normalizePhoneNumber(phone)
         val digits = normalizePhoneDigits(norm)
 
@@ -470,9 +465,13 @@ object PenikPhoneDirectoryManager {
             var matchedJid = cachedHashToJid[hash]
 
             if (matchedJid == null && hash.isNotEmpty()) {
-                val token = getAuthToken()
+                val token = account?.let { PenikServiceTokenProvider.getToken(it) }
                 val prefix = hash.take(3)
-                val candidates = lookupHashesByPrefixes(listOf(prefix), token).getOrNull() ?: emptyList()
+                val candidates = if (token != null) {
+                    lookupHashesByPrefixes(listOf(prefix), token).getOrNull() ?: emptyList()
+                } else {
+                    emptyList()
+                }
                 val match = candidates.firstOrNull { it.phoneHash.equals(hash, ignoreCase = true) }
                 if (match != null) {
                     matchedJid = match.jid
@@ -546,8 +545,12 @@ object PenikPhoneDirectoryManager {
 
             if (matchedJid == null && hash.isNotEmpty()) {
                 val account = service.accounts.firstOrNull { it.isEnabled }
-                val token = getAuthToken(account?.jid?.asBareJid()?.toString())
-                val candidates = lookupHashesByPrefixes(listOf(hash.take(3)), token).getOrNull() ?: emptyList()
+                val token = account?.let { PenikServiceTokenProvider.getToken(it) }
+                val candidates = if (token != null) {
+                    lookupHashesByPrefixes(listOf(hash.take(3)), token).getOrNull() ?: emptyList()
+                } else {
+                    emptyList()
+                }
                 val match = candidates.firstOrNull { it.phoneHash.equals(hash, ignoreCase = true) }
                 if (match != null) {
                     matchedJid = match.jid
@@ -599,14 +602,17 @@ object PenikPhoneDirectoryManager {
         }
     }
 
-    suspend fun matchLocalContacts(context: Context): List<MatchedPhoneContact> = withContext(Dispatchers.IO) {
+    suspend fun matchLocalContacts(
+        service: XmppConnectionService,
+        account: Account
+    ): List<MatchedPhoneContact> = withContext(Dispatchers.IO) {
         val matched = mutableListOf<MatchedPhoneContact>()
         try {
             val projection = arrayOf(
                 ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
                 ContactsContract.CommonDataKinds.Phone.NUMBER
             )
-            val cursor = context.contentResolver.query(
+            val cursor = service.contentResolver.query(
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 projection,
                 null,
@@ -642,8 +648,12 @@ object PenikPhoneDirectoryManager {
 
             if (hashes.isNotEmpty()) {
                 val prefixes = hashes.keys.map { it.take(3) }.distinct()
-                val token = getAuthToken()
-                val results = lookupHashesByPrefixes(prefixes, token).getOrNull() ?: emptyList()
+                val token = PenikServiceTokenProvider.getToken(account)
+                val results = if (token != null) {
+                    lookupHashesByPrefixes(prefixes, token).getOrNull() ?: emptyList()
+                } else {
+                    emptyList()
+                }
                 for (entry in results) {
                     val pair = hashes[entry.phoneHash]
                     if (pair != null) {

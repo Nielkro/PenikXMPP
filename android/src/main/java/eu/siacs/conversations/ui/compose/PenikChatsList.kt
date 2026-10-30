@@ -2039,7 +2039,7 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                             service.publishPhoneNumber(account, norm)
                         }
                         PenikPhoneDirectoryManager.uploadPhoneAsync(
-                            account.jid.asBareJid().toString(),
+                            account,
                             norm,
                             phonePublic = tempPhonePublic
                         )

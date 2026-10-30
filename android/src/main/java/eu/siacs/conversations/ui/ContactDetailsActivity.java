@@ -725,8 +725,8 @@ public class ContactDetailsActivity extends OmemoActivity
 
                             private void fetchPhoneFromDirectory() {
                                 PenikPhoneDirectoryManager.fetchPhoneForJidAsync(
+                                        account,
                                         contact.getAddress().asBareJid().toString(),
-                                        account.getJid().asBareJid().toString(),
                                         dirPhone -> {
                                             if (!Strings.isNullOrEmpty(dirPhone)) {
                                                 contact.setPhoneNumber(dirPhone);
