@@ -133,6 +133,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
@@ -1616,7 +1617,8 @@ fun PenikTextBubble(
         activity: XmppActivity,
         isMuc: Boolean,
         listener: PenikChatListener,
-        revision: Long = 0L
+        revision: Long = 0L,
+        previewOnly: Boolean = false
 ) {
     val context = LocalContext.current
     val quoteScrollHandler = LocalQuoteScrollHandler.current
@@ -1677,17 +1679,20 @@ fun PenikTextBubble(
         val bubbleShape = PenikBubbleShape(isSentByMe = isSentByMe)
         if (isEmojiOnly) {
             val fontSize = if (emojiCount == 1) 64.sp else 40.sp
-            Box(
-                    modifier =
-                            Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                                    .combinedClickable(
-                                            onClick = {},
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                showMenu = true
-                                            }
-                                    )
-            ) {
+            val emojiModifier =
+                    if (previewOnly) {
+                        Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    } else {
+                        Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                                .combinedClickable(
+                                        onClick = {},
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            showMenu = true
+                                        }
+                                )
+                    }
+            Box(modifier = emojiModifier) {
                 Column(horizontalAlignment = if (isSentByMe) Alignment.End else Alignment.Start) {
                     Text(text = rawBody, fontSize = fontSize)
                     val effectiveMuted = if (isSentByMe) fgColor.copy(alpha = 0.7f) else textMuted
@@ -1706,9 +1711,12 @@ fun PenikTextBubble(
                     )
                 }
                 if (showMenu) {
-                    PenikMessageMenu(
+                    PenikMessageContextOverlay(
                             message = message,
                             isSentByMe = isSentByMe,
+                            activity = activity,
+                            listener = listener,
+                            isMuc = isMuc,
                             onDismiss = { showMenu = false },
                             onAction = {
                                 showMenu = false
@@ -1718,24 +1726,29 @@ fun PenikTextBubble(
                 }
             }
         } else {
+            val baseBubbleModifier =
+                    Modifier.padding(horizontal = 12.dp)
+                            .widthIn(max = 300.dp)
+                            .clip(bubbleShape)
+                            .background(if (collapsed) recvBg else bgColor)
+            val bubbleModifier =
+                    if (previewOnly) {
+                        baseBubbleModifier
+                    } else {
+                        baseBubbleModifier.combinedClickable(
+                                onClick = {
+                                    if (collapsed) {
+                                        expandedBug = true
+                                    }
+                                },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    showMenu = true
+                                }
+                        )
+                    }
             Box(
-                    modifier =
-                            Modifier.padding(horizontal = 12.dp)
-                                    .widthIn(max = 300.dp)
-                                    .clip(bubbleShape)
-                                    .background(if (collapsed) recvBg else bgColor)
-                                    .combinedClickable(
-                                            onClick = {
-                                                if (collapsed) {
-                                                    expandedBug = true
-                                                }
-                                            },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                showMenu = true
-                                            }
-                                    )
-                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    modifier = bubbleModifier.padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Column {
                     if (showSender && senderName.isNotEmpty()) {
@@ -1788,7 +1801,7 @@ fun PenikTextBubble(
                                     color = fgColor,
                                     fontSize = 15.sp,
                                     onTextLayout = { layoutResult = it },
-                                    modifier = Modifier.pointerInput(annotated) {
+                                    modifier = if (previewOnly) Modifier else Modifier.pointerInput(annotated) {
                                         detectTapGestures(
                                                 onLongPress = {
                                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -1857,9 +1870,12 @@ fun PenikTextBubble(
                     }
                 }
                 if (showMenu) {
-                    PenikMessageMenu(
+                    PenikMessageContextOverlay(
                             message = message,
                             isSentByMe = isSentByMe,
+                            activity = activity,
+                            listener = listener,
+                            isMuc = isMuc,
                             onDismiss = { showMenu = false },
                             onAction = {
                                 showMenu = false
@@ -2148,6 +2164,199 @@ fun PenikMessageMenu(
                 },
                 onClick = { onAction(PenikChatActions.DELETE) }
         )
+    }
+}
+
+private val PENIK_QUICK_REACTIONS = listOf("👍", "❤️", "😂", "😮", "😢", "🙏", "🔥")
+
+@Composable
+private fun PenikContextActionRow(
+        icon: androidx.compose.ui.graphics.vector.ImageVector,
+        label: String,
+        labelColor: Color,
+        iconTint: Color,
+        onClick: () -> Unit
+) {
+    Row(
+            modifier =
+                    Modifier.fillMaxWidth()
+                            .clickable { onClick() }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(14.dp))
+        Text(text = label, color = labelColor, fontSize = 15.sp)
+    }
+}
+
+@Composable
+fun PenikMessageContextOverlay(
+        message: Message,
+        isSentByMe: Boolean,
+        activity: XmppActivity,
+        listener: PenikChatListener,
+        isMuc: Boolean,
+        onDismiss: () -> Unit,
+        onAction: (String) -> Unit
+) {
+    val panel = colorResource(R.color.penik_panel)
+    val textPrimary = colorResource(R.color.penik_text_primary)
+    val textMuted = colorResource(R.color.penik_text_muted)
+    val accent = colorResource(R.color.penik_accent)
+    val danger = colorResource(R.color.penik_danger)
+    val mime = message.mimeType ?: ""
+    val isMedia = message.isFileOrImage || mime.startsWith("image/") || mime.startsWith("audio/") || mime.startsWith("video/") || message.isGeoUri
+    val body = message.body ?: ""
+    val hasText = body.isNotBlank() && !message.isGeoUri
+    val ourReactions = remember(message.uuid) { message.aggregatedReactions.ourReactions }
+
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+
+    androidx.compose.ui.window.Dialog(
+            onDismissRequest = onDismiss,
+            properties =
+                    androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+                modifier =
+                        Modifier.fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.35f))
+                                .pointerInput(message.uuid) {
+                                    detectTapGestures { onDismiss() }
+                                },
+                contentAlignment = Alignment.Center
+        ) {
+            AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn() + scaleIn(initialScale = 0.92f),
+                    exit = fadeOut() + scaleOut(targetScale = 0.95f)
+            ) {
+                Column(
+                        modifier =
+                                Modifier.padding(horizontal = 24.dp)
+                                        .widthIn(max = 300.dp)
+                                        .fillMaxWidth(),
+                        horizontalAlignment = if (isSentByMe) Alignment.End else Alignment.Start
+                ) {
+                    Row(
+                            modifier =
+                                    Modifier.shadow(6.dp, RoundedCornerShape(24.dp))
+                                            .clip(RoundedCornerShape(24.dp))
+                                            .background(panel)
+                                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        for (emoji in PENIK_QUICK_REACTIONS) {
+                            val selected = ourReactions.contains(emoji)
+                            Box(
+                                    modifier =
+                                            Modifier.clip(CircleShape)
+                                                    .background(
+                                                            if (selected) {
+                                                                accent.copy(alpha = 0.18f)
+                                                            } else {
+                                                                Color.Transparent
+                                                            }
+                                                    )
+                                                    .clickable {
+                                                        val updated =
+                                                                if (selected) {
+                                                                    ourReactions - emoji
+                                                                } else {
+                                                                    ourReactions + emoji
+                                                                }
+                                                        activity.sendReactions(message, updated)
+                                                        onDismiss()
+                                                    }
+                                                    .padding(4.dp),
+                                    contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = emoji, fontSize = 23.sp)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PenikTextBubble(
+                            message = message,
+                            activity = activity,
+                            isMuc = isMuc,
+                            listener = listener,
+                            previewOnly = true
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(
+                            modifier =
+                                    Modifier.fillMaxWidth()
+                                            .shadow(6.dp, RoundedCornerShape(16.dp))
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(panel)
+                                            .padding(vertical = 6.dp)
+                    ) {
+                        if (message.status == Message.STATUS_SEND_FAILED) {
+                            PenikContextActionRow(
+                                    icon = Icons.Default.Refresh,
+                                    label = "Повторить попытку",
+                                    labelColor = accent,
+                                    iconTint = accent
+                            ) {
+                                onAction(PenikChatActions.RESEND)
+                            }
+                        }
+                        PenikContextActionRow(
+                                icon = Icons.AutoMirrored.Filled.Reply,
+                                label = "Ответить",
+                                labelColor = textPrimary,
+                                iconTint = textMuted
+                        ) {
+                            onAction(PenikChatActions.QUOTE)
+                        }
+                        if (hasText) {
+                            PenikContextActionRow(
+                                    icon = Icons.Default.ContentCopy,
+                                    label = "Копировать текст",
+                                    labelColor = textPrimary,
+                                    iconTint = textMuted
+                            ) {
+                                onAction(PenikChatActions.COPY)
+                            }
+                        }
+                        if (!isMedia && isSentByMe && message.status != Message.STATUS_SEND_FAILED && message.acceptMessageCorrection()) {
+                            PenikContextActionRow(
+                                    icon = Icons.Default.Edit,
+                                    label = "Изменить",
+                                    labelColor = textPrimary,
+                                    iconTint = textMuted
+                            ) {
+                                onAction(PenikChatActions.CORRECT)
+                            }
+                        }
+                        PenikContextActionRow(
+                                icon = Icons.Default.Share,
+                                label = "Поделиться",
+                                labelColor = textPrimary,
+                                iconTint = textMuted
+                        ) {
+                            onAction(PenikChatActions.SHARE)
+                        }
+                        PenikContextActionRow(
+                                icon = Icons.Default.Delete,
+                                label = "Удалить",
+                                labelColor = danger,
+                                iconTint = danger
+                        ) {
+                            onAction(PenikChatActions.DELETE)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
