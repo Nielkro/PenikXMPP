@@ -28,13 +28,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -53,10 +56,13 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -595,6 +601,89 @@ fun ConnectionBanner(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun PenikSwipeableRow(
+        isArchiveView: Boolean,
+        onArchiveAction: () -> Unit,
+        onTogglePin: () -> Unit,
+        content: @Composable () -> Unit
+) {
+    val background = colorResource(R.color.penik_background)
+    val success = colorResource(R.color.penik_success)
+    val accent = colorResource(R.color.penik_accent)
+    val dismissState = rememberSwipeToDismissBoxState()
+    // The current Material3 API deprecated confirmValueChange, so the gesture is
+    // observed through settledValue instead: fire the action once per settled
+    // swipe, then reset() so the state-driven row always snaps back (the host
+    // decides whether the item actually leaves the list).
+    LaunchedEffect(dismissState.settledValue) {
+        when (dismissState.settledValue) {
+            SwipeToDismissBoxValue.StartToEnd -> {
+                onArchiveAction()
+                dismissState.reset()
+            }
+            SwipeToDismissBoxValue.EndToStart -> {
+                onTogglePin()
+                dismissState.reset()
+            }
+            SwipeToDismissBoxValue.Settled -> Unit
+        }
+    }
+    SwipeToDismissBox(
+            state = dismissState,
+            backgroundContent = {
+                val direction = dismissState.dismissDirection
+                val isStartToEnd = direction == SwipeToDismissBoxValue.StartToEnd
+                val isEndToStart = direction == SwipeToDismissBoxValue.EndToStart
+                Box(
+                        modifier =
+                                Modifier.fillMaxSize()
+                                        .background(
+                                                when {
+                                                    isStartToEnd -> success
+                                                    isEndToStart -> accent
+                                                    else -> Color.Transparent
+                                                }
+                                        )
+                                        .padding(horizontal = 20.dp),
+                        contentAlignment =
+                                if (isEndToStart) Alignment.CenterEnd else Alignment.CenterStart
+                ) {
+                    if (isStartToEnd || isEndToStart) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                    imageVector =
+                                            when {
+                                                isEndToStart -> Icons.Default.PushPin
+                                                isArchiveView -> Icons.Default.Unarchive
+                                                else -> Icons.Default.Archive
+                                            },
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                    text =
+                                            when {
+                                                isEndToStart -> "Закрепить"
+                                                isArchiveView -> "В чаты"
+                                                else -> "Архив"
+                                            },
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+    ) {
+        Box(modifier = Modifier.background(background)) { content() }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun PenikChatsTab(
         state: PenikChatsState,
         activity: XmppActivity,
@@ -643,13 +732,21 @@ fun PenikChatsTab(
                         items = filtered,
                         key = { it.uuid }
                     ) { conversation ->
-                        PenikConversationRow(
-                                conversation = conversation,
-                                activity = activity,
-                                revision = rev,
-                                onClick = { listener.onConversationClick(conversation) },
-                                onLongClick = { selectedConversation = conversation }
-                        )
+                        PenikSwipeableRow(
+                                isArchiveView = true,
+                                onArchiveAction = {
+                                    listener.onUnarchiveConversation(conversation)
+                                },
+                                onTogglePin = { listener.onTogglePin(conversation) }
+                        ) {
+                            PenikConversationRow(
+                                    conversation = conversation,
+                                    activity = activity,
+                                    revision = rev,
+                                    onClick = { listener.onConversationClick(conversation) },
+                                    onLongClick = { selectedConversation = conversation }
+                            )
+                        }
                     }
                 }
             }
@@ -730,13 +827,21 @@ fun PenikChatsTab(
                         items = filtered,
                         key = { it.uuid }
                     ) { conversation ->
-                        PenikConversationRow(
-                                conversation = conversation,
-                                activity = activity,
-                                revision = rev,
-                                onClick = { listener.onConversationClick(conversation) },
-                                onLongClick = { selectedConversation = conversation }
-                        )
+                        PenikSwipeableRow(
+                                isArchiveView = false,
+                                onArchiveAction = {
+                                    listener.onArchiveConversation(conversation)
+                                },
+                                onTogglePin = { listener.onTogglePin(conversation) }
+                        ) {
+                            PenikConversationRow(
+                                    conversation = conversation,
+                                    activity = activity,
+                                    revision = rev,
+                                    onClick = { listener.onConversationClick(conversation) },
+                                    onLongClick = { selectedConversation = conversation }
+                            )
+                        }
                     }
                 }
             }
