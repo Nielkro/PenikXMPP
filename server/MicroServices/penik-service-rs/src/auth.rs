@@ -25,6 +25,8 @@ pub enum AuthError {
     Expired,
     #[error("Invalid signature")]
     InvalidSignature,
+    #[error("Authentication is not configured")]
+    MissingConfiguration,
 }
 
 impl IntoResponse for AuthError {
@@ -33,6 +35,7 @@ impl IntoResponse for AuthError {
             AuthError::MissingHeader | AuthError::InvalidScheme => StatusCode::UNAUTHORIZED,
             AuthError::Expired => StatusCode::UNAUTHORIZED,
             AuthError::InvalidFormat | AuthError::InvalidSignature => StatusCode::FORBIDDEN,
+            AuthError::MissingConfiguration => StatusCode::INTERNAL_SERVER_ERROR,
         };
         let body = Json(crate::models::ApiResponse::<()>::err(self.to_string()));
         (status, body).into_response()
@@ -114,7 +117,7 @@ where
             .extensions
             .get::<std::sync::Arc<crate::config::Config>>()
             .map(|c| c.shared_secret.as_str())
-            .unwrap_or("penik_secret_shared_key");
+            .ok_or(AuthError::MissingConfiguration)?;
 
         let jid = verify_token(token, shared_secret)?;
         Ok(AuthUser(jid))
@@ -143,11 +146,12 @@ where
                 let shared_secret = parts
                     .extensions
                     .get::<std::sync::Arc<crate::config::Config>>()
-                    .map(|c| c.shared_secret.as_str())
-                    .unwrap_or("penik_secret_shared_key");
+                    .map(|c| c.shared_secret.as_str());
 
-                if let Ok(jid) = verify_token(token, shared_secret) {
-                    return Ok(MaybeAuthUser(Some(jid)));
+                if let Some(shared_secret) = shared_secret {
+                    if let Ok(jid) = verify_token(token, shared_secret) {
+                        return Ok(MaybeAuthUser(Some(jid)));
+                    }
                 }
             }
         }
@@ -190,6 +194,24 @@ mod tests {
         match err {
             AuthError::Expired => {}
             _ => panic!("Expected Expired error, got {:?}", err),
+        }
+    }
+
+    #[test]
+    fn test_legacy_default_token_does_not_verify_with_configured_secret() {
+        let configured_secret = "configured-secret-with-at-least-32-chars";
+        let jid = "mallory@snikket.penik.ru";
+        let expires = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64
+            + 3600;
+
+        let token = generate_token(jid, expires, crate::config::LEGACY_SHARED_SECRET);
+        let err = verify_token(&token, configured_secret).unwrap_err();
+        match err {
+            AuthError::InvalidSignature => {}
+            _ => panic!("Expected InvalidSignature error, got {:?}", err),
         }
     }
 

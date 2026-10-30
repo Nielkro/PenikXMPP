@@ -28,8 +28,11 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    // 2. Parse configuration
+    // 2. Parse and validate configuration
     let config = Arc::new(Config::parse());
+    config
+        .validate_shared_secret()
+        .map_err(anyhow::Error::msg)?;
     info!(
         "Starting Penik Service on {}:{}",
         config.host, config.port
