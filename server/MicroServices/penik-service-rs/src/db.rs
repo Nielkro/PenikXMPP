@@ -71,6 +71,7 @@ pub async fn init_db(db_path: &str) -> anyhow::Result<SqlitePool> {
             jid TEXT PRIMARY KEY,
             phone TEXT NOT NULL,
             phone_hash TEXT NOT NULL DEFAULT '',
+            phone_public INTEGER NOT NULL DEFAULT 0,
             updated_at INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_phone ON phone_directory(phone);
@@ -87,9 +88,16 @@ pub async fn init_db(db_path: &str) -> anyhow::Result<SqlitePool> {
         .execute(&pool)
         .await;
 
+    // Migration: add phone_public column if it doesn't exist yet
+    let _ = sqlx::query(
+        "ALTER TABLE phone_directory ADD COLUMN phone_public INTEGER NOT NULL DEFAULT 0",
+    )
+    .execute(&pool)
+    .await;
+
     // Backfill empty phone_hash for existing records
     let rows = sqlx::query_as::<_, PhoneDirectoryEntry>(
-        "SELECT jid, phone, phone_hash, updated_at FROM phone_directory WHERE phone_hash = ''"
+        "SELECT jid, phone, phone_hash, phone_public, updated_at FROM phone_directory WHERE phone_hash = ''"
     )
     .fetch_all(&pool)
     .await
@@ -259,7 +267,12 @@ pub async fn get_user_installed_packs(pool: &SqlitePool, user_jid: &str) -> anyh
     Ok(packs)
 }
 
-pub async fn save_phone(pool: &SqlitePool, jid: &str, phone: &str) -> anyhow::Result<()> {
+pub async fn save_phone(
+    pool: &SqlitePool,
+    jid: &str,
+    phone: &str,
+    phone_public: bool,
+) -> anyhow::Result<()> {
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
@@ -268,17 +281,19 @@ pub async fn save_phone(pool: &SqlitePool, jid: &str, phone: &str) -> anyhow::Re
 
     sqlx::query(
         r#"
-        INSERT INTO phone_directory (jid, phone, phone_hash, updated_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO phone_directory (jid, phone, phone_hash, phone_public, updated_at)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(jid) DO UPDATE SET
             phone = excluded.phone,
             phone_hash = excluded.phone_hash,
+            phone_public = excluded.phone_public,
             updated_at = excluded.updated_at
         "#,
     )
     .bind(jid)
     .bind(phone)
     .bind(phone_hash)
+    .bind(phone_public)
     .bind(now)
     .execute(pool)
     .await?;
@@ -335,9 +350,80 @@ pub async fn lookup_phone_hashes_by_prefixes(
     Ok(all_results)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn phone_public_flag_is_persisted() {
+        let dir = tempfile::tempdir().expect("temporary directory should be created");
+        let db_path = dir.path().join("phone-directory.db");
+        let pool = init_db(db_path.to_str().expect("temporary path should be UTF-8"))
+            .await
+            .expect("database should initialize");
+
+        save_phone(&pool, "alice@example.com", "+1234567890", true)
+            .await
+            .expect("public phone entry should save");
+        let entry = get_phone_by_jid(&pool, "alice@example.com")
+            .await
+            .expect("phone lookup should succeed")
+            .expect("phone entry should exist");
+        assert!(entry.phone_public);
+
+        save_phone(&pool, "alice@example.com", "+1234567890", false)
+            .await
+            .expect("private phone entry should save");
+        let entry = get_phone_by_jid(&pool, "alice@example.com")
+            .await
+            .expect("phone lookup should succeed")
+            .expect("phone entry should exist");
+        assert!(!entry.phone_public);
+    }
+
+    #[tokio::test]
+    async fn phone_public_migration_defaults_existing_entries_to_private() {
+        let dir = tempfile::tempdir().expect("temporary directory should be created");
+        let db_path = dir.path().join("legacy-phone-directory.db");
+        let db_path = db_path.to_str().expect("temporary path should be UTF-8");
+        let options = SqliteConnectOptions::from_str(db_path)
+            .expect("legacy database options should parse")
+            .create_if_missing(true);
+        let pool = SqlitePool::connect_with(options)
+            .await
+            .expect("legacy database should initialize");
+        sqlx::query(
+            "CREATE TABLE phone_directory (jid TEXT PRIMARY KEY, phone TEXT NOT NULL, phone_hash TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL)",
+        )
+        .execute(&pool)
+        .await
+        .expect("legacy phone table should be created");
+        sqlx::query(
+            "INSERT INTO phone_directory (jid, phone, phone_hash, updated_at) VALUES (?, ?, ?, ?)",
+        )
+        .bind("bob@example.com")
+        .bind("+1234567890")
+        .bind("legacy-hash")
+        .bind(1_i64)
+        .execute(&pool)
+        .await
+        .expect("legacy phone entry should be inserted");
+        pool.close().await;
+
+        let pool = init_db(db_path)
+            .await
+            .expect("database migration should succeed");
+        let entry = get_phone_by_jid(&pool, "bob@example.com")
+            .await
+            .expect("phone lookup should succeed")
+            .expect("phone entry should exist");
+        assert!(!entry.phone_public);
+    }
+}
+
 pub async fn get_phone_by_jid(pool: &SqlitePool, jid: &str) -> anyhow::Result<Option<PhoneDirectoryDetails>> {
     let entry = sqlx::query_as::<_, PhoneDirectoryDetails>(
-        "SELECT jid, phone, phone_hash, updated_at FROM phone_directory WHERE jid = ?"
+        "SELECT jid, phone, phone_hash, phone_public, updated_at FROM phone_directory WHERE jid = ?"
     )
     .bind(jid)
     .fetch_optional(pool)

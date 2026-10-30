@@ -18,8 +18,15 @@ local base64 = require "util.encodings".base64;
 
 local xmlns_stickers_auth = "penik:stickers:auth:0";
 
-local shared_secret = module:get_option_string("stickers_shared_secret", "penik_secret_shared_key");
+local shared_secret = module:get_option_string("stickers_shared_secret");
+local shared_secret_configured = shared_secret ~= nil
+    and shared_secret ~= ""
+    and shared_secret ~= "penik_secret_shared_key";
 local token_ttl = module:get_option_number("stickers_token_ttl", 86400); -- 24 hours default
+
+if not shared_secret_configured then
+    module:log("error", "stickers_shared_secret is missing or uses the former public default; token issuance disabled");
+end
 
 local function handle_auth_iq(event)
     local origin, stanza = event.origin, event.stanza;
@@ -31,6 +38,11 @@ local function handle_auth_iq(event)
     local payload_tag = stanza:get_child("stickers-auth", xmlns_stickers_auth);
     if not payload_tag then
         return;
+    end
+
+    if not shared_secret_configured then
+        origin.send(st.error_reply(stanza, "cancel", "service-unavailable", "Stickers authentication is not configured"));
+        return true;
     end
 
     -- Determine authenticated user JID

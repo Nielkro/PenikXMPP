@@ -175,7 +175,7 @@ class WelcomeActivity : QrCodeProcessingActivity(),
                     if (!phone.isNullOrBlank()) {
                         service.publishPhoneNumber(account, phone)
                         PenikPhoneDirectoryManager.uploadPhoneAsync(
-                            account.jid.asBareJid().toString(),
+                            account,
                             phone
                         )
                     }

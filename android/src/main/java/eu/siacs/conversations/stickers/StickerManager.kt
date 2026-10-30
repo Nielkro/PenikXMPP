@@ -293,16 +293,5 @@ class StickerManager private constructor(private val context: Context) {
                 INSTANCE ?: StickerManager(context.applicationContext).also { INSTANCE = it }
             }
         }
-
-        fun createAuthToken(userJid: String, sharedSecret: String = "penik_secret_shared_key"): String {
-            val expiresAt = System.currentTimeMillis() / 1000 + 86400 * 7
-            val raw = "$userJid:$expiresAt"
-            val mac = javax.crypto.Mac.getInstance("HmacSHA256")
-            mac.init(javax.crypto.spec.SecretKeySpec(sharedSecret.toByteArray(Charsets.UTF_8), "HmacSHA256"))
-            val sigBytes = mac.doFinal(raw.toByteArray(Charsets.UTF_8))
-            val sigHex = sigBytes.joinToString("") { "%02x".format(it) }
-            val full = "$raw:$sigHex"
-            return android.util.Base64.encodeToString(full.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP)
-        }
     }
 }
