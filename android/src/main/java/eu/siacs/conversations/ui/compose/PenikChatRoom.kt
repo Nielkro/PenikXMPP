@@ -277,8 +277,41 @@ private sealed interface ChatRow {
         val body: String,
         val fileUrl: String,
         val readCount: Int,
-        val reactionsCount: Int
+        val reactionsCount: Int,
+        val isFirstInGroup: Boolean = true,
+        val isLastInGroup: Boolean = true
     ) : ChatRow
+}
+
+private fun penikIsGroupableMessage(message: Message): Boolean {
+    return message.type != Message.TYPE_STATUS && message.type != Message.TYPE_RTP_SESSION
+}
+
+private fun penikSenderGroupKey(message: Message): String {
+    return if (message.status == Message.STATUS_RECEIVED) {
+        "in:" + ((message.trueCounterpart ?: message.counterpart)?.toString() ?: "")
+    } else {
+        "out"
+    }
+}
+
+private fun penikSameSenderGroup(a: ChatRow.Msg, b: ChatRow.Msg): Boolean {
+    if (!penikIsGroupableMessage(a.message) || !penikIsGroupableMessage(b.message)) {
+        return false
+    }
+    if (penikSenderGroupKey(a.message) != penikSenderGroupKey(b.message)) {
+        return false
+    }
+    val aTime = a.message.timeSent
+    val bTime = b.message.timeSent
+    if (aTime > 0 && bTime > 0) {
+        val aDay = Instant.ofEpochMilli(aTime).atZone(ZoneId.systemDefault()).toLocalDate()
+        val bDay = Instant.ofEpochMilli(bTime).atZone(ZoneId.systemDefault()).toLocalDate()
+        if (aDay != bDay) {
+            return false
+        }
+    }
+    return true
 }
 
 fun penikChatDateLabel(date: LocalDate): String {
@@ -431,7 +464,25 @@ fun PenikChatRoom(
                         )
                     )
                 }
-                items.asReversed()
+                val groupedItems = ArrayList<ChatRow>(items.size)
+                for (index in items.indices) {
+                    val row = items[index]
+                    if (row is ChatRow.Msg && penikIsGroupableMessage(row.message)) {
+                        val prev = items.getOrNull(index - 1) as? ChatRow.Msg
+                        val next = items.getOrNull(index + 1) as? ChatRow.Msg
+                        groupedItems.add(
+                                row.copy(
+                                        isFirstInGroup =
+                                                prev == null || !penikSameSenderGroup(prev, row),
+                                        isLastInGroup =
+                                                next == null || !penikSameSenderGroup(row, next)
+                                )
+                        )
+                    } else {
+                        groupedItems.add(row)
+                    }
+                }
+                groupedItems.asReversed()
             }
     val showScrollDown by remember {
         derivedStateOf {
@@ -628,7 +679,9 @@ fun PenikChatRoom(
                                         isMuc = state.isMuc,
                                         showAvatars11 = state.showAvatars11,
                                         listener = listener,
-                                        revision = state.revision
+                                        revision = state.revision,
+                                        isFirstInGroup = row.isFirstInGroup,
+                                        isLastInGroup = row.isLastInGroup
                                 )
                     }
                 }
@@ -690,7 +743,10 @@ fun PenikDateHeader(label: String) {
     }
 }
 
-class PenikBubbleShape(private val isSentByMe: Boolean) : Shape {
+class PenikBubbleShape(
+        private val isSentByMe: Boolean,
+        private val showTail: Boolean = true
+) : Shape {
     override fun createOutline(
             size: androidx.compose.ui.geometry.Size,
             layoutDirection: LayoutDirection,
@@ -703,7 +759,17 @@ class PenikBubbleShape(private val isSentByMe: Boolean) : Shape {
                     val radius = with(density) { 14.dp.toPx() }
                     val tailWidth = with(density) { 6.dp.toPx() }
                     val ctrlOffset = with(density) { 2.dp.toPx() }
-                    if (isSentByMe) {
+                    if (!showTail) {
+                        moveTo(radius, 0f)
+                        lineTo(width - radius, 0f)
+                        quadraticBezierTo(width, 0f, width, radius)
+                        lineTo(width, height - radius)
+                        quadraticBezierTo(width, height, width - radius, height)
+                        lineTo(radius, height)
+                        quadraticBezierTo(0f, height, 0f, height - radius)
+                        lineTo(0f, radius)
+                        quadraticBezierTo(0f, 0f, radius, 0f)
+                    } else if (isSentByMe) {
                         moveTo(radius, 0f)
                         lineTo(width - tailWidth - radius, 0f)
                         quadraticBezierTo(width - tailWidth, 0f, width - tailWidth, radius)
@@ -1113,7 +1179,9 @@ fun PenikMessageRow(
         isMuc: Boolean,
         showAvatars11: Boolean,
         listener: PenikChatListener,
-        revision: Long = 0L
+        revision: Long = 0L,
+        isFirstInGroup: Boolean = true,
+        isLastInGroup: Boolean = true
 ) {
     if (message.type == Message.TYPE_RTP_SESSION) {
         PenikCallCard(message = message, activity = activity, listener = listener)
@@ -1246,7 +1314,9 @@ fun PenikMessageRow(
                                         activity = activity,
                                         isMuc = isMuc,
                                         listener = listener,
-                                        revision = revision
+                                        revision = revision,
+                                        isFirstInGroup = isFirstInGroup,
+                                        isLastInGroup = isLastInGroup
                                 )
                             }
                         }
@@ -1267,7 +1337,9 @@ fun PenikMessageRow(
                                 activity = activity,
                                 isMuc = isMuc,
                                 listener = listener,
-                                revision = revision
+                                revision = revision,
+                                isFirstInGroup = isFirstInGroup,
+                                isLastInGroup = isLastInGroup
                         )
                     }
 
@@ -1618,7 +1690,9 @@ fun PenikTextBubble(
         isMuc: Boolean,
         listener: PenikChatListener,
         revision: Long = 0L,
-        previewOnly: Boolean = false
+        previewOnly: Boolean = false,
+        isFirstInGroup: Boolean = true,
+        isLastInGroup: Boolean = true
 ) {
     val context = LocalContext.current
     val quoteScrollHandler = LocalQuoteScrollHandler.current
@@ -1664,7 +1738,7 @@ fun PenikTextBubble(
                 Message.STATUS_SEND_FAILED -> danger
                 else -> textMuted
             }
-    val showSender = isMuc && !isSentByMe
+    val showSender = isMuc && !isSentByMe && isFirstInGroup
     val senderName =
             if (showSender) {
                 UIHelper.getMessageDisplayName(message).split("\\s+".toRegex()).firstOrNull() ?: ""
@@ -1673,10 +1747,15 @@ fun PenikTextBubble(
             }
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
     Box(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
+            modifier =
+                    Modifier.fillMaxWidth()
+                            .padding(
+                                    top = if (isFirstInGroup) 1.dp else 0.dp,
+                                    bottom = if (isLastInGroup) 1.dp else 0.dp
+                            ),
             contentAlignment = boxAlignment
     ) {
-        val bubbleShape = PenikBubbleShape(isSentByMe = isSentByMe)
+        val bubbleShape = PenikBubbleShape(isSentByMe = isSentByMe, showTail = isLastInGroup)
         if (isEmojiOnly) {
             val fontSize = if (emojiCount == 1) 64.sp else 40.sp
             val emojiModifier =
