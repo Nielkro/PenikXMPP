@@ -131,6 +131,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.draw.drawBehind
@@ -2904,10 +2905,15 @@ fun PenikVideoViewer(
     var isPlaying by remember { mutableStateOf(false) }
     var currentPositionMs by remember { mutableStateOf(0) }
     var durationMs by remember { mutableStateOf(0) }
-    var showControls by remember { mutableStateOf(true) }
+    var showControls by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
     var videoViewRef by remember { mutableStateOf<android.widget.VideoView?>(null) }
     var mediaPlayerRef by remember { mutableStateOf<android.media.MediaPlayer?>(null) }
+    val initialRuntimeSec = message.fileParams?.runtime ?: 0
+    var isLooping by remember(message.uuid) {
+        mutableStateOf(initialRuntimeSec in 1..30)
+    }
+    var isLoopingExplicit by remember(message.uuid) { mutableStateOf(false) }
 
     val senderName = remember(message) { UIHelper.getMessageDisplayName(message) }
     val timeText = remember(message.timeSent) {
@@ -2939,6 +2945,7 @@ fun PenikVideoViewer(
             if (vv.isPlaying) {
                 vv.pause()
                 isPlaying = false
+                showControls = true
             } else {
                 if (currentPositionMs >= durationMs - 500 && durationMs > 0) {
                     vv.seekTo(0)
@@ -2946,6 +2953,7 @@ fun PenikVideoViewer(
                 }
                 vv.start()
                 isPlaying = true
+                showControls = false
             }
         }
     }
@@ -2973,15 +2981,26 @@ fun PenikVideoViewer(
                                 setVideoURI(videoUri)
                                 setOnPreparedListener { mp ->
                                     mediaPlayerRef = mp
-                                    mp.isLooping = false
                                     durationMs = mp.duration
+                                    if (!isLoopingExplicit) {
+                                        isLooping = mp.duration in 1..30_000
+                                    }
+                                    mp.isLooping = isLooping
                                     start()
                                     isPlaying = true
                                 }
-                                setOnCompletionListener {
-                                    isPlaying = false
-                                    currentPositionMs = durationMs
-                                    showControls = true
+                                setOnCompletionListener { mp ->
+                                    if (isLooping) {
+                                        mp.seekTo(0)
+                                        mp.start()
+                                        isPlaying = true
+                                        currentPositionMs = 0
+                                    } else {
+                                        isPlaying = false
+                                        currentPositionMs = 0
+                                        videoViewRef?.seekTo(0)
+                                        showControls = true
+                                    }
                                 }
                                 setOnErrorListener { _, _, _ ->
                                     isError = true
@@ -2994,18 +3013,29 @@ fun PenikVideoViewer(
                                 .fillMaxSize()
                                 .pointerInput(Unit) {
                                     detectTapGestures {
-                                        showControls = !showControls
+                                        if (isPlaying) {
+                                            videoViewRef?.pause()
+                                            isPlaying = false
+                                            showControls = true
+                                        } else {
+                                            if (currentPositionMs >= durationMs - 500 && durationMs > 0) {
+                                                videoViewRef?.seekTo(0)
+                                                currentPositionMs = 0
+                                            }
+                                            videoViewRef?.start()
+                                            isPlaying = true
+                                            showControls = false
+                                        }
                                     }
                                 }
                 )
 
                 AnimatedVisibility(
-                        visible = showControls || !isPlaying,
+                        visible = !isPlaying,
                         enter = fadeIn(),
                         exit = fadeOut(),
                         modifier = Modifier.align(Alignment.Center)
                 ) {
-                    val isFinished = currentPositionMs >= durationMs - 500 && durationMs > 0
                     Box(
                             modifier = Modifier
                                     .size(72.dp)
@@ -3015,12 +3045,8 @@ fun PenikVideoViewer(
                             contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                                imageVector = when {
-                                    isFinished -> Icons.Default.Refresh
-                                    isPlaying -> Icons.Default.Pause
-                                    else -> Icons.Default.PlayArrow
-                                },
-                                contentDescription = if (isPlaying) "Пауза" else "Воспроизведение",
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Воспроизведение",
                                 tint = Color.White,
                                 modifier = Modifier.size(40.dp)
                         )
@@ -3111,21 +3137,54 @@ fun PenikVideoViewer(
                                 )
                             }
                         }
-                        if (listener != null) {
-                            var showOverflowMenu by remember { mutableStateOf(false) }
-                            Box {
-                                IconButton(onClick = { showOverflowMenu = true }) {
-                                    Icon(
-                                            imageVector = Icons.Default.MoreVert,
-                                            contentDescription = "Ещё",
-                                            tint = Color.White
-                                    )
-                                }
-                                DropdownMenu(
-                                        expanded = showOverflowMenu,
-                                        onDismissRequest = { showOverflowMenu = false },
-                                        modifier = Modifier.background(colorResource(R.color.penik_panel_secondary))
-                                ) {
+                        var showOverflowMenu by remember { mutableStateOf(false) }
+                        Box {
+                            IconButton(onClick = { showOverflowMenu = true }) {
+                                Icon(
+                                        imageVector = Icons.Default.MoreVert,
+                                        contentDescription = "Ещё",
+                                        tint = Color.White
+                                )
+                            }
+                            DropdownMenu(
+                                    expanded = showOverflowMenu,
+                                    onDismissRequest = { showOverflowMenu = false },
+                                    modifier = Modifier.background(colorResource(R.color.penik_panel_secondary))
+                            ) {
+                                DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                    text = "Зациклить",
+                                                    color = if (isLooping) colorResource(R.color.penik_accent) else Color.White
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                    imageVector = Icons.Default.Repeat,
+                                                    contentDescription = null,
+                                                    tint = if (isLooping) colorResource(R.color.penik_accent) else Color.White.copy(alpha = 0.7f),
+                                                    modifier = Modifier.size(20.dp)
+                                            )
+                                        },
+                                        trailingIcon = if (isLooping) {
+                                            {
+                                                Icon(
+                                                        imageVector = Icons.Default.Done,
+                                                        contentDescription = null,
+                                                        tint = colorResource(R.color.penik_accent),
+                                                        modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        } else null,
+                                        onClick = {
+                                            showOverflowMenu = false
+                                            val newLoop = !isLooping
+                                            isLooping = newLoop
+                                            isLoopingExplicit = true
+                                            mediaPlayerRef?.isLooping = newLoop
+                                        }
+                                )
+                                if (listener != null) {
                                     if (hasUrl) {
                                         DropdownMenuItem(
                                                 text = { Text("Копировать ссылку", color = Color.White) },
@@ -3744,22 +3803,6 @@ fun PenikVideoThumb(message: Message, activity: XmppActivity, fgColor: Color) {
             Box(
                     modifier = modifier
                             .background(Color(0xFF1E232B))
-            )
-        }
-
-        // Compact center play circle
-        Box(
-                modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.55f)),
-                contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Воспроизвести",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
             )
         }
 
