@@ -197,7 +197,7 @@ fun PenikStickerBubble(
                         val danger = colorResource(R.color.penik_danger)
                         val status = message.status
                         when (status) {
-                            Message.STATUS_WAITING -> {
+                            Message.STATUS_WAITING, Message.STATUS_UNSEND -> {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_schedule_24dp),
                                     contentDescription = "Ожидание отправки",
@@ -205,7 +205,7 @@ fun PenikStickerBubble(
                                     modifier = Modifier.padding(start = 3.dp).size(12.dp)
                                 )
                             }
-                            Message.STATUS_UNSEND, Message.STATUS_SEND_FAILED -> {
+                            Message.STATUS_SEND_FAILED -> {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_error_24dp),
                                     contentDescription = "Не удалось отправить",

@@ -133,8 +133,10 @@ public class ConversationsActivity extends QrCodeProcessingActivity
 
     @Override
     protected void refreshUiReal() {
-        for (@IdRes int id : FRAGMENT_ID_NOTIFICATION_ORDER) {
-            refreshFragment(id);
+        for (final Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof XmppFragment xmppFragment) {
+                xmppFragment.refresh();
+            }
         }
     }
 
@@ -360,7 +362,10 @@ public class ConversationsActivity extends QrCodeProcessingActivity
         Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
         ;
         this.getSupportFragmentManager()
-                .addOnBackStackChangedListener(this::showDialogsIfMainIsOverview);
+                .addOnBackStackChangedListener(() -> {
+                    showDialogsIfMainIsOverview();
+                    onConversationsListItemUpdated();
+                });
         this.initializeFragments();
         final Intent intent;
         if (savedInstanceState == null) {

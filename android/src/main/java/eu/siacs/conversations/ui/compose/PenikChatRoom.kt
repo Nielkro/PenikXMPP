@@ -762,7 +762,7 @@ fun PenikMessageStatusIcon(
         modifier: Modifier = Modifier
 ) {
     when (status) {
-        Message.STATUS_WAITING -> {
+        Message.STATUS_WAITING, Message.STATUS_UNSEND -> {
             Icon(
                     painter = painterResource(R.drawable.ic_schedule_24dp),
                     contentDescription = "Ожидание отправки",
@@ -770,7 +770,7 @@ fun PenikMessageStatusIcon(
                     modifier = modifier.size(12.dp)
             )
         }
-        Message.STATUS_UNSEND, Message.STATUS_SEND_FAILED -> {
+        Message.STATUS_SEND_FAILED -> {
             Icon(
                     painter = painterResource(R.drawable.ic_error_24dp),
                     contentDescription = "Не удалось отправить",
@@ -1974,66 +1974,136 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
             } else {
                 ""
             }
-    val durationText = penikCallDuration(status.duration, message.timeSent)
+
+    val seconds =
+            if (status.duration > 0) {
+                if (message.timeSent < 1791010127000L) {
+                    status.duration / 1000
+                } else {
+                    status.duration
+                }
+            } else {
+                0L
+            }
+    val durationText =
+            if (seconds > 0 && seconds <= 7 * 24 * 3600) {
+                val h = seconds / 3600
+                val m = (seconds % 3600) / 60
+                val s = seconds % 60
+                if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
+            } else {
+                ""
+            }
+
     val mediaText =
             when (status.media) {
                 "video" -> context.getString(R.string.video).replaceFirstChar { it.uppercase() }
-                "audio" -> context.getString(R.string.audio).replaceFirstChar { it.uppercase() }
-                else -> ""
+                else -> context.getString(R.string.audio).replaceFirstChar { it.uppercase() }
             }
+
+    val subtitle =
+            when {
+                durationText.isNotEmpty() -> "$durationText  $mediaText"
+                missed && received -> "Без ответа"
+                missed && !received -> "Отменен"
+                else -> mediaText
+            }
+
     val bgColor = if (isSentByMe) sentBg else recvBg
     val fgColor = if (isSentByMe) sentText else textPrimary
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
+    val iconTint = if (missed && received) danger else fgColor
+
     Box(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
             contentAlignment = boxAlignment
     ) {
         Row(
                 modifier =
-                        Modifier.padding(horizontal = 12.dp)
-                                .widthIn(max = 300.dp)
+                        Modifier.widthIn(min = 190.dp, max = 270.dp)
                                 .clip(PenikBubbleShape(isSentByMe = isSentByMe))
                                 .background(bgColor)
                                 .clickable { listener.onMessageAction(PenikChatActions.OPEN, message) }
-                                .padding(12.dp),
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                     modifier =
-                            Modifier.size(44.dp)
+                            Modifier.size(38.dp)
                                     .clip(CircleShape)
-                                    .background(accent.copy(alpha = 0.2f)),
+                                    .background(Color.White.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
             ) {
-                Icon(
-                        painter =
-                                painterResource(
-                                        RtpSessionStatus.getDrawable(received, status.successful)
-                                ),
-                        contentDescription = null,
-                        tint = if (missed) danger else accent,
-                        modifier = Modifier.size(24.dp)
-                )
+                Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                            painter = painterResource(R.drawable.ic_call_24dp),
+                            contentDescription = null,
+                            tint = iconTint.copy(alpha = 0.9f),
+                            modifier = Modifier.size(17.dp)
+                    )
+                    Spacer(modifier = Modifier.width(1.dp))
+                    Icon(
+                            painter =
+                                    painterResource(
+                                            if (received) {
+                                                if (missed) R.drawable.ic_call_missed_24dp
+                                                else R.drawable.ic_call_received_24dp
+                                            } else {
+                                                R.drawable.ic_call_made_24dp
+                                            }
+                                    ),
+                            contentDescription = null,
+                            tint = iconTint.copy(alpha = 0.85f),
+                            modifier = Modifier.size(13.dp)
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f, fill = false)) {
                 Text(
                         text = title,
-                        color = if (missed && !isSentByMe) danger else fgColor,
-                        fontWeight = FontWeight.Bold,
+                        color = if (missed && received) danger else fgColor,
+                        fontWeight = FontWeight.SemiBold,
                         fontSize = 15.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                 )
-                val details =
-                        listOf(durationText, mediaText).filter { it.isNotEmpty() }.joinToString(" ")
-                if (details.isNotEmpty()) {
-                    Text(text = details, color = textMuted, fontSize = 13.sp)
-                }
+                Text(
+                        text = subtitle,
+                        color = textMuted,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                )
             }
-            if (timeText.isNotEmpty()) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = timeText, color = textMuted, fontSize = 11.sp)
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Bottom,
+                    modifier = Modifier.align(Alignment.Bottom)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (timeText.isNotEmpty()) {
+                        Text(
+                                text = timeText,
+                                color = textMuted,
+                                fontSize = 11.sp
+                        )
+                    }
+                    if (isSentByMe) {
+                        Spacer(modifier = Modifier.width(3.dp))
+                        PenikMessageStatusIcon(
+                                status = message.status,
+                                tint = textMuted,
+                                accent = accent,
+                                danger = danger,
+                                modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
             }
         }
     }

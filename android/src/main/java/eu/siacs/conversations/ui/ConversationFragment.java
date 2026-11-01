@@ -120,6 +120,7 @@ import eu.siacs.conversations.entities.Sticker;
 import eu.siacs.conversations.stickers.PenikServiceTokenProvider;
 import eu.siacs.conversations.stickers.StickerManager;
 import eu.siacs.conversations.entities.ReadByMarker;
+import eu.siacs.conversations.entities.RtpSessionStatus;
 import eu.siacs.conversations.ui.compose.PenikBotCommandsBridge;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import eu.siacs.conversations.entities.Transferable;
@@ -1895,6 +1896,9 @@ public class ConversationFragment extends XmppFragment
         getParentFragmentManager().removeOnBackStackChangedListener(backStackListener);
         messageListAdapter.setOnContactPictureClicked(null);
         messageListAdapter.setOnContactPictureLongClicked(null);
+        if (getActivity() instanceof ConversationsActivity ca) {
+            ca.onConversationsListItemUpdated();
+        }
     }
 
     private void quoteText(String text) {
@@ -4020,7 +4024,14 @@ public class ConversationFragment extends XmppFragment
                 }
             }
             case PenikChatActions.OPEN -> {
-                if (message.isGeoUri()) {
+                if (message.getType() == Message.TYPE_RTP_SESSION) {
+                    final RtpSessionStatus rtpStatus = RtpSessionStatus.of(message.getBody());
+                    if ("video".equalsIgnoreCase(rtpStatus.media)) {
+                        checkPermissionAndTriggerVideoCall();
+                    } else {
+                        checkPermissionAndTriggerAudioCall();
+                    }
+                } else if (message.isGeoUri()) {
                     GeoHelper.view(getActivity(), message);
                 } else {
                     messageListAdapter.openDownloadable(message);
