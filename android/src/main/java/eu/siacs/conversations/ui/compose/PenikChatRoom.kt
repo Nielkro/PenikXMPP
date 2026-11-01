@@ -2992,8 +2992,10 @@ fun PenikVideoViewer(
                         },
                         modifier = Modifier
                                 .fillMaxSize()
-                                .clickable {
-                                    showControls = !showControls
+                                .pointerInput(Unit) {
+                                    detectTapGestures {
+                                        showControls = !showControls
+                                    }
                                 }
                 )
 
