@@ -271,7 +271,8 @@ object PenikChatBridge {
 }
 
 private sealed interface ChatRow {
-    data class DateHeader(val label: String, val key: LocalDate) : ChatRow
+    val rowKey: String
+    data class DateHeader(val label: String, val key: LocalDate, override val rowKey: String) : ChatRow
     data class Msg(
         val message: Message,
         val status: Int,
@@ -279,7 +280,8 @@ private sealed interface ChatRow {
         val body: String,
         val fileUrl: String,
         val readCount: Int,
-        val reactionsCount: Int
+        val reactionsCount: Int,
+        override val rowKey: String
     ) : ChatRow
 }
 
@@ -394,9 +396,14 @@ fun PenikChatRoom(
     val listState = rememberLazyListState()
     val rows =
             remember(state.messages, state.revision) {
+                val seenUuids = HashSet<String>()
                 val inOrder =
                         state.messages
                                 .filter { m ->
+                                    val u = m.uuid
+                                    if (u != null && !seenUuids.add(u)) {
+                                        return@filter false
+                                    }
                                     val body = m.body ?: ""
                                     if (m.type == Message.TYPE_STATUS) {
                                         body.isNotBlank() &&
@@ -409,6 +416,7 @@ fun PenikChatRoom(
                                     }
                                 }
                 val items = ArrayList<ChatRow>()
+                val seenRowKeys = HashSet<String>()
                 var lastDay: LocalDate? = null
                 for (m in inOrder) {
                     if (m.type != Message.TYPE_STATUS && m.timeSent > 0) {
@@ -418,8 +426,18 @@ fun PenikChatRoom(
                                         .toLocalDate()
                         if (day != lastDay) {
                             lastDay = day
-                            items.add(ChatRow.DateHeader(penikChatDateLabel(day), day))
+                            var hKey = "date-$day"
+                            if (!seenRowKeys.add(hKey)) {
+                                hKey = "$hKey-${items.size}"
+                                seenRowKeys.add(hKey)
+                            }
+                            items.add(ChatRow.DateHeader(penikChatDateLabel(day), day, hKey))
                         }
+                    }
+                    var mKey = "msg-${m.uuid ?: m.hashCode()}"
+                    if (!seenRowKeys.add(mKey)) {
+                        mKey = "$mKey-${m.timeSent}-${items.size}"
+                        seenRowKeys.add(mKey)
                     }
                     items.add(
                         ChatRow.Msg(
@@ -429,7 +447,8 @@ fun PenikChatRoom(
                             body = m.body ?: "",
                             fileUrl = m.fileParams?.url ?: "",
                             readCount = m.readByMarkers?.size ?: 0,
-                            reactionsCount = m.reactions?.size ?: 0
+                            reactionsCount = m.reactions?.size ?: 0,
+                            rowKey = mKey
                         )
                     )
                 }
@@ -606,12 +625,7 @@ fun PenikChatRoom(
             ) {
                 items(
                         items = rows,
-                        key = { row ->
-                            when (row) {
-                                is ChatRow.DateHeader -> "date-${row.key}"
-                                is ChatRow.Msg -> "msg-${row.message.uuid ?: row.message.hashCode()}"
-                            }
-                        },
+                        key = { row -> row.rowKey },
                         contentType = { row ->
                             when (row) {
                                 is ChatRow.DateHeader -> "date_header"

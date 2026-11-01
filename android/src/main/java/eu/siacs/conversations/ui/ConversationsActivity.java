@@ -375,6 +375,13 @@ public class ConversationsActivity extends QrCodeProcessingActivity
             pendingViewIntent.push(intent);
             setIntent(createLauncherIntent(this));
         }
+        new Thread(() -> {
+            try {
+                Class.forName("eu.siacs.conversations.ui.compose.PenikChatRoomKt");
+                Class.forName("eu.siacs.conversations.ui.ConversationFragment");
+                Class.forName("eu.siacs.conversations.ui.widget.PenikSwipeBackLayout");
+            } catch (Throwable ignored) {}
+        }, "penik-prewarm").start();
     }
 
     @Override
