@@ -1157,6 +1157,7 @@
     <string name="moderate_delete_dot_dot_dot">Удалить как модератор…</string>
     <string name="moderate_delete">Удалить как модератор</string>
     <string name="delete_message">Удалить сообщение</string>
+    <string name="delete_message_dialog_confirm">Вы действительно хотите удалить это сообщение?</string>
     <string name="moderation_explained">Сообщение будет удалено для вас и всех остальных участников этого публичного канала.</string>
     <string name="do_not_show_this_warning_again">Больше не предупреждать.</string>
     <string name="could_not_moderate_message">Невозможно модерировать сообщение</string>

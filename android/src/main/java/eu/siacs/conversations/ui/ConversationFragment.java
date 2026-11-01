@@ -4005,23 +4005,39 @@ public class ConversationFragment extends XmppFragment
             case PenikChatActions.SAVE_FILE -> saveFile(message);
             case PenikChatActions.RESEND -> resendMessage(message, false);
             case PenikChatActions.DELETE -> {
-                if (message.isFileOrImage() && message.getFileParams() != null) {
-                    deleteFileDialog(message, false);
-                } else {
-                    final var builder = new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireActivity());
-                    builder.setTitle(R.string.delete_message);
-                    builder.setMessage(R.string.delete_file_dialog_confirm);
-                    builder.setNegativeButton(R.string.cancel, null);
-                    builder.setPositiveButton(
-                            R.string.delete,
-                            (dialog, which) -> {
-                                DatabaseBackend.getInstance(requireContext())
-                                        .deleteMessage(message.getUuid());
-                                requireConversationsActivity().onConversationsListItemUpdated();
-                                refresh();
-                            });
-                    builder.create().show();
-                }
+                final var builder = new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireActivity());
+                builder.setTitle(R.string.delete_message);
+                builder.setMessage(R.string.delete_message_dialog_confirm);
+                builder.setNegativeButton(R.string.cancel, null);
+                builder.setPositiveButton(
+                        R.string.delete,
+                        (dialog, which) -> {
+                            if (message.isFileOrImage()) {
+                                try {
+                                    final var xmppService = requireXmppActivity().xmppConnectionService;
+                                    if (xmppService != null) {
+                                        xmppService.getFileBackend().deleteFile(message);
+                                        xmppService.evictPreview(message.getUuid());
+                                    }
+                                } catch (final Exception e) {
+                                    Log.w(Config.LOGTAG, "could not delete file for message", e);
+                                }
+                            }
+                            DatabaseBackend.getInstance(requireContext())
+                                    .deleteMessage(message.getUuid());
+                            if (this.conversation != null) {
+                                this.conversation.remove(message);
+                            }
+                            synchronized (this.messageList) {
+                                this.messageList.remove(message);
+                            }
+                            if (requireXmppActivity().xmppConnectionService != null) {
+                                requireXmppActivity().xmppConnectionService.getNotificationService().clear(message);
+                            }
+                            requireConversationsActivity().onConversationsListItemUpdated();
+                            refresh();
+                        });
+                builder.create().show();
             }
             case PenikChatActions.OPEN -> {
                 if (message.getType() == Message.TYPE_RTP_SESSION) {

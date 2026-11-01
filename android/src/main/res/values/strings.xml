@@ -1146,6 +1146,7 @@
     <string name="moderate_delete">Delete as moderator</string>
     <string name="could_not_moderate_message">Could not moderate message</string>
     <string name="delete_message">Delete message</string>
+    <string name="delete_message_dialog_confirm">Are you sure you want to delete this message?</string>
     <string name="moderation_explained">This message will be deleted for you and every participant of this public channel.</string>
     <string name="do_not_show_this_warning_again">Don’t show this warning again.</string>
     <string name="last_seen">last seen %s</string>
