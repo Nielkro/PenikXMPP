@@ -674,7 +674,7 @@ fun PenikChatRoom(
 @Composable
 fun PenikDateHeader(label: String) {
     val panelSecondary = colorResource(R.color.penik_panel_secondary)
-    val textMuted = colorResource(R.color.penik_text_muted)
+    val textPrimary = colorResource(R.color.penik_text_primary)
     Box(
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             contentAlignment = Alignment.Center
@@ -685,7 +685,12 @@ fun PenikDateHeader(label: String) {
                                 .background(panelSecondary)
                                 .padding(horizontal = 12.dp, vertical = 4.dp)
         ) {
-            Text(text = label, color = textMuted, fontSize = 12.sp)
+            Text(
+                    text = label,
+                    color = textPrimary,
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
