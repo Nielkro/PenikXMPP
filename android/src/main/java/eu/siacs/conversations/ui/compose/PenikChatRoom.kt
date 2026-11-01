@@ -114,6 +114,7 @@ import eu.siacs.conversations.entities.Conversational
 import eu.siacs.conversations.entities.Message
 import eu.siacs.conversations.entities.RtpSessionStatus
 import eu.siacs.conversations.entities.Sticker
+import eu.siacs.conversations.entities.Transferable
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -3340,6 +3341,55 @@ fun PenikAttachmentRow(
                 } else {
                     PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
                 }
+                val mediaSize: Long = remember(message.uuid, message.fileParams?.size) {
+                    val pSize = message.fileParams?.getSize() ?: 0L
+                    if (pSize > 0L) {
+                        pSize
+                    } else {
+                        val local = activity.xmppConnectionService?.fileBackend?.getFile(message, false)
+                        if (local != null && local.exists()) {
+                            local.length()
+                        } else {
+                            message.transferable?.fileSize ?: 0L
+                        }
+                    }
+                }
+                val isUploading = isSentByMe && message.fileParams?.url == null && (
+                        message.needsUploading() ||
+                        status == Message.STATUS_UNSEND ||
+                        status == Message.STATUS_WAITING ||
+                        message.transferable?.status == Transferable.STATUS_UPLOADING ||
+                        message.transferable?.status == Transferable.STATUS_CHECKING
+                )
+                if (isUploading && mediaSize > 0L) {
+                    val progress = message.transferable?.progress ?: 0
+                    val sizeFormatted = android.text.format.Formatter.formatShortFileSize(context, mediaSize)
+                    val badgeText = if (progress in 1..99) "$progress% · $sizeFormatted" else sizeFormatted
+                    Box(
+                            modifier =
+                                    Modifier.align(Alignment.TopStart)
+                                            .padding(6.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.Black.copy(alpha = 0.55f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                    painter = painterResource(R.drawable.ic_upload_24dp),
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(10.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                    text = badgeText,
+                                    fontSize = 10.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
                 if (timeText.isNotEmpty()) {
                     Box(
                             modifier =
@@ -3757,11 +3807,16 @@ fun PenikFileRow(message: Message, fgColor: Color, textMuted: Color) {
                     urlName?.takeIf { it.isNotBlank() } ?: "Файл"
                 }
             }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val resolvedSize = remember(message.uuid, params?.size) {
+        val s = params?.getSize() ?: 0L
+        if (s > 0L) s else message.transferable?.fileSize ?: 0L
+    }
     val sizeText =
-            if (!message.isGeoUri && params != null && params.getSize() > 0) {
+            if (!message.isGeoUri && resolvedSize > 0L) {
                 " · " + android.text.format.Formatter.formatShortFileSize(
-                        androidx.compose.ui.platform.LocalContext.current,
-                        params.getSize()
+                        context,
+                        resolvedSize
                 )
             } else if (params != null && params.runtime > 0) {
                 val runtimeSec = if (params.runtime >= 1000) params.runtime / 1000 else params.runtime
