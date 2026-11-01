@@ -2953,7 +2953,6 @@ fun PenikVideoViewer(
                 }
                 vv.start()
                 isPlaying = true
-                showControls = false
             }
         }
     }
@@ -3013,25 +3012,13 @@ fun PenikVideoViewer(
                                 .fillMaxSize()
                                 .pointerInput(Unit) {
                                     detectTapGestures {
-                                        if (isPlaying) {
-                                            videoViewRef?.pause()
-                                            isPlaying = false
-                                            showControls = true
-                                        } else {
-                                            if (currentPositionMs >= durationMs - 500 && durationMs > 0) {
-                                                videoViewRef?.seekTo(0)
-                                                currentPositionMs = 0
-                                            }
-                                            videoViewRef?.start()
-                                            isPlaying = true
-                                            showControls = false
-                                        }
+                                        showControls = !showControls
                                     }
                                 }
                 )
 
                 AnimatedVisibility(
-                        visible = !isPlaying,
+                        visible = showControls || !isPlaying,
                         enter = fadeIn(),
                         exit = fadeOut(),
                         modifier = Modifier.align(Alignment.Center)
@@ -3045,8 +3032,8 @@ fun PenikVideoViewer(
                             contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Воспроизведение",
+                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (isPlaying) "Пауза" else "Воспроизведение",
                                 tint = Color.White,
                                 modifier = Modifier.size(40.dp)
                         )
