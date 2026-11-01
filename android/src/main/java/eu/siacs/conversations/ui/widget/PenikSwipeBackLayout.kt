@@ -19,12 +19,12 @@ import eu.siacs.conversations.ui.ConversationsActivity
 import eu.siacs.conversations.ui.XmppFragment
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Telegram-style Follow-the-finger Swipe Back Layout for chat screens.
- * Intercepts left-edge drags, tracks finger position 1:1, draws an edge shadow,
- * moves the underlying screen with smooth parallax, and dismisses without flicker.
+ * Intercepts left-edge drags in dispatchTouchEvent to overcome child touch interception,
+ * tracks finger position 1:1, draws an edge shadow, moves the underlying screen with smooth parallax,
+ * and dismisses without duplicate animations or flicker.
  */
 class PenikSwipeBackLayout @JvmOverloads constructor(
     context: Context,
@@ -33,10 +33,16 @@ class PenikSwipeBackLayout @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     private val density = resources.displayMetrics.density
-    private val edgeThresholdPx = 28f * density
-    private val shadowWidthPx = (20f * density).toInt()
+    private val shadowWidthPx = (22f * density).toInt()
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private val interpolator = PathInterpolator(0.23f, 1f, 0.32f, 1f)
+
+    // Telegram allows swiping right from almost anywhere across the screen
+    private val maxSwipeStartX: Float
+        get() {
+            val totalWidth = if (width > 0) width.toFloat() else resources.displayMetrics.widthPixels.toFloat()
+            return totalWidth * 0.88f
+        }
 
     private val shadowDrawable = GradientDrawable(
         GradientDrawable.Orientation.RIGHT_LEFT,
@@ -65,79 +71,57 @@ class PenikSwipeBackLayout @JvmOverloads constructor(
 
     init {
         setWillNotDraw(false)
+        clipChildren = false
     }
 
-    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
-        if (!isEnabled || isAnimating || isTablet) return false
+    override fun requestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {
+        if (isEdgeTouch) {
+            // Do NOT allow children (Compose, RecyclerView) to block our edge swipe
+            return
+        }
+        super.requestDisallowInterceptTouchEvent(disallowIntercept)
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (!isEnabled || isAnimating || isTablet) {
+            return super.dispatchTouchEvent(ev)
+        }
 
         when (ev.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 downX = ev.rawX
                 downY = ev.rawY
                 isDragging = false
-                if (ev.x <= edgeThresholdPx) {
-                    isEdgeTouch = true
+                isEdgeTouch = ev.x <= maxSwipeStartX
+                if (isEdgeTouch) {
                     velocityTracker?.recycle()
                     velocityTracker = VelocityTracker.obtain()
                     velocityTracker?.addMovement(ev)
-                } else {
-                    isEdgeTouch = false
                 }
             }
             MotionEvent.ACTION_MOVE -> {
                 if (isEdgeTouch && !isDragging) {
                     val dx = ev.rawX - downX
                     val dy = abs(ev.rawY - downY)
-                    if (dx > touchSlop && dx > dy * 1.2f) {
+                    if (dx > touchSlop && dx > dy * 1.1f) {
                         isDragging = true
                         parent?.requestDisallowInterceptTouchEvent(true)
                         ensureUnderlyingFragmentVisible()
                         onSwipeStarted?.run()
-                        velocityTracker?.addMovement(ev)
-                        return true
-                    } else if (dy > touchSlop) {
+
+                        // Cancel child gestures by dispatching ACTION_CANCEL to child views
+                        val cancelEvent = MotionEvent.obtain(ev).apply {
+                            action = MotionEvent.ACTION_CANCEL
+                        }
+                        super.dispatchTouchEvent(cancelEvent)
+                        cancelEvent.recycle()
+                    } else if (dy > touchSlop && dy > dx) {
                         isEdgeTouch = false
                     }
                 }
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                isEdgeTouch = false
-                isDragging = false
-                velocityTracker?.recycle()
-                velocityTracker = null
-            }
-        }
-        return isDragging
-    }
 
-    override fun onTouchEvent(ev: MotionEvent): Boolean {
-        if (!isEnabled || isAnimating || isTablet) return false
-        velocityTracker?.addMovement(ev)
-
-        when (ev.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                downX = ev.rawX
-                downY = ev.rawY
-                if (ev.x <= edgeThresholdPx) {
-                    isEdgeTouch = true
-                    velocityTracker?.recycle()
-                    velocityTracker = VelocityTracker.obtain()
-                    velocityTracker?.addMovement(ev)
-                    return true
-                }
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if (isEdgeTouch && !isDragging) {
-                    val dx = ev.rawX - downX
-                    val dy = abs(ev.rawY - downY)
-                    if (dx > touchSlop && dx > dy * 1.2f) {
-                        isDragging = true
-                        parent?.requestDisallowInterceptTouchEvent(true)
-                        ensureUnderlyingFragmentVisible()
-                        onSwipeStarted?.run()
-                    }
-                }
                 if (isDragging) {
+                    velocityTracker?.addMovement(ev)
                     val dx = max(0f, ev.rawX - downX)
                     applySwipeOffset(dx)
                     return true
@@ -145,10 +129,11 @@ class PenikSwipeBackLayout @JvmOverloads constructor(
             }
             MotionEvent.ACTION_UP -> {
                 if (isDragging) {
+                    velocityTracker?.addMovement(ev)
                     velocityTracker?.computeCurrentVelocity(1000)
                     val vx = velocityTracker?.xVelocity ?: 0f
                     val currentShift = currentContentView?.translationX ?: 0f
-                    val totalWidth = width.toFloat()
+                    val totalWidth = max(1f, width.toFloat())
                     val shouldDismiss = (currentShift > totalWidth * 0.35f || vx > 1000f) && vx >= -200f
 
                     if (shouldDismiss) {
@@ -162,6 +147,10 @@ class PenikSwipeBackLayout @JvmOverloads constructor(
                     velocityTracker = null
                     return true
                 }
+                isEdgeTouch = false
+                isDragging = false
+                velocityTracker?.recycle()
+                velocityTracker = null
             }
             MotionEvent.ACTION_CANCEL -> {
                 if (isDragging) {
@@ -172,9 +161,14 @@ class PenikSwipeBackLayout @JvmOverloads constructor(
                     velocityTracker = null
                     return true
                 }
+                isEdgeTouch = false
+                isDragging = false
+                velocityTracker?.recycle()
+                velocityTracker = null
             }
         }
-        return super.onTouchEvent(ev)
+
+        return super.dispatchTouchEvent(ev)
     }
 
     private fun applySwipeOffset(dx: Float) {
