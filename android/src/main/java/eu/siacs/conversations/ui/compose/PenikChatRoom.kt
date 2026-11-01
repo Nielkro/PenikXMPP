@@ -1,5 +1,6 @@
 package eu.siacs.conversations.ui.compose
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.util.Patterns
 import androidx.compose.foundation.Canvas
@@ -2670,6 +2671,18 @@ fun PenikMediaOverflowMenu(
     }
 }
 
+fun formatViewerDateTime(context: Context, timestamp: Long): String {
+    if (timestamp <= 0L) return ""
+    val msgCal = java.util.Calendar.getInstance().apply { timeInMillis = timestamp }
+    val nowCal = java.util.Calendar.getInstance()
+    val sameYear = msgCal.get(java.util.Calendar.YEAR) == nowCal.get(java.util.Calendar.YEAR)
+    val timeFormat = android.text.format.DateFormat.getTimeFormat(context)
+    val datePattern = if (sameYear) "d MMMM" else "d MMMM yyyy"
+    val dateStr = android.text.format.DateFormat.format(datePattern, msgCal).toString()
+    val timeStr = timeFormat.format(java.util.Date(timestamp))
+    return "$dateStr, $timeStr"
+}
+
 @Composable
 fun PenikImageViewer(
         model: Any?,
@@ -2691,15 +2704,9 @@ fun PenikImageViewer(
             ""
         }
     }
-    val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
-    val dateFormat = remember { android.text.format.DateFormat.getMediumDateFormat(context) }
-    val timeText = remember(message) {
-        if (message != null && message.timeSent > 0) {
-            val date = java.util.Date(message.timeSent)
-            "${dateFormat.format(date)}, ${timeFormat.format(date)}"
-        } else {
-            ""
-        }
+    val timeText = remember(message?.timeSent) {
+        val ts = message?.timeSent ?: 0L
+        formatViewerDateTime(context, ts)
     }
     val hasUrl = message?.fileParams?.url != null || (message?.body != null && (message.body.contains("http://") || message.body.contains("https://")))
 
@@ -2770,11 +2777,16 @@ fun PenikImageViewer(
                                 Modifier.fillMaxWidth()
                                         .background(
                                                 Brush.verticalGradient(
-                                                        colors = listOf(Color.Black.copy(alpha = 0.85f), Color.Transparent)
+                                                        colors = listOf(
+                                                                Color.Black.copy(alpha = 0.95f),
+                                                                Color.Black.copy(alpha = 0.75f),
+                                                                Color.Black.copy(alpha = 0.35f),
+                                                                Color.Transparent
+                                                        )
                                                 )
                                         )
                                         .statusBarsPadding()
-                                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                                        .padding(start = 8.dp, end = 8.dp, top = 6.dp, bottom = 28.dp)
                 ) {
                     Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -2802,7 +2814,7 @@ fun PenikImageViewer(
                             if (timeText.isNotEmpty()) {
                                 Text(
                                         text = timeText,
-                                        color = Color.White.copy(alpha = 0.7f),
+                                        color = Color.White.copy(alpha = 0.75f),
                                         fontSize = 12.sp,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -2810,40 +2822,53 @@ fun PenikImageViewer(
                             }
                         }
                         if (message != null && listener != null) {
-                            if (hasUrl) {
-                                IconButton(
-                                        onClick = {
-                                            listener.onMessageAction(PenikChatActions.COPY_URL, message)
-                                        }
-                                ) {
+                            var showOverflowMenu by remember { mutableStateOf(false) }
+                            Box {
+                                IconButton(onClick = { showOverflowMenu = true }) {
                                     Icon(
-                                            imageVector = Icons.Default.Link,
-                                            contentDescription = "Копировать ссылку",
+                                            imageVector = Icons.Default.MoreVert,
+                                            contentDescription = "Ещё",
                                             tint = Color.White
                                     )
                                 }
-                            }
-                            IconButton(
-                                    onClick = {
-                                        listener.onMessageAction(PenikChatActions.SAVE_FILE, message)
+                                DropdownMenu(
+                                        expanded = showOverflowMenu,
+                                        onDismissRequest = { showOverflowMenu = false },
+                                        modifier = Modifier.background(colorResource(R.color.penik_panel_secondary))
+                                ) {
+                                    if (hasUrl) {
+                                        DropdownMenuItem(
+                                                text = { Text("Копировать ссылку", color = Color.White) },
+                                                leadingIcon = {
+                                                    Icon(
+                                                            imageVector = Icons.Default.Link,
+                                                            contentDescription = null,
+                                                            tint = Color.White.copy(alpha = 0.7f),
+                                                            modifier = Modifier.size(20.dp)
+                                                    )
+                                                },
+                                                onClick = {
+                                                    showOverflowMenu = false
+                                                    listener.onMessageAction(PenikChatActions.COPY_URL, message)
+                                                }
+                                        )
                                     }
-                            ) {
-                                Icon(
-                                        imageVector = Icons.Default.Download,
-                                        contentDescription = "Сохранить",
-                                        tint = Color.White
-                                )
-                            }
-                            IconButton(
-                                    onClick = {
-                                        listener.onMessageAction(PenikChatActions.SHARE, message)
-                                    }
-                            ) {
-                                Icon(
-                                        imageVector = Icons.Default.Share,
-                                        contentDescription = "Поделиться",
-                                        tint = Color.White
-                                )
+                                    DropdownMenuItem(
+                                            text = { Text("Сохранить", color = Color.White) },
+                                            leadingIcon = {
+                                                Icon(
+                                                        imageVector = Icons.Default.Download,
+                                                        contentDescription = null,
+                                                        tint = Color.White.copy(alpha = 0.7f),
+                                                        modifier = Modifier.size(20.dp)
+                                                )
+                                            },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                listener.onMessageAction(PenikChatActions.SAVE_FILE, message)
+                                            }
+                                    )
+                                }
                             }
                         }
                     }
@@ -2883,42 +2908,10 @@ fun PenikVideoViewer(
     var isError by remember { mutableStateOf(false) }
     var videoViewRef by remember { mutableStateOf<android.widget.VideoView?>(null) }
     var mediaPlayerRef by remember { mutableStateOf<android.media.MediaPlayer?>(null) }
-    var volume by remember { mutableStateOf(1.0f) }
-    var isMuted by remember { mutableStateOf(false) }
-    var lastNonZeroVolume by remember { mutableStateOf(1.0f) }
-
-    val setPlayerVolume = { newVol: Float, muted: Boolean ->
-        val clamped = newVol.coerceIn(0f, 1f)
-        volume = clamped
-        isMuted = muted
-        if (!muted && clamped > 0f) {
-            lastNonZeroVolume = clamped
-        }
-        val eff = if (muted) 0f else clamped
-        try {
-            mediaPlayerRef?.setVolume(eff, eff)
-        } catch (_: Exception) {}
-    }
-
-    val toggleMute = {
-        if (isMuted || volume == 0f) {
-            val target = if (lastNonZeroVolume > 0f) lastNonZeroVolume else 1.0f
-            setPlayerVolume(target, false)
-        } else {
-            setPlayerVolume(0f, true)
-        }
-    }
 
     val senderName = remember(message) { UIHelper.getMessageDisplayName(message) }
-    val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
-    val dateFormat = remember { android.text.format.DateFormat.getMediumDateFormat(context) }
-    val timeText = remember(message) {
-        if (message.timeSent > 0) {
-            val date = java.util.Date(message.timeSent)
-            "${dateFormat.format(date)}, ${timeFormat.format(date)}"
-        } else {
-            ""
-        }
+    val timeText = remember(message.timeSent) {
+        formatViewerDateTime(context, message.timeSent)
     }
     val hasUrl = message.fileParams?.url != null || (message.body != null && (message.body.contains("http://") || message.body.contains("https://")))
 
@@ -2982,10 +2975,6 @@ fun PenikVideoViewer(
                                     mediaPlayerRef = mp
                                     mp.isLooping = false
                                     durationMs = mp.duration
-                                    val eff = if (isMuted) 0f else volume
-                                    try {
-                                        mp.setVolume(eff, eff)
-                                    } catch (_: Exception) {}
                                     start()
                                     isPlaying = true
                                 }
@@ -3004,15 +2993,17 @@ fun PenikVideoViewer(
                         modifier = Modifier
                                 .fillMaxSize()
                                 .clickable {
-                                    if (currentPositionMs >= durationMs - 500 && durationMs > 0) {
-                                        togglePlay()
-                                    } else {
-                                        showControls = !showControls
-                                    }
+                                    showControls = !showControls
                                 }
                 )
 
-                if (!isPlaying) {
+                AnimatedVisibility(
+                        visible = showControls || !isPlaying,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        modifier = Modifier.align(Alignment.Center)
+                ) {
+                    val isFinished = currentPositionMs >= durationMs - 500 && durationMs > 0
                     Box(
                             modifier = Modifier
                                     .size(72.dp)
@@ -3022,8 +3013,12 @@ fun PenikVideoViewer(
                             contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                                imageVector = if (currentPositionMs >= durationMs - 500 && durationMs > 0) Icons.Default.Refresh else Icons.Default.PlayArrow,
-                                contentDescription = "Воспроизвести",
+                                imageVector = when {
+                                    isFinished -> Icons.Default.Refresh
+                                    isPlaying -> Icons.Default.Pause
+                                    else -> Icons.Default.PlayArrow
+                                },
+                                contentDescription = if (isPlaying) "Пауза" else "Воспроизведение",
                                 tint = Color.White,
                                 modifier = Modifier.size(40.dp)
                         )
@@ -3067,11 +3062,16 @@ fun PenikVideoViewer(
                                 .fillMaxWidth()
                                 .background(
                                         Brush.verticalGradient(
-                                                colors = listOf(Color.Black.copy(alpha = 0.85f), Color.Transparent)
+                                                colors = listOf(
+                                                        Color.Black.copy(alpha = 0.95f),
+                                                        Color.Black.copy(alpha = 0.75f),
+                                                        Color.Black.copy(alpha = 0.35f),
+                                                        Color.Transparent
+                                                )
                                         )
-                                    )
+                                )
                                 .statusBarsPadding()
-                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                                .padding(start = 8.dp, end = 8.dp, top = 6.dp, bottom = 28.dp)
                 ) {
                     Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -3102,7 +3102,7 @@ fun PenikVideoViewer(
                             if (timeText.isNotEmpty()) {
                                 Text(
                                         text = timeText,
-                                        color = Color.White.copy(alpha = 0.7f),
+                                        color = Color.White.copy(alpha = 0.75f),
                                         fontSize = 12.sp,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -3110,40 +3110,53 @@ fun PenikVideoViewer(
                             }
                         }
                         if (listener != null) {
-                            if (hasUrl) {
-                                IconButton(
-                                        onClick = {
-                                            listener.onMessageAction(PenikChatActions.COPY_URL, message)
-                                        }
-                                ) {
+                            var showOverflowMenu by remember { mutableStateOf(false) }
+                            Box {
+                                IconButton(onClick = { showOverflowMenu = true }) {
                                     Icon(
-                                            imageVector = Icons.Default.Link,
-                                            contentDescription = "Копировать ссылку",
+                                            imageVector = Icons.Default.MoreVert,
+                                            contentDescription = "Ещё",
                                             tint = Color.White
                                     )
                                 }
-                            }
-                            IconButton(
-                                    onClick = {
-                                        listener.onMessageAction(PenikChatActions.SAVE_FILE, message)
+                                DropdownMenu(
+                                        expanded = showOverflowMenu,
+                                        onDismissRequest = { showOverflowMenu = false },
+                                        modifier = Modifier.background(colorResource(R.color.penik_panel_secondary))
+                                ) {
+                                    if (hasUrl) {
+                                        DropdownMenuItem(
+                                                text = { Text("Копировать ссылку", color = Color.White) },
+                                                leadingIcon = {
+                                                    Icon(
+                                                            imageVector = Icons.Default.Link,
+                                                            contentDescription = null,
+                                                            tint = Color.White.copy(alpha = 0.7f),
+                                                            modifier = Modifier.size(20.dp)
+                                                    )
+                                                },
+                                                onClick = {
+                                                    showOverflowMenu = false
+                                                    listener.onMessageAction(PenikChatActions.COPY_URL, message)
+                                                }
+                                        )
                                     }
-                            ) {
-                                Icon(
-                                        imageVector = Icons.Default.Download,
-                                        contentDescription = "Сохранить",
-                                        tint = Color.White
+                                    DropdownMenuItem(
+                                            text = { Text("Сохранить", color = Color.White) },
+                                            leadingIcon = {
+                                                Icon(
+                                                        imageVector = Icons.Default.Download,
+                                                        contentDescription = null,
+                                                        tint = Color.White.copy(alpha = 0.7f),
+                                                        modifier = Modifier.size(20.dp)
+                                                )
+                                            },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                listener.onMessageAction(PenikChatActions.SAVE_FILE, message)
+                                            }
                                     )
-                            }
-                            IconButton(
-                                    onClick = {
-                                        listener.onMessageAction(PenikChatActions.SHARE, message)
-                                    }
-                            ) {
-                                Icon(
-                                        imageVector = Icons.Default.Share,
-                                        contentDescription = "Поделиться",
-                                        tint = Color.White
-                                )
+                                }
                             }
                         }
                     }
@@ -3162,13 +3175,21 @@ fun PenikVideoViewer(
                                 .fillMaxWidth()
                                 .background(
                                         Brush.verticalGradient(
-                                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                                                colors = listOf(
+                                                        Color.Transparent,
+                                                        Color.Black.copy(alpha = 0.35f),
+                                                        Color.Black.copy(alpha = 0.75f),
+                                                        Color.Black.copy(alpha = 0.95f)
+                                                )
                                         )
                                 )
                                 .navigationBarsPadding()
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                .padding(horizontal = 16.dp, vertical = 10.dp)
                 ) {
-                    Column {
+                    Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                    ) {
                         val progress = if (durationMs > 0) (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) else 0f
                         Slider(
                                 value = progress,
@@ -3182,69 +3203,20 @@ fun PenikVideoViewer(
                                 colors = SliderDefaults.colors(
                                         thumbColor = colorResource(R.color.penik_accent),
                                         activeTrackColor = colorResource(R.color.penik_accent),
-                                        inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                                        inactiveTrackColor = Color.White.copy(alpha = 0.35f)
                                 ),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.weight(1f)
                         )
-                        Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                IconButton(onClick = { togglePlay() }) {
-                                    Icon(
-                                            imageVector = if (isPlaying) Icons.Default.Pause else if (currentPositionMs >= durationMs - 500 && durationMs > 0) Icons.Default.Refresh else Icons.Default.PlayArrow,
-                                            contentDescription = if (isPlaying) "Пауза" else "Воспроизведение",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(32.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(4.dp))
-                                val curSec = (currentPositionMs / 1000).coerceAtLeast(0)
-                                val durSec = (durationMs / 1000).coerceAtLeast(0)
-                                val timeStr = "%02d:%02d / %02d:%02d".format(curSec / 60, curSec % 60, durSec / 60, durSec % 60)
-                                Text(
-                                        text = timeStr,
-                                        color = Color.White,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Medium
-                                )
-                            }
-                            Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                IconButton(onClick = { toggleMute() }) {
-                                    Icon(
-                                            painter = painterResource(if (isMuted || volume == 0f) R.drawable.ic_volume_off_24dp else R.drawable.ic_volume_up_24dp),
-                                            contentDescription = if (isMuted || volume == 0f) "Включить звук" else "Выключить звук",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                Slider(
-                                        value = if (isMuted) 0f else volume,
-                                        onValueChange = { newVol ->
-                                            setPlayerVolume(newVol, false)
-                                        },
-                                        colors = SliderDefaults.colors(
-                                                thumbColor = Color.White,
-                                                activeTrackColor = colorResource(R.color.penik_accent),
-                                                inactiveTrackColor = Color.White.copy(alpha = 0.3f)
-                                        ),
-                                        modifier = Modifier.width(85.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                        text = "${((if (isMuted) 0f else volume) * 100).toInt()}%",
-                                        color = Color.White.copy(alpha = 0.85f),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        val curSec = (currentPositionMs / 1000).coerceAtLeast(0)
+                        val durSec = (durationMs / 1000).coerceAtLeast(0)
+                        val timeStr = "%02d:%02d / %02d:%02d".format(curSec / 60, curSec % 60, durSec / 60, durSec % 60)
+                        Text(
+                                text = timeStr,
+                                color = Color.White.copy(alpha = 0.9f),
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
