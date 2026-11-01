@@ -988,22 +988,48 @@ hook_c2s(module, "c2s-connected", function(event)
     end
 end, 100);
 
--- Hook: Stream Management hibernation / disconnect cleanup
--- When a connection drops or hibernates, reset funxmpp stream state so that
--- reconnected/resumed sessions do not attempt binary I/O on fresh un-negotiated sockets.
-local function handle_session_cleanup(event)
+-- Hook: Stream Management hibernation start
+-- When a connection enters hibernation, detach stream filters from the closed socket,
+-- but PRESERVE the negotiated FunXMPP state (dictionary, direct flag, stats) in the session
+-- so it can be seamlessly restored on the new socket upon SM resume.
+local function handle_hibernation_start(event)
     local session = event.origin or event.session;
-    if session then
+    if session and session.funxmpp_enabled then
+        pcall(filters.remove_filter, session, "bytes/in", funxmpp_bytes_in);
+        pcall(filters.remove_filter, session, "bytes/out", funxmpp_bytes_out);
+        pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_stash_out);
+        pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_out);
+        session.funxmpp_in_buf = nil;
+        session.funxmpp_last_out = nil;
+        session.funxmpp_hibernated = true;
         if session.conn then
             session.conn.funxmpp_state = nil;
         end
-        if session.funxmpp_enabled then
+        module:log("info", "FunXMPP stream state suspended for SM hibernation for %s",
+            session.full_jid or session.ip or "unknown");
+    end
+end
+
+-- Hook: Permanent disconnect / destruction cleanup
+-- Wipes all FunXMPP state only when the session is permanently destroyed.
+local function handle_session_cleanup(event)
+    local session = event.origin or event.session;
+    if session then
+        -- If session is currently hibernating awaiting SM resume, do not destroy its state on c2s-closed
+        if (session.hibernating or session.funxmpp_hibernated) and event.event ~= "c2s-destroyed" then
+            return;
+        end
+        if session.conn then
+            session.conn.funxmpp_state = nil;
+        end
+        if session.funxmpp_enabled or session.funxmpp_hibernated then
             if session.funxmpp_original_send then
                 session.send = session.funxmpp_original_send;
                 session.funxmpp_original_send = nil;
             end
             session.funxmpp_enabled = false;
             session.funxmpp_direct = false;
+            session.funxmpp_hibernated = nil;
             session.funxmpp_sniff_buf = nil;
             session.funxmpp_sniff_installed = nil;
             session.funxmpp_dict = nil;
@@ -1013,7 +1039,7 @@ local function handle_session_cleanup(event)
             pcall(filters.remove_filter, session, "bytes/out", funxmpp_bytes_out);
             pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_stash_out);
             pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_out);
-            module:log("info", "FunXMPP stream state reset on disconnect/hibernation for %s",
+            module:log("info", "FunXMPP stream state destroyed for %s",
                 session.full_jid or session.ip or "unknown");
         end
     end
@@ -1021,7 +1047,7 @@ end
 
 hook_c2s(module, "c2s-closed", handle_session_cleanup, 100);
 hook_c2s(module, "c2s-destroyed", handle_session_cleanup, 100);
-module:hook("smacks-hibernation-start", handle_session_cleanup, 100);
+module:hook("smacks-hibernation-start", handle_hibernation_start, 100);
 
 -- Hook: SM resume session update
 -- When mod_smacks resumes a session, Prosody fires 'c2s-session-updated' inside update_session
@@ -1029,36 +1055,66 @@ module:hook("smacks-hibernation-start", handle_session_cleanup, 100);
 hook_c2s(module, "c2s-session-updated", function(event)
     local to_session = event.session;
     local from_session = event.from_session;
-    if from_session and from_session.funxmpp_enabled then
-        to_session.funxmpp_enabled = from_session.funxmpp_enabled;
-        to_session.funxmpp_direct = from_session.funxmpp_direct;
-        to_session.funxmpp_dict = from_session.funxmpp_dict;
-        to_session.funxmpp_stats = from_session.funxmpp_stats or to_session.funxmpp_stats;
-        to_session.funxmpp_in_buf = from_session.funxmpp_in_buf;
-        if to_session.conn and from_session.conn and from_session.conn.funxmpp_state then
-            to_session.conn.funxmpp_state = from_session.conn.funxmpp_state;
+    local enabled = (from_session and from_session.funxmpp_enabled)
+        or (to_session and (to_session.funxmpp_enabled or to_session.funxmpp_hibernated))
+        or (to_session and to_session.conn and to_session.conn.funxmpp_state and to_session.conn.funxmpp_state.enabled);
+
+    if enabled then
+        local direct = (from_session and from_session.funxmpp_direct)
+            or (to_session and to_session.funxmpp_direct)
+            or (to_session and to_session.conn and to_session.conn.funxmpp_state and to_session.conn.funxmpp_state.direct)
+            or false;
+        local dict = (from_session and from_session.funxmpp_dict)
+            or (to_session and to_session.funxmpp_dict)
+            or (to_session and to_session.conn and to_session.conn.funxmpp_state and to_session.conn.funxmpp_state.dict)
+            or TOKENS_V1;
+        local stats = (to_session and to_session.funxmpp_stats)
+            or (from_session and from_session.funxmpp_stats)
+            or { in_bytes = 0, out_bytes = 0, in_frames = 0, out_frames = 0 };
+
+        to_session.funxmpp_enabled = true;
+        to_session.funxmpp_direct = direct;
+        to_session.funxmpp_dict = dict;
+        to_session.funxmpp_stats = stats;
+        to_session.funxmpp_hibernated = nil;
+        to_session.funxmpp_in_buf = nil;
+        to_session.funxmpp_last_out = nil;
+
+        if to_session.conn then
+            to_session.conn.funxmpp_state = {
+                enabled = true,
+                direct = direct,
+                dict = dict,
+                stats = stats,
+            };
         end
-        module:log("info", "Direct PXMPP / FunXMPP: transferred state on SM resume to %s",
-            to_session.full_jid or to_session.ip or "unknown");
-    elseif to_session.conn and to_session.conn.funxmpp_state then
-        local state = to_session.conn.funxmpp_state;
-        to_session.funxmpp_enabled = state.enabled;
-        to_session.funxmpp_direct = state.direct;
-        to_session.funxmpp_dict = state.dict;
-        to_session.funxmpp_stats = state.stats or to_session.funxmpp_stats;
-        module:log("info", "Direct PXMPP / FunXMPP: restored state from conn on SM resume for %s",
-            to_session.full_jid or to_session.ip or "unknown");
+
+        -- Re-attach symmetric stream filters for the resumed socket
+        pcall(filters.remove_filter, to_session, "bytes/in", funxmpp_bytes_in);
+        pcall(filters.remove_filter, to_session, "stanzas/out", funxmpp_stanzas_stash_out);
+        pcall(filters.remove_filter, to_session, "stanzas/out", funxmpp_stanzas_out);
+
+        filters.add_filter(to_session, "bytes/in", funxmpp_bytes_in, 100);
+        filters.add_filter(to_session, "stanzas/out", funxmpp_stanzas_stash_out, -999);
+        filters.add_filter(to_session, "stanzas/out", funxmpp_stanzas_out, -10000);
+
+        module:log("info", "FunXMPP stream restored on SM resume for %s (direct=%s)",
+            to_session.full_jid or to_session.ip or "unknown", tostring(direct));
     end
 end, 100);
 
 module:hook("smacks-hibernation-end", function(event)
     local resumed = event.resumed;
-    if resumed and resumed.conn and resumed.conn.funxmpp_state then
-        local state = resumed.conn.funxmpp_state;
-        resumed.funxmpp_enabled = state.enabled;
-        resumed.funxmpp_direct = state.direct;
-        resumed.funxmpp_dict = state.dict;
-        resumed.funxmpp_stats = state.stats or resumed.funxmpp_stats;
+    if resumed and resumed.funxmpp_enabled then
+        resumed.funxmpp_hibernated = nil;
+        if resumed.conn and not resumed.conn.funxmpp_state then
+            resumed.conn.funxmpp_state = {
+                enabled = true,
+                direct = resumed.funxmpp_direct or false,
+                dict = resumed.funxmpp_dict or TOKENS_V1,
+                stats = resumed.funxmpp_stats,
+            };
+        end
     end
 end, 100);
 
