@@ -86,6 +86,7 @@ public class Conversations extends Application {
         super.onCreate();
         installSecurityProvider();
         CONTEXT = this.getApplicationContext();
+        eu.siacs.conversations.ui.compose.NavigationStyleManager.init(this);
         registerActivityLifecycleCallbacks(
                 new ActivityLifecycleCallbacks() {
                     @Override
