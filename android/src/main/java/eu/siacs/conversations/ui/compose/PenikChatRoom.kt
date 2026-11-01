@@ -2034,30 +2034,28 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
                                     .background(Color.White.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
             ) {
-                Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                ) {
+                Box(modifier = Modifier.size(24.dp)) {
                     Icon(
                             painter = painterResource(R.drawable.ic_call_24dp),
                             contentDescription = null,
-                            tint = iconTint.copy(alpha = 0.9f),
-                            modifier = Modifier.size(17.dp)
+                            tint = if (missed && received) fgColor.copy(alpha = 0.85f) else fgColor.copy(alpha = 0.95f),
+                            modifier = Modifier.size(19.dp).align(Alignment.BottomStart)
                     )
-                    Spacer(modifier = Modifier.width(1.dp))
                     Icon(
                             painter =
                                     painterResource(
                                             if (received) {
-                                                if (missed) R.drawable.ic_call_missed_24dp
-                                                else R.drawable.ic_call_received_24dp
+                                                R.drawable.ic_call_received_24dp
                                             } else {
                                                 R.drawable.ic_call_made_24dp
                                             }
                                     ),
                             contentDescription = null,
-                            tint = iconTint.copy(alpha = 0.85f),
-                            modifier = Modifier.size(13.dp)
+                            tint = if (missed && received) danger else fgColor.copy(alpha = 0.95f),
+                            modifier =
+                                    Modifier.size(11.dp)
+                                            .align(Alignment.TopEnd)
+                                            .offset(x = (-1).dp, y = 1.dp)
                     )
                 }
             }
