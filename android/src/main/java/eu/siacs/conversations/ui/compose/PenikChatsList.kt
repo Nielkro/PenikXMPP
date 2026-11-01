@@ -5,6 +5,9 @@ import android.graphics.Bitmap
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import eu.siacs.conversations.phone.PenikPhoneDirectoryManager
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,14 +16,17 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -28,6 +34,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.ViewSidebar
 import androidx.compose.material.icons.filled.Call
@@ -389,75 +398,16 @@ fun PenikMainScreen(
                     )
                 }
             },
-            bottomBar = {
-                if (!isDrawerMode) {
-                    NavigationBar(containerColor = panel) {
-                        NavigationBarItem(
-                                selected = tab == PenikTab.CHATS,
-                                onClick = { tab = PenikTab.CHATS },
-                                icon = {
-                                    Icon(
-                                            painter = painterResource(R.drawable.ic_chat_24dp),
-                                            contentDescription = "Чаты"
-                                    )
-                                },
-                                label = { Text("Чаты") },
-                                colors =
-                                        NavigationBarItemDefaults.colors(
-                                                selectedIconColor = accent,
-                                                selectedTextColor = accent,
-                                                unselectedIconColor = textMuted,
-                                                unselectedTextColor = textMuted,
-                                                indicatorColor = accent.copy(alpha = 0.15f)
-                                        )
-                        )
-                        NavigationBarItem(
-                                selected = tab == PenikTab.CALLS,
-                                onClick = { tab = PenikTab.CALLS },
-                                icon = {
-                                    Icon(
-                                            painter = painterResource(R.drawable.ic_phone_24dp),
-                                            contentDescription = "Звонки"
-                                    )
-                                },
-                                label = { Text("Звонки") },
-                                colors =
-                                        NavigationBarItemDefaults.colors(
-                                                selectedIconColor = accent,
-                                                selectedTextColor = accent,
-                                                unselectedIconColor = textMuted,
-                                                unselectedTextColor = textMuted,
-                                                indicatorColor = accent.copy(alpha = 0.15f)
-                                        )
-                        )
-                        NavigationBarItem(
-                                selected = tab == PenikTab.PROFILE,
-                                onClick = { tab = PenikTab.PROFILE },
-                                icon = {
-                                    Icon(
-                                            painter = painterResource(R.drawable.ic_person_24dp),
-                                            contentDescription = "Профиль"
-                                    )
-                                },
-                                label = { Text("Профиль") },
-                                colors =
-                                        NavigationBarItemDefaults.colors(
-                                                selectedIconColor = accent,
-                                                selectedTextColor = accent,
-                                                unselectedIconColor = textMuted,
-                                                unselectedTextColor = textMuted,
-                                                indicatorColor = accent.copy(alpha = 0.15f)
-                                        )
-                        )
-                    }
-                }
-            },
+            bottomBar = {},
             floatingActionButton = {
                 if (tab == PenikTab.CHATS && !isArchiveOpen) {
                     FloatingActionButton(
                             onClick = { showNewChatSheet = true },
                             containerColor = accent,
-                            contentColor = Color.White
+                            contentColor = Color.White,
+                            modifier = Modifier
+                                    .navigationBarsPadding()
+                                    .padding(bottom = if (!isDrawerMode && !isSearchActive) 80.dp else 0.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Новый чат")
                     }
@@ -490,6 +440,7 @@ fun PenikMainScreen(
                                     listener = listener,
                                     searchQuery = searchQuery,
                                     isArchiveOpen = isArchiveOpen,
+                                    isDrawerMode = isDrawerMode,
                                     onOpenArchive = { state.isArchiveOpen = true }
                             )
                     PenikTab.CALLS ->
@@ -497,6 +448,7 @@ fun PenikMainScreen(
                                     state = state,
                                     activity = activity,
                                     listener = listener,
+                                    isDrawerMode = isDrawerMode,
                                     onBack = if (isDrawerMode) { { tab = PenikTab.CHATS } } else null
                             )
                     PenikTab.PROFILE ->
@@ -506,6 +458,20 @@ fun PenikMainScreen(
                                     listener = listener,
                                     onBack = if (isDrawerMode) { { tab = PenikTab.CHATS } } else null
                             )
+                }
+
+                if (!isDrawerMode && !isArchiveOpen && !isSearchActive) {
+                    PenikFloatingBottomBar(
+                            tab = tab,
+                            onTabSelected = { tab = it },
+                            modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .navigationBarsPadding()
+                                    .padding(bottom = 16.dp),
+                            panelColor = panel,
+                            accentColor = accent,
+                            textMutedColor = textMuted
+                    )
                 }
             }
         }
@@ -796,6 +762,115 @@ fun ConnectionBanner(
     }
 }
 
+@Composable
+private fun PenikFloatingBottomBar(
+    tab: PenikTab,
+    onTabSelected: (PenikTab) -> Unit,
+    modifier: Modifier = Modifier,
+    panelColor: Color,
+    accentColor: Color,
+    textMutedColor: Color
+) {
+    Surface(
+        modifier = modifier
+            .wrapContentWidth()
+            .height(56.dp)
+            .shadow(
+                elevation = 16.dp,
+                shape = CircleShape,
+                spotColor = Color.Black.copy(alpha = 0.5f),
+                ambientColor = Color.Black.copy(alpha = 0.25f)
+            ),
+        shape = CircleShape,
+        color = panelColor.copy(alpha = 0.70f),
+        tonalElevation = 0.dp,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+    ) {
+        Row(
+            modifier = Modifier
+                .wrapContentWidth()
+                .padding(horizontal = 6.dp, vertical = 3.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PenikFloatingNavItem(
+                selected = tab == PenikTab.CHATS,
+                onClick = { onTabSelected(PenikTab.CHATS) },
+                icon = painterResource(R.drawable.ic_chat_24dp),
+                label = "Чаты",
+                accent = accentColor,
+                textMuted = textMutedColor
+            )
+            PenikFloatingNavItem(
+                selected = tab == PenikTab.CALLS,
+                onClick = { onTabSelected(PenikTab.CALLS) },
+                icon = painterResource(R.drawable.ic_phone_24dp),
+                label = "Звонки",
+                accent = accentColor,
+                textMuted = textMutedColor
+            )
+            PenikFloatingNavItem(
+                selected = tab == PenikTab.PROFILE,
+                onClick = { onTabSelected(PenikTab.PROFILE) },
+                icon = painterResource(R.drawable.ic_person_24dp),
+                label = "Профиль",
+                accent = accentColor,
+                textMuted = textMutedColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun PenikFloatingNavItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: Painter,
+    label: String,
+    accent: Color,
+    textMuted: Color
+) {
+    val indicatorColor by animateColorAsState(
+        targetValue = if (selected) accent.copy(alpha = 0.16f) else Color.Transparent,
+        animationSpec = tween(durationMillis = 180),
+        label = "tab_indicator"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) accent else textMuted,
+        animationSpec = tween(durationMillis = 180),
+        label = "tab_content"
+    )
+
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(indicatorColor)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = icon,
+                contentDescription = label,
+                tint = contentColor,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = label,
+                color = contentColor,
+                fontSize = 11.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                maxLines = 1
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PenikChatsTab(
@@ -804,6 +879,7 @@ fun PenikChatsTab(
         listener: PenikChatsListener,
         searchQuery: String,
         isArchiveOpen: Boolean,
+        isDrawerMode: Boolean = false,
         onOpenArchive: () -> Unit
 ) {
     val background = colorResource(R.color.penik_background)
@@ -834,6 +910,7 @@ fun PenikChatsTab(
                                     true
                 }
             }
+    val bottomPadding = if (!isDrawerMode) 92.dp else 16.dp
     Column(modifier = Modifier.fillMaxSize().background(background)) {
         if (isArchiveOpen) {
             if (filtered.isEmpty()) {
@@ -841,7 +918,10 @@ fun PenikChatsTab(
                     Text(text = "Архив пуст", color = textMuted, fontSize = 16.sp)
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = bottomPadding)
+                ) {
                     items(
                         items = filtered,
                         key = { it.uuid }
@@ -857,7 +937,10 @@ fun PenikChatsTab(
                 }
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = bottomPadding)
+            ) {
                 // 1. Archive folder placed above "Избранное"
                 if (state.archived.isNotEmpty() && searchQuery.isBlank()) {
                     if (!isArchiveHidden) {
@@ -1696,6 +1779,7 @@ fun PenikCallsTab(
         state: PenikChatsState,
         activity: XmppActivity,
         listener: PenikChatsListener,
+        isDrawerMode: Boolean = false,
         onBack: (() -> Unit)? = null
 ) {
     val background = colorResource(R.color.penik_background)
@@ -1765,7 +1849,10 @@ fun PenikCallsTab(
                 Text(text = "Звонков пока нет", color = textMuted, fontSize = 16.sp)
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = if (!isDrawerMode) 92.dp else 16.dp)
+            ) {
                 items(calls, key = { it.message.uuid }) { entry ->
                     PenikCallRow(
                             entry = entry,
@@ -1872,6 +1959,7 @@ fun PenikProfileTab(
     val accent = colorResource(R.color.penik_accent)
     val danger = colorResource(R.color.penik_danger)
     val navigationStyle by NavigationStyleManager.navigationStyle.collectAsState()
+    val isDrawerMode = navigationStyle == NavigationStyle.DRAWER
     var showNavStyleDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val account = state.account
@@ -1977,7 +2065,7 @@ fun PenikProfileTab(
                             .background(background)
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = 24.dp)
-                            .padding(bottom = 24.dp),
+                            .padding(bottom = if (!isDrawerMode) 96.dp else 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (onBack != null) {
