@@ -384,6 +384,7 @@ fun PenikMainScreen(
                             activity.xmppConnectionService?.let { service ->
                                 for (account in service.accounts) {
                                     if (account.isEnabled) {
+                                        account.xmppConnection?.disconnectHard()
                                         account.xmppConnection?.resetAttemptCount()
                                         service.reconnectAccountInBackground(account)
                                     }

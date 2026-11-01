@@ -546,4 +546,54 @@ do
     in_filter(frame, session);
 end
 
+-- Test 16: Stream Management resume restores FunXMPP state via c2s-session-updated
+do
+    local temp_session = {
+        type = "c2s",
+        full_jid = "test@snikket.penik.ru",
+        send_queue = {},
+        send = function(s) end
+    };
+    enable_handler(temp_session, mock_stanza.stanza("enable", { xmlns = "penik:protocol:funxmpp", dict = "3a145c7a" }));
+    local dict = temp_session.funxmpp_dict;
+
+    local old_session = {
+        id = "old-sess-1",
+        full_jid = "user@snikket.penik.ru/penik",
+        funxmpp_enabled = false, -- Hibernating session had its state cleared
+    };
+    local new_conn = {
+        funxmpp_state = {
+            enabled = true,
+            direct = true,
+            dict = dict,
+            stats = { in_bytes = 10, out_bytes = 20, in_frames = 1, out_frames = 2 }
+        }
+    };
+    local new_session = {
+        id = "new-temp-sess-2",
+        conn = new_conn,
+        funxmpp_enabled = true,
+        funxmpp_direct = true,
+        funxmpp_dict = dict,
+        funxmpp_stats = new_conn.funxmpp_state.stats
+    };
+
+    local resume_handler = hooks["c2s-session-updated"];
+    assert(type(resume_handler) == "function", "c2s-session-updated hook is registered");
+    resume_handler({ session = old_session, from_session = new_session });
+
+    assert_eq(old_session.funxmpp_enabled, true, "Resumed session has funxmpp_enabled = true");
+    assert_eq(old_session.funxmpp_direct, true, "Resumed session has funxmpp_direct = true");
+    assert_true(old_session.funxmpp_dict ~= nil, "Resumed session has dictionary restored");
+
+    -- Verify that outgoing stanzas (e.g. <resumed>) are encoded into binary frames
+    local resumed_stanza = mock_stanza.stanza("resumed", { xmlns = "urn:xmpp:sm:3", previd = "old-sess-1", h = "5" });
+    local wrapped = out_filter(resumed_stanza, old_session);
+    assert_true(type(wrapped) == "table", "Out filter returned binary wrapper");
+    local bin = tostring(wrapped);
+    assert_true(#bin > 0, "Resumed stanza correctly encoded into binary frame");
+    assert_true(bin:byte(1) ~= 0x3C, "Frame is binary, not plain XML '<'");
+end
+
 print("ALL MOD_FUNXMPP TESTS PASSED SUCCESSFULLY!");

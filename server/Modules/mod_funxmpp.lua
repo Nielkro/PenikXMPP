@@ -558,9 +558,24 @@ local function decode_node(data, pos, parent_ns, session, depth)
     return stanza, pos;
 end
 
+-- Helper to check if FunXMPP is active on session or underlying connection
+local function is_funxmpp_active(session)
+    if not session then return false end
+    if session.funxmpp_enabled then return true end
+    if session.conn and session.conn.funxmpp_state then
+        local state = session.conn.funxmpp_state;
+        session.funxmpp_enabled = state.enabled;
+        session.funxmpp_direct = state.direct;
+        session.funxmpp_dict = state.dict;
+        session.funxmpp_stats = state.stats or session.funxmpp_stats;
+        return true;
+    end
+    return false;
+end
+
 -- Incoming byte filter for FunXMPP frames
 local function funxmpp_bytes_in(data, session)
-    if not session.funxmpp_enabled then
+    if not is_funxmpp_active(session) then
         return data;
     end
     local buf = session.funxmpp_in_buf;
@@ -636,7 +651,7 @@ end
 -- the table with a new object before mod_smacks stringifies it, the prefix check below
 -- (tostring(stashed)) ensures we do not output stale or corrupt content if the string diverged.
 local function funxmpp_stanzas_stash_out(stanza, session)
-    if session.funxmpp_enabled and type(stanza) == "table" and stanza.name then
+    if is_funxmpp_active(session) and type(stanza) == "table" and stanza.name then
         session.funxmpp_last_out = stanza;
     else
         session.funxmpp_last_out = nil;
@@ -653,10 +668,11 @@ end
 -- NOTE: mod_smacks returns "" (empty string) during session hibernation.
 -- Such non-piggyback strings pass through directly to socket write without binary encoding.
 local function funxmpp_stanzas_out(stanza, session)
-    if not session.funxmpp_enabled then
+    if not is_funxmpp_active(session) then
         return stanza;
     end
-    if session.funxmpp_direct and type(stanza) == "string" and not session.funxmpp_last_out then
+    local is_direct = session.funxmpp_direct or (session.conn and session.conn.funxmpp_state and session.conn.funxmpp_state.direct);
+    if is_direct and type(stanza) == "string" and not session.funxmpp_last_out then
         if stanza:sub(1, 5) == "<?xml" or stanza:sub(1, 14) == "<stream:stream" then
             return nil;
         end
@@ -712,7 +728,8 @@ local function funxmpp_stanzas_out(stanza, session)
 end
 
 local function funxmpp_bytes_out(data, session)
-    if not session.funxmpp_direct then
+    local is_direct = session and (session.funxmpp_direct or (session.conn and session.conn.funxmpp_state and session.conn.funxmpp_state.direct));
+    if not is_direct then
         return data;
     end
     if type(data) == "string" then
@@ -773,6 +790,15 @@ local function handle_enable(origin, stanza)
         session.full_jid or session.ip or "unknown", selected_hash, selected_dict.version);
     session.funxmpp_stats = { in_bytes = 0, out_bytes = 0, in_frames = 0, out_frames = 0 };
 
+    if session.conn then
+        session.conn.funxmpp_state = {
+            enabled = true,
+            direct = false,
+            dict = selected_dict,
+            stats = session.funxmpp_stats,
+        };
+    end
+
     -- Send XML acknowledgment first with negotiated dict hash
     session.send(st.stanza("enabled", { xmlns = FUN_NS, dict = selected_hash }));
     session.funxmpp_enabled = true;
@@ -820,6 +846,15 @@ local function handle_direct_pxmpp(session, data)
     session.funxmpp_enabled = true;
     session.funxmpp_direct = true;
     session.funxmpp_stats = { in_bytes = 0, out_bytes = 0, in_frames = 0, out_frames = 0 };
+
+    if session.conn then
+        session.conn.funxmpp_state = {
+            enabled = true,
+            direct = true,
+            dict = selected_dict,
+            stats = session.funxmpp_stats,
+        };
+    end
 
     module:log("info", "Direct PXMPP stream negotiated for %s (dict=%s, domain=%s)",
         session.full_jid or session.ip or "unknown", selected_dict.hash, domain);
@@ -958,30 +993,74 @@ end, 100);
 -- reconnected/resumed sessions do not attempt binary I/O on fresh un-negotiated sockets.
 local function handle_session_cleanup(event)
     local session = event.origin or event.session;
-    if session and session.funxmpp_enabled then
-        if session.funxmpp_original_send then
-            session.send = session.funxmpp_original_send;
-            session.funxmpp_original_send = nil;
+    if session then
+        if session.conn then
+            session.conn.funxmpp_state = nil;
         end
-        session.funxmpp_enabled = false;
-        session.funxmpp_direct = false;
-        session.funxmpp_sniff_buf = nil;
-        session.funxmpp_sniff_installed = nil;
-        session.funxmpp_dict = nil;
-        session.funxmpp_in_buf = nil;
-        session.funxmpp_last_out = nil;
-        pcall(filters.remove_filter, session, "bytes/in", funxmpp_bytes_in);
-        pcall(filters.remove_filter, session, "bytes/out", funxmpp_bytes_out);
-        pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_stash_out);
-        pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_out);
-        module:log("info", "FunXMPP stream state reset on disconnect/hibernation for %s",
-            session.full_jid or session.ip or "unknown");
+        if session.funxmpp_enabled then
+            if session.funxmpp_original_send then
+                session.send = session.funxmpp_original_send;
+                session.funxmpp_original_send = nil;
+            end
+            session.funxmpp_enabled = false;
+            session.funxmpp_direct = false;
+            session.funxmpp_sniff_buf = nil;
+            session.funxmpp_sniff_installed = nil;
+            session.funxmpp_dict = nil;
+            session.funxmpp_in_buf = nil;
+            session.funxmpp_last_out = nil;
+            pcall(filters.remove_filter, session, "bytes/in", funxmpp_bytes_in);
+            pcall(filters.remove_filter, session, "bytes/out", funxmpp_bytes_out);
+            pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_stash_out);
+            pcall(filters.remove_filter, session, "stanzas/out", funxmpp_stanzas_out);
+            module:log("info", "FunXMPP stream state reset on disconnect/hibernation for %s",
+                session.full_jid or session.ip or "unknown");
+        end
     end
 end
 
 hook_c2s(module, "c2s-closed", handle_session_cleanup, 100);
 hook_c2s(module, "c2s-destroyed", handle_session_cleanup, 100);
 module:hook("smacks-hibernation-start", handle_session_cleanup, 100);
+
+-- Hook: SM resume session update
+-- When mod_smacks resumes a session, Prosody fires 'c2s-session-updated' inside update_session
+-- before sending <resumed> and flushing the unacked stanzas queue.
+hook_c2s(module, "c2s-session-updated", function(event)
+    local to_session = event.session;
+    local from_session = event.from_session;
+    if from_session and from_session.funxmpp_enabled then
+        to_session.funxmpp_enabled = from_session.funxmpp_enabled;
+        to_session.funxmpp_direct = from_session.funxmpp_direct;
+        to_session.funxmpp_dict = from_session.funxmpp_dict;
+        to_session.funxmpp_stats = from_session.funxmpp_stats or to_session.funxmpp_stats;
+        to_session.funxmpp_in_buf = from_session.funxmpp_in_buf;
+        if to_session.conn and from_session.conn and from_session.conn.funxmpp_state then
+            to_session.conn.funxmpp_state = from_session.conn.funxmpp_state;
+        end
+        module:log("info", "Direct PXMPP / FunXMPP: transferred state on SM resume to %s",
+            to_session.full_jid or to_session.ip or "unknown");
+    elseif to_session.conn and to_session.conn.funxmpp_state then
+        local state = to_session.conn.funxmpp_state;
+        to_session.funxmpp_enabled = state.enabled;
+        to_session.funxmpp_direct = state.direct;
+        to_session.funxmpp_dict = state.dict;
+        to_session.funxmpp_stats = state.stats or to_session.funxmpp_stats;
+        module:log("info", "Direct PXMPP / FunXMPP: restored state from conn on SM resume for %s",
+            to_session.full_jid or to_session.ip or "unknown");
+    end
+end, 100);
+
+module:hook("smacks-hibernation-end", function(event)
+    local resumed = event.resumed;
+    if resumed and resumed.conn and resumed.conn.funxmpp_state then
+        local state = resumed.conn.funxmpp_state;
+        resumed.funxmpp_enabled = state.enabled;
+        resumed.funxmpp_direct = state.direct;
+        resumed.funxmpp_dict = state.dict;
+        resumed.funxmpp_stats = state.stats or resumed.funxmpp_stats;
+    end
+end, 100);
 
 -- Automatically re-open stream in Prosody runner for post-auth stream features upon SASL success
 hook_c2s(module, "authentication-success", function(event)

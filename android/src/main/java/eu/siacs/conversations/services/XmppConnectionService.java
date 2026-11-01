@@ -3372,6 +3372,9 @@ public class XmppConnectionService extends Service {
         synchronized (account) {
             final var connection = account.getXmppConnection();
             if (account.isConnectionEnabled()) {
+                if (interactive) {
+                    connection.disconnectHard();
+                }
                 final var thread = new Thread(connection);
                 connection.setInteractive(interactive);
                 connection.prepareNewConnection();
