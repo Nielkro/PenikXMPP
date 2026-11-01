@@ -4040,14 +4040,7 @@ public class ConversationFragment extends XmppFragment
                 builder.create().show();
             }
             case PenikChatActions.OPEN -> {
-                if (message.getType() == Message.TYPE_RTP_SESSION) {
-                    final RtpSessionStatus rtpStatus = RtpSessionStatus.of(message.getBody());
-                    if ("video".equalsIgnoreCase(rtpStatus.media)) {
-                        checkPermissionAndTriggerVideoCall();
-                    } else {
-                        checkPermissionAndTriggerAudioCall();
-                    }
-                } else if (message.isGeoUri()) {
+                if (message.isGeoUri()) {
                     GeoHelper.view(getActivity(), message);
                 } else {
                     messageListAdapter.openDownloadable(message);

@@ -1954,9 +1954,12 @@ fun PenikMetaRow(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatListener) {
     val context = LocalContext.current
+    var showMenu by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
     val sentBg = colorResource(R.color.penik_sent_message_bg)
     val recvBg = colorResource(R.color.penik_recv_message_bg)
     val textPrimary = colorResource(R.color.penik_text_primary)
@@ -2031,7 +2034,13 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
                         Modifier.widthIn(min = 190.dp, max = 270.dp)
                                 .clip(PenikBubbleShape(isSentByMe = isSentByMe))
                                 .background(bgColor)
-                                .clickable { listener.onMessageAction(PenikChatActions.OPEN, message) }
+                                .combinedClickable(
+                                        onClick = {},
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            showMenu = true
+                                        }
+                                )
                                 .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
         ) {
@@ -2111,6 +2120,17 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
                     }
                 }
             }
+        }
+        if (showMenu) {
+            PenikMessageMenu(
+                    message = message,
+                    isSentByMe = isSentByMe,
+                    onDismiss = { showMenu = false },
+                    onAction = { action ->
+                        showMenu = false
+                        listener.onMessageAction(action, message)
+                    }
+            )
         }
     }
 }
