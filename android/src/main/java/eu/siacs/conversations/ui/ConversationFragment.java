@@ -1529,6 +1529,35 @@ public class ConversationFragment extends XmppFragment
             final Bundle savedInstanceState) {
         this.binding =
                 DataBindingUtil.inflate(inflater, R.layout.fragment_conversation, container, false);
+        final var viewIdBuilder = new ImmutableList.Builder<Integer>();
+        final var showContactHideRecording =
+                QuickConversationsService.isContactListIntegration(requireContext())
+                        && new AppSettings(requireContext()).isQuickActionRecordingAuto()
+                        && Conversations.getInstance(requireContext()).isMicrophoneAvailable();
+        for (final var attachmentChoice : ATTACHMENT_CHOICES) {
+            if (attachmentChoice.type() == AttachmentChoice.Type.RECORDING
+                    && showContactHideRecording) {
+                continue;
+            } else if (attachmentChoice.type() == AttachmentChoice.Type.CONTACT
+                    && !showContactHideRecording) {
+                continue;
+            }
+            final int id = View.generateViewId();
+            final ItemMediaChoiceBinding binding =
+                    DataBindingUtil.inflate(
+                            getLayoutInflater(),
+                            R.layout.item_media_choice,
+                            this.binding.attachmentChoices,
+                            false);
+            binding.getRoot().setId(id);
+            binding.icon.setIconResource(attachmentChoice.icon());
+            binding.icon.setContentDescription(
+                    binding.icon.getContext().getString(attachmentChoice.name()));
+            binding.label.setText(attachmentChoice.name());
+            binding.icon.setOnClickListener(v -> handleAttachmentChoice(attachmentChoice.type()));
+            this.binding.attachmentChoices.addView(binding.getRoot());
+            viewIdBuilder.add(id);
+        }
         setAttachmentChoicesVisibility(false);
         binding.attachButton.setOnClickListener((v) -> toggleAttachmentChoicesVisibility());
         binding.stickerButton.setOnClickListener(
@@ -1552,6 +1581,7 @@ public class ConversationFragment extends XmppFragment
                 });
         binding.botCommandsButton.setOnClickListener((v) -> toggleBotCommandsPopup());
         binding.cancelReplyButton.setOnClickListener((v) -> clearActiveReply());
+        binding.attachmentChoicesFlow.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         binding.getRoot().setOnClickListener(null); // TODO why the fuck did we do this?
         binding.toolbar.addMenuProvider(
                 menuProvider, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
@@ -1881,46 +1911,9 @@ public class ConversationFragment extends XmppFragment
         setAttachmentChoicesVisibility(this.binding.attachmentChoices.getVisibility() == View.GONE);
     }
 
-    private void ensureAttachmentChoicesInflated() {
-        if (this.binding == null || this.binding.attachmentChoices.getChildCount() > 0) {
-            return;
-        }
-        final var viewIdBuilder = new ImmutableList.Builder<Integer>();
-        final var showContactHideRecording =
-                QuickConversationsService.isContactListIntegration(requireContext())
-                        && new AppSettings(requireContext()).isQuickActionRecordingAuto()
-                        && Conversations.getInstance(requireContext()).isMicrophoneAvailable();
-        for (final var attachmentChoice : ATTACHMENT_CHOICES) {
-            if (attachmentChoice.type() == AttachmentChoice.Type.RECORDING
-                    && showContactHideRecording) {
-                continue;
-            } else if (attachmentChoice.type() == AttachmentChoice.Type.CONTACT
-                    && !showContactHideRecording) {
-                continue;
-            }
-            final int id = View.generateViewId();
-            final ItemMediaChoiceBinding choiceBinding =
-                    DataBindingUtil.inflate(
-                            getLayoutInflater(),
-                            R.layout.item_media_choice,
-                            this.binding.attachmentChoices,
-                            false);
-            choiceBinding.getRoot().setId(id);
-            choiceBinding.icon.setIconResource(attachmentChoice.icon());
-            choiceBinding.icon.setContentDescription(
-                    choiceBinding.icon.getContext().getString(attachmentChoice.name()));
-            choiceBinding.label.setText(attachmentChoice.name());
-            choiceBinding.icon.setOnClickListener(v -> handleAttachmentChoice(attachmentChoice.type()));
-            this.binding.attachmentChoices.addView(choiceBinding.getRoot());
-            viewIdBuilder.add(id);
-        }
-        this.binding.attachmentChoicesFlow.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
-    }
-
     private void setAttachmentChoicesVisibility(final boolean visible) {
         this.attachmentChoicesBackPressed.setEnabled(visible);
         if (visible) {
-            ensureAttachmentChoicesInflated();
             ViewCompat.setStateDescription(this.binding.attachButton, getString(R.string.expanded));
             ViewCompat.replaceAccessibilityAction(
                     this.binding.attachButton,
