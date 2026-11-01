@@ -3002,11 +3002,11 @@ public class XmppConnection implements Runnable {
     public int getTimeToNextAttempt(final boolean aggressive) {
         final int interval;
         if (aggressive) {
-            interval = Math.min((int) (3 * Math.pow(1.3, attempt)), 60);
+            interval = Math.min((int) (2 * Math.pow(1.3, attempt)), 30);
         } else {
             final int additionalTime =
                     account.getLastErrorStatus() == Account.State.POLICY_VIOLATION ? 3 : 0;
-            interval = Math.min((int) (25 * Math.pow(1.3, (additionalTime + attempt))), 300);
+            interval = Math.min((int) (3 * Math.pow(1.4, (additionalTime + attempt))), 60);
         }
         final var connectionDuration = Ints.saturatedCast(getConnectionDuration() / 1000);
         return interval - connectionDuration;

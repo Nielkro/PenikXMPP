@@ -160,6 +160,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -296,6 +297,8 @@ public class XmppConnectionService extends Service {
             new RestrictedEventReceiver(List.of(TorServiceUtils.ACTION_STATUS));
     private final BroadcastReceiver mInternalScreenEventReceiver = new InternalEventReceiver();
     private ConnectivityManager.NetworkCallback mDefaultNetworkCallback = null;
+    private final ScheduledExecutorService mNetworkChangeExecutor = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> mPendingNetworkReconnect = null;
 
     private void registerDefaultNetworkCallback() {
         final ConnectivityManager connectivityManager = getSystemService(ConnectivityManager.class);
@@ -344,22 +347,29 @@ public class XmppConnectionService extends Service {
         }
     }
 
-    public void onNetworkChanged(final boolean changed) {
-        Resolver.clearCache();
-        resetAllAttemptCounts(true);
-        if (new NetworkManager(this).getHint() == NetworkManager.Hint.ACTIVE) {
-            for (final Account account : accounts) {
-                if (account.isConnectionEnabled()) {
-                    if (changed || account.getStatus() != Account.State.ONLINE) {
-                        Log.d(
-                                Config.LOGTAG,
-                                account.getJid().asBareJid()
-                                        + ": network changed, reconnecting immediately");
-                        reconnectAccount(account, false);
-                    }
-                }
-            }
+    public synchronized void onNetworkChanged(final boolean changed) {
+        if (mPendingNetworkReconnect != null && !mPendingNetworkReconnect.isDone()) {
+            mPendingNetworkReconnect.cancel(false);
         }
+        mPendingNetworkReconnect =
+                mNetworkChangeExecutor.schedule(
+                        () -> {
+                            Resolver.clearCache();
+                            resetAllAttemptCounts(true);
+                            if (new NetworkManager(this).getHint() == NetworkManager.Hint.ACTIVE) {
+                                for (final Account account : accounts) {
+                                    if (account.isConnectionEnabled()) {
+                                        Log.d(
+                                                Config.LOGTAG,
+                                                account.getJid().asBareJid()
+                                                        + ": network stabilized, reconnecting immediately");
+                                        reconnectAccount(account, false);
+                                    }
+                                }
+                            }
+                        },
+                        400,
+                        TimeUnit.MILLISECONDS);
     }
 
     public void onNetworkLost() {
@@ -563,7 +573,9 @@ public class XmppConnectionService extends Service {
                 mQuickConversationsService.handleSmsReceived(intent);
                 break;
             case ConnectivityManager.CONNECTIVITY_ACTION:
-                onNetworkChanged(true);
+                if (this.mDefaultNetworkCallback == null) {
+                    onNetworkChanged(true);
+                }
                 break;
             case Intent.ACTION_SHUTDOWN:
                 logoutAndSave(true);
@@ -1375,6 +1387,7 @@ public class XmppConnectionService extends Service {
         destroyed = false;
         fileObserver.stopWatching();
         internalPingExecutor.shutdown();
+        mNetworkChangeExecutor.shutdownNow();
         super.onDestroy();
     }
 
