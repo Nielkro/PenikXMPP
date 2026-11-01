@@ -21,6 +21,8 @@ import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
@@ -293,6 +295,100 @@ public class XmppConnectionService extends Service {
     private final BroadcastReceiver mInternalRestrictedEventReceiver =
             new RestrictedEventReceiver(List.of(TorServiceUtils.ACTION_STATUS));
     private final BroadcastReceiver mInternalScreenEventReceiver = new InternalEventReceiver();
+    private ConnectivityManager.NetworkCallback mDefaultNetworkCallback = null;
+
+    private void registerDefaultNetworkCallback() {
+        final ConnectivityManager connectivityManager = getSystemService(ConnectivityManager.class);
+        if (connectivityManager == null) {
+            return;
+        }
+        this.mDefaultNetworkCallback =
+                new ConnectivityManager.NetworkCallback() {
+                    private Network currentNetwork = null;
+
+                    @Override
+                    public void onAvailable(@NonNull Network network) {
+                        final boolean changed = currentNetwork != null && !currentNetwork.equals(network);
+                        currentNetwork = network;
+                        Log.d(Config.LOGTAG, "Default network available: " + network + " (changed=" + changed + ")");
+                        onNetworkChanged(changed);
+                    }
+
+                    @Override
+                    public void onLost(@NonNull Network network) {
+                        Log.d(Config.LOGTAG, "Default network lost: " + network);
+                        if (network.equals(currentNetwork)) {
+                            currentNetwork = null;
+                        }
+                        onNetworkLost();
+                    }
+
+                    @Override
+                    public void onCapabilitiesChanged(
+                            @NonNull Network network, @NonNull NetworkCapabilities capabilities) {
+                        final boolean hasInternet =
+                                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+                        final boolean validated =
+                                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+                        if (hasInternet && validated) {
+                            Log.d(Config.LOGTAG, "Default network validated: " + network);
+                            onNetworkValidated();
+                        }
+                    }
+                };
+        try {
+            connectivityManager.registerDefaultNetworkCallback(this.mDefaultNetworkCallback);
+            Log.d(Config.LOGTAG, "Registered default network callback");
+        } catch (final RuntimeException e) {
+            Log.e(Config.LOGTAG, "Failed to register default network callback", e);
+        }
+    }
+
+    public void onNetworkChanged(final boolean changed) {
+        Resolver.clearCache();
+        resetAllAttemptCounts(true);
+        if (new NetworkManager(this).getHint() == NetworkManager.Hint.ACTIVE) {
+            for (final Account account : accounts) {
+                if (account.isConnectionEnabled()) {
+                    if (changed || account.getStatus() != Account.State.ONLINE) {
+                        Log.d(
+                                Config.LOGTAG,
+                                account.getJid().asBareJid()
+                                        + ": network changed, reconnecting immediately");
+                        reconnectAccount(account, false);
+                    }
+                }
+            }
+        }
+    }
+
+    public void onNetworkLost() {
+        final var hint = new NetworkManager(this).getHint();
+        if (hint != NetworkManager.Hint.ACTIVE) {
+            for (final Account account : accounts) {
+                if (account.isConnectionEnabled() && account.getStatus() == Account.State.ONLINE) {
+                    account.getXmppConnection().disconnectHard();
+                    account.setStatus(Account.State.NO_INTERNET);
+                }
+            }
+            updateAccountUi();
+        }
+    }
+
+    public void onNetworkValidated() {
+        Resolver.clearCache();
+        for (final Account account : accounts) {
+            if (account.isConnectionEnabled()
+                    && account.getStatus() != Account.State.ONLINE
+                    && account.getStatus() != Account.State.CONNECTING) {
+                Log.d(
+                        Config.LOGTAG,
+                        account.getJid().asBareJid()
+                                + ": network validated, reconnecting offline account");
+                reconnectAccount(account, false);
+            }
+        }
+    }
 
     public boolean isInLowPingTimeoutMode(Account account) {
         synchronized (mLowPingTimeoutMode) {
@@ -467,15 +563,7 @@ public class XmppConnectionService extends Service {
                 mQuickConversationsService.handleSmsReceived(intent);
                 break;
             case ConnectivityManager.CONNECTIVITY_ACTION:
-                if (new NetworkManager(this).getHint() == NetworkManager.Hint.ACTIVE) {
-                    if (Config.POST_CONNECTIVITY_CHANGE_PING_INTERVAL > 0) {
-                        schedulePostConnectivityChange();
-                    }
-                    if (Config.RESET_ATTEMPT_COUNT_ON_NETWORK_CHANGE) {
-                        resetAllAttemptCounts(true);
-                    }
-                    Resolver.clearCache();
-                }
+                onNetworkChanged(true);
                 break;
             case Intent.ACTION_SHUTDOWN:
                 logoutAndSave(true);
@@ -888,8 +976,11 @@ public class XmppConnectionService extends Service {
             final boolean aggressive =
                     account.getStatus() == Account.State.SEE_OTHER_HOST
                             || connection.getManager(JingleManager.class).hasJingleRtpConnection();
-            if (connection.getTimeToNextAttempt(aggressive) <= 0) {
+            final int timeToNext = connection.getTimeToNextAttempt(aggressive);
+            if (timeToNext <= 0) {
                 reconnectAccount(account, interactive);
+            } else {
+                scheduleWakeUpCall(timeToNext * 1000L, requestCode);
             }
         }
         return false;
@@ -1171,6 +1262,7 @@ public class XmppConnectionService extends Service {
                 ContextCompat.RECEIVER_EXPORTED);
         mForceDuringOnCreate.set(false);
         toggleForegroundService();
+        registerDefaultNetworkCallback();
         internalPingExecutor.scheduleWithFixedDelay(
                 this::manageAccountConnectionStatesInternal, 10, 10, TimeUnit.SECONDS);
         final SharedPreferences sharedPreferences =
@@ -1262,6 +1354,17 @@ public class XmppConnectionService extends Service {
 
     @Override
     public void onDestroy() {
+        if (this.mDefaultNetworkCallback != null) {
+            final ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+            if (cm != null) {
+                try {
+                    cm.unregisterNetworkCallback(this.mDefaultNetworkCallback);
+                } catch (final RuntimeException e) {
+                    // ignored
+                }
+            }
+            this.mDefaultNetworkCallback = null;
+        }
         try {
             unregisterReceiver(this.mInternalEventReceiver);
             unregisterReceiver(this.mInternalRestrictedEventReceiver);
@@ -3372,9 +3475,7 @@ public class XmppConnectionService extends Service {
         synchronized (account) {
             final var connection = account.getXmppConnection();
             if (account.isConnectionEnabled()) {
-                if (interactive) {
-                    connection.disconnectHard();
-                }
+                connection.disconnectHard();
                 final var thread = new Thread(connection);
                 connection.setInteractive(interactive);
                 connection.prepareNewConnection();
