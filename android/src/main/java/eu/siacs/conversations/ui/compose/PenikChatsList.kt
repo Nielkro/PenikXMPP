@@ -5,7 +5,11 @@ import android.graphics.Bitmap
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import eu.siacs.conversations.phone.PenikPhoneDirectoryManager
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -23,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,6 +41,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.ViewSidebar
@@ -148,6 +154,8 @@ class PenikChatsState {
     var account by mutableStateOf<Account?>(null)
     var isArchiveOpen by mutableStateOf(false)
     var revision by mutableStateOf(0L)
+    var calls by mutableStateOf<List<PenikCallEntry>>(emptyList())
+    var callsLoaded by mutableStateOf(false)
 
     fun bumpRevision() {
         revision++
@@ -265,6 +273,28 @@ fun PenikMainScreen(
                         null
                     }
                 }
+    }
+
+    LaunchedEffect(state.revision, activity.xmppConnectionService) {
+        val service = activity.xmppConnectionService ?: return@LaunchedEffect
+        withContext(Dispatchers.IO) {
+            val convMap = (state.conversations + state.archived).associateBy { it.uuid }
+            val rtpMessages = try {
+                service.databaseBackend.getRtpSessionMessages(60) { uuid ->
+                    convMap[uuid] ?: service.findConversationByUuid(uuid)
+                }
+            } catch (e: Exception) {
+                emptyList()
+            }
+            val entries = rtpMessages.mapNotNull { msg ->
+                val conv = (msg.conversation as? Conversation) ?: convMap[msg.conversationUuid] ?: service.findConversationByUuid(msg.conversationUuid)
+                if (conv != null) PenikCallEntry(conv, msg) else null
+            }
+            withContext(Dispatchers.Main) {
+                state.calls = entries
+                state.callsLoaded = true
+            }
+        }
     }
 
     BackHandler(enabled = isDrawerMode && drawerState.isOpen) {
@@ -432,32 +462,38 @@ fun PenikMainScreen(
                 )
             }
             Box(modifier = Modifier.weight(1f)) {
-                when (tab) {
-                    PenikTab.CHATS ->
+                Crossfade(
+                    targetState = tab,
+                    animationSpec = tween(durationMillis = 180),
+                    label = "tab_crossfade"
+                ) { currentTab ->
+                    when (currentTab) {
+                        PenikTab.CHATS ->
                             PenikChatsTab(
-                                    state = state,
-                                    activity = activity,
-                                    listener = listener,
-                                    searchQuery = searchQuery,
-                                    isArchiveOpen = isArchiveOpen,
-                                    isDrawerMode = isDrawerMode,
-                                    onOpenArchive = { state.isArchiveOpen = true }
+                                state = state,
+                                activity = activity,
+                                listener = listener,
+                                searchQuery = searchQuery,
+                                isArchiveOpen = isArchiveOpen,
+                                isDrawerMode = isDrawerMode,
+                                onOpenArchive = { state.isArchiveOpen = true }
                             )
-                    PenikTab.CALLS ->
+                        PenikTab.CALLS ->
                             PenikCallsTab(
-                                    state = state,
-                                    activity = activity,
-                                    listener = listener,
-                                    isDrawerMode = isDrawerMode,
-                                    onBack = if (isDrawerMode) { { tab = PenikTab.CHATS } } else null
+                                state = state,
+                                activity = activity,
+                                listener = listener,
+                                isDrawerMode = isDrawerMode,
+                                onBack = if (isDrawerMode) { { tab = PenikTab.CHATS } } else null
                             )
-                    PenikTab.PROFILE ->
+                        PenikTab.PROFILE ->
                             PenikProfileTab(
-                                    state = state,
-                                    activity = activity,
-                                    listener = listener,
-                                    onBack = if (isDrawerMode) { { tab = PenikTab.CHATS } } else null
+                                state = state,
+                                activity = activity,
+                                listener = listener,
+                                onBack = if (isDrawerMode) { { tab = PenikTab.CHATS } } else null
                             )
+                    }
                 }
 
                 if (!isDrawerMode && !isArchiveOpen && !isSearchActive) {
@@ -771,6 +807,20 @@ private fun PenikFloatingBottomBar(
     accentColor: Color,
     textMutedColor: Color
 ) {
+    val itemWidth = 72.dp
+    val itemHeight = 48.dp
+    val itemSpacing = 4.dp
+
+    val targetOffset = (itemWidth + itemSpacing) * tab.ordinal
+    val animatedOffset by animateDpAsState(
+        targetValue = targetOffset,
+        animationSpec = spring(
+            dampingRatio = 0.82f,
+            stiffness = 380f
+        ),
+        label = "floating_tab_pill_offset"
+    )
+
     Surface(
         modifier = modifier
             .wrapContentWidth()
@@ -786,37 +836,55 @@ private fun PenikFloatingBottomBar(
         tonalElevation = 0.dp,
         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .wrapContentWidth()
-                .padding(horizontal = 6.dp, vertical = 3.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 4.dp, vertical = 4.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
-            PenikFloatingNavItem(
-                selected = tab == PenikTab.CHATS,
-                onClick = { onTabSelected(PenikTab.CHATS) },
-                icon = painterResource(R.drawable.ic_chat_24dp),
-                label = "Чаты",
-                accent = accentColor,
-                textMuted = textMutedColor
+            // Animated sliding indicator pill behind the active tab
+            Box(
+                modifier = Modifier
+                    .offset(x = animatedOffset)
+                    .width(itemWidth)
+                    .height(itemHeight)
+                    .clip(CircleShape)
+                    .background(accentColor.copy(alpha = 0.20f))
             )
-            PenikFloatingNavItem(
-                selected = tab == PenikTab.CALLS,
-                onClick = { onTabSelected(PenikTab.CALLS) },
-                icon = painterResource(R.drawable.ic_phone_24dp),
-                label = "Звонки",
-                accent = accentColor,
-                textMuted = textMutedColor
-            )
-            PenikFloatingNavItem(
-                selected = tab == PenikTab.PROFILE,
-                onClick = { onTabSelected(PenikTab.PROFILE) },
-                icon = painterResource(R.drawable.ic_person_24dp),
-                label = "Профиль",
-                accent = accentColor,
-                textMuted = textMutedColor
-            )
+
+            Row(
+                modifier = Modifier.wrapContentWidth(),
+                horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PenikFloatingNavItem(
+                    selected = tab == PenikTab.CHATS,
+                    onClick = { onTabSelected(PenikTab.CHATS) },
+                    icon = painterResource(R.drawable.ic_chat_24dp),
+                    label = "Чаты",
+                    modifier = Modifier.width(itemWidth).height(itemHeight),
+                    accent = accentColor,
+                    textMuted = textMutedColor
+                )
+                PenikFloatingNavItem(
+                    selected = tab == PenikTab.CALLS,
+                    onClick = { onTabSelected(PenikTab.CALLS) },
+                    icon = painterResource(R.drawable.ic_phone_24dp),
+                    label = "Звонки",
+                    modifier = Modifier.width(itemWidth).height(itemHeight),
+                    accent = accentColor,
+                    textMuted = textMutedColor
+                )
+                PenikFloatingNavItem(
+                    selected = tab == PenikTab.PROFILE,
+                    onClick = { onTabSelected(PenikTab.PROFILE) },
+                    icon = painterResource(R.drawable.ic_person_24dp),
+                    label = "Профиль",
+                    modifier = Modifier.width(itemWidth).height(itemHeight),
+                    accent = accentColor,
+                    textMuted = textMutedColor
+                )
+            }
         }
     }
 }
@@ -827,31 +895,37 @@ private fun PenikFloatingNavItem(
     onClick: () -> Unit,
     icon: Painter,
     label: String,
+    modifier: Modifier = Modifier,
     accent: Color,
     textMuted: Color
 ) {
-    val indicatorColor by animateColorAsState(
-        targetValue = if (selected) accent.copy(alpha = 0.16f) else Color.Transparent,
-        animationSpec = tween(durationMillis = 180),
-        label = "tab_indicator"
-    )
     val contentColor by animateColorAsState(
         targetValue = if (selected) accent else textMuted,
         animationSpec = tween(durationMillis = 180),
         label = "tab_content"
     )
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.05f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = 0.8f,
+            stiffness = 400f
+        ),
+        label = "tab_scale"
+    )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .clip(CircleShape)
-            .background(indicatorColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 6.dp),
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
         ) {
             Icon(
                 painter = icon,
@@ -1785,34 +1859,31 @@ fun PenikCallsTab(
     val background = colorResource(R.color.penik_background)
     val border = colorResource(R.color.penik_border)
     val textMuted = colorResource(R.color.penik_text_muted)
-    var calls by remember { mutableStateOf<List<PenikCallEntry>>(emptyList()) }
-    var loaded by remember { mutableStateOf(false) }
-    LaunchedEffect(state.conversations, state.archived) {
-        val all = state.conversations + state.archived
-        val service = activity.xmppConnectionService
-        if (service == null) {
-            loaded = true
-            return@LaunchedEffect
-        }
-        val result =
-                withContext(Dispatchers.IO) {
-                    val found = ArrayList<PenikCallEntry>()
-                    for (conversation in all) {
-                        try {
-                            val messages = service.databaseBackend.getMessages(conversation, 40)
-                            for (message in messages) {
-                                if (message.type == Message.TYPE_RTP_SESSION) {
-                                    found.add(PenikCallEntry(conversation, message))
-                                }
-                            }
-                        } catch (e: Exception) {
-                            // ignore per-conversation failures
-                        }
+    val calls = state.calls
+    val loaded = state.callsLoaded
+
+    LaunchedEffect(state.callsLoaded, activity.xmppConnectionService) {
+        if (!state.callsLoaded) {
+            val service = activity.xmppConnectionService ?: return@LaunchedEffect
+            withContext(Dispatchers.IO) {
+                val convMap = (state.conversations + state.archived).associateBy { it.uuid }
+                val rtpMessages = try {
+                    service.databaseBackend.getRtpSessionMessages(60) { uuid ->
+                        convMap[uuid] ?: service.findConversationByUuid(uuid)
                     }
-                    found.sortedByDescending { it.message.timeSent }.take(60)
+                } catch (e: Exception) {
+                    emptyList()
                 }
-        calls = result
-        loaded = true
+                val entries = rtpMessages.mapNotNull { msg ->
+                    val conv = (msg.conversation as? Conversation) ?: convMap[msg.conversationUuid] ?: service.findConversationByUuid(msg.conversationUuid)
+                    if (conv != null) PenikCallEntry(conv, msg) else null
+                }
+                withContext(Dispatchers.Main) {
+                    state.calls = entries
+                    state.callsLoaded = true
+                }
+            }
+        }
     }
     Column(modifier = Modifier.fillMaxSize().background(background)) {
         TopAppBar(
@@ -1960,7 +2031,6 @@ fun PenikProfileTab(
     val danger = colorResource(R.color.penik_danger)
     val navigationStyle by NavigationStyleManager.navigationStyle.collectAsState()
     val isDrawerMode = navigationStyle == NavigationStyle.DRAWER
-    var showNavStyleDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val account = state.account
 
@@ -2297,87 +2367,6 @@ fun PenikProfileTab(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Settings / Interface Card
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(panel)
-        ) {
-            Text(
-                text = "НАСТРОЙКИ",
-                color = accent,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 4.dp)
-            )
-
-            // Navigation style row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showNavStyleDialog = true }
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ViewSidebar,
-                    contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Стиль навигации",
-                        color = textPrimary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = navigationStyle.displayName,
-                        color = textMuted,
-                        fontSize = 12.sp
-                    )
-                }
-                Text("›", color = textMuted, fontSize = 20.sp)
-            }
-
-            HorizontalDivider(
-                modifier = Modifier.padding(start = 56.dp, end = 16.dp),
-                color = background,
-                thickness = 1.dp
-            )
-
-            // App settings row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { listener.onOpenSettings() }
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = "Все настройки",
-                    color = textPrimary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
-                )
-                Text("›", color = textMuted, fontSize = 20.sp)
-            }
-        }
-
         Spacer(modifier = Modifier.height(24.dp))
 
         androidx.compose.material3.Button(
@@ -2395,70 +2384,6 @@ fun PenikProfileTab(
                 fontWeight = FontWeight.Medium
             )
         }
-    }
-
-    if (showNavStyleDialog) {
-        AlertDialog(
-            onDismissRequest = { showNavStyleDialog = false },
-            containerColor = panel,
-            title = {
-                Text(
-                    text = "Стиль навигации",
-                    color = textPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NavigationStyle.entries.forEach { style ->
-                        val isSelected = style == navigationStyle
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable {
-                                    NavigationStyleManager.setStyle(style)
-                                    showNavStyleDialog = false
-                                }
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = isSelected,
-                                onClick = {
-                                    NavigationStyleManager.setStyle(style)
-                                    showNavStyleDialog = false
-                                },
-                                colors = RadioButtonDefaults.colors(
-                                    selectedColor = accent,
-                                    unselectedColor = textMuted
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = style.displayName,
-                                    color = textPrimary,
-                                    fontSize = 16.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                )
-                                Text(
-                                    text = style.description,
-                                    color = textMuted,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showNavStyleDialog = false }) {
-                    Text("Закрыть", color = accent)
-                }
-            }
-        )
     }
 
     if (showEditPhoneDialog) {
