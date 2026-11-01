@@ -753,6 +753,66 @@ fun PenikTicksIcon(
     )
 }
 
+@Composable
+fun PenikMessageStatusIcon(
+        status: Int,
+        tint: Color,
+        accent: Color,
+        danger: Color,
+        modifier: Modifier = Modifier
+) {
+    when (status) {
+        Message.STATUS_WAITING -> {
+            Icon(
+                    painter = painterResource(R.drawable.ic_schedule_24dp),
+                    contentDescription = "Ожидание отправки",
+                    tint = tint,
+                    modifier = modifier.size(12.dp)
+            )
+        }
+        Message.STATUS_UNSEND, Message.STATUS_SEND_FAILED -> {
+            Icon(
+                    painter = painterResource(R.drawable.ic_error_24dp),
+                    contentDescription = "Не удалось отправить",
+                    tint = danger,
+                    modifier = modifier.size(13.dp)
+            )
+        }
+        Message.STATUS_SEND -> {
+            Icon(
+                    imageVector = Icons.Default.Done,
+                    contentDescription = "Отправлено",
+                    tint = tint,
+                    modifier = modifier.size(14.dp)
+            )
+        }
+        Message.STATUS_SEND_RECEIVED -> {
+            Icon(
+                    imageVector = Icons.Default.DoneAll,
+                    contentDescription = "Доставлено",
+                    tint = tint,
+                    modifier = modifier.size(16.dp)
+            )
+        }
+        Message.STATUS_SEND_DISPLAYED -> {
+            Icon(
+                    imageVector = Icons.Default.DoneAll,
+                    contentDescription = "Прочитано",
+                    tint = accent,
+                    modifier = modifier.size(16.dp)
+            )
+        }
+        else -> {
+            Icon(
+                    imageVector = Icons.Default.Done,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = modifier.size(14.dp)
+            )
+        }
+    }
+}
+
 fun penikBareImageUrl(text: String): String? {
     val trimmed = text.trim()
     if (trimmed.isEmpty() || trimmed.contains("\n") || trimmed.contains(" ")) {
@@ -1648,20 +1708,6 @@ fun PenikTextBubble(
             } else {
                 ""
             }
-    val ticks =
-            when (status) {
-                Message.STATUS_UNSEND, Message.STATUS_WAITING, Message.STATUS_OFFERED, Message.STATUS_SEND -> "✓"
-                Message.STATUS_SEND_RECEIVED -> "✓✓"
-                Message.STATUS_SEND_DISPLAYED -> "✓✓"
-                Message.STATUS_SEND_FAILED -> "⚠"
-                else -> if (isSentByMe) "✓" else ""
-            }
-    val ticksColor =
-            when (status) {
-                Message.STATUS_SEND_DISPLAYED -> accent
-                Message.STATUS_SEND_FAILED -> danger
-                else -> textMuted
-            }
     val showSender = isMuc && !isSentByMe
     val senderName =
             if (showSender) {
@@ -1694,8 +1740,6 @@ fun PenikTextBubble(
                     val readAccent = if (isSentByMe && bgColor == accent) Color(0xFF80D8FF) else accent
                     PenikMetaRow(
                             timeText = timeText,
-                            ticks = ticks,
-                            ticksColor = ticksColor,
                             isEncrypted = message.encryption != Message.ENCRYPTION_NONE,
                             edited = edited,
                             overlayDark = false,
@@ -1833,26 +1877,13 @@ fun PenikTextBubble(
                             Text(text = timeText, color = effectiveMuted, fontSize = 11.sp)
                         }
                         if (isSentByMe) {
-                            if (status == Message.STATUS_SEND_FAILED) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                        text = "!",
-                                        color = danger,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                )
-                            } else {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                val isDouble =
-                                        status == Message.STATUS_SEND_RECEIVED ||
-                                                status == Message.STATUS_SEND_DISPLAYED
-                                PenikTicksIcon(
-                                        double = isDouble,
-                                        read = status == Message.STATUS_SEND_DISPLAYED,
-                                        tint = effectiveMuted,
-                                        accent = readAccent
-                                )
-                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            PenikMessageStatusIcon(
+                                    status = status,
+                                    tint = effectiveMuted,
+                                    accent = readAccent,
+                                    danger = danger
+                            )
                         }
                     }
                 }
@@ -1875,8 +1906,6 @@ fun PenikTextBubble(
 @Composable
 fun PenikMetaRow(
         timeText: String,
-        ticks: String,
-        ticksColor: Color,
         isEncrypted: Boolean,
         edited: Boolean,
         overlayDark: Boolean,
@@ -1907,29 +1936,11 @@ fun PenikMetaRow(
         }
         if (isSentByMe && status != Message.STATUS_RECEIVED) {
             Spacer(modifier = Modifier.width(4.dp))
-            if (status == Message.STATUS_SEND_FAILED) {
-                Text(
-                        text = "!",
-                        color = Color(0xFFF05A5A),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                )
-            } else {
-                val isDouble = status == Message.STATUS_SEND_RECEIVED || status == Message.STATUS_SEND_DISPLAYED
-                PenikTicksIcon(
-                        double = isDouble,
-                        read = status == Message.STATUS_SEND_DISPLAYED,
-                        tint = if (overlayDark) Color.White.copy(alpha = 0.85f) else baseColor,
-                        accent = if (accent != Color.Unspecified) accent else Color(0xFF64B5F6)
-                )
-            }
-        } else if (ticks.isNotEmpty()) {
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                    text = ticks,
-                    color = if (overlayDark) Color.White else ticksColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
+            PenikMessageStatusIcon(
+                    status = status,
+                    tint = if (overlayDark) Color.White.copy(alpha = 0.85f) else baseColor,
+                    accent = if (accent != Color.Unspecified) accent else Color(0xFF64B5F6),
+                    danger = Color(0xFFF05A5A)
             )
         }
     }
@@ -3273,26 +3284,13 @@ fun PenikAttachmentRow(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = timeText, fontSize = 10.sp, color = Color.White)
                             if (isSentByMe) {
-                                if (status == Message.STATUS_SEND_FAILED) {
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                            text = "!",
-                                            color = danger,
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold
-                                    )
-                                } else {
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    val isDouble =
-                                            status == Message.STATUS_SEND_RECEIVED ||
-                                                    status == Message.STATUS_SEND_DISPLAYED
-                                    PenikTicksIcon(
-                                            double = isDouble,
-                                            read = status == Message.STATUS_SEND_DISPLAYED,
-                                            tint = Color.White.copy(alpha = 0.8f),
-                                            accent = accent
-                                    )
-                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                PenikMessageStatusIcon(
+                                        status = status,
+                                        tint = Color.White.copy(alpha = 0.8f),
+                                        accent = accent,
+                                        danger = danger
+                                )
                             }
                         }
                     }
@@ -3368,27 +3366,14 @@ fun PenikAttachmentRow(
                             Text(text = timeText, color = effectiveMutedColor, fontSize = 11.sp)
                         }
                         if (isSentByMe) {
-                            if (status == Message.STATUS_SEND_FAILED) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                        text = "!",
-                                        color = danger,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                )
-                            } else {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                val isDouble =
-                                        status == Message.STATUS_SEND_RECEIVED ||
-                                                status == Message.STATUS_SEND_DISPLAYED
-                                val readAccent = if (isSentByMe && bubbleBg == accent) Color(0xFF80D8FF) else accent
-                                PenikTicksIcon(
-                                        double = isDouble,
-                                        read = status == Message.STATUS_SEND_DISPLAYED,
-                                        tint = effectiveMutedColor,
-                                        accent = readAccent
-                                )
-                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            val readAccent = if (isSentByMe && bubbleBg == accent) Color(0xFF80D8FF) else accent
+                            PenikMessageStatusIcon(
+                                    status = status,
+                                    tint = effectiveMutedColor,
+                                    accent = readAccent,
+                                    danger = danger
+                            )
                         }
                     }
                 }
@@ -3487,26 +3472,13 @@ fun PenikUrlImageRow(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = timeText, fontSize = 10.sp, color = Color.White)
                         if (isSentByMe) {
-                            if (status == Message.STATUS_SEND_FAILED) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                        text = "!",
-                                        color = danger,
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold
-                                )
-                            } else {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                val isDouble =
-                                        status == Message.STATUS_SEND_RECEIVED ||
-                                                status == Message.STATUS_SEND_DISPLAYED
-                                PenikTicksIcon(
-                                        double = isDouble,
-                                        read = status == Message.STATUS_SEND_DISPLAYED,
-                                        tint = Color.White.copy(alpha = 0.8f),
-                                        accent = accent
-                                )
-                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            PenikMessageStatusIcon(
+                                    status = status,
+                                    tint = Color.White.copy(alpha = 0.8f),
+                                    accent = accent,
+                                    danger = danger
+                            )
                         }
                     }
                 }

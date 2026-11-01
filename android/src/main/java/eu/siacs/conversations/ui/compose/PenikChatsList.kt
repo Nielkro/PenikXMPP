@@ -702,7 +702,7 @@ fun PenikChatsTab(
                 }
 
                 // 2. Self Chat ("Избранное")
-                item(key = "self_chat") {
+                item(key = "self_chat_$rev") {
                     PenikSelfRow(
                             selfChat = state.selfChat,
                             activity = activity,
@@ -984,7 +984,10 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long
     val context = LocalContext.current
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
-    val latest = selfChat?.latestMessage
+    val hasMessages = selfChat != null && selfChat.countMessages() > 0
+    val rawLatest = if (hasMessages) selfChat.latestMessage else null
+    val isReal = rawLatest != null && (rawLatest.body.isNotEmpty() || rawLatest.type != Message.TYPE_STATUS || rawLatest.isFileOrImage)
+    val latest = if (isReal) rawLatest else null
     val service = activity.xmppConnectionService
     val rawBody = latest?.body?.trim() ?: ""
     val isAesGcm = rawBody.startsWith("aesgcm://", ignoreCase = true)
@@ -1040,7 +1043,7 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long
                     overflow = TextOverflow.Ellipsis
             )
             val preview = if (latest != null) penikMessagePreviewData(context, latest) else null
-            if (preview != null) {
+            if (preview != null && (preview.text.isNotBlank() || preview.iconRes != null)) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val loadedThumb = thumb
@@ -1069,6 +1072,15 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long
                             overflow = TextOverflow.Ellipsis
                     )
                 }
+            } else {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                        text = "Сохранённые сообщения",
+                        color = textMuted,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                )
             }
         }
         if (latest != null && latest.timeSent > 0) {
@@ -1151,7 +1163,10 @@ fun PenikConversationRow(
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
     val accent = colorResource(R.color.penik_accent)
-    val latest = conversation.latestMessage
+    val hasMessages = conversation.countMessages() > 0
+    val rawLatest = if (hasMessages) conversation.latestMessage else null
+    val isReal = rawLatest != null && (rawLatest.body.isNotEmpty() || rawLatest.type != Message.TYPE_STATUS || rawLatest.isFileOrImage)
+    val latest = if (isReal) rawLatest else null
     val draft = if (conversation.isRead) conversation.draft else null
     val timestamp =
             if (draft != null) {

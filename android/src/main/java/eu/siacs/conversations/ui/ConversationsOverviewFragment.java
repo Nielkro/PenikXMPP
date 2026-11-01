@@ -687,10 +687,9 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 final var contact = c.getContact();
                 final boolean isSelfChat =
                         c.getMode() == Conversation.MODE_SINGLE
-                                && contact != null
-                                && contact.isSelf();
+                                && ((contact != null && contact.isSelf()) || c.isSelf());
                 if (isSelfChat) {
-                    if (self == null) {
+                    if (self == null || (self.countMessages() == 0 && c.countMessages() > 0)) {
                         self = c;
                     }
                     continue;
@@ -711,6 +710,18 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 } else if (a.getStatus() == Account.State.CONNECTING) {
                     connecting = true;
                 }
+            }
+        }
+        if (self == null && firstEnabled != null) {
+            final var selfContact = firstEnabled.getSelfContact();
+            if (selfContact != null) {
+                self = service.find(firstEnabled, selfContact.getAddress());
+            }
+        }
+        if (self != null && self.countMessages() == 0 && service.databaseBackend != null) {
+            final var msgs = service.databaseBackend.getMessages(self, Config.PAGE_SIZE);
+            if (!msgs.isEmpty()) {
+                self.addAll(0, msgs);
             }
         }
         this.penikChatsState.setConversations(ImmutableList.copyOf(main));
