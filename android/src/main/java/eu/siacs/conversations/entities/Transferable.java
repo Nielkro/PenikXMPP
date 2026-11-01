@@ -18,6 +18,7 @@ public interface Transferable {
     int STATUS_OFFER_CHECK_FILESIZE = 0x206;
     int STATUS_UPLOADING = 0x207;
     int STATUS_CANCELLED = 0x208;
+    int STATUS_TRANSCODING = 0x209;
 
     boolean start();
 

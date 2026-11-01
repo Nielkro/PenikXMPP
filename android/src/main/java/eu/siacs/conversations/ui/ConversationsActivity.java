@@ -133,10 +133,8 @@ public class ConversationsActivity extends QrCodeProcessingActivity
 
     @Override
     protected void refreshUiReal() {
-        for (final Fragment fragment : getSupportFragmentManager().getFragments()) {
-            if (fragment instanceof XmppFragment xmppFragment) {
-                xmppFragment.refresh();
-            }
+        for (@IdRes int id : FRAGMENT_ID_NOTIFICATION_ORDER) {
+            refreshFragment(id);
         }
     }
 
