@@ -3,19 +3,14 @@ package eu.siacs.conversations.ui.util
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.graphics.Outline
-import android.view.MotionEvent
-import android.view.VelocityTracker
 import android.view.View
-import android.view.ViewConfiguration
 import android.view.ViewOutlineProvider
 import android.view.animation.PathInterpolator
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import eu.siacs.conversations.ui.XmppFragment
-import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Telegram-style Predictive Back and Edge-Swipe gesture handler for chat screens.
@@ -30,18 +25,11 @@ class PenikPredictiveBackHelper(
     // Telegram EASE_OUT_QUINT interpolator
     private val interpolator = PathInterpolator(0.23f, 1f, 0.32f, 1f)
     private var isPredicting = false
-    private var isEdgeSwiping = false
     private var currentRadius = 0f
     private val density = targetView.resources.displayMetrics.density
     private val maxRadiusPx = 22f * density
     private val screenWidth: Float
         get() = max(1f, targetView.resources.displayMetrics.widthPixels.toFloat())
-
-    private var downX = 0f
-    private var downY = 0f
-    private var velocityTracker: VelocityTracker? = null
-    private val touchSlop = ViewConfiguration.get(targetView.context).scaledTouchSlop
-    private val edgeSwipeThresholdPx = 28f * density
 
     init {
         targetView.outlineProvider = object : ViewOutlineProvider() {
@@ -53,7 +41,6 @@ class PenikPredictiveBackHelper(
                 }
             }
         }
-        setupEdgeTouchListener()
     }
 
     /**
@@ -222,73 +209,5 @@ class PenikPredictiveBackHelper(
                 f.view?.alpha = 1.0f
             }
         }
-    }
-
-    /**
-     * Intercepts left-edge drag gestures to provide interactive swipe-back on any Android version.
-     */
-    private fun setupEdgeTouchListener() {
-        // Hook touch dispatch through a simple touch listener on target view
-        val existingTouchListener = targetView.setOnTouchListener { _, event ->
-            handleTouch(event)
-        }
-    }
-
-    fun handleTouch(event: MotionEvent): Boolean {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                if (event.rawX <= edgeSwipeThresholdPx) {
-                    isEdgeSwiping = true
-                    downX = event.rawX
-                    downY = event.rawY
-                    targetView.clipToOutline = true
-                    targetView.elevation = 28f * density
-                    ensureUnderlyingFragmentVisible()
-                    velocityTracker = VelocityTracker.obtain()
-                    velocityTracker?.addMovement(event)
-                    return true
-                }
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if (isEdgeSwiping) {
-                    velocityTracker?.addMovement(event)
-                    val dx = event.rawX - downX
-                    val dy = abs(event.rawY - downY)
-                    if (dx > 0 && dx > dy) {
-                        val progress = (dx / (screenWidth * 0.85f)).coerceIn(0f, 1f)
-                        applyProgress(progress, false)
-                        return true
-                    }
-                }
-            }
-            MotionEvent.ACTION_UP -> {
-                if (isEdgeSwiping) {
-                    velocityTracker?.addMovement(event)
-                    velocityTracker?.computeCurrentVelocity(1000)
-                    val xVelocity = velocityTracker?.xVelocity ?: 0f
-                    val dx = event.rawX - downX
-                    velocityTracker?.recycle()
-                    velocityTracker = null
-                    isEdgeSwiping = false
-
-                    if (dx > screenWidth * 0.35f || xVelocity > 1000f) {
-                        animateDismiss()
-                    } else {
-                        animateCancel()
-                    }
-                    return true
-                }
-            }
-            MotionEvent.ACTION_CANCEL -> {
-                if (isEdgeSwiping) {
-                    velocityTracker?.recycle()
-                    velocityTracker = null
-                    isEdgeSwiping = false
-                    animateCancel()
-                    return true
-                }
-            }
-        }
-        return false
     }
 }

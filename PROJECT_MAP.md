@@ -200,6 +200,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/ui/util/ShareUtil.java` — Share/link helpers.
 - `android/src/main/java/eu/siacs/conversations/ui/util/SettingsUtils.java` — Night mode / theme helpers.
 - `android/src/main/java/eu/siacs/conversations/ui/util/PenikPredictiveBackHelper.kt` — Telegram-style interactive predictive back and edge-swipe gesture handler for chat screens (smooth scaling to card, dynamic corner rounding, translation, and live preview of the underlying chats list).
+- `android/src/main/java/eu/siacs/conversations/ui/widget/PenikSwipeBackLayout.kt` — Telegram-style interactive follow-the-finger swipe-back container with edge touch interception, dynamic drop shadow, and underlying parallax.
 - `android/src/main/java/eu/siacs/conversations/ui/widget/` — Custom views (scanner, bubbles, spans, audio recorder).
 - `android/src/main/java/eu/siacs/conversations/ui/text/` — Message spans (quote, URL, divider).
 - `android/src/main/java/eu/siacs/conversations/ui/interfaces/` — Activity/fragment callbacks (backend connected, conversation selected/read).

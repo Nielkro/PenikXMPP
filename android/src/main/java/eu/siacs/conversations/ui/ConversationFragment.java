@@ -1496,7 +1496,7 @@ public class ConversationFragment extends XmppFragment
         }
         this.predictiveBackHelper = new PenikPredictiveBackHelper(
                 this,
-                view,
+                this.binding.getRoot(),
                 () -> {
                     hideSoftKeyboard(binding != null ? binding.textInput : null);
                     if (isAdded()) {
@@ -1690,7 +1690,29 @@ public class ConversationFragment extends XmppFragment
 
         this.binding.textInput.setCustomInsertionActionModeCallback(
                 new EditMessageActionModeCallback(this.binding.textInput));
-        return binding.getRoot();
+
+        final eu.siacs.conversations.ui.widget.PenikSwipeBackLayout swipeBackLayout =
+                new eu.siacs.conversations.ui.widget.PenikSwipeBackLayout(requireContext());
+        swipeBackLayout.setLayoutParams(
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+        swipeBackLayout.setFragment(this);
+        swipeBackLayout.setOnSwipeStarted(
+                () -> hideSoftKeyboard(this.binding != null ? this.binding.textInput : null));
+        swipeBackLayout.setOnDismissed(
+                () -> {
+                    hideSoftKeyboard(this.binding != null ? this.binding.textInput : null);
+                    if (isAdded()) {
+                        if (!getParentFragmentManager().isStateSaved()) {
+                            getParentFragmentManager().popBackStackImmediate();
+                        } else {
+                            getParentFragmentManager().popBackStack();
+                        }
+                    }
+                });
+        swipeBackLayout.addView(this.binding.getRoot());
+        return swipeBackLayout;
     }
 
     private void onPenikBotButtonClick(final Message message, final BotMarkup.Button button) {
