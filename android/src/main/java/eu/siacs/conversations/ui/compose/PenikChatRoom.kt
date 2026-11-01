@@ -2012,7 +2012,7 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
     val bgColor = if (isSentByMe) sentBg else recvBg
     val fgColor = if (isSentByMe) sentText else textPrimary
     val boxAlignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
-    val iconTint = if (missed && received) danger else fgColor
+    val iconTint = if (missed) danger else fgColor.copy(alpha = 0.95f)
 
     Box(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
@@ -2038,7 +2038,7 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
                     Icon(
                             painter = painterResource(R.drawable.ic_call_24dp),
                             contentDescription = null,
-                            tint = if (missed && received) fgColor.copy(alpha = 0.85f) else fgColor.copy(alpha = 0.95f),
+                            tint = iconTint,
                             modifier = Modifier.size(19.dp).align(Alignment.BottomStart)
                     )
                     Icon(
@@ -2051,7 +2051,7 @@ fun PenikCallCard(message: Message, activity: XmppActivity, listener: PenikChatL
                                             }
                                     ),
                             contentDescription = null,
-                            tint = if (missed && received) danger else fgColor.copy(alpha = 0.95f),
+                            tint = iconTint,
                             modifier =
                                     Modifier.size(11.dp)
                                             .align(Alignment.TopEnd)
