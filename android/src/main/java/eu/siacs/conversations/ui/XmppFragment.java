@@ -29,11 +29,29 @@
 
 package eu.siacs.conversations.ui;
 
+import android.view.animation.Animation;
 import androidx.fragment.app.Fragment;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.interfaces.OnBackendConnected;
 
 public abstract class XmppFragment extends Fragment implements OnBackendConnected {
+
+    private static int sSkipAnimationCount = 0;
+
+    public static void skipNextFragmentAnimations(int count) {
+        sSkipAnimationCount = count;
+    }
+
+    @Override
+    public Animation onCreateAnimation(int transit, boolean enter, int nextAnim) {
+        if (sSkipAnimationCount > 0) {
+            sSkipAnimationCount--;
+            final Animation noAnim = new Animation() {};
+            noAnim.setDuration(0);
+            return noAnim;
+        }
+        return super.onCreateAnimation(transit, enter, nextAnim);
+    }
 
     abstract void refresh();
 

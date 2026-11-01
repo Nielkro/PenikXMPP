@@ -62,6 +62,7 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
+import eu.siacs.conversations.ui.util.PenikPredictiveBackHelper;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
@@ -312,12 +313,16 @@ public class ConversationFragment extends XmppFragment
     private String lastMessageUuid = null;
     private Conversation conversation;
     private FragmentConversationBinding binding;
+    private PenikPredictiveBackHelper predictiveBackHelper;
     private final FragmentManager.OnBackStackChangedListener backStackListener =
             new FragmentManager.OnBackStackChangedListener() {
                 @Override
                 public void onBackStackChanged() {
                     final var up =
                             isAdded() && getParentFragmentManager().getBackStackEntryCount() > 0;
+                    if (predictiveBackHelper != null) {
+                        predictiveBackHelper.getCallback().setEnabled(up);
+                    }
                     if (up) {
                         binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_back_24dp);
                         binding.toolbar.setNavigationOnClickListener(
@@ -1484,10 +1489,29 @@ public class ConversationFragment extends XmppFragment
 
     @Override
     public void onViewCreated(@NonNull final View view, final Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         if (savedInstanceState != null) {
             Log.d(Config.LOGTAG, "processing instant state");
             this.processSavedInstanceState(savedInstanceState);
         }
+        this.predictiveBackHelper = new PenikPredictiveBackHelper(
+                this,
+                view,
+                () -> {
+                    hideSoftKeyboard(binding != null ? binding.textInput : null);
+                    if (isAdded()) {
+                        if (!getParentFragmentManager().isStateSaved()) {
+                            getParentFragmentManager().popBackStackImmediate();
+                        } else {
+                            getParentFragmentManager().popBackStack();
+                        }
+                    }
+                });
+        final boolean isUp = isAdded() && getParentFragmentManager().getBackStackEntryCount() > 0;
+        this.predictiveBackHelper.getCallback().setEnabled(isUp);
+        requireActivity()
+                .getOnBackPressedDispatcher()
+                .addCallback(getViewLifecycleOwner(), this.predictiveBackHelper.getCallback());
     }
 
     @Override
