@@ -14,6 +14,7 @@ import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.persistance.DatabaseBackend;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.utils.MimeUtils;
@@ -22,7 +23,8 @@ import java.io.FileNotFoundException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class AttachFileToConversationRunnable implements Runnable, TranscoderListener {
+public class AttachFileToConversationRunnable
+        implements Runnable, TranscoderListener, Transferable {
 
     private final XmppConnectionService mXmppConnectionService;
     private final AppSettings appSettings;
@@ -54,6 +56,42 @@ public class AttachFileToConversationRunnable implements Runnable, TranscoderLis
                         && originalFileSize > autoAcceptFileSize
                         && appSettings.isCompressVideo();
     }
+
+    void prepareOptimisticVideoMessage() {
+        mXmppConnectionService.getFileBackend().prepareOptimisticVideoParams(message, uri);
+        message.setTransferable(this);
+    }
+
+    @Override
+    public boolean start() {
+        return true;
+    }
+
+    @Override
+    public int getStatus() {
+        return Transferable.STATUS_UPLOADING;
+    }
+
+    @Override
+    public Long getFileSize() {
+        return this.originalFileSize;
+    }
+
+    @Override
+    public int getProgress() {
+        return Math.max(0, this.currentProgress);
+    }
+
+    @Override
+    public Long getTransferred() {
+        if (this.originalFileSize > 0L) {
+            return (long) (this.originalFileSize * (getProgress() / 100.0));
+        }
+        return 0L;
+    }
+
+    @Override
+    public void cancel() {}
 
     boolean isVideoMessage() {
         return this.isVideoMessage;
@@ -147,11 +185,15 @@ public class AttachFileToConversationRunnable implements Runnable, TranscoderLis
             mXmppConnectionService
                     .getNotificationService()
                     .updateFileAddingNotification(p, message);
+            if (p % 2 == 0 || p == 100) {
+                mXmppConnectionService.updateConversationUi();
+            }
         }
     }
 
     @Override
     public void onTranscodeCompleted(int successCode) {
+        this.currentProgress = 100;
         mXmppConnectionService.stopOngoingVideoTranscodingForegroundNotification();
         final var file = mXmppConnectionService.getFileBackend().getFile(message);
         final long convertedFileSize =

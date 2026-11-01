@@ -27,5 +27,13 @@ public interface Transferable {
 
     int getProgress();
 
+    default Long getTransferred() {
+        final Long total = getFileSize();
+        if (total != null && total > 0L) {
+            return (long) (total * (getProgress() / 100.0));
+        }
+        return 0L;
+    }
+
     void cancel();
 }

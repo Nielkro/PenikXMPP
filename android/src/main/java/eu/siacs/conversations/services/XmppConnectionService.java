@@ -485,6 +485,11 @@ public class XmppConnectionService extends Service {
         final AttachFileToConversationRunnable runnable =
                 new AttachFileToConversationRunnable(this, uri, type, message);
         if (runnable.isVideoMessage()) {
+            runnable.prepareOptimisticVideoMessage();
+            final Conversation conversation = (Conversation) message.getConversation();
+            conversation.add(message);
+            databaseBackend.createMessage(message);
+            updateConversationUi();
             return Futures.submit(runnable, VIDEO_COMPRESSION_EXECUTOR);
         } else {
             return Futures.submit(runnable, FILE_ATTACHMENT_EXECUTOR);
@@ -1743,7 +1748,9 @@ public class XmppConnectionService extends Service {
         }
 
         im.conversations.android.xmpp.model.stanza.Message packet = null;
-        final boolean addToConversation = !message.edited();
+        final boolean alreadyInConversation =
+                conversation.findMessageWithUuid(message.getUuid()) != null;
+        final boolean addToConversation = !message.edited() && !alreadyInConversation;
         boolean saveInDb = addToConversation;
         message.setStatus(Message.STATUS_WAITING);
 
@@ -1872,6 +1879,8 @@ public class XmppConnectionService extends Service {
             }
             if (saveInDb) {
                 databaseBackend.createMessage(message);
+            } else if (alreadyInConversation) {
+                databaseBackend.updateMessage(message, true);
             } else if (message.edited()) {
                 if (!databaseBackend.updateMessage(message, false)) {
                     Log.e(Config.LOGTAG, "error updated message in DB after edit");

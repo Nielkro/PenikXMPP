@@ -3316,6 +3316,49 @@ fun PenikAttachmentRow(
                 )
             }
         } else if (isImage || isVideo) {
+            var currentTransferred by remember(message.uuid) {
+                mutableStateOf(message.transferable?.transferred ?: 0L)
+            }
+            var currentTotal by remember(message.uuid) {
+                val initTotal = message.transferable?.fileSize?.takeIf { it > 0L }
+                    ?: message.fileParams?.getSize()?.takeIf { it > 0L }
+                    ?: activity.xmppConnectionService?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }?.length()
+                    ?: 0L
+                mutableStateOf(initTotal)
+            }
+            val isUploading = isSentByMe && message.fileParams?.url == null && (
+                    message.needsUploading() ||
+                    status == Message.STATUS_UNSEND ||
+                    status == Message.STATUS_WAITING ||
+                    message.transferable?.status == Transferable.STATUS_UPLOADING ||
+                    message.transferable?.status == Transferable.STATUS_CHECKING
+            )
+            LaunchedEffect(message.uuid, isUploading, message.transferable) {
+                if (!isUploading) return@LaunchedEffect
+                while (isUploading) {
+                    val t = message.transferable
+                    if (t != null) {
+                        val trans = t.transferred ?: ((t.progress.toLong() * currentTotal) / 100L)
+                        currentTransferred = trans.coerceAtLeast(0L)
+                        val tot = t.fileSize ?: 0L
+                        if (tot > 0L) {
+                            currentTotal = tot
+                        }
+                    }
+                    if (currentTotal <= 0L) {
+                        val pSize = message.fileParams?.getSize() ?: 0L
+                        if (pSize > 0L) {
+                            currentTotal = pSize
+                        } else {
+                            val local = activity.xmppConnectionService?.fileBackend?.getFile(message, false)
+                            if (local != null && local.exists()) {
+                                currentTotal = local.length()
+                            }
+                        }
+                    }
+                    delay(50)
+                }
+            }
             Box(
                     modifier =
                             Modifier.padding(horizontal = 12.dp)
@@ -3324,6 +3367,9 @@ fun PenikAttachmentRow(
                                     .background(Color(0x15FFFFFF))
                                     .combinedClickable(
                                             onClick = {
+                                                if (isUploading) {
+                                                    return@combinedClickable
+                                                }
                                                 if (isVideo) {
                                                     showVideoViewer = true
                                                 } else {
@@ -3341,30 +3387,10 @@ fun PenikAttachmentRow(
                 } else {
                     PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
                 }
-                val mediaSize: Long = remember(message.uuid, message.fileParams?.size) {
-                    val pSize = message.fileParams?.getSize() ?: 0L
-                    if (pSize > 0L) {
-                        pSize
-                    } else {
-                        val local = activity.xmppConnectionService?.fileBackend?.getFile(message, false)
-                        if (local != null && local.exists()) {
-                            local.length()
-                        } else {
-                            message.transferable?.fileSize ?: 0L
-                        }
-                    }
-                }
-                val isUploading = isSentByMe && message.fileParams?.url == null && (
-                        message.needsUploading() ||
-                        status == Message.STATUS_UNSEND ||
-                        status == Message.STATUS_WAITING ||
-                        message.transferable?.status == Transferable.STATUS_UPLOADING ||
-                        message.transferable?.status == Transferable.STATUS_CHECKING
-                )
-                if (isUploading && mediaSize > 0L) {
-                    val progress = message.transferable?.progress ?: 0
-                    val sizeFormatted = android.text.format.Formatter.formatShortFileSize(context, mediaSize)
-                    val badgeText = if (progress in 1..99) "$progress% · $sizeFormatted" else sizeFormatted
+                if (isUploading && currentTotal > 0L) {
+                    val transferredFormatted = android.text.format.Formatter.formatShortFileSize(context, currentTransferred.coerceIn(0L, currentTotal))
+                    val totalFormatted = android.text.format.Formatter.formatShortFileSize(context, currentTotal)
+                    val badgeText = "$transferredFormatted / $totalFormatted"
                     Box(
                             modifier =
                                     Modifier.align(Alignment.TopStart)
@@ -3812,12 +3838,39 @@ fun PenikFileRow(message: Message, fgColor: Color, textMuted: Color) {
         val s = params?.getSize() ?: 0L
         if (s > 0L) s else message.transferable?.fileSize ?: 0L
     }
+    val isUploading = message.fileParams?.url == null && (
+            message.needsUploading() ||
+            message.status == Message.STATUS_UNSEND ||
+            message.status == Message.STATUS_WAITING ||
+            message.transferable?.status == Transferable.STATUS_UPLOADING ||
+            message.transferable?.status == Transferable.STATUS_CHECKING
+    )
+    var currentTransferred by remember(message.uuid) {
+        mutableStateOf(message.transferable?.transferred ?: 0L)
+    }
+    LaunchedEffect(message.uuid, isUploading, message.transferable) {
+        if (!isUploading) return@LaunchedEffect
+        while (isUploading) {
+            val t = message.transferable
+            if (t != null) {
+                val trans = t.transferred ?: ((t.progress.toLong() * resolvedSize) / 100L)
+                currentTransferred = trans.coerceAtLeast(0L)
+            }
+            delay(50)
+        }
+    }
     val sizeText =
             if (!message.isGeoUri && resolvedSize > 0L) {
-                " · " + android.text.format.Formatter.formatShortFileSize(
-                        context,
-                        resolvedSize
-                )
+                if (isUploading) {
+                    val tFormatted = android.text.format.Formatter.formatShortFileSize(context, currentTransferred.coerceIn(0L, resolvedSize))
+                    val totFormatted = android.text.format.Formatter.formatShortFileSize(context, resolvedSize)
+                    " · $tFormatted / $totFormatted"
+                } else {
+                    " · " + android.text.format.Formatter.formatShortFileSize(
+                            context,
+                            resolvedSize
+                    )
+                }
             } else if (params != null && params.runtime > 0) {
                 val runtimeSec = if (params.runtime >= 1000) params.runtime / 1000 else params.runtime
                 " · %02d:%02d".format(runtimeSec / 60, runtimeSec % 60)
