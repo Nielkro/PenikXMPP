@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "status": "SOURCE_ONLY_NO_NEW_RUNTIME_ADMISSION_OR_EXECUTION",
+  "scope": "A18V_ONE_NEW_CURRENT_MIXED_LEGACY_VIDEO_900S_CASE",
+  "files": {
+    "derive_source.py": {
+      "sha256": "9ab15194efed5c058a3010d04b843bdef3f57a2acefddcd578735a20cff9549f",
+      "bytes": 14370
+    },
+    "owner_helpers.source": {
+      "sha256": "b54ed2eca9e502e06bcb17c28002e9b241a8ede3544353ef6457eac36b2068a3",
+      "bytes": 4367
+    },
+    "runtime.py": {
+      "sha256": "ffc188c4d2c179ff3b66fd8a06a01b05ee6b62938e46a35f854f73e46526de51",
+      "bytes": 49551
+    },
+    "control.py": {
+      "sha256": "b9ac71d2c1c3d3d216464edd05f8609b486b2638088b55493eef8e58ed80b285",
+      "bytes": 9236
+    },
+    "recorder.py": {
+      "sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+      "bytes": 4044
+    },
+    "scenario.py": {
+      "sha256": "dfd3bcf8473092c8ec38ab0ddaa17b6ac5e514b9dfc9a868ffc3f89847bbda6f",
+      "bytes": 21632
+    },
+    "monitor.py": {
+      "sha256": "25f3cdae2cb4155d2f93ee219e834f9321d033fd258590352f8eb5fe5f1d6370",
+      "bytes": 3622
+    },
+    "process_lifecycle.py": {
+      "sha256": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9",
+      "bytes": 15866
+    },
+    "freeze.json": {
+      "sha256": "aa26bdddf406771b167bdffca3ec4a62b5339f6d8990f2b4dc9af2790b4e4fe2",
+      "bytes": 3644
+    },
+    "check_source_only.py": {
+      "sha256": "7539e86360ac742c9292ed7875d7a395532e34df8492d93f4826a7590c06ed07",
+      "bytes": 10271
+    },
+    "check_lifecycle_scan.py": {
+      "sha256": "52dc74f7fd8a1733526a46b15cc55327d8d52cc8aa4517ef8989cd488c7aebe6",
+      "bytes": 2665
+    },
+    "check_budget_source.py": {
+      "sha256": "79d63561c2ee64faef45c158b86db24d4edb9917e624d3e2aeac1bab0ad6c620",
+      "bytes": 9513
+    },
+    "README.md": {
+      "sha256": "f8dc18ea2d0faf00551bed752d0e34df0b1c7386f1438a3d9b49e700cc19127b",
+      "bytes": 3060
+    },
+    "derivation.diff": {
+      "sha256": "eb6892c94a418ceb298ce32902be1323a6d757d9e6fe3feff23d4bc0760e0b4d",
+      "bytes": 37501
+    },
+    "budget-derivation.diff": {
+      "sha256": "032bdd5232076d1f9a0e26ceb8b0f21090b95066b5a97971d16b7441d59fc2ce",
+      "bytes": 30473
+    }
+  },
+  "source_files": 15,
+  "source_bytes": 219815,
+  "operational_files": 6,
+  "operational_bytes": 103951,
+  "freeze_sha256": "aa26bdddf406771b167bdffca3ec4a62b5339f6d8990f2b4dc9af2790b4e4fe2",
+  "offline_checks_sha256": "ca4fd2441e4134655dba8b5dff6c4a90cfbc962f6a2436f42e01448d885bf5ed",
+  "lifecycle_offline_checks_sha256": "6aa4f39e94fb4d58bbcf9290f5e3618c96257e301efb379b3ba4ec54168c1bf0",
+  "budget_offline_checks_sha256": "8750d66d4882283429a53f6481ad29c3032bb390c37d53fefd5bc53991f412e7",
+  "origins": {
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/source-manifest.json": {
+      "sha256": "e3431bddb31aa783ffa608018d228126000e82087df29fccce57bed453431c74",
+      "bytes": 5588
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/derive_source.py": {
+      "sha256": "a3914ca1ceb5f8578fe3dab6e1f0547ac4f2196b5d0d78af608f92d8672f5f46",
+      "bytes": 14004
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/owner_helpers.source": {
+      "sha256": "533f7d4e5177adc05e5c44307b3f175a0e53e7472d9d8b8396aa5b5ef517d825",
+      "bytes": 3407
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/runtime.py": {
+      "sha256": "ffc188c4d2c179ff3b66fd8a06a01b05ee6b62938e46a35f854f73e46526de51",
+      "bytes": 49551
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/control.py": {
+      "sha256": "b9ac71d2c1c3d3d216464edd05f8609b486b2638088b55493eef8e58ed80b285",
+      "bytes": 9236
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/recorder.py": {
+      "sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+      "bytes": 4044
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/scenario.py": {
+      "sha256": "e96f3cb63200f96fa7a79c1b6c9f7f12840a1fc662d4d0b95af23a22aa69f13f",
+      "bytes": 20698
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/monitor.py": {
+      "sha256": "25f3cdae2cb4155d2f93ee219e834f9321d033fd258590352f8eb5fe5f1d6370",
+      "bytes": 3622
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/process_lifecycle.py": {
+      "sha256": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9",
+      "bytes": 15866
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/freeze.json": {
+      "sha256": "07d2662015e858872ea02476f739aea08811797d0c56dbccc8ac84e9fa2c29e9",
+      "bytes": 3644
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/check_source_only.py": {
+      "sha256": "7539e86360ac742c9292ed7875d7a395532e34df8492d93f4826a7590c06ed07",
+      "bytes": 10271
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/check_lifecycle_scan.py": {
+      "sha256": "52dc74f7fd8a1733526a46b15cc55327d8d52cc8aa4517ef8989cd488c7aebe6",
+      "bytes": 2665
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/README.md": {
+      "sha256": "adcda87176775b4807ca99454374681c379f6ca5acde79e179576dfd58c7558f",
+      "bytes": 9486
+    },
+    "local/monocles-dinox-interop-20261018/mixed-video-owner-source/derivation.diff": {
+      "sha256": "7fc3d32c8e95ee28973d5a84a8fff9596c36b7aace8cb911063d3fd9902725f6",
+      "bytes": 36373
+    },
+    "local/monocles-dinox-interop-20261018/runtime.py": {
+      "sha256": "a4f1b23d9a1b6759543cea757ec15551f4697caed834cb5b19f48f1bef81cf5f",
+      "bytes": 49153
+    },
+    "local/monocles-dinox-interop-20261018/freeze.json": {
+      "sha256": "73c64b7aba80ff49c83e3425cb20b37fcc33d562aa96b7751e4973ea4ff91c04",
+      "bytes": 2853
+    },
+    "local/monocles-dinox-interop-20261018/monitor.py": {
+      "sha256": "f66b72dd17b59862d3649f932d12dbf1d6e670c6f7ba0d8df556fb7e858b06f9",
+      "bytes": 3649
+    },
+    "local/monocles-dinox-interop-20261015/harness/devicefix_nora_runtime/control.py": {
+      "sha256": "96b54078b0b958d23b8f13f7546877ac0ee5f2c47c92ce368aacd2efe86b7617",
+      "bytes": 8638
+    },
+    "local/monocles-dinox-interop-20261015/harness/devicefix_nora_runtime/recorder.py": {
+      "sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+      "bytes": 4044
+    },
+    "local/monocles-dinox-interop-20261015/harness/resume-completion-plan-20261016T190157Z/ui-owner-resume/auth-media-only/auth_media.py": {
+      "sha256": "f3b319d70d77c9a67c8be6693fa574f433237bd09c42f0c77c234237368360a3",
+      "bytes": 25093
+    },
+    "local/monocles-dinox-interop-20261018/mixed-three-video/media_case.py": {
+      "sha256": "4ba30539fb8259fd717d83f3f9a619a8fe167bde884d520760993c9eb8434a54",
+      "bytes": 10335
+    },
+    "local/monocles-dinox-interop-20261018/mixed-three-video/source-manifest.json": {
+      "sha256": "6fcc7e333ede7ed0eca700b1a8af345a44fa580e0c5bb3eb93e60e4ae489dab9",
+      "bytes": 804
+    },
+    "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/source-manifest.json": {
+      "sha256": "3f9f8fc46e95cd20864e417560366a182e4f94f92e734189b9ad4ae7824584d4",
+      "bytes": 7483
+    },
+    "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/inner_maps.py": {
+      "sha256": "2c7f37aea4f86a14b8bfe2f2d7973259f6b0bba5047220c0418f4bc2fc422dad",
+      "bytes": 5258
+    },
+    "local/monocles-dinox-interop-20261018/capture-shell-v2/runtime_consent/process_lifecycle.py": {
+      "sha256": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9",
+      "bytes": 15866
+    },
+    "local/monocles-dinox-interop-20261018/lifecycle-terminal-fix/check_lifecycle_offline.py": {
+      "sha256": "e53d574100e0fe6fdb518ead3d80a345ceb91c0577177921c4b9267dab301dfb",
+      "bytes": 14729
+    }
+  },
+  "original_240s_sources_freeze_batch_claim_and_evidence_unmodified": true,
+  "five_operational_files_byte_identical": true,
+  "only_scenario_budget_lifetime_and_deadline_calculation_changed": true,
+  "entry_age_max_seconds": 120,
+  "case_lifetime_max_seconds": 900,
+  "cleanup_reserve_seconds": 120,
+  "deadline": "min(admission expiry, created+900, Nora batch deadline-120, each admitted native StartedAt+5400-120)",
+  "product_ops_UUID_claim_session_PID_cleanup_auth_and_case_unchanged": true,
+  "no_new_runtime_import_SSH_ADB_guest_build_or_account_action": true,
+  "old_partial_does_not_prove_group_edges_or_their_failure_cause": true,
+  "root_and_independent_review_before_new_batch": true
+}

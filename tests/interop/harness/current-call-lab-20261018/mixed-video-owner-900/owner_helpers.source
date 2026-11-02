@@ -1,0 +1,64 @@
+def claim_once(root, admission_path):
+    """A18's durable O_EXCL/fsync rule, scoped only to this one video case."""
+    assert re.fullmatch('[0-9a-f]{32}',root['batch_id'])
+    folder=r.STATE/'operation-claims';folder.mkdir(mode=0o700,parents=True,exist_ok=True)
+    info=folder.lstat();assert stat.S_ISDIR(info.st_mode) and info.st_uid==os.getuid() and info.st_mode&0o077==0
+    target=folder/('current-mixed-three-video-'+root['batch_id']+'.json')
+    value={'scope':'ONE_CURRENT_MIXED_THREE_VIDEO_CASE_PER_BATCH_NO_RETRY','run_id':r.RUN,
+           'batch_id':root['batch_id'],'runtime_freeze_sha256':root['runtime_freeze_sha256'],
+           'session_binding':root['session_binding'],'root_admission_sha256':r.sha(admission_path),
+           'case_source_sha256':CASE_SHA,'product_mutation_may_follow':True,'automatic_retry':False}
+    fd=os.open(target,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    try:
+        with os.fdopen(fd,'w',closefd=False) as stream:
+            json.dump(value,stream,sort_keys=True);stream.write('\n');stream.flush();os.fsync(fd)
+    finally:os.close(fd)
+    directory_fd=os.open(folder,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    try:os.fsync(directory_fd)
+    finally:os.close(directory_fd)
+    return str(target)
+
+
+def collect_native_maps(root,write,case_deadline):
+    """Existing reviewed read-only map observer inside exact active native peers."""
+    source=NATIVE_SOURCE/'inner_maps.py'
+    assert r.sha(source)=='2c7f37aea4f86a14b8bfe2f2d7973259f6b0bba5047220c0418f4bc2fc422dad'
+    s=server_control.s
+    wrapper=s.MOUNT+'/qualified-runtime/lib/libdinox-google-webrtc.so'
+    config={'binary':s.BINARY,'artifacts':s.ARTIFACTS,'profile':s.PROFILE,'library_path':s.LIBRARY_PATH,
+            'worker':s.WORKER,'runtime_lib':s.MOUNT+'/qualified-runtime/lib','wrapper':wrapper,
+            'required_driver_maps':[s.BINARY,s.MOUNT+'/lib/libdino.so.0',s.MOUNT+'/lib/libxmpp-vala.so.0',s.MOUNT+'/lib/omemo.so',wrapper,s.SESSION_PATH],
+            'optional_codec_maps':[s.MOUNT+'/qualified-runtime/lib/'+p for p in ('libavcodec-dinox-hw.so.62','libavutil-dinox-hw.so.60')]}
+    for role in ('leon','felix'):
+        r.v1.resources();owner_session(root);assert time.time()<case_deadline
+        binding=root['native_bindings'];ref=binding['inspects'][role]
+        assert r.sha(Path(ref['path']))==ref['sha256'];info=r.read(ref['path'])
+        if isinstance(info,list):assert len(info)==1;info=info[0]
+        row=binding['owner_admission']['roles'][role];server_control.check_container(info,row,role)
+        started=datetime.datetime.fromisoformat(info['State']['StartedAt'].replace('Z','+00:00')).timestamp()
+        argv=[*s.DOCKER,'exec','-i','--user','1000:1000',row['container_id'],'python3','-',role,str(started),json.dumps(config)]
+        q=subprocess.run(['ssh','-4','-p','2654','-o','BatchMode=yes','-o','ConnectTimeout=12',server_control.HOST,shlex.join(argv)],
+                         input=source.read_bytes(),capture_output=True,timeout=65)
+        assert q.returncode==0 and len(q.stdout)<=4*1024**2,'Actual active native maps proof failed; no retry'
+        result=json.loads(q.stdout);workers=[w for w in result['actual_workers_if_started'] if w['exe']==s.WORKER]
+        assert len(workers)==1,'Actual current media worker must be running during successful video'
+        write(role+'-actual-active-current-native-maps.json',result)
+
+
+
+
+def case_budget_deadline(root,session):
+    """Fresh case budget, bounded by both already-running native lifetimes."""
+    deadlines=[root['expires_unix'],root['created_unix']+900,session['batch_deadline_unix']-120]
+    binding=root['native_bindings']
+    assert set(binding['inspects'])=={'leon','felix'}
+    for role,ref in binding['inspects'].items():
+        path=Path(ref['path']);assert r.sha(path)==ref['sha256']
+        rows=r.read(path);assert isinstance(rows,list) and len(rows)==1
+        info=rows[0]
+        assert info['Id']==binding['owner_admission']['roles'][role]['container_id']
+        assert info['State']['Running'] is True and info['State']['Status']=='running'
+        started=datetime.datetime.fromisoformat(info['State']['StartedAt'].replace('Z','+00:00')).timestamp()
+        # Reviewed server_entry_{role}.sh starts its fixed 5400s timer after container start.
+        deadlines.append(started+5400-120)
+    return min(deadlines)

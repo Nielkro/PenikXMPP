@@ -1,0 +1,364 @@
+{
+  "schema_version": 1,
+  "status": "SOURCE_ONLY_NOT_STAGED",
+  "run_id": "20261015-71115b",
+  "volume": "dinox-interop-current-85879bcf-20261018",
+  "mount": "/driver-current",
+  "qualified_runtime_files": 43,
+  "qualified_runtime_elf_files": [
+    "qualified-runtime/lib/dinox-webrtc-worker",
+    "qualified-runtime/lib/dinox-vision-worker",
+    "qualified-runtime/lib/libavcodec-dinox-hw.so.62",
+    "qualified-runtime/lib/libavutil-dinox-hw.so.60",
+    "qualified-runtime/lib/libdinox-google-webrtc.so"
+  ],
+  "archive_path": "/home/cpaneladmin/dinox-current-driver-2c6dabad1b9f4285b124ef5d7efa5446/payload.tar",
+  "archive_bytes": 150814720,
+  "archive_sha256": "dd6c49fa4261ab6080b047c35ef8f4d5d4f6f2274aab48011a9791d9d7ac4351",
+  "input_manifest_sha256": "326a6a57c711950ca9bb8c3a9c6861c7ec03aa049681a00a77d3f19c5412b1b1",
+  "actual_build_receipt_sha256": "f0d553a8d74f4f62f976e2f277ec34b59f3fe1c22ba973c454ca4f1d0570d792",
+  "files": {
+    "server_entry_leon.sh": {
+      "source": "source:server_entry_leon.sh",
+      "sha256": "b382c557bef2d6b2dd981f61bdeecfe251c4307ee34cad34bca78136c58cad79",
+      "bytes": 1559,
+      "mode": 493
+    },
+    "server_entry_felix.sh": {
+      "source": "source:server_entry_felix.sh",
+      "sha256": "622c375bb725f245d011857801a7bdacc4e80aadb189dc62df71f4eb158b9f2b",
+      "bytes": 1607,
+      "mode": 493
+    },
+    "lib/libdino.so.0": {
+      "source": "tar:native-current-driver/inputs/lib/libdino.so.0",
+      "sha256": "8ff8ed6e7a6ef77af0041ed1c236856161878e7f71270191be21ccb6f53c81af",
+      "bytes": 5477984,
+      "mode": 420,
+      "origin": "build/libdino/libdino.so.0.0"
+    },
+    "lib/libxmpp-vala.so.0": {
+      "source": "tar:native-current-driver/inputs/lib/libxmpp-vala.so.0",
+      "sha256": "2808c28b2a84c2e08e7a38a8a9b144eef7c034973ebc46c787d1d95fe42467f5",
+      "bytes": 3605992,
+      "mode": 420,
+      "origin": "build/xmpp-vala/libxmpp-vala.so.0.1"
+    },
+    "lib/omemo.so": {
+      "source": "tar:native-current-driver/inputs/existing-plugin/omemo.so",
+      "sha256": "7a58f4fb8d94d8ca8a7d53ded73c840fc0dd8a48f18f05e9920537c4ddacc948",
+      "bytes": 4604376,
+      "mode": 420,
+      "origin": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/actual-server-job/artifacts/plugin/omemo.so"
+    },
+    "qualified-runtime/FFMPEG-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/FFMPEG-LICENSE",
+      "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+      "bytes": 26517,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/FFMPEG-LICENSE"
+    },
+    "qualified-runtime/FFMPEG-VP8-VAAPI.json": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/FFMPEG-VP8-VAAPI.json",
+      "sha256": "4d412d3f5a1425c8acb0a3fee760f5e7b752382b849b85d1855dbb0ca1d47db9",
+      "bytes": 2408,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/FFMPEG-VP8-VAAPI.json"
+    },
+    "qualified-runtime/LIBVA-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/LIBVA-LICENSE",
+      "sha256": "c86a782ee845b52472dae9b9d79fb915d333628ac0efe49cdce63644814931de",
+      "bytes": 1130,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/LIBVA-LICENSE"
+    },
+    "qualified-runtime/LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/LICENSE",
+      "sha256": "ab00a482b6a3902e40211b43c5d0441962ea99b6cc7c25c0f243fa270b78d482",
+      "bytes": 1511,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/LICENSE"
+    },
+    "qualified-runtime/LICENSE.md": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/LICENSE.md",
+      "sha256": "733fd158c98fccb759d8e6206bcbfc4d8f672b6f7f59ee6c58fa647882405a6c",
+      "bytes": 209351,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/LICENSE.md"
+    },
+    "qualified-runtime/NVIDIA-CODEC-HEADERS-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/NVIDIA-CODEC-HEADERS-LICENSE",
+      "sha256": "1c75138295c689e5188852f0f1f00ef78300d8b32249798a88a7e7aa335256c5",
+      "bytes": 6034,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/NVIDIA-CODEC-HEADERS-LICENSE"
+    },
+    "qualified-runtime/PATENTS": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/PATENTS",
+      "sha256": "01462e2068d1a04c2274f3389773014c14ed9bc3446b28303543bd3e3c064145",
+      "bytes": 1388,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/PATENTS"
+    },
+    "qualified-runtime/WEBRTC-CODECS.json": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/WEBRTC-CODECS.json",
+      "sha256": "6b8847e59ac8518374575506b044d1eddf912c5d4d4f5d4ed1f3cf0166ed5d98",
+      "bytes": 909,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/WEBRTC-CODECS.json"
+    },
+    "qualified-runtime/WEBRTC-GN-ARGS.gn": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/WEBRTC-GN-ARGS.gn",
+      "sha256": "db09b3af40e6f48bdd29a318b2cfeb6ea2f33ac1b89db95b1462b73bce22bec3",
+      "bytes": 360,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/WEBRTC-GN-ARGS.gn"
+    },
+    "qualified-runtime/include/dinox_webrtc.h": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/include/dinox_webrtc.h",
+      "sha256": "e82847dc9f26f32a51f2eb96c9f310b040e76e5085bfca0c37c7bf414a353e2d",
+      "bytes": 30195,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/include/dinox_webrtc.h"
+    },
+    "qualified-runtime/lib/dinox-vision-SHA256SUMS": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-SHA256SUMS",
+      "sha256": "10622705a97ada4e03b805ef27448d4cae14b6a3b568945256b1d17721cd3449",
+      "bytes": 2568,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-SHA256SUMS"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/MODEL_AND_CUSTOM_OP_LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/MODEL_AND_CUSTOM_OP_LICENSE",
+      "sha256": "8707eef0533987efc5b155d64761eeb6e20793f50b9bd1a68dad1cf4719d0ed8",
+      "bytes": 12331,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/MODEL_AND_CUSTOM_OP_LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/PROJECT_LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/PROJECT_LICENSE",
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "bytes": 35149,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/PROJECT_LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/abseil-cpp/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/abseil-cpp/0-LICENSE",
+      "sha256": "c79a7fea0e3cac04cd43f20e7b648e5a0ff8fa5344e644b0ee09ca1162b62747",
+      "bytes": 11361,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/abseil-cpp/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/boringssl/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/boringssl/0-LICENSE",
+      "sha256": "827c8d8fc207c2392794eef9e00fe246f9f61fdcc132556c275be3dd8c3cd97f",
+      "bytes": 13115,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/boringssl/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/compiler-rt/0-LICENSE.TXT": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/compiler-rt/0-LICENSE.TXT",
+      "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d",
+      "bytes": 16708,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/compiler-rt/0-LICENSE.TXT"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/cpuinfo/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/cpuinfo/0-LICENSE",
+      "sha256": "8e7e60636c3aa0cb03571a1a841ce5697f9551ff92b3c426c2561613d15ade70",
+      "bytes": 1424,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/cpuinfo/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/farmhash/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/farmhash/0-LICENSE",
+      "sha256": "4162dd091caae234f72d3b57e138174f733e736b2430a4c51b098b17d866fcb6",
+      "bytes": 1110,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/farmhash/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/fft2d/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/fft2d/0-LICENSE",
+      "sha256": "64a68ebd98d10064bfd8f6c8dc4fa094747bd33af191f694183ce163cba5c9b5",
+      "bytes": 185,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/fft2d/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/flatbuffers/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/flatbuffers/0-LICENSE",
+      "sha256": "7ec9661a8afafab1eee3523d6f1a193eff76314a5ab10b4ce96aefd87621b0c3",
+      "bytes": 11342,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/flatbuffers/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/fp16/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/fp16/0-LICENSE",
+      "sha256": "c91377adafa2f498211a4fe017788e20c38892124673860f068f2919c289193d",
+      "bytes": 1158,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/fp16/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/fxdiv/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/fxdiv/0-LICENSE",
+      "sha256": "7cac00006125b1486a27e4801ed66357236e984c540bd323945ab7b66b078ec3",
+      "bytes": 1117,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/fxdiv/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/gemmlowp/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/gemmlowp/0-LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/gemmlowp/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/neon_2_sse/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/neon_2_sse/0-LICENSE",
+      "sha256": "7022f51b439a5915e933ecc270c83e24ca0cb2cceeb08b0132dcd4dbb03ed2dc",
+      "bytes": 1662,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/neon_2_sse/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/protobuf/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/protobuf/0-LICENSE",
+      "sha256": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d",
+      "bytes": 1732,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/protobuf/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/pthreadpool/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/pthreadpool/0-LICENSE",
+      "sha256": "57814a606b4d0fb087d9a534919084b6c11b58a4174cb5a4aef200187780dc3a",
+      "bytes": 1378,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/pthreadpool/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/ruy/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/ruy/0-LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/ruy/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/tflite/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/tflite/0-LICENSE",
+      "sha256": "bccef418d4c4ca9ded5818eabce995b99c1e4e062293f6291ee81ef41e963837",
+      "bytes": 11421,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/tflite/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-licenses/dependencies/xnnpack/0-LICENSE": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/xnnpack/0-LICENSE",
+      "sha256": "63f519e15726f4c4f830bd958f694c84fecb4e0a4cacc527d2696bb71ef95ada",
+      "bytes": 1560,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/xnnpack/0-LICENSE"
+    },
+    "qualified-runtime/lib/dinox-vision-models/blaze_face_short_range-v1.tflite": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-models/blaze_face_short_range-v1.tflite",
+      "sha256": "b4578f35940bf5a1a655214a1cce5cab13eba73c1297cd78e1a04c2380b0152f",
+      "bytes": 229746,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-models/blaze_face_short_range-v1.tflite"
+    },
+    "qualified-runtime/lib/dinox-vision-models/selfie_segmenter_landscape-v1.tflite": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-models/selfie_segmenter_landscape-v1.tflite",
+      "sha256": "490e9ea734313e0de10fa0cd9e3c6133e36ea4db2b7a49bde9ef019f72796b8e",
+      "bytes": 250177,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-models/selfie_segmenter_landscape-v1.tflite"
+    },
+    "qualified-runtime/lib/dinox-vision-runtime-manifest.json": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-runtime-manifest.json",
+      "sha256": "7990cde26c6e5e623e8bf6ba2e06a98f3ff64e5c134bf0fed43e735bceb95096",
+      "bytes": 514993,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-runtime-manifest.json"
+    },
+    "qualified-runtime/lib/dinox-vision-worker": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-vision-worker",
+      "sha256": "56194cc3e51b6615b7a396b7e3602896465178ff986745b034a12d1163970214",
+      "bytes": 5922680,
+      "mode": 493,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-worker"
+    },
+    "qualified-runtime/lib/dinox-webrtc-worker": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/dinox-webrtc-worker",
+      "sha256": "5ed8a7919211f3fbb8dd52ad745c44f31fdab678a05613d94244feb7b0248eeb",
+      "bytes": 97104,
+      "mode": 493,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-webrtc-worker"
+    },
+    "qualified-runtime/lib/libavcodec-dinox-hw.so.62": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/libavcodec-dinox-hw.so.62",
+      "sha256": "5b6593f2af86b55ecf0950371c767531d1755248ff26640ce65f4856d0f9b37f",
+      "bytes": 2246441,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/libavcodec-dinox-hw.so.62"
+    },
+    "qualified-runtime/lib/libavutil-dinox-hw.so.60": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/libavutil-dinox-hw.so.60",
+      "sha256": "2dde8c7087502216f5e63971100c308b6c1f69ad5fc5e88693436f896f65e106",
+      "bytes": 912769,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/libavutil-dinox-hw.so.60"
+    },
+    "qualified-runtime/lib/libdinox-google-webrtc.so": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/lib/libdinox-google-webrtc.so",
+      "sha256": "1cc82999cf0c50e28377c1fdace815e82260e7e017cbda5233bbdaad6f4f93d3",
+      "bytes": 32092528,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/libdinox-google-webrtc.so"
+    },
+    "qualified-runtime/manifest.json": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/manifest.json",
+      "sha256": "f2fc23040b2b88a4b6465172b33c0d2e686b66fa88b60ae2b3d29f51446964af",
+      "bytes": 8809,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/manifest.json"
+    },
+    "qualified-runtime/sources/ffmpeg-8.1.2.tar.xz": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/sources/ffmpeg-8.1.2.tar.xz",
+      "sha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+      "bytes": 11710924,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/ffmpeg-8.1.2.tar.xz"
+    },
+    "qualified-runtime/sources/ffmpeg-dinox-symbol-versions.patch": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/sources/ffmpeg-dinox-symbol-versions.patch",
+      "sha256": "e3630fac46c8459340de0b1eb58916f1f3dada03899bded00bca332486375903",
+      "bytes": 331,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/ffmpeg-dinox-symbol-versions.patch"
+    },
+    "qualified-runtime/sources/libva-2.20.0.tar.gz": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/sources/libva-2.20.0.tar.gz",
+      "sha256": "117f8d658a5fc9ea406ca80a3eb4ae1d70b15a54807c9ed77199c812bed73b60",
+      "bytes": 280079,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/libva-2.20.0.tar.gz"
+    },
+    "qualified-runtime/sources/nv-codec-headers-n8.1.24.15.tar.gz": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/sources/nv-codec-headers-n8.1.24.15.tar.gz",
+      "sha256": "1e1600606cde2c04f5b1a71cb3b2e966b3ffe4e252a6ddec5781151d982e259f",
+      "bytes": 58488,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/nv-codec-headers-n8.1.24.15.tar.gz"
+    },
+    "qualified-runtime/sources/webrtc-m152-codec-sources-6f37672d3584-sha256-2b17c14cc13b.tar.gz": {
+      "source": "tar:native-current-driver/inputs/qualified-runtime/sources/webrtc-m152-codec-sources-6f37672d3584-sha256-2b17c14cc13b.tar.gz",
+      "sha256": "2b17c14cc13b4b661c4a2be9b25c26240c97cec4a1c938196ed81dc9fd24278c",
+      "bytes": 78647821,
+      "mode": 420,
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/webrtc-m152-codec-sources-6f37672d3584-sha256-2b17c14cc13b.tar.gz"
+    },
+    "bin/dinox-interop-current": {
+      "source": "binary:artifacts/native-driver/dinox-interop-current",
+      "sha256": "85879bcf53bd1fb6c285f5f1928a688758ede689da204e013157c4ab914a677c",
+      "bytes": 3408424,
+      "mode": 493
+    }
+  },
+  "total_bytes": 150500672,
+  "no_profile_or_account_files": true
+}

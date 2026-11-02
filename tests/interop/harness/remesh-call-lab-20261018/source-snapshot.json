@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "scope": "SOURCE_ONLY_NO_RUNTIME_RESULTS_OR_PRIVATE_INPUTS",
+  "files_count": 15,
+  "source_original_bytes": 177874,
+  "source_archive_bytes": 177874,
+  "files": [
+    {
+      "path": "product-qualification/prepare_source.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/mixed-video-remesh-fixed-source/prepare_source.py",
+      "original_sha256": "d28f4018a90d38dacb0253f85494f91cb5dd40706f43f15c69558acc2104bd60",
+      "original_bytes": 7165,
+      "archive_sha256": "d28f4018a90d38dacb0253f85494f91cb5dd40706f43f15c69558acc2104bd60",
+      "archive_bytes": 7165,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "product-qualification/current_product_guard.source",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/mixed-video-remesh-fixed-source/current_product_guard.source",
+      "original_sha256": "3babeb8e313b1a45beeb3bcf7a421bda66df8b02ff33667a13fe8a76adeb782f",
+      "original_bytes": 3458,
+      "archive_sha256": "3babeb8e313b1a45beeb3bcf7a421bda66df8b02ff33667a13fe8a76adeb782f",
+      "archive_bytes": 3458,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "product-qualification/check_source_only.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/mixed-video-remesh-fixed-source/check_source_only.py",
+      "original_sha256": "4ac682b53f2b18c43654da9c3add7122da01b01a7eda6d8828c177b0902a0435",
+      "original_bytes": 9528,
+      "archive_sha256": "4ac682b53f2b18c43654da9c3add7122da01b01a7eda6d8828c177b0902a0435",
+      "archive_bytes": 9528,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-derivation/derive.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/host-gpu-a18v-source/derive.py",
+      "original_sha256": "87929e538645f81f5eb19d25f874c389816d00f08db2d5d0fd2ece7702862a52",
+      "original_bytes": 5302,
+      "archive_sha256": "87929e538645f81f5eb19d25f874c389816d00f08db2d5d0fd2ece7702862a52",
+      "archive_bytes": 5302,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-derivation/check_source.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/host-gpu-a18v-source/check_source.py",
+      "original_sha256": "6be136886cd4b223a81fdfdad9e6364a012fc20ea09fbf02e74d0f0350bace5f",
+      "original_bytes": 7005,
+      "archive_sha256": "6be136886cd4b223a81fdfdad9e6364a012fc20ea09fbf02e74d0f0350bace5f",
+      "archive_bytes": 7005,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/runtime.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/runtime.py",
+      "original_sha256": "3a9979b131d29a072f885bf3767ff25f906d7bb49bcd79f249661011aee9afc7",
+      "original_bytes": 55079,
+      "archive_sha256": "3a9979b131d29a072f885bf3767ff25f906d7bb49bcd79f249661011aee9afc7",
+      "archive_bytes": 55079,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/control.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/control.py",
+      "original_sha256": "56781b89f64849f16033c8be5116c281bef46f5b04451dc9aa8c86a009609ffa",
+      "original_bytes": 13255,
+      "archive_sha256": "56781b89f64849f16033c8be5116c281bef46f5b04451dc9aa8c86a009609ffa",
+      "archive_bytes": 13255,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/recorder.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/recorder.py",
+      "original_sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+      "original_bytes": 4044,
+      "archive_sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+      "archive_bytes": 4044,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/scenario.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/scenario.py",
+      "original_sha256": "6945ce341472937308ade77ebb3191901904c281ceb97edce2e53f505118b519",
+      "original_bytes": 21658,
+      "archive_sha256": "6945ce341472937308ade77ebb3191901904c281ceb97edce2e53f505118b519",
+      "archive_bytes": 21658,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/monitor.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/monitor.py",
+      "original_sha256": "e96daad5baf1c816a314e9b10301154b09d00f36b74c5340d5b2de66bd20d7fd",
+      "original_bytes": 3886,
+      "archive_sha256": "e96daad5baf1c816a314e9b10301154b09d00f36b74c5340d5b2de66bd20d7fd",
+      "archive_bytes": 3886,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/process_lifecycle.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/process_lifecycle.py",
+      "original_sha256": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9",
+      "original_bytes": 15866,
+      "archive_sha256": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9",
+      "archive_bytes": 15866,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/host_gpu.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/host_gpu.py",
+      "original_sha256": "0ae409f47b1a9e74911a453317f99af6bb902064636e4826cc69323984b0a39a",
+      "original_bytes": 3336,
+      "archive_sha256": "0ae409f47b1a9e74911a453317f99af6bb902064636e4826cc69323984b0a39a",
+      "archive_bytes": 3336,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/stop_ack.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/stop_ack.py",
+      "original_sha256": "5d99cf12c923b4ff67fc7ac1f223d26838404cd7363ffe47ebe4068b9c5fe2bf",
+      "original_bytes": 5682,
+      "archive_sha256": "5d99cf12c923b4ff67fc7ac1f223d26838404cd7363ffe47ebe4068b9c5fe2bf",
+      "archive_bytes": 5682,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/check_stop_ack.py",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/check_stop_ack.py",
+      "original_sha256": "779e7ca8a4f093cf370a01b21df29436a3d66f0b5f0ecf21bf2f79417061dd32",
+      "original_bytes": 18971,
+      "archive_sha256": "779e7ca8a4f093cf370a01b21df29436a3d66f0b5f0ecf21bf2f79417061dd32",
+      "archive_bytes": 18971,
+      "final_newline_normalized": false
+    },
+    {
+      "path": "host-gpu-stop/README.md",
+      "original_path": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/stop-ack-drain-source/README.md",
+      "original_sha256": "aca89e166dc8c9cc4710c2e35e6b0f9ae5087053a33bc1de69e4cca00c69e9fa",
+      "original_bytes": 3639,
+      "archive_sha256": "aca89e166dc8c9cc4710c2e35e6b0f9ae5087053a33bc1de69e4cca00c69e9fa",
+      "archive_bytes": 3639,
+      "final_newline_normalized": false
+    }
+  ],
+  "monocles_only_relocation": {
+    "repository": "dinoxim/monocles-chat",
+    "commit": "a4980b9f43bc6288cc0cfc0abcf188623f1949ea",
+    "path": "tools/interop/retained_fixture",
+    "manifest_sha256": "1986b912c829fc3303ca96166c6563eb2f6c8e9a3dfcb6ea1c76cc32a284347e",
+    "files": 184,
+    "bytes": 2565762,
+    "byte_identical": true,
+    "historical_paths_and_pins_not_rewritten": true
+  }
+}

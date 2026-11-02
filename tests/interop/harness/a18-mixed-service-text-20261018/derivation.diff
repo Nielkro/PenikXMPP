@@ -1,0 +1,171 @@
+--- frozen-A/runtime.py
++++ A18/runtime.py
+@@ -16,0 +17,3 @@
++sys.dont_write_bytecode = True
++if sys.flags.optimize:
++    raise RuntimeError("A18 requires Python without optimization")
+@@ -19 +22,2 @@
+-sys.path.insert(0, str(HERE.parent))
++HARNESS = Path('/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261015/harness')
++sys.path.insert(0, str(HARNESS))
+@@ -23 +27 @@
+-STATE = ROOT / 'pair-v2'
++STATE = HERE / 'runtime-state'
+@@ -129,13 +133,3 @@
+-def frozen_files():
+-    assert {name: sha(HERE.parent / name) for name in V1_PINS} == V1_PINS, 'Current shared controller baseline changed'
+-    freeze = read(HERE / 'freeze.json')
+-    assert freeze['schema_version'] == 2 and freeze['run_id'] == RUN
+-    assert freeze['setup_revision'] == v1.SETUP_REVISION
+-    assert freeze['v1_sha256'] == V1_PINS
+-    assert freeze['v2_sha256'] == {name: sha(HERE / name) for name in V2_FILES}
+-    assert freeze['apk_sha256'] == APKS and freeze['base_apk_sha256'] == v1.APKS
+-    assert freeze['diagnostic_source_manifest_sha256'] == DIAGNOSTIC_SOURCE
+-    assert freeze['csi_product_source_manifest_sha256'] == CSI_PRODUCT_PROOF['source_manifest_sha256']
+-    assert freeze['join_product_source_manifest_sha256'] == JOIN_PRODUCT_PROOF['source_manifest_sha256']
+-    assert freeze['join_product_main_sha256'] == JOIN_PRODUCT_PROOF['main_sha256']
+-    return sha(HERE / 'freeze.json')
++def historical_v2_freeze_not_used():
++    raise RuntimeError("Historical V2 freeze is not an A18 entry point")
++
+@@ -638,8 +632,17 @@
+-    assert _historical.frozen_files()=='e406750ab36b260618f254c15d8cedcbc52db6dcfa0a1e26e073aaf1cf46df28'
+-    value=read(HERE/'freeze.json')
+-    assert value['mode']=='Nora-only-2048-devicefix-consent' and value['roles']==['nora']
+-    assert value['files_sha256']=={name:sha(HERE/name) for name in ('runtime.py','control.py','recorder.py','scenario.py')}
+-    assert value['apk_sha256']==APKS and value['product']==PRODUCT
+-    assert sha(MIXED_HELPER)==NORMAL_MIXED_CONSENT_UI_SHA256
+-    assert sha(LAYOUT_CAPTURE)==LAYOUT_CAPTURE_SHA256
+-    _current_product();return sha(HERE/'freeze.json')
++    # The historical A chain stays frozen; this sibling owns a distinct source freeze.
++    assert _historical.frozen_files() == 'e406750ab36b260618f254c15d8cedcbc52db6dcfa0a1e26e073aaf1cf46df28'
++    baseline = read(HARNESS / 'devicefix_nora_runtime/freeze.json')
++    assert sha(HARNESS / 'devicefix_nora_runtime/freeze.json') == '131aa89a08adf3075e7ddcbc62af03b4ac14a682e3df4547099cd6bd6ef7b294'
++    for name, digest in baseline['files_sha256'].items():
++        assert sha(HARNESS / 'devicefix_nora_runtime' / name) == digest
++    value = read(HERE / 'freeze.json')
++    assert value['mode'] == 'Nora-only-persistent-room-service-20261018' and value['roles'] == ['nora']
++    names = ('runtime.py', 'control.py', 'recorder.py', 'scenario.py', 'service_support.py', 'room_scope.py', 'monitor.py')
++    assert value['files_sha256'] == {name: sha(HERE / name) for name in names}
++    assert value['parent_A_freeze_sha256'] == '131aa89a08adf3075e7ddcbc62af03b4ac14a682e3df4547099cd6bd6ef7b294'
++    assert value['apk_sha256'] == APKS and value['product'] == PRODUCT
++    assert sha(MIXED_HELPER) == NORMAL_MIXED_CONSENT_UI_SHA256
++    assert sha(LAYOUT_CAPTURE) == LAYOUT_CAPTURE_SHA256
++    _current_product()
++    return sha(HERE / 'freeze.json')
++
+@@ -660 +663 @@
+-    assert directory.is_relative_to(HERE.parent)
++    assert directory.is_relative_to(HARNESS)
+@@ -687 +690 @@
+-    probe_path=HERE.parent/'triple_v3/gpu_probe/probe.py'
++    probe_path=HARNESS/'triple_v3/gpu_probe/probe.py'
+@@ -705 +708 @@
+-    approved={HERE/'runtime.py',HERE/'control.py',HERE/'recorder.py',HERE/'scenario.py',MIXED_HELPER}
++    approved={HERE/'runtime.py',HERE/'control.py',HERE/'recorder.py',HERE/'scenario.py'}
+@@ -707 +709,0 @@
+-    if script==MIXED_HELPER:assert sha(script)==NORMAL_MIXED_CONSENT_UI_SHA256
+@@ -708,0 +711,29 @@
++
++
++
++def room_control_context():
++    # This exact new caller has already passed the same source/owner/resource gate.
++    settings = control_settings('nora')
++    session = read(settings['state'] / 'live-session.json')
++    keys = {'controller_pid', 'controller_start_ticks', 'adb_pid', 'adb_start_ticks',
++            'emulator_pid', 'emulator_start_ticks', 'adb_cgroup', 'approval_sha256'}
++    return {
++        'run_id': RUN, 'role': 'nora', 'account': OWN['nora'],
++        'runtime_freeze_sha256': frozen_files(), 'runtime_inputs_sha256': session['inputs_sha256'],
++        'apk_sha256': session['apk_sha256'], 'batch_id': session['batch_id'],
++        'session_binding': {key: session[key] for key in keys},
++        'process_cgroups': {name: v1.process_cgroup(session[name + '_pid']) for name in ('controller', 'adb', 'emulator')},
++        'native_readonly_bindings': session['native_readonly_bindings'],
++        'batch_deadline_unix': session['batch_deadline_unix'],
++        'runtime_root': str(ROOT), 'derivation_root': str(HERE),
++    }
++
++
++def validate_control_config(role, value, request):
++    assert role == 'nora'
++    # Startup validate_private_config remains byte-identical and still requires [].
++    scope_spec = _iu.spec_from_file_location('persistent_room_scope', HERE / 'room_scope.py')
++    scope = _iu.module_from_spec(scope_spec)
++    scope_spec.loader.exec_module(scope)
++    assert scope.RUN == RUN and scope.OWN == OWN
++    return scope.validate_control_config(value, request, room_control_context(), time.time())
+--- frozen-A/control.py
++++ A18/control.py
+@@ -15,4 +15 @@
+-OPS = {'status', 'stats', 'stop', 'contact', 'chat', 'prepare_crypto', 'send_text',
+-       'reply_notification', 'join_room', 'leave_room', 'start_call', 'accept_call',
+-       'reject_call', 'add_participant', 'start_group_call', 'accept_invite',
+-       'reject_invite', 'hangup', 'retract_call', 'authorize_room'}
++OPS = {'status', 'stats', 'stop', 'prepare_crypto', 'send_text'}
+@@ -32,0 +30,5 @@
++    if 'room_admission' in value:
++        ref = value['room_admission']
++        assert isinstance(ref, dict) and set(ref) == {'path', 'sha256'}
++        assert isinstance(ref['path'], str) and Path(ref['path']).is_absolute()
++        assert re.fullmatch('[0-9a-f]{64}', ref['sha256'])
+@@ -50 +52 @@
+-    runtime.validate_private_config(value['role'], config)
++    runtime.validate_control_config(value['role'], config, value)
+@@ -85,0 +88 @@
++        self.scope_request = self.scope_config = None
+@@ -94,0 +98,2 @@
++        if self.scope_request is not None:
++            runtime.validate_control_config(self.role, self.scope_config, self.scope_request)
+@@ -139 +144,2 @@
+-    runtime.validate_private_config(value['role'], config)
++    runtime.validate_control_config(value['role'], config, value)
++    backend.scope_request, backend.scope_config = value, config
+@@ -170,0 +177,2 @@
++    parser.add_argument('--room-admission', type=Path)
++    parser.add_argument('--room-admission-sha256')
+@@ -172,0 +181,3 @@
++    assert (args.room_admission is None) == (args.room_admission_sha256 is None)
++    if args.room_admission is not None:
++        value['room_admission'] = {'path': str(args.room_admission), 'sha256': args.room_admission_sha256}
+--- frozen-A/recorder.py
++++ A18/recorder.py
+@@ -41,0 +42 @@
++    if 'room_admission' in value: request['room_admission'] = value['room_admission']
+@@ -64,0 +66,2 @@
++        item.add_argument('--room-admission', type=Path)
++        item.add_argument('--room-admission-sha256')
+@@ -67,0 +71,5 @@
++    if value['action'] != 'begin':
++        path = value.pop('room_admission')
++        digest = value.pop('room_admission_sha256')
++        assert (path is None) == (digest is None)
++        if path is not None: value['room_admission'] = {'path': str(path), 'sha256': digest}
+--- frozen-service/scenario.py
++++ A18/scenario.py
+@@ -8 +8 @@
+-BASE=HERE.parent/'mixed_scenario.py'
++BASE=HERE/'service_support.py'
+@@ -10 +10 @@
+-assert sha(BASE)=='895aa598f4f069ad8978b352c870cb544a7b4f0c5f7310bdd5240d9c120a7f87'
++assert sha(BASE)=='0a74b6302f07bc62c6b475953e495de4a66d38c0682ba476f637af7a521a2daf'
+@@ -65 +65 @@
+- assert a['runtime_profile']=='A' and a['role']=='nora' and a['run_id']==r.RUN and a['accounts']==r.OWN
++ assert a['runtime_profile']=='A18' and a['role']=='nora' and a['run_id']==r.RUN and a['accounts']==r.OWN
+@@ -77 +77 @@
+- assert m.FREEZE==r.frozen_files()=='131aa89a08adf3075e7ddcbc62af03b4ac14a682e3df4547099cd6bd6ef7b294'
++ assert m.FREEZE==r.frozen_files()==a['runtime_freeze_sha256']
+@@ -79,0 +80,9 @@
++ import room_scope
++ context=r.room_control_context()
++ room_admission=room_scope.private_artifact(a['room_control_admission'],[r.HERE,r.ROOT])
++ room_scope.validate_admission(room_admission,context,time.time(),at_entry=True)
++ assert room_admission['fixture_room_authorization']==a['fixture_room_authorization']
++ case_deadline=min(a['expires_unix'],room_admission['expires_unix'],session['batch_deadline_unix']-120)
++ assert case_deadline-time.time()>=90, 'Insufficient fresh case budget; no product command'
++ room_scope.claim_scenario_once(context,a['room_control_admission'],{'path':str(args.root_admission),'sha256':sha(args.root_admission)})
++ m.ROOM_CONTROL_ADMISSION=a['room_control_admission']
+@@ -91,0 +101,3 @@
++  assert time.time()<case_deadline, 'Case scope expired; no further operation or resend'
++  if payload and payload['op']=='send_text':
++   assert case_deadline-time.time()>=40, 'Keep one send/result observation budget; no late token'

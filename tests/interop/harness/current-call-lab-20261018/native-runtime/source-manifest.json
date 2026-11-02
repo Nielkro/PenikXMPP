@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "status": "SOURCE_ONLY_RUNTIME_NOT_STAGED",
+  "scope": "MINIMAL_SEPARATE_CURRENT_NATIVE_OVERLAY_CREATED_OFF_CONTROL_AND_IDLE_RECIPES",
+  "files": {
+    "runtime_spec.py": {
+      "sha256": "9c977b2821e257a6ac691e8ba2b17b8e8494489844fd77529d9a4ef1346329e8",
+      "bytes": 6632
+    },
+    "stage_native_overlay.py": {
+      "sha256": "fe7bd2ee62b8f98a2769160a0b83e0032b5b00754c7ed3625a53d9e84fd08a31",
+      "bytes": 8721
+    },
+    "recreate_stopped_native_peers.py": {
+      "sha256": "c1745adabcaa9739439c9f2b1f60581dbcfd586d9152dce495cc0acdb2cb3992",
+      "bytes": 6261
+    },
+    "server_entry_leon.sh": {
+      "sha256": "b382c557bef2d6b2dd981f61bdeecfe251c4307ee34cad34bca78136c58cad79",
+      "bytes": 1559
+    },
+    "server_entry_felix.sh": {
+      "sha256": "622c375bb725f245d011857801a7bdacc4e80aadb189dc62df71f4eb158b9f2b",
+      "bytes": 1607
+    },
+    "native_control.py": {
+      "sha256": "00ecb9700f20e2bb15e93346480dbd1db8ac23c3eeebd6e8d2d70caf522133eb",
+      "bytes": 3818
+    },
+    "native_recorder.py": {
+      "sha256": "5d408f9dadf27c700648ac73712e12093dd81924da4916e258e4209e13ac9cdb",
+      "bytes": 4889
+    },
+    "server_control_base.py": {
+      "sha256": "0fe86a2329e77b2f35b804596f900a0d4341d7d2640d8264342cb8e94bbc6555",
+      "bytes": 14027
+    },
+    "inner_maps.py": {
+      "sha256": "2c7f37aea4f86a14b8bfe2f2d7973259f6b0bba5047220c0418f4bc2fc422dad",
+      "bytes": 5258
+    },
+    "idle_native_peers.py": {
+      "sha256": "0849424ecc31f7f7602c456d420368159e6402386da2a0682d799d9e65c9b1da",
+      "bytes": 7726
+    },
+    "checks.py": {
+      "sha256": "f644d81d6d53f690aa642c556e193807c1d007b296530ada22b27ee5c4c8c031",
+      "bytes": 16328
+    },
+    "overlay-manifest.json": {
+      "sha256": "8e4193f3d102c469139d1a2bd7d11985fae9e84bbba319eddd5a80ea249622fd",
+      "bytes": 20750
+    },
+    "launch-template.json": {
+      "sha256": "79d1bd7b42cb4101205f5ccdd5113709015eb3fa48fee085060da99fc79a9279",
+      "bytes": 5388
+    },
+    "historical-create-command.json": {
+      "sha256": "89e8143b90f30c75f1dfffc6720ee587eac81e5161b350ccfd9853a9566e88bb",
+      "bytes": 1597
+    },
+    "README.md": {
+      "sha256": "0060f1e1cddb79a10812dd4a759af172ab67050377e032bc575eeae2579126c9",
+      "bytes": 7403
+    },
+    "derivation.diff": {
+      "sha256": "94c8e05556e46a51a42b890d7f77d74605541df90620b84ae1c0d5fb5e94dcd2",
+      "bytes": 50434
+    }
+  },
+  "source_files": 16,
+  "source_bytes": 162398,
+  "overlay_manifest_sha256": "8e4193f3d102c469139d1a2bd7d11985fae9e84bbba319eddd5a80ea249622fd",
+  "overlay_files": 49,
+  "overlay_bytes": 150500672,
+  "complete_qualified_runtime_files": 43,
+  "complete_qualified_runtime_elf_files": 5,
+  "baseline_files": [
+    {
+      "path": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/off-preparation/stage_native_overlay.py",
+      "sha256": "7975455c0a6df8e1909b1fbf3de6bce714d9702f0fbccdf89b08a4567769d554",
+      "derived_source": "stage_native_overlay.py",
+      "unchanged": false
+    },
+    {
+      "path": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/off-preparation/recreate_stopped_native_peers.py",
+      "sha256": "33f75276d569f0a74073c3391313a1b474bcccfb032bbf1c7703ae0cf9eb7310",
+      "derived_source": "recreate_stopped_native_peers.py",
+      "unchanged": false
+    },
+    {
+      "path": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/off-preparation/server_entry_leon.sh",
+      "sha256": "50310d1db2fbb8fca150121247d9e4a148129cc29c7e413977e417f6b73fe3f9",
+      "derived_source": "server_entry_leon.sh",
+      "unchanged": false
+    },
+    {
+      "path": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/off-preparation/server_entry_felix.sh",
+      "sha256": "8f24b14574323ca861ba0747f082bab743c6e7e6ae86c96acf544380eb244660",
+      "derived_source": "server_entry_felix.sh",
+      "unchanged": false
+    },
+    {
+      "path": "local/monocles-dinox-interop-20261015/harness/native_session_public/native_control.py",
+      "sha256": "62c7313238566c959ce0590020ee844049c47ef77f50693c84a84293dc887099",
+      "derived_source": "native_control.py",
+      "unchanged": false
+    },
+    {
+      "path": "local/monocles-dinox-interop-20261015/harness/native_session_public/native_recorder.py",
+      "sha256": "ff4cc18668f6d0243b93ec0dfb4768d5a1313b10c11e92333f4a2a481e687776",
+      "derived_source": "native_recorder.py",
+      "unchanged": false
+    },
+    {
+      "path": "local/monocles-dinox-interop-20261015/harness/native_session_public/server_control_base.py",
+      "sha256": "0fe86a2329e77b2f35b804596f900a0d4341d7d2640d8264342cb8e94bbc6555",
+      "derived_source": "server_control_base.py",
+      "unchanged": true
+    },
+    {
+      "path": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/idle-start-recipe/actual-inner-maps-proof.py",
+      "sha256": "b6d8f4e787b7b2780e3d9caf11992b1eee1b806c78fc1a48f029919faf88bd38",
+      "derived_source": "inner_maps.py",
+      "unchanged": false
+    }
+  ],
+  "baseline_start_sources": [
+    {
+      "path": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/idle-start-recipe/actual-start-worker-source.py",
+      "sha256": "8958de8c9ef2aa3c0f29e590a4a95799cd8c853bb322292784034c60775a982c"
+    },
+    {
+      "path": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/idle-start-recipe/actual-idle-proof-worker-source.py",
+      "sha256": "1186bc8e88f2f37ac8f6d8846a83c8ea695e1cf2cb742903b2eb06bf8c69b675"
+    }
+  ],
+  "actual_readonly_metadata_receipt": {
+    "path": "actual-readonly-runtime-metadata.json",
+    "sha256": "e92c340daa9b080ed93ede2d643b20934a71b961e41806b47d9c04cc94f04b2a",
+    "runtime_and_base_images_present": true,
+    "original_profile_and_payload_volumes_present": true,
+    "test_network_absent": true,
+    "exact_owned_missing_bridge_restore_authorized_by_root_source_only": true
+  },
+  "offline_checks_sha256": "78fd43f9335a1090ea07871b03016c0e262a4d94d44468cbb05653c4db70077c",
+  "actual_build_source_manifest_sha256": "3ead32384ff0e0f15783b5dccbd2961902b91f0c255ec0d9b18fd141baa1c578",
+  "actual_build_input_manifest_sha256": "326a6a57c711950ca9bb8c3a9c6861c7ec03aa049681a00a77d3f19c5412b1b1",
+  "actual_build_receipt_sha256": "f0d553a8d74f4f62f976e2f277ec34b59f3fe1c22ba973c454ca4f1d0570d792",
+  "actual_binary_sha256": "85879bcf53bd1fb6c285f5f1928a688758ede689da204e013157c4ab914a677c",
+  "no_admission_or_new_container_ids_fabricated": true,
+  "old_overlay_profiles_keys_frozen_sources_changed": false,
+  "runtime_or_guest_or_build_action_performed": false,
+  "review_required_before_future_runtime": true,
+  "integration_fix_delta": {
+    "path": "integration-fixes.diff",
+    "sha256": "1bea01649b5f2ea63e52363cd39dd6c5b1c1d8d34d9c0f6040bad5f52583190c",
+    "bytes": 15726,
+    "previous_source_manifest": "history-before-three-argument-check/source-manifest.json",
+    "previous_source_sha256": "aafa59fb81d9839b6b83034bd7d605f89f260851f23ba79057420fe20972dc32",
+    "changes": [
+      "strict three named-volume preconditions before each create",
+      "unused historical RO overlay mounts explicitly omitted",
+      "original three-argument check_container API retained",
+      "relative pinned runtime_spec import works under A18 spec loader"
+    ]
+  }
+}

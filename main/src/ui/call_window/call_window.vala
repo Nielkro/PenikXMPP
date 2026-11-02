@@ -1,0 +1,407 @@
+using Gee;
+using Xmpp;
+using Dino.Entities;
+using Gtk;
+
+namespace Dino.Ui {
+
+    public class CallWindow : Gtk.Window {
+
+        public signal void menu_dump_dot();
+
+        public CallWindowController controller;
+
+        public Box main_box = new Box(Orientation.HORIZONTAL, 0);
+        private Adw.ToastOverlay invite_notices = new Adw.ToastOverlay();
+        public Overlay overlay = new Overlay();
+        public Grid grid = new Grid();
+        public CallBottomBar bottom_bar = new CallBottomBar();
+        public Revealer bottom_bar_revealer = new Revealer() { valign=Align.END, transition_type=RevealerTransitionType.CROSSFADE, transition_duration=200 };
+        private Label call_duration_label = new Label("") { halign=Align.CENTER, valign=Align.END, margin_bottom=88, visible=false, can_target=false };
+        public HeaderBar header_bar = new HeaderBar() { valign=Align.START, halign=Align.END, show_title_buttons=true, opacity=0.0 };
+        public Revealer header_bar_revealer = new Revealer() { halign=Align.END, valign=Align.START, transition_type=RevealerTransitionType.SLIDE_LEFT, transition_duration=200, reveal_child=false };
+        public Box own_video_box = new Box(Orientation.HORIZONTAL, 0) { halign=Align.END, valign=Align.END };
+        public Revealer participant_list_revealer = new Revealer() { halign=Align.END, valign=Align.FILL, transition_type=RevealerTransitionType.SLIDE_LEFT, transition_duration=300, reveal_child=false };
+        public GroupCallParticipantList participant_list = new GroupCallParticipantList();
+        private HashMap<string, ParticipantWidget> participant_widgets = new HashMap<string, ParticipantWidget>();
+        private HashMap<string, ArrayList<Binding>> participant_bindings = new HashMap<string, ArrayList<Binding>>();
+        private ArrayList<string> participants = new ArrayList<string>();
+
+        private EventControllerFocus this_focus_events = new EventControllerFocus();
+        private GestureClick this_gesture_events = new GestureClick() { touch_only=true, propagation_phase=Gtk.PropagationPhase.CAPTURE };
+        private EventControllerMotion this_motion_events = new EventControllerMotion();
+        private double latest_motion_x = -1;
+        private double latest_motion_y = -1;
+        private const double MOTION_RELEVANCE_THRESHOLD = 2;
+
+        private int own_video_width = 150;
+        private int own_video_height = 100;
+
+        private bool hide_control_elements = false;
+        private uint hide_control_handler = 0;
+        public bool controls_active { get; set; default=true; }
+
+        construct {
+            header_bar.add_css_class("call-header-bar");
+            header_bar.title_widget = new Box(Orientation.VERTICAL, 0);
+//            header_bar.spacing = 0;
+            header_bar_revealer.set_child(header_bar);
+            bottom_bar_revealer.set_child(bottom_bar);
+            own_video_box.add_css_class("own-video");
+
+            this.add_css_class("dino-call-window");
+
+            overlay.set_child(grid);
+            overlay.add_overlay(own_video_box);
+            overlay.add_overlay(bottom_bar_revealer);
+            overlay.add_overlay(call_duration_label);
+            overlay.add_overlay(header_bar_revealer);
+            overlay.get_child_position.connect(on_get_child_position);
+
+            call_duration_label.add_css_class("call-duration");
+            call_duration_label.add_css_class("monospace");
+
+            // Setup participant list sidebar
+            participant_list_revealer.set_child(participant_list);
+            participant_list.add_css_class("sidebar");
+            
+            // Main layout: video area (overlay) + participant list (sidebar)
+            main_box.append(overlay);
+            main_box.append(participant_list_revealer);
+            overlay.hexpand = true;
+
+            invite_notices.set_child(main_box);
+            set_child(invite_notices);
+        }
+
+        public void show_invite_notice(string message) {
+            invite_notices.add_toast(new Adw.Toast(message) { timeout=6 });
+        }
+
+        public CallWindow() {
+            this.bind_property("controls-active", bottom_bar_revealer, "reveal-child", BindingFlags.SYNC_CREATE);
+
+            ((Widget) this).add_controller(this_motion_events);
+            this_motion_events.motion.connect((x, y) => {
+                if ((latest_motion_x - x).abs() <= MOTION_RELEVANCE_THRESHOLD && (latest_motion_y - y).abs() <= MOTION_RELEVANCE_THRESHOLD) return;
+
+                latest_motion_x = x;
+                latest_motion_y = y;
+                reveal_control_elements();
+            });
+
+            ((Widget) this).add_controller(this_focus_events);
+            this_focus_events.enter.connect(reveal_control_elements);
+            this_focus_events.leave.connect(reveal_control_elements);
+
+            ((Widget) this).add_controller(this_gesture_events);
+            this_gesture_events.pressed.connect_after(reveal_control_elements);
+
+            this.notify["default-width"].connect(reveal_control_elements);
+            this.notify["default-height"].connect(reveal_control_elements);
+
+            this.notify["default-width"].connect(reposition_participant_widgets);
+            this.notify["default-height"].connect(reposition_participant_widgets);
+
+            this.set_titlebar(new OutsideHeaderBar(this.header_bar));
+
+            // Cancel pending timeouts and remove event controllers before
+            // the GDK surface is destroyed — prevents GTK critical:
+            //   gdk_surface_get_device_position: assertion 'GDK_IS_SURFACE (surface)' failed
+            this.close_request.connect(() => {
+                if (hide_control_handler != 0) {
+                    Source.remove(hide_control_handler);
+                    hide_control_handler = 0;
+                }
+                shutdown_transient_ui();
+                ((Widget) this).remove_controller(this_motion_events);
+                return false;
+            });
+
+            reveal_control_elements();
+        }
+
+        public void add_participant(string participant, ParticipantWidget participant_widget) {
+            participant_widget.visible = true;
+            var bindings = new ArrayList<Binding>();
+            bindings.add(this.bind_property("controls-active", participant_widget, "controls-active", BindingFlags.SYNC_CREATE));
+            bindings.add(this.bind_property("controls-active", participant_widget.encryption_button_controller, "controls-active", BindingFlags.SYNC_CREATE));
+            participant_bindings[participant] = bindings;
+
+            participants.add(participant);
+            participant_widgets[participant] = participant_widget;
+            grid.attach(participant_widget, 0, 0);
+
+            reposition_participant_widgets();
+        }
+
+        public void remove_participant(string participant) {
+            // Unbind property bindings to allow cleanup
+            if (participant_bindings.has_key(participant)) {
+                foreach (Binding binding in participant_bindings[participant]) {
+                    binding.unbind();
+                }
+                participant_bindings.unset(participant);
+            }
+            if (!participant_widgets.has_key(participant)) return;
+            ParticipantWidget participant_widget = participant_widgets[participant];
+            participants.remove(participant);
+            // GTK may already have detached a participant during window
+            // teardown. Only remove children still owned by this grid.
+            if (participant_widget.get_parent() == grid) {
+                participant_widget.set_video(new Adw.Bin());
+                grid.remove(participant_widget);
+            }
+            participant_widgets.unset(participant);
+
+            reposition_participant_widgets();
+            update_participant_control_visibility();
+        }
+
+        public void set_video(string participant, Widget widget) {
+            if (!participant_widgets.has_key(participant)) return;
+            participant_widgets[participant].set_video(widget);
+            hide_control_elements = true;
+            timeout_hide_control_elements();
+        }
+
+        public void set_placeholder(string participant, Conversation? conversation, StreamInteractor stream_interactor) {
+            if (!participant_widgets.has_key(participant)) return;
+            participant_widgets[participant].set_placeholder(conversation, stream_interactor);
+            update_participant_control_visibility();
+        }
+
+        private void update_participant_control_visibility() {
+            hide_control_elements = false;
+            foreach (ParticipantWidget participant_widget in participant_widgets.values) {
+                if (participant_widget.shows_video) {
+                    hide_control_elements = true;
+                    break;
+                }
+            }
+
+            if (!hide_control_elements) {
+                // Restore the target state even while the revealer is still
+                // animating from visible to hidden.
+                controls_active = true;
+                reveal_control_elements();
+            }
+        }
+
+        private void reposition_participant_widgets() {
+            int width = get_size(Orientation.HORIZONTAL);
+            int height = get_size(Orientation.VERTICAL);
+            reposition_participant_widgets_rec(participants, width, height, 0, 0, 0, 0);
+        }
+
+        private void reposition_participant_widgets_rec(ArrayList<string> participants, int width, int height, int margin_top, int margin_right, int margin_bottom, int margin_left) {
+            if (participants.size == 0) return;
+
+            if (participants.size == 1) {
+                participant_widgets[participants[0]].margin_top = margin_top;
+                participant_widgets[participants[0]].margin_end = margin_right;
+                participant_widgets[participants[0]].margin_bottom = margin_bottom;
+                participant_widgets[participants[0]].margin_start = margin_left;
+
+                participant_widgets[participants[0]].on_row_changed(margin_top == 0, margin_bottom == 0, margin_left == 0, margin_right == 0);
+                return;
+            }
+
+            ArrayList<string> first_part = new ArrayList<string>();
+            ArrayList<string> last_part = new ArrayList<string>();
+
+            for (int i = 0; i < participants.size; i++) {
+                if (i < Math.ceil((double)participants.size / (double)2)) {
+                    first_part.add(participants[i]);
+                } else {
+                    last_part.add(participants[i]);
+                }
+            }
+
+            if (width > height) {
+                reposition_participant_widgets_rec(first_part, width / 2, height, margin_top, margin_right + width / 2, margin_bottom, margin_left);
+                reposition_participant_widgets_rec(last_part, width / 2, height, margin_top, margin_right, margin_bottom, margin_left + width / 2);
+            } else {
+                reposition_participant_widgets_rec(first_part, width, height / 2, margin_top, margin_right, margin_bottom + height / 2, margin_left);
+                reposition_participant_widgets_rec(last_part, width, height / 2, margin_top + height / 2, margin_right, margin_bottom, margin_left);
+            }
+        }
+
+        public void set_own_video(Widget? widget_) {
+            unset_own_video();
+
+            Widget? own_video = widget_;
+            if (own_video == null) {
+                own_video = new Box(Orientation.HORIZONTAL, 0);
+            }
+            own_video.hexpand = own_video.vexpand = true;
+            own_video.visible = true;
+            own_video_box.append(own_video);
+        }
+
+        public void set_own_video_ratio(int width, int height) {
+            if (width * 100 > height * 150) {
+                this.own_video_width = 150;
+                this.own_video_height = height * 150 / width;
+            } else {
+                this.own_video_width = width * 100 / height;
+                this.own_video_height = 100;
+            }
+        }
+
+        public void unset_own_video() {
+            Widget to_remove = own_video_box.get_first_child();
+            while (to_remove != null) {
+                own_video_box.remove(to_remove);
+                to_remove = own_video_box.get_first_child();
+            }
+        }
+
+        public void set_status(string participant_id, string state) {
+            if (!participant_widgets.has_key(participant_id)) return;
+            participant_widgets[participant_id].set_status(state);
+        }
+
+        public void show_call_duration(string duration) {
+            call_duration_label.label = duration;
+            call_duration_label.visible = true;
+        }
+
+        public void hide_call_duration() {
+            call_duration_label.visible = false;
+        }
+
+        public void show_counterpart_ended(string who_terminated, string? reason_name, string? reason_text) {
+            hide_control_elements = false;
+            reveal_control_elements();
+
+            string text = "";
+            if (reason_name == Xmpp.Xep.Jingle.ReasonElement.SUCCESS) {
+                text = _("%s ended the call").printf(who_terminated);
+            } else if (reason_name == Xmpp.Xep.Jingle.ReasonElement.DECLINE || reason_name == Xmpp.Xep.Jingle.ReasonElement.BUSY) {
+                text = _("%s declined the call").printf(who_terminated);
+            } else {
+                if (reason_text == CallState.CALL_FULL_REASON) {
+                    text = _("Call full (max. %d participants)").printf(CallState.MAX_MUJI_PEERS + 1);
+                } else if (reason_text == null) {
+                    text = "The call has been terminated" + " " + (reason_name ?? "");
+                } else {
+                    text = reason_text + " " + (reason_name ?? "");
+                }
+            }
+
+            bottom_bar.show_counterpart_ended(text);
+        }
+
+        private void reveal_control_elements() {
+            if (!bottom_bar_revealer.child_revealed) {
+                controls_active = true;
+            }
+
+            timeout_hide_control_elements();
+        }
+
+        private void timeout_hide_control_elements() {
+            if (hide_control_handler != 0) {
+                Source.remove(hide_control_handler);
+                hide_control_handler = 0;
+            }
+
+            if (!hide_control_elements) {
+                return;
+            }
+
+            hide_control_handler = Timeout.add_seconds(3, () => {
+                // Guard: if the window is already unrealized (surface
+                // destroyed), don't touch widget properties — it would
+                // trigger gdk_surface_get_device_position on a dead surface.
+                if (!((Widget) this).get_realized()) {
+                    hide_control_handler = 0;
+                    return false;
+                }
+
+                if (!hide_control_elements) {
+                    hide_control_handler = 0;
+                    return false;
+                }
+
+                if (bottom_bar.is_menu_active() || participant_menu_active()) {
+                    hide_control_handler = 0;
+                    return false;
+                }
+
+                controls_active = false;
+
+                hide_control_handler = 0;
+                return false;
+            });
+        }
+
+        private bool participant_menu_active() {
+            foreach (ParticipantWidget participant_widget in participant_widgets.values) {
+                if (participant_widget.is_menu_active()) return true;
+            }
+            return false;
+        }
+
+        public void shutdown_transient_ui() {
+            bottom_bar.shutdown();
+            foreach (ParticipantWidget participant_widget in participant_widgets.values) {
+                participant_widget.shutdown();
+            }
+        }
+
+        private bool on_get_child_position(Widget widget, out Gdk.Rectangle allocation) {
+            allocation = Gdk.Rectangle();
+
+            if (widget == own_video_box) {
+                int width = get_size(Orientation.HORIZONTAL);
+                int height = get_size(Orientation.VERTICAL);
+
+                allocation.width = own_video_width;
+                allocation.height = own_video_height;
+                allocation.x = width - own_video_width - 20;
+                allocation.y = height - own_video_height - 20;
+                return true;
+            }
+            return false;
+        }
+        
+        public void show_participant_list(bool show) {
+            participant_list_revealer.reveal_child = show;
+        }
+        
+        public void add_group_call_participant(Jid jid, string? display_name = null) {
+            participant_list.add_participant(jid, display_name);
+        }
+        
+        public void remove_group_call_participant(Jid jid) {
+            participant_list.remove_participant(jid);
+        }
+        
+        public void set_group_call_participant_status(Jid jid, bool connected) {
+            participant_list.set_participant_connection_status(jid, connected);
+        }
+    }
+
+    /* Hack to make the CallHeaderBar feel like a HeaderBar (right click menu, double click, ..) although it isn't set as headerbar.
+     * OutsideHeaderBar is set as a headerbar and it doesn't take any space, but claims to take space (which is actually taken by CallHeaderBar).
+     */
+    public class OutsideHeaderBar : Gtk.Box {
+        HeaderBar header_bar;
+
+        public OutsideHeaderBar(HeaderBar header_bar) {
+            this.header_bar = header_bar;
+
+//            size_allocate.connect_after(on_header_bar_size_allocate);
+//            header_bar.size_allocate.connect(on_header_bar_size_allocate);
+        }
+
+        public void on_header_bar_size_allocate() {
+            // int header_bar_height = header_bar.get_height();
+            // int alloc_height = get_height();
+            // alloc.height = header_bar_alloc.height;
+//            set_allocation(alloc);
+        }
+    }
+}

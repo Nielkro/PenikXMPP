@@ -1,0 +1,549 @@
+name: Linux Package Builder Image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/linux-package-builder-image.yml'
+      - 'ci/images/linux-package-builder-dinox/**'
+      - 'scripts/scan_unicode.py'
+      - 'scripts/ci-build-deps.sh'
+      - 'scripts/verify-ci-deps.sh'
+      - 'scripts/verify-package-builder-image.sh'
+      - 'scripts/verify-package-builder-for-package-job.sh'
+      - 'scripts/update-linux-package-builder-digest.sh'
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: 'Image in die Forgejo Registry pushen'
+        type: boolean
+        default: true
+      image_tag:
+        description: 'Image tag'
+        type: string
+        default: 'ubuntu-24.04'
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: linux-package-builder-image
+  cancel-in-progress: false
+
+env:
+  CI: true
+  DINOX_CI: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  DOCKER_CLI_VERSION: 27.5.1
+  REGISTRY: git.dinox.im
+  IMAGE_NAME: git.dinox.im/dinoxim/linux-package-builder-dinox
+  DINOX_PACKAGE_BUILDER_INPUTS: >-
+    .github/workflows/linux-package-builder-image.yml
+    ci/images/linux-package-builder-dinox
+    scripts/scan_unicode.py
+    scripts/ci-build-deps.sh
+    scripts/verify-ci-deps.sh
+    scripts/verify-package-builder-image.sh
+    scripts/verify-package-builder-for-package-job.sh
+    scripts/update-linux-package-builder-digest.sh
+
+jobs:
+  build-linux-package-builder-image:
+    name: "Build Linux Package Builder Image"
+    runs-on: docker
+    timeout-minutes: 240
+    container:
+      image: catthehacker/ubuntu:act-24.04
+    env:
+      DOCKER_HOST: unix:///var/run/docker.sock
+    steps:
+      - name: "Checkout sources"
+        uses: https://git.dinox.im/dinoxim/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: "Install Docker CLI"
+        run: |
+          set -eu
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl git python3 tar
+          curl --fail --show-error --location \
+            --retry 3 --connect-timeout 20 --max-time 180 \
+            "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_CLI_VERSION}.tgz" \
+            --output /tmp/docker.tgz
+          tar -xzf /tmp/docker.tgz -C /tmp
+          install -m 0755 /tmp/docker/docker /usr/local/bin/docker
+          docker --version
+
+      - name: "Verify digest pin helper"
+        run: |
+          set -eu
+          chmod +x scripts/update-linux-package-builder-digest.sh
+          scripts/update-linux-package-builder-digest.sh --self-test
+          scripts/update-linux-package-builder-digest.sh --check-current
+
+      - name: "Reject stale queued master build"
+        if: |
+          (github.event_name == 'push' || inputs.push_image == true || inputs.push_image == 'true') &&
+          github.ref == 'refs/heads/master'
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_SHA:-}" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "ERROR: GITHUB_SHA is missing or invalid." >&2
+            exit 1
+          }
+          read -r -a builder_inputs <<< "$DINOX_PACKAGE_BUILDER_INPUTS"
+          git fetch --no-tags origin \
+            refs/heads/master:refs/remotes/origin/master
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/master || {
+            echo "ERROR: queued builder commit is no longer on current master." >&2
+            exit 1
+          }
+          git diff --quiet "$GITHUB_SHA" origin/master -- "${builder_inputs[@]}" || {
+            echo "ERROR: a newer package-builder input is already on master." >&2
+            echo "Skipping this stale queued image before the expensive build." >&2
+            exit 1
+          }
+
+      - name: "Connect to Docker daemon"
+        run: |
+          set -eu
+          for host in \
+            unix:///var/run/docker.sock \
+            tcp://127.0.0.1:2375 \
+            tcp://localhost:2375 \
+            tcp://docker:2375
+          do
+            echo "Trying DOCKER_HOST=$host"
+            export DOCKER_HOST="$host"
+            for i in $(seq 1 5); do
+              if timeout 5 docker info >/dev/null 2>&1; then
+                echo "DOCKER_HOST=$host" >> "$GITHUB_ENV"
+                docker version
+                exit 0
+              fi
+              sleep 2
+            done
+          done
+          echo "ERROR: no Docker daemon reachable from this Forgejo runner job." >&2
+          echo "Checked /var/run/docker.sock, 127.0.0.1:2375, localhost:2375 and docker:2375." >&2
+          exit 1
+
+      - name: "Login to Forgejo registry"
+        if: github.event_name == 'push' || inputs.push_image == true || inputs.push_image == 'true'
+        env:
+          DINOX_REGISTRY_TOKEN: ${{ secrets.DINOX_REGISTRY_TOKEN }}
+        run: |
+          token="${DINOX_REGISTRY_TOKEN:-}"
+          if [ -z "$token" ]; then
+            echo "ERROR: DINOX_REGISTRY_TOKEN is required to push the image." >&2
+            exit 1
+          fi
+          printf '%s' "$token" | docker login "$REGISTRY" -u "${GITHUB_ACTOR:-forgejo}" --password-stdin
+
+      - name: "Build uniquely tagged image"
+        env:
+          REQUESTED_IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          image_tag="${REQUESTED_IMAGE_TAG:-ubuntu-24.04}"
+          [[ "$image_tag" =~ ^[A-Za-z0-9_.-]{1,80}$ ]] \
+            && [[ "${image_tag:0:1}" =~ ^[A-Za-z0-9_]$ ]] || {
+            echo "ERROR: invalid or overlong OCI image tag: $image_tag" >&2
+            exit 1
+          }
+          [[ "${GITHUB_SHA:-}" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "ERROR: GITHUB_SHA is missing or invalid." >&2
+            exit 1
+          }
+          run_id="${GITHUB_RUN_ID:-}"
+          run_attempt="${GITHUB_RUN_ATTEMPT:-}"
+          [[ "$run_id" =~ ^[0-9]+$ ]] && [ "$run_id" -gt 0 ] \
+            && [[ "$run_attempt" =~ ^[0-9]+$ ]] \
+            && [ "$run_attempt" -gt 0 ] || {
+            echo "ERROR: Forgejo run identity is invalid." >&2
+            exit 1
+          }
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ] \
+              && [ "${GITHUB_REF:-}" != "refs/heads/master" ] \
+              && [ "$image_tag" = "ubuntu-24.04" ]; then
+            echo "ERROR: a manual non-master build must use a custom image tag." >&2
+            exit 1
+          fi
+
+          short_sha="$(printf '%.12s' "$GITHUB_SHA")"
+          unique_tag="${image_tag}-${short_sha}-${run_id}-${run_attempt}"
+          commit_tag="${image_tag}-${short_sha}"
+          [ "${#unique_tag}" -le 128 ] || {
+            echo "ERROR: run-unique OCI image tag exceeds 128 characters." >&2
+            exit 1
+          }
+          commit_epoch="$(git show -s --format=%ct "$GITHUB_SHA")"
+          ubuntu_snapshot="$(date -u -d "@$commit_epoch" +%Y%m%dT%H0000Z)"
+          echo "Ubuntu APT snapshot: $ubuntu_snapshot"
+          echo "Run-unique image tag: $unique_tag"
+          tar -cf - \
+            scripts/scan_unicode.py \
+            scripts/ci-build-deps.sh \
+            scripts/verify-ci-deps.sh \
+            scripts/verify-package-builder-image.sh \
+            ci/images/linux-package-builder-dinox/Dockerfile \
+          | docker build \
+            --pull \
+            --progress=plain \
+            --build-arg "DINOX_UBUNTU_APT_SNAPSHOT=$ubuntu_snapshot" \
+            --tag "$IMAGE_NAME:$unique_tag" \
+            --tag "$IMAGE_NAME:$image_tag" \
+            --tag "$IMAGE_NAME:$commit_tag" \
+            --file ci/images/linux-package-builder-dinox/Dockerfile \
+            -
+          local_image_id="$(
+            docker image inspect --format '{{.Id}}' "$IMAGE_NAME:$unique_tag"
+          )"
+          [[ "$local_image_id" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "ERROR: invalid local Docker image ID: $local_image_id" >&2
+            exit 1
+          }
+          echo "DINOX_PACKAGE_BUILDER_CANONICAL_TAG=$image_tag" >> "$GITHUB_ENV"
+          echo "DINOX_PACKAGE_BUILDER_COMMIT_TAG=$commit_tag" >> "$GITHUB_ENV"
+          echo "DINOX_PACKAGE_BUILDER_UNIQUE_TAG=$unique_tag" >> "$GITHUB_ENV"
+          echo "DINOX_PACKAGE_BUILDER_LOCAL_IMAGE_ID=$local_image_id" >> "$GITHUB_ENV"
+          docker image inspect "$IMAGE_NAME:$unique_tag"
+
+      - name: "Verify image contents"
+        run: |
+          set -euo pipefail
+          unique_tag="${DINOX_PACKAGE_BUILDER_UNIQUE_TAG:-}"
+          [[ "$unique_tag" =~ ^[A-Za-z0-9_.-]{1,128}$ ]] \
+            && [[ "${unique_tag:0:1}" =~ ^[A-Za-z0-9_]$ ]] || {
+            echo "ERROR: run-unique image tag is missing or invalid." >&2
+            exit 1
+          }
+          tar -cf - \
+            scripts/ci-build-deps.sh \
+            scripts/verify-ci-deps.sh \
+            scripts/verify-package-builder-image.sh \
+            ci/images/linux-package-builder-dinox/Dockerfile \
+          | docker run --rm -i \
+            "$IMAGE_NAME:$DINOX_PACKAGE_BUILDER_UNIQUE_TAG" bash -lc '
+            set -eu
+            mkdir -p /workspace
+            tar -xf - -C /workspace
+            cd /workspace
+            bash scripts/verify-package-builder-image.sh
+            bash scripts/verify-ci-deps.sh
+            verify-dinox-package-builder-image
+            verify-dinox-ci-deps
+            meson --version
+            ninja --version
+            valac --version
+            pkg-config --modversion gtk4 libadwaita-1 gstreamer-1.0 libva
+            patchelf --version
+            node --version
+            python3 --version
+          '
+
+      - name: "Verify master builder inputs are current"
+        if: |
+          (github.event_name == 'push' || inputs.push_image == true || inputs.push_image == 'true') &&
+          github.ref == 'refs/heads/master'
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_SHA:-}" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "ERROR: GITHUB_SHA is missing or invalid." >&2
+            exit 1
+          }
+          read -r -a builder_inputs <<< "$DINOX_PACKAGE_BUILDER_INPUTS"
+          git fetch --no-tags origin \
+            refs/heads/master:refs/remotes/origin/master
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/master || {
+            echo "ERROR: builder commit is not an ancestor of current master." >&2
+            exit 1
+          }
+          git diff --quiet "$GITHUB_SHA" origin/master -- "${builder_inputs[@]}" || {
+            echo "ERROR: package-builder inputs changed while this image was building." >&2
+            echo "A newer image workflow must publish and pin the matching digest." >&2
+            exit 1
+          }
+          echo "Builder inputs still match current master."
+
+      - name: "Push run-unique image"
+        if: github.event_name == 'push' || inputs.push_image == true || inputs.push_image == 'true'
+        run: |
+          set -euo pipefail
+          unique_tag="${DINOX_PACKAGE_BUILDER_UNIQUE_TAG:-}"
+          [[ "$unique_tag" =~ ^[A-Za-z0-9_.-]{1,128}$ ]] \
+            && [[ "${unique_tag:0:1}" =~ ^[A-Za-z0-9_]$ ]] || {
+            echo "ERROR: run-unique image tag is missing or invalid." >&2
+            exit 1
+          }
+          push_log="$(mktemp)"
+          trap 'rm -f "$push_log"' EXIT
+          docker push \
+            "$IMAGE_NAME:$DINOX_PACKAGE_BUILDER_UNIQUE_TAG" 2>&1 | tee "$push_log"
+          published_digest="$(
+            scripts/update-linux-package-builder-digest.sh \
+              --extract-push-digest "$push_log"
+          )"
+          echo "Published run-unique image digest: $published_digest"
+          echo "DINOX_PUBLISHED_LINUX_PACKAGE_BUILDER_DIGEST=$published_digest" >> "$GITHUB_ENV"
+
+      - name: "Verify published image by digest"
+        if: github.event_name == 'push' || inputs.push_image == true || inputs.push_image == 'true'
+        run: |
+          set -euo pipefail
+          digest="${DINOX_PUBLISHED_LINUX_PACKAGE_BUILDER_DIGEST:-}"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "ERROR: published image digest is missing or invalid." >&2
+            exit 1
+          }
+          [[ "${DINOX_PACKAGE_BUILDER_LOCAL_IMAGE_ID:-}" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "ERROR: local image ID is missing or invalid." >&2
+            exit 1
+          }
+
+          docker pull "$IMAGE_NAME@$digest"
+          pulled_image_id="$(
+            docker image inspect --format '{{.Id}}' "$IMAGE_NAME@$digest"
+          )"
+          [ "$pulled_image_id" = "$DINOX_PACKAGE_BUILDER_LOCAL_IMAGE_ID" ] || {
+            echo "ERROR: registry image ID does not match the verified local image." >&2
+            echo "local:  $DINOX_PACKAGE_BUILDER_LOCAL_IMAGE_ID" >&2
+            echo "remote: $pulled_image_id" >&2
+            exit 1
+          }
+
+          tar -cf - \
+            scripts/ci-build-deps.sh \
+            scripts/verify-ci-deps.sh \
+            scripts/verify-package-builder-image.sh \
+            ci/images/linux-package-builder-dinox/Dockerfile \
+          | docker run --rm -i "$IMAGE_NAME@$digest" bash -lc '
+            set -eu
+            mkdir -p /workspace
+            tar -xf - -C /workspace
+            cd /workspace
+            bash scripts/verify-package-builder-image.sh
+            bash scripts/verify-ci-deps.sh
+            verify-dinox-package-builder-image
+            verify-dinox-ci-deps
+          '
+          echo "Published image verified by immutable digest: $digest"
+
+      - name: "Pin published image digest"
+        if: |
+          (github.event_name == 'push' || inputs.push_image == true || inputs.push_image == 'true') &&
+          github.ref == 'refs/heads/master' &&
+          (github.event_name == 'push' || inputs.image_tag == '' || inputs.image_tag == 'ubuntu-24.04')
+        run: |
+          set -euo pipefail
+          PUBLISHED_DIGEST="${DINOX_PUBLISHED_LINUX_PACKAGE_BUILDER_DIGEST:-}"
+          [[ "${PUBLISHED_DIGEST:-}" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "ERROR: published Linux package-builder digest is missing or invalid." >&2
+            exit 1
+          }
+          [[ "${GITHUB_SHA:-}" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "ERROR: GITHUB_SHA is missing or invalid." >&2
+            exit 1
+          }
+
+          read -r -a builder_inputs <<< "$DINOX_PACKAGE_BUILDER_INPUTS"
+
+          pin_parent="$(mktemp -d)"
+          pin_worktree="$pin_parent/repository"
+          cleanup_pin_worktree() {
+            if [ -d "$pin_worktree" ]; then
+              git worktree remove --force "$pin_worktree" >/dev/null 2>&1 || true
+            fi
+            rm -rf "$pin_parent"
+          }
+          trap cleanup_pin_worktree EXIT
+
+          git worktree add --detach "$pin_worktree" origin/master
+
+          verify_worktree_delta() {
+            local added_lines removed_lines changed_path
+            local -a changed_files
+
+            mapfile -t changed_files < <(
+              git -C "$pin_worktree" diff --name-only
+            )
+            [ "${#changed_files[@]}" -eq 1 ] \
+              && [ "${changed_files[0]}" = ".github/workflows/build.yml" ] || {
+                echo "ERROR: digest update changed unexpected files: ${changed_files[*]:-none}" >&2
+                exit 1
+              }
+            git -C "$pin_worktree" diff --check
+            read -r added_lines removed_lines changed_path < <(
+              git -C "$pin_worktree" diff --numstat \
+                -- .github/workflows/build.yml
+            )
+            [ "$added_lines" = "3" ] \
+              && [ "$removed_lines" = "3" ] \
+              && [ "$changed_path" = ".github/workflows/build.yml" ] || {
+                echo "ERROR: digest update must replace exactly three build.yml lines." >&2
+                echo "Observed numstat: ${added_lines:-?} ${removed_lines:-?} ${changed_path:-?}" >&2
+                exit 1
+              }
+          }
+
+          verify_pin_commit() {
+            local added_lines removed_lines changed_path
+            local -a changed_files
+
+            "$pin_worktree/scripts/update-linux-package-builder-digest.sh" \
+              --check "$PUBLISHED_DIGEST" \
+              "$pin_worktree/.github/workflows/build.yml"
+            mapfile -t changed_files < <(
+              git -C "$pin_worktree" diff --name-only origin/master HEAD
+            )
+            [ "${#changed_files[@]}" -eq 1 ] \
+              && [ "${changed_files[0]}" = ".github/workflows/build.yml" ] || {
+                echo "ERROR: pin commit changes unexpected files: ${changed_files[*]:-none}" >&2
+                exit 1
+              }
+            git -C "$pin_worktree" diff --check origin/master HEAD
+            read -r added_lines removed_lines changed_path < <(
+              git -C "$pin_worktree" diff --numstat \
+                origin/master HEAD -- .github/workflows/build.yml
+            )
+            [ "$added_lines" = "3" ] \
+              && [ "$removed_lines" = "3" ] \
+              && [ "$changed_path" = ".github/workflows/build.yml" ] || {
+                echo "ERROR: pin commit must replace exactly three build.yml lines." >&2
+                echo "Observed numstat: ${added_lines:-?} ${removed_lines:-?} ${changed_path:-?}" >&2
+                exit 1
+              }
+          }
+
+          digest_short="${PUBLISHED_DIGEST#sha256:}"
+          digest_short="$(printf '%.12s' "$digest_short")"
+
+          for attempt in 1 2 3; do
+            git -C "$pin_worktree" fetch --no-tags origin \
+              refs/heads/master:refs/remotes/origin/master
+            git -C "$pin_worktree" merge-base --is-ancestor \
+              "$GITHUB_SHA" origin/master || {
+                echo "ERROR: builder commit is no longer an ancestor of master." >&2
+                exit 1
+              }
+            if ! git -C "$pin_worktree" diff --quiet \
+              "$GITHUB_SHA" origin/master -- "${builder_inputs[@]}"; then
+              echo "ERROR: package-builder inputs changed during the digest update." >&2
+              echo "A newer image workflow must publish and pin the matching digest." >&2
+              exit 1
+            fi
+
+            git -C "$pin_worktree" checkout --detach origin/master
+            "$pin_worktree/scripts/update-linux-package-builder-digest.sh" \
+              "$PUBLISHED_DIGEST" \
+              "$pin_worktree/.github/workflows/build.yml"
+            "$pin_worktree/scripts/update-linux-package-builder-digest.sh" \
+              --check "$PUBLISHED_DIGEST" \
+              "$pin_worktree/.github/workflows/build.yml"
+            if git -C "$pin_worktree" diff --quiet; then
+              echo "Linux package-builder digest is already pinned."
+              exit 0
+            fi
+
+            verify_worktree_delta
+            git -C "$pin_worktree" config user.name "DinoX Forgejo Actions"
+            git -C "$pin_worktree" config user.email "actions@dinox.im"
+            git -C "$pin_worktree" add .github/workflows/build.yml
+            git -C "$pin_worktree" commit \
+              -m "ci: pin Linux package builder $digest_short"
+            verify_pin_commit
+
+            if git -C "$pin_worktree" push origin HEAD:refs/heads/master; then
+              echo "Pinned Linux package-builder digest: $PUBLISHED_DIGEST"
+              exit 0
+            fi
+            [ "$attempt" -lt 3 ] || break
+
+            echo "Master advanced during the digest update; retrying ($attempt/3)."
+          done
+
+          echo "ERROR: could not push the immutable package-builder digest after 3 attempts." >&2
+          exit 1
+
+      - name: "Publish canonical image aliases"
+        if: github.event_name == 'push' || inputs.push_image == true || inputs.push_image == 'true'
+        run: |
+          set -euo pipefail
+          image_tag="${DINOX_PACKAGE_BUILDER_CANONICAL_TAG:-}"
+          commit_tag="${DINOX_PACKAGE_BUILDER_COMMIT_TAG:-}"
+          digest="${DINOX_PUBLISHED_LINUX_PACKAGE_BUILDER_DIGEST:-}"
+          local_image_id="${DINOX_PACKAGE_BUILDER_LOCAL_IMAGE_ID:-}"
+          [[ "$image_tag" =~ ^[A-Za-z0-9_.-]{1,80}$ ]] \
+            && [[ "${image_tag:0:1}" =~ ^[A-Za-z0-9_]$ ]] || {
+            echo "ERROR: canonical image tag is missing or invalid." >&2
+            exit 1
+          }
+          [[ "$commit_tag" =~ ^[A-Za-z0-9_.-]{1,128}$ ]] \
+            && [[ "${commit_tag:0:1}" =~ ^[A-Za-z0-9_]$ ]] || {
+            echo "ERROR: commit image tag is missing or invalid." >&2
+            exit 1
+          }
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "ERROR: published image digest is missing or invalid." >&2
+            exit 1
+          }
+          [[ "$local_image_id" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "ERROR: local image ID is missing or invalid." >&2
+            exit 1
+          }
+          [[ "${GITHUB_SHA:-}" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "ERROR: GITHUB_SHA is missing or invalid." >&2
+            exit 1
+          }
+
+          stable_push_log="$(mktemp)"
+          commit_push_log="$(mktemp)"
+          trap 'rm -f "$stable_push_log" "$commit_push_log"' EXIT
+
+          verified_image_id="$(
+            docker image inspect --format '{{.Id}}' "$IMAGE_NAME@$digest"
+          )"
+          [ "$verified_image_id" = "$local_image_id" ] || {
+            echo "ERROR: image identity changed before publishing aliases." >&2
+            echo "expected: $local_image_id" >&2
+            echo "found:    $verified_image_id" >&2
+            exit 1
+          }
+          canonical_image_id="$(
+            docker image inspect --format '{{.Id}}' "$IMAGE_NAME:$image_tag"
+          )"
+          commit_image_id="$(
+            docker image inspect --format '{{.Id}}' "$IMAGE_NAME:$commit_tag"
+          )"
+          [ "$canonical_image_id" = "$local_image_id" ] \
+            && [ "$commit_image_id" = "$local_image_id" ] || {
+              echo "ERROR: a prebuilt alias no longer identifies the verified image." >&2
+              echo "expected:  $local_image_id" >&2
+              echo "canonical: $canonical_image_id" >&2
+              echo "commit:    $commit_image_id" >&2
+              exit 1
+            }
+          docker push "$IMAGE_NAME:$image_tag" 2>&1 | tee "$stable_push_log"
+          docker push "$IMAGE_NAME:$commit_tag" 2>&1 | tee "$commit_push_log"
+
+          stable_digest="$(
+            scripts/update-linux-package-builder-digest.sh \
+              --extract-push-digest "$stable_push_log"
+          )"
+          commit_digest="$(
+            scripts/update-linux-package-builder-digest.sh \
+              --extract-push-digest "$commit_push_log"
+          )"
+          [ "$stable_digest" = "$digest" ] \
+            && [ "$commit_digest" = "$digest" ] || {
+              echo "ERROR: published aliases do not match the pinned digest." >&2
+              echo "pinned: $digest" >&2
+              echo "stable: ${stable_digest:-missing}" >&2
+              echo "commit: ${commit_digest:-missing}" >&2
+              exit 1
+            }
+          echo "Published canonical aliases for immutable digest $digest"

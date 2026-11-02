@@ -1,0 +1,525 @@
+{
+    "id": "im.dinox.dinox",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "50",
+    "sdk": "org.gnome.Sdk",
+    "sdk-extensions": [
+        "org.freedesktop.Sdk.Extension.golang"
+    ],
+    "command": "dinox",
+    "separate-locales": false,
+    "cleanup": [
+        "/include",
+        "/lib/pkgconfig",
+        "/lib/cmake",
+        "/share/pkgconfig",
+        "/share/aclocal",
+        "/man",
+        "/share/man",
+        "/share/gtk-doc",
+        "*.la",
+        "*.a"
+    ],
+    "finish-args": [
+        "--share=ipc",
+        "--socket=fallback-x11",
+        "--socket=wayland",
+        "--socket=pulseaudio",
+        "--share=network",
+        "--device=all",
+        "--talk-name=org.freedesktop.Notifications",
+        "--talk-name=org.freedesktop.secrets",
+        "--talk-name=org.kde.StatusNotifierWatcher",
+        "--talk-name=org.x.StatusNotifierWatcher",
+        "--talk-name=org.freedesktop.ScreenSaver",
+        "--talk-name=org.freedesktop.GeoClue2",
+        "--filesystem=xdg-run/dinox:create",
+        "--filesystem=home:ro",
+        "--nofilesystem=~/.local/share/dinox",
+        "--env=IBUS_ENABLE_SYNC_MODE=1",
+        "--unset-env=LC_ALL",
+        "--unset-env=GTK_IM_MODULE"
+    ],
+    "modules": [
+        {
+            "name": "dinox-flatpak-license-helper",
+            "buildsystem": "simple",
+            "build-commands": [
+                "install -Dm0755 stage-flatpak-module-licenses.sh /app/libexec/dinox-flatpak-stage-module-licenses"
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "path": "scripts/stage-flatpak-module-licenses.sh"
+                }
+            ]
+        },
+        {
+            "name": "libcanberra",
+            "buildsystem": "autotools",
+            "config-opts": [
+                "--disable-oss",
+                "--disable-alsa",
+                "--enable-pulse",
+                "--disable-gtk",
+                "--disable-gtk3"
+            ],
+            "cleanup": [
+                "/include",
+                "/lib/pkgconfig",
+                "*.la",
+                "*.a"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses libcanberra /run/build/libcanberra"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/libcanberra_0.30.orig.tar.xz",
+                    "sha256": "c2b671e67e0c288a69fc33dc1b6f1b534d07882c2aceed37004bf48c601afa72"
+                }
+            ]
+        },
+        {
+            "name": "libnice",
+            "buildsystem": "meson",
+            "builddir": true,
+            "config-opts": [
+                "-Dtests=disabled",
+                "-Dgtk_doc=disabled",
+                "-Dexamples=disabled",
+                "-Dintrospection=disabled",
+                "-Dgstreamer=disabled"
+            ],
+            "cleanup": [
+                "/bin/stunbdc",
+                "/bin/stund",
+                "/include",
+                "/lib/pkgconfig",
+                "*.la",
+                "*.a"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses libnice /run/build/libnice"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/libnice-0.1.23.tar.gz",
+                    "sha256": "cd69da89d70b529e2eac955de006503a318123d36196482b14005a83e7cb2c21"
+                }
+            ]
+        },
+{
+    "name": "tcl",
+    "buildsystem": "autotools",
+    "subdir": "unix",
+    "post-install": [
+        "chmod u+w /app/bin/tclsh8.6 /app/lib/libtcl8.6.so || true"
+    ],
+    "cleanup": [
+        "*"
+    ],
+    "sources": [
+        {
+            "type": "archive",
+            "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/tcl8.6.15-src.tar.gz",
+            "sha256": "861e159753f2e2fbd6ec1484103715b0be56be3357522b858d3cbb5f893ffef1"
+        }
+    ]
+},
+{
+    "name": "sqlcipher",
+    "buildsystem": "autotools",
+    "build-options": {
+        "env": {
+            "LDFLAGS": "-lcrypto",
+            "CFLAGS": "-DSQLITE_HAS_CODEC -DSQLITE_ENABLE_COLUMN_METADATA -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_FTS4 -DSQLITE_ENABLE_FTS5 -DSQLITE_TEMP_STORE=1"
+        }
+    },
+    "config-opts": [
+        "--enable-tempstore=yes",
+        "--disable-tcl"
+    ],
+    "post-install": [
+        "/app/libexec/dinox-flatpak-stage-module-licenses sqlcipher /run/build/sqlcipher"
+    ],
+    "sources": [
+        {
+            "type": "archive",
+            "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/v4.6.1.tar.gz",
+            "sha256": "d8f9afcbc2f4b55e316ca4ada4425daf3d0b4aab25f45e11a802ae422b9f53a3"
+        }
+    ]
+},
+        {
+            "name": "protobuf",
+            "buildsystem": "cmake-ninja",
+            "config-opts": [
+                "-Dprotobuf_BUILD_TESTS=OFF",
+                "-Dprotobuf_BUILD_SHARED_LIBS=ON",
+                "-DCMAKE_INSTALL_LIBDIR=lib",
+                "-DCMAKE_POLICY_VERSION_MINIMUM=3.10"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses protobuf /run/build/protobuf"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/protobuf-cpp-3.21.12.tar.gz",
+                    "sha256": "4eab9b524aa5913c6fffb20b2a8abf5ef7f95a80bc0701f3a6dbb4c607f73460"
+                }
+            ]
+        },
+        {
+            "name": "libprotobuf-c",
+            "buildsystem": "autotools",
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses protobuf-c /run/build/libprotobuf-c"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/protobuf-c-1.5.2.tar.gz",
+                    "sha256": "e2c86271873a79c92b58fef7ebf8de1aa0df4738347a8bd5d4e65a80a16d0d24"
+                }
+            ]
+        },
+        {
+            "name": "libomemo-c",
+            "buildsystem": "meson",
+            "config-opts": [
+                "-Dtests=false",
+                "-Ddefault_library=static",
+                "--libdir=lib"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses libomemo-c /run/build/libomemo-c"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/libomemo-c-0.5.1.tar.gz",
+                    "sha512": "ff59565406c51663f2944e9a7c12c5b0e3fa01073039f5161472dd81f59194b1cf2685bc1e0cc930a141bc409b965c5d93313cfc3e0e237250102af3b5e88826"
+                }
+            ]
+        },
+        {
+            "name": "qrencode",
+            "buildsystem": "autotools",
+            "cleanup": [
+                "/bin/qrencode",
+                "/include",
+                "/lib/pkgconfig",
+                "/share/man",
+                "*.la",
+                "*.a"
+            ],
+            "build-options": {
+                "cflags": "-fPIC"
+            },
+            "config-opts": [
+                "--disable-shared"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses qrencode /run/build/qrencode"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/v4.1.1.tar.gz",
+                    "sha512": "584106e7bcaaa1ef2efe63d653daad38d4ff436eb4b185a1db3c747169c1ffa74149c3b1329bb0b8ae007903db0a7034aabf135cc196d91a37b5c61348154a65"
+                }
+            ]
+        },
+        {
+            "name": "intltool",
+            "cleanup": [
+                "*"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/intltool-0.51.0.tar.gz",
+                    "sha256": "67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd"
+                }
+            ]
+        },
+        {
+            "name": "libevent",
+            "buildsystem": "autotools",
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses libevent /run/build/libevent"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/libevent-2.1.12-stable.tar.gz",
+                    "sha256": "92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb"
+                }
+            ]
+        },
+        {
+            "name": "tor",
+            "buildsystem": "autotools",
+            "config-opts": [
+                "--disable-asciidoc",
+                "--disable-manpages",
+                "--disable-system-torrc",
+                "--disable-module-relay",
+                "--disable-unittests"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses tor /run/build/tor"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/tor-0.4.9.12.tar.gz",
+                    "sha256": "c0d307c9dcdaee4848a8ca53e9d6c4ec92823e4f30be12790b0fbddfc6515f5b"
+                }
+            ]
+        },
+        {
+            "name": "lyrebird",
+            "buildsystem": "simple",
+            "build-options": {
+                "append-path": "/usr/lib/sdk/golang/bin",
+                "env": {
+                    "GOPATH": "/run/build/lyrebird/go",
+                    "GOBIN": "/app/bin",
+                    "GO111MODULE": "on",
+                    "GOFLAGS": "-mod=vendor"
+                }
+            },
+            "build-commands": [
+                ". /usr/lib/sdk/golang/enable.sh && go build -trimpath -ldflags '-s -w -X main.lyrebirdVersion=0.8.1' -o /app/bin/lyrebird ./cmd/lyrebird"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses lyrebird /run/build/lyrebird"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/lyrebird-0.8.1-vendored.tar.gz",
+                    "sha256": "05d87533c66562baae8a0adac6ae7f7401aa08516ea0dfd192a367d2f8645092"
+                }
+            ]
+        },
+        {
+            "name": "cjson",
+            "buildsystem": "cmake-ninja",
+            "config-opts": [
+                "-DENABLE_CJSON_TEST=OFF",
+                "-DBUILD_SHARED_LIBS=ON",
+                "-DCMAKE_INSTALL_LIBDIR=lib",
+                "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+            ],
+            "cleanup": [
+                "/include",
+                "/lib/pkgconfig",
+                "/lib/cmake",
+                "*.a",
+                "*.la"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses cjson /run/build/cjson"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/v1.7.19.tar.gz",
+                    "sha256": "7fa616e3046edfa7a28a32d5f9eacfd23f92900fe1f8ccd988c1662f30454562"
+                }
+            ]
+        },
+        {
+            "name": "mosquitto",
+            "buildsystem": "cmake-ninja",
+            "config-opts": [
+                "-DWITH_BROKER=OFF",
+                "-DWITH_CLIENTS=OFF",
+                "-DWITH_APPS=OFF",
+                "-DWITH_PLUGINS=OFF",
+                "-DWITH_TESTS=OFF",
+                "-DWITH_DOCS=OFF",
+                "-DWITH_TLS=ON",
+                "-DWITH_STATIC_LIBRARIES=OFF",
+                "-DCMAKE_INSTALL_LIBDIR=lib"
+            ],
+            "cleanup": [
+                "/include",
+                "/lib/pkgconfig",
+                "*.a",
+                "*.la"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses mosquitto /run/build/mosquitto"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/mosquitto-2.1.2.tar.gz",
+                    "sha256": "fd905380691ac65ea5a93779e8214941829e3d6e038d5edff9eac5fd74cbed02"
+                }
+            ]
+        },
+        {
+            "name": "unbound",
+            "config-opts": [
+                "--with-libunbound-only",
+                "--with-pthreads",
+                "--disable-static",
+                "--without-libevent",
+                "--with-libexpat=/usr",
+                "--without-libhiredis",
+                "--without-libnghttp2"
+            ],
+            "cleanup": [
+                "/include",
+                "/lib/*.la",
+                "/lib/pkgconfig",
+                "/share/man"
+            ],
+            "post-install": [
+                "/app/libexec/dinox-flatpak-stage-module-licenses unbound /run/build/unbound"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://nlnetlabs.nl/downloads/unbound/unbound-1.24.2.tar.gz",
+                    "sha256": "44e7b53e008a6dcaec03032769a212b46ab5c23c105284aa05a4f3af78e59cdb"
+                }
+            ]
+        },
+        {
+            "name": "ibus-compat",
+            "buildsystem": "simple",
+            "build-commands": [
+                "bash prepare-ibus-compat.sh --prefix /app --source-archive ibus_1.5.30.orig.tar.gz",
+                "install -Dm0644 /app/share/dinox/custom-dependency-licenses/ibus-compat/files/COPYING /app/share/licenses/dinox/third-party/ibus-compat/COPYING",
+                "cp /app/share/dinox/custom-dependency-licenses/ibus-compat/METADATA /app/share/licenses/dinox/third-party/ibus-compat/METADATA",
+                "install -d /app/share/licenses/dinox/corresponding-sources/ibus-compat",
+                "cp /app/share/dinox/corresponding-sources/ibus-compat/* /app/share/licenses/dinox/corresponding-sources/ibus-compat/",
+                "install -m0644 prepare-ibus-compat.sh /app/share/licenses/dinox/corresponding-sources/ibus-compat/prepare-ibus-compat.sh",
+                "rm -rf /app/share/dinox/custom-dependency-licenses/ibus-compat /app/share/dinox/corresponding-sources/ibus-compat"
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "url": "https://old-releases.ubuntu.com/ubuntu/pool/main/i/ibus/ibus_1.5.30.orig.tar.gz",
+                    "sha256": "05b84d4a45139face161596e5ade8e6c5da55cfaf6f194861da66516190f5b96"
+                },
+                {
+                    "type": "file",
+                    "path": "scripts/prepare-ibus-compat.sh"
+                }
+            ]
+        },
+        {
+            "name": "dino",
+            "buildsystem": "meson",
+            "builddir": true,
+            "build-options": {
+                "strip": false,
+                "no-debuginfo": true
+            },
+            "config-opts": [
+                "--buildtype=debugoptimized",
+                "--libdir=lib",
+                "-Dplugin-notification-sound=enabled",
+                "-Dplugin-http-files=enabled",
+                "-Dplugin-ice=enabled",
+                "-Dplugin-omemo=enabled",
+                "-Dplugin-openpgp=enabled",
+                "-Dplugin-rtp=disabled",
+                "-Dplugin-google-webrtc=enabled",
+                "-Dgoogle-libwebrtc-wrapper=enabled",
+                "-Dgoogle-libwebrtc-test-oracle=false",
+                "-Dgoogle-libwebrtc-tests=false",
+                "-Dgoogle-libwebrtc-runtime-root=/run/build/dino/libwebrtc-m152-linux-x86_64-runtime",
+                "-Dplugin-mqtt=enabled",
+                "-Ddnssec=enabled",
+                "-Dlocation-sharing=enabled",
+                "-Dplugin-rtp-h264=disabled",
+                "-Dplugin-rtp-vaapi=disabled",
+                "-Dplugin-rtp-v4l2-sl=disabled"
+            ],
+            "cleanup": [
+                "/include",
+                "/share/vala"
+            ],
+            "post-install": [
+                "install -Dm0644 /run/build/dino/LICENSE /app/share/licenses/dinox/dinox/LICENSE",
+                "install -Dm0644 /run/build/dino/NOTICE /app/share/licenses/dinox/dinox/NOTICE",
+                "install -Dm0644 /run/build/dino/AUTHORS /app/share/licenses/dinox/dinox/AUTHORS",
+                "install -Dm0644 /run/build/dino/packaging/flatpak/THIRD_PARTY_NOTICES.md /app/share/licenses/dinox/THIRD_PARTY_NOTICES.md",
+                "install -Dm0755 /run/build/dino/scripts/check-flatpak-runtime.sh /app/libexec/dinox-flatpak-runtime-gate",
+                "rm -f /app/libexec/dinox-flatpak-stage-module-licenses"
+            ],
+            "sources": [
+            {
+                "type": "archive",
+                "url": "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/libwebrtc-m152-linux-x86_64-runtime-abi40-ipc10-sha256-2479cdb9ab7e.tar.gz",
+                "sha256": "2479cdb9ab7eace826e28d519a9dd33478329e34c303ed716c196005d9cec46f",
+                "strip-components": 0
+            },
+                {
+                    "type": "dir",
+                    "path": ".",
+                    "skip": [
+                        "..bfg-report",
+                        ".appimage-runtime-gate",
+                        ".appimage-tools",
+                        ".flatpak-builder",
+                        ".git",
+                        ".vendor-deps",
+                        ".vscode",
+                        "AppDir",
+                        "[options]",
+                        "build",
+                        "build_linux",
+                        "build_test",
+                        "build-appimage-package",
+                        "build-deb-package",
+                        "build-google-webrtc-local",
+                        "build-google-webrtc-local.toolchain",
+                        "build-google-webrtc-m152",
+                        "build-google-webrtc-m152.toolchain",
+                        "build-google-webrtc-portability",
+                        "build-google-webrtc-prebuilt-warmtone",
+                        "build-google-webrtc-release-linux",
+                        "build-google-webrtc-release-linux.toolchain",
+                        "build-google-webrtc-runtime-consumer",
+                        "build-google-webrtc-runtime-test",
+                        "build-google-webrtc-runtime-v2-20260722",
+                        "build-google-webrtc-runtime-v2-20260722.toolchain",
+                        "build-google-webrtc-runtime-v2-final-20260722",
+                        "build-google-webrtc-runtime-v2-final-20260722.toolchain",
+                        "build-google-webrtc-warmtone-oracle",
+                        "build-libwebrtc-proof",
+                        "build-libwebrtc-wrapper-gcc-negative",
+                        "build-sasl2",
+                        "build-sasl2-cas-review",
+                        "build-sasl2-failclosed-review",
+                        "build-video-effects-baseline-runtime",
+                        "dist",
+                        "flatpak-build",
+                        "flatpak-build-fallback-20260813",
+                        "flatpak-build-home-ro-20260814",
+                        "flatpak_app",
+                        "im.dinox.dinox.flatpak",
+                        "im.dinox.dinox.flatpak.sha256",
+                        "local",
+                        "local-dino-repo",
+                        "logs",
+                        "pkg_dinox",
+                        "repo"
+                    ]
+                }
+            ]
+        }
+    ]
+}

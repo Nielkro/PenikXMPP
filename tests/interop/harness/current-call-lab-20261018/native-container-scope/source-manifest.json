@@ -1,0 +1,31 @@
+{
+  "status": "SOURCE_ONLY_UNTIL_REVIEW",
+  "original_runtime_source_manifest_sha256": "3f9f8fc46e95cd20864e417560366a182e4f94f92e734189b9ad4ae7824584d4",
+  "baseline_recreate_sha256": "c1745adabcaa9739439c9f2b1f60581dbcfd586d9152dce495cc0acdb2cb3992",
+  "files": {
+    "recreate_stopped_native_peers_container_scope.py": {
+      "sha256": "f77a7715f865aa335de2c6632f75d140b47e7d57c7d8c71460d77e81ba368fee",
+      "bytes": 6340
+    },
+    "container-scope.diff": {
+      "sha256": "d29c5307384cd6a230c878bb5889638dfb9c05dd5cef8c686e4174e867f2dc01",
+      "bytes": 1513
+    },
+    "offline-checks.json": {
+      "sha256": "1d1de787a57e7807822171912139c930ad8093d7c693f4bd63f3305d42118b71",
+      "bytes": 377
+    },
+    "README.md": {
+      "sha256": "b23ab0a1e2f35b082cf9f3ce3f9279cec29cfd78e8dd4221d0079719cbe4c5be",
+      "bytes": 992
+    },
+    "check_source_only.py": {
+      "sha256": "78eac9627e32b899f9e0b33eca6bb90bee5dcf79a7411dcc5acb1e222179cc69",
+      "bytes": 3163
+    }
+  },
+  "actual_precreate_diagnosis_sha256": "5f8b652e57e9fd9567b1ffb286dcfd16af477a9c83a5ef5800b034824b7bfcf2",
+  "actual_container_scoped_absence_sha256": "cb7e4c1c7a8fc0bf99c83aacf71b70b778b644c8de121c00c452214ad1f65739",
+  "no_previous_peer_create_or_owner_admission": true,
+  "only_namespace_parser_and_nonoverwriting_network_receipt_name_changed": true
+}

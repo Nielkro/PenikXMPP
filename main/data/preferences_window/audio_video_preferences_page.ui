@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <object class="AdwPreferencesPage" id="content_page">
+
+    <!-- Call Devices Group -->
+    <child>
+      <object class="AdwPreferencesGroup" id="call_devices_group">
+        <property name="title" translatable="yes">Audio/Video Calls</property>
+        <property name="description" translatable="yes">Devices used for real-time calls</property>
+        <child>
+          <object class="AdwComboRow" id="call_mic_row">
+            <property name="title" translatable="yes">Microphone</property>
+            <property name="subtitle" translatable="yes">Audio input for calls</property>
+            <accessibility>
+              <property name="label" translatable="yes">Select microphone for calls</property>
+            </accessibility>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="call_speaker_row">
+            <property name="title" translatable="yes">Speaker</property>
+            <property name="subtitle" translatable="yes">Audio output for calls</property>
+            <accessibility>
+              <property name="label" translatable="yes">Select speaker for calls</property>
+            </accessibility>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="call_camera_row">
+            <property name="title" translatable="yes">Camera</property>
+            <property name="subtitle" translatable="yes">Video input for calls</property>
+            <accessibility>
+              <property name="label" translatable="yes">Select camera for calls</property>
+            </accessibility>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="call_network_mode_row">
+            <property name="title" translatable="yes">Call network mode</property>
+            <property name="subtitle" translatable="yes">Changes apply to new calls</property>
+            <accessibility>
+              <property name="label" translatable="yes">Select call network mode</property>
+            </accessibility>
+          </object>
+        </child>
+      </object>
+    </child>
+
+    <!-- Message Devices Group -->
+    <child>
+      <object class="AdwPreferencesGroup" id="message_devices_group">
+        <property name="title" translatable="yes">Voice/Video Messages</property>
+        <property name="description" translatable="yes">Devices used for recording and playing messages</property>
+        <child>
+          <object class="AdwComboRow" id="msg_mic_row">
+            <property name="title" translatable="yes">Recording Microphone</property>
+            <property name="subtitle" translatable="yes">Audio input for voice and video messages</property>
+            <accessibility>
+              <property name="label" translatable="yes">Select microphone for voice messages</property>
+            </accessibility>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="msg_speaker_row">
+            <property name="title" translatable="yes">Playback Speaker</property>
+            <property name="subtitle" translatable="yes">Audio output for playing voice and video messages</property>
+            <accessibility>
+              <property name="label" translatable="yes">Select speaker for message playback</property>
+            </accessibility>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="msg_camera_row">
+            <property name="title" translatable="yes">Recording Camera</property>
+            <property name="subtitle" translatable="yes">Video input for video messages</property>
+            <accessibility>
+              <property name="label" translatable="yes">Select camera for video messages</property>
+            </accessibility>
+          </object>
+        </child>
+      </object>
+    </child>
+
+    <!-- Call device tests -->
+    <child>
+      <object class="AdwPreferencesGroup" id="call_device_tests_group">
+        <property name="title" translatable="yes">Call Device Tests</property>
+        <property name="description" translatable="yes">Uses the devices selected under Audio/Video Calls</property>
+        <child>
+          <object class="AdwActionRow" id="test_call_mic_row">
+            <property name="title" translatable="yes">Test Call Microphone</property>
+            <property name="subtitle" translatable="yes">Record and play back a short clip with the selected call microphone</property>
+            <property name="activatable">True</property>
+            <child type="suffix">
+              <object class="GtkImage">
+                <property name="icon-name">audio-input-microphone-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="test_call_speaker_row">
+            <property name="title" translatable="yes">Test Call Speaker</property>
+            <property name="subtitle" translatable="yes">Play a short tone on the selected call speaker</property>
+            <property name="activatable">True</property>
+            <child type="suffix">
+              <object class="GtkImage">
+                <property name="icon-name">audio-speakers-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="test_call_camera_row">
+            <property name="title" translatable="yes">Test Call Camera</property>
+            <property name="subtitle" translatable="yes">Show a short live preview from the selected call camera</property>
+            <property name="activatable">True</property>
+            <child type="suffix">
+              <object class="GtkImage">
+                <property name="icon-name">camera-video-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+
+    <!-- Message recording device tests -->
+    <child>
+      <object class="AdwPreferencesGroup" id="message_device_tests_group">
+        <property name="title" translatable="yes">Message Device Tests</property>
+        <property name="description" translatable="yes">Uses the devices selected under Voice/Video Messages</property>
+        <child>
+          <object class="AdwActionRow" id="test_msg_mic_row">
+            <property name="title" translatable="yes">Test Recording Microphone</property>
+            <property name="subtitle" translatable="yes">Record and play back a short clip with the selected message microphone</property>
+            <property name="activatable">True</property>
+            <child type="suffix">
+              <object class="GtkImage">
+                <property name="icon-name">audio-input-microphone-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="test_msg_camera_row">
+            <property name="title" translatable="yes">Test Recording Camera</property>
+            <property name="subtitle" translatable="yes">Show a short live preview from the selected message camera</property>
+            <property name="activatable">True</property>
+            <child type="suffix">
+              <object class="GtkImage">
+                <property name="icon-name">camera-video-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+
+    <!-- Device Management Group -->
+    <child>
+      <object class="AdwPreferencesGroup" id="device_management_group">
+        <property name="title" translatable="yes">Device Management</property>
+        <child>
+          <object class="AdwActionRow" id="refresh_row">
+            <property name="title" translatable="yes">Refresh Devices</property>
+            <property name="subtitle" translatable="yes">Reload Google WebRTC audio and video devices</property>
+            <property name="activatable">True</property>
+            <accessibility>
+              <property name="label" translatable="yes">Reload Google WebRTC audio and video devices</property>
+            </accessibility>
+            <child type="suffix">
+              <object class="GtkImage">
+                <property name="icon-name">view-refresh-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

@@ -1,0 +1,630 @@
+{
+  "schema_version": 1,
+  "scope": "CURRENT_WIRE_PREBUILT_IQ_RUNTIME_DRIVER_ONLY_EXISTING_IMAGE_DERIVATION",
+  "status": "SOURCE_ONLY_NOT_EXECUTED",
+  "product_commit": "adc4eb6fa43ee248bc6661ea282103bfbd7e93b5",
+  "baseline": {
+    "directory": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z",
+    "server_compile_sha256": "ff52a995c6c1cfc91fc46dfaf2029dbe91f3d2cd83282572a86673feae91cb9b",
+    "server_run_sha256": "e0fcd2b1bf9fca06d6f30f73ae679aa1a23886e6280bd80a246cb04f718ee778",
+    "input_manifest_sha256": "5fc6a9c88e4f14b967599a65283432c513842d39cca67d47391493e489e31c1d",
+    "actual_receipt_sha256": "d9ab7ab1d7bde48970ac2d59e5c4524e3054b155e9c03f062f37f0c4070a5d61",
+    "original_driver_sha256": "f2de98871ed1121324b51d76bcab58670722dce95561e6f50ff62d3e62529e56"
+  },
+  "limits": {
+    "cpus": 2,
+    "memory_bytes": 4294967296,
+    "extra_swap_bytes": 0,
+    "pids": 128,
+    "network": "none",
+    "nice": 19,
+    "uid": 1000,
+    "gid": 1000,
+    "compiler_deadline_seconds": 1200,
+    "outer_wait_seconds": 1260,
+    "no_profile_or_account_mounts": true
+  },
+  "files": {
+    "inputs/current/plugins/google-webrtc/src/media_foundation_writer.vapi": {
+      "origin": "plugins/google-webrtc/src/media_foundation_writer.vapi",
+      "sha256": "68aed16f3aec6e7f5582b0b45ef84fb4914f1fe99c4284b2f75cf94553b5e866",
+      "bytes": 274
+    },
+    "inputs/current/plugins/google-webrtc/src/native_handles.vapi": {
+      "origin": "plugins/google-webrtc/src/native_handles.vapi",
+      "sha256": "06eea5c3ecc3f9ab23c4e14f5a3992cb5408b2f9c57a413f563434b3050712f7",
+      "bytes": 698
+    },
+    "inputs/current/plugins/google-webrtc/src/audio_message_recorder_v2.vala": {
+      "origin": "plugins/google-webrtc/src/audio_message_recorder_v2.vala",
+      "sha256": "97e4f6b8cd79247228d0b20c41cd8ee65c89ca433014605886be144abd408da7",
+      "bytes": 12570
+    },
+    "inputs/current/plugins/google-webrtc/src/audio_message_writer.vala": {
+      "origin": "plugins/google-webrtc/src/audio_message_writer.vala",
+      "sha256": "fd98c193598981c0052919774c1f53f3047846aa4e1b6642931538d6b8a7c62f",
+      "bytes": 17239
+    },
+    "inputs/current/plugins/google-webrtc/src/engine_media_device.vala": {
+      "origin": "plugins/google-webrtc/src/engine_media_device.vala",
+      "sha256": "85b824d89b699f1d0e5b28a39fd6271f96b615910778a0a7dd5b5b55ba8345b0",
+      "bytes": 2806
+    },
+    "inputs/current/plugins/google-webrtc/src/engine_jmi_iq_interceptor.vala": {
+      "origin": "plugins/google-webrtc/src/engine_jmi_iq_interceptor.vala",
+      "sha256": "f29599637e499e84f41c9484231466fda15c6eca4236c16035febf9cd5dd85eb",
+      "bytes": 4129
+    },
+    "inputs/current/plugins/google-webrtc/src/engine_jmi_session_router.vala": {
+      "origin": "plugins/google-webrtc/src/engine_jmi_session_router.vala",
+      "sha256": "0622693c1745c72972fe0f79f5740e4a2ddee2fa1c67087b1fe97c4e1895e0f9",
+      "bytes": 8172
+    },
+    "inputs/current/plugins/google-webrtc/src/engine_jmi_session.vala": {
+      "origin": "plugins/google-webrtc/src/engine_jmi_session.vala",
+      "sha256": "349404469d0784f0b9354c744a937f38c060f639b3e2040296f2c9f6ef999e8f",
+      "bytes": 67834
+    },
+    "inputs/current/plugins/google-webrtc/src/engine_jingle_session.vala": {
+      "origin": "plugins/google-webrtc/src/engine_jingle_session.vala",
+      "sha256": "871bcabf83ef9f279057294f81af97f21f9b090fad5a6e0afb736047a53e8ded",
+      "bytes": 24774
+    },
+    "inputs/current/plugins/google-webrtc/src/engine_jingle_wire_session.vala": {
+      "origin": "plugins/google-webrtc/src/engine_jingle_wire_session.vala",
+      "sha256": "52b009d3289420676f145f2a16aaf6d9f8c5981a551366aa1d00344ed9fa1349",
+      "bytes": 23637
+    },
+    "inputs/current/plugins/google-webrtc/src/engine_muji_codec_probe.vala": {
+      "origin": "plugins/google-webrtc/src/engine_muji_codec_probe.vala",
+      "sha256": "841c2d6f200d70f9f3f96f72d043bf608e4a87107fee440891fc190024b57299",
+      "bytes": 5263
+    },
+    "inputs/current/plugins/google-webrtc/src/engine_muji_group_session.vala": {
+      "origin": "plugins/google-webrtc/src/engine_muji_group_session.vala",
+      "sha256": "8a2260394bb2435c3ef269a8331a3cea3048443c524233ed4f426c31566ee463",
+      "bytes": 61653
+    },
+    "inputs/current/plugins/google-webrtc/src/ice_servers.vala": {
+      "origin": "plugins/google-webrtc/src/ice_servers.vala",
+      "sha256": "69784456caf54fcf07ea7e114a52a2ede44113b9f68f1dddd4430a3a20105505",
+      "bytes": 4507
+    },
+    "inputs/current/plugins/google-webrtc/src/media_message_playback_provider.vala": {
+      "origin": "plugins/google-webrtc/src/media_message_playback_provider.vala",
+      "sha256": "52b8c2a8fb2f902ec0925217bdedf134bfa67cfbbd2b80853864cce045b58606",
+      "bytes": 12902
+    },
+    "inputs/current/plugins/google-webrtc/src/media_message_recorder_provider.vala": {
+      "origin": "plugins/google-webrtc/src/media_message_recorder_provider.vala",
+      "sha256": "8b4d7c4c30496dca7ad0ad16edec012c8380294150fc7dc3616a950385eab63e",
+      "bytes": 24955
+    },
+    "inputs/current/plugins/google-webrtc/src/media_message_recorder_native.vala": {
+      "origin": "plugins/google-webrtc/src/media_message_recorder_native.vala",
+      "sha256": "c21c4559d8ba972fd6b388f238e0572e97531d64d2dd5b5d798ec07f3d42b6ba",
+      "bytes": 8977
+    },
+    "inputs/current/plugins/google-webrtc/src/media_policy.vala": {
+      "origin": "plugins/google-webrtc/src/media_policy.vala",
+      "sha256": "c2f05acdd9358c0c9998bf8dcdd7b5f3fb7f26ba69d1a32882b1bac683d7a0c6",
+      "bytes": 1627
+    },
+    "inputs/current/plugins/google-webrtc/src/native.vala": {
+      "origin": "plugins/google-webrtc/src/native.vala",
+      "sha256": "8360a3eb970f1ba1b845926e7c675d1bf90229fb1d187e9deb1bef1c63e540df",
+      "bytes": 19164
+    },
+    "inputs/current/plugins/google-webrtc/src/native_video_effects.vala": {
+      "origin": "plugins/google-webrtc/src/native_video_effects.vala",
+      "sha256": "498b50a885aa2cd9fa4663bd0341abe28d136576984651dfe33066070911e80c",
+      "bytes": 8163
+    },
+    "inputs/current/plugins/google-webrtc/src/signaling_session.vala": {
+      "origin": "plugins/google-webrtc/src/signaling_session.vala",
+      "sha256": "e5f01495ccfc07d7fb8d4f20d13162abd8a3bbb84c2342bf5c2d9dfc90a335d7",
+      "bytes": 34884
+    },
+    "inputs/current/plugins/google-webrtc/src/session_owner.vala": {
+      "origin": "plugins/google-webrtc/src/session_owner.vala",
+      "sha256": "be4550fe4be82ce07e1ee1d86b983185c108c20913e0a632dbaed01e37ea7003",
+      "bytes": 48834
+    },
+    "inputs/current/plugins/google-webrtc/src/video_effect_config.vala": {
+      "origin": "plugins/google-webrtc/src/video_effect_config.vala",
+      "sha256": "699386cfe34e90fa4382988688dcb97a2b7af202ddca69166e2eaf841f3d311f",
+      "bytes": 6925
+    },
+    "inputs/current/plugins/google-webrtc/src/video_effect_pipeline.vala": {
+      "origin": "plugins/google-webrtc/src/video_effect_pipeline.vala",
+      "sha256": "7c5e79d032319bbf32b7dc555ce8ac9f6dec0d9c20e03c54ae2b4d185819fd93",
+      "bytes": 34844
+    },
+    "inputs/current/plugins/google-webrtc/src/video_message_recorder_v2.vala": {
+      "origin": "plugins/google-webrtc/src/video_message_recorder_v2.vala",
+      "sha256": "f433e6f625bcc9b3649023f1fdc5f074e210713591664d3173fe14be65d97615",
+      "bytes": 20090
+    },
+    "inputs/current/plugins/google-webrtc/src/video_message_writer.vala": {
+      "origin": "plugins/google-webrtc/src/video_message_writer.vala",
+      "sha256": "72326f1981d689ee57513abfc5e47b77b6287dfa7b6309fa86aa8b9f5eadbb7d",
+      "bytes": 37791
+    },
+    "inputs/current/plugins/google-webrtc/src/plugin.vala": {
+      "origin": "plugins/google-webrtc/src/plugin.vala",
+      "sha256": "c060f20ee290deeb57a20e86731a1f80d2107bd9aa3b50d98da1bac7ee45b57c",
+      "bytes": 70035
+    },
+    "inputs/current/build/libdino/libdino.vapi": {
+      "origin": "build/libdino/libdino.vapi",
+      "sha256": "f36d7446fc7bcc41c3098de2294fea88bd1797657ba54e50ccebf641f0e44f12",
+      "bytes": 203796
+    },
+    "inputs/current/build/qlite/qlite.vapi": {
+      "origin": "build/qlite/qlite.vapi",
+      "sha256": "866f99c64c9ad4cf0d6f6535976f6493d228488a1187595fa6df0c6e1a69a0a1",
+      "bytes": 10773
+    },
+    "inputs/current/build/crypto-vala/crypto-vala.vapi": {
+      "origin": "build/crypto-vala/crypto-vala.vapi",
+      "sha256": "40cd516a1d6d338c1b647abdcd4f8e29ecafd97fe787ddd71952bbd38b493c5f",
+      "bytes": 3475
+    },
+    "inputs/current/build/xmpp-vala/xmpp-vala.vapi": {
+      "origin": "build/xmpp-vala/xmpp-vala.vapi",
+      "sha256": "52f1883ba8942e5436657d580370a7b31d19a2fe919b652559e56ef1f85ec254",
+      "bytes": 223555
+    },
+    "inputs/current/build/xmpp-vala/xmpp-vala.h": {
+      "origin": "build/xmpp-vala/xmpp-vala.h",
+      "sha256": "27fce1f2f3e24e2d145e54823f678084b42598af4c385f9a80c8a6a66554bbcb",
+      "bytes": 995805
+    },
+    "inputs/current/google-webrtc/include/dinox_webrtc.h": {
+      "origin": "google-webrtc/include/dinox_webrtc.h",
+      "sha256": "e82847dc9f26f32a51f2eb96c9f310b040e76e5085bfca0c37c7bf414a353e2d",
+      "bytes": 30195
+    },
+    "inputs/current/google-webrtc/include/dinox_webrtc_ipc.h": {
+      "origin": "google-webrtc/include/dinox_webrtc_ipc.h",
+      "sha256": "b4040546dfcf146b18caab48de58e5bf454cf8f1e26a6accefe0c68cd63bc1e5",
+      "bytes": 10375
+    },
+    "inputs/current/plugins/google-webrtc/src/native_handles.h": {
+      "origin": "plugins/google-webrtc/src/native_handles.h",
+      "sha256": "305a3c265c60bdf93e4795ab7729e60a52d4ada29839f7b0bdcd06d482ce1dcd",
+      "bytes": 722
+    },
+    "inputs/current/plugins/google-webrtc/src/media_foundation_writer.h": {
+      "origin": "plugins/google-webrtc/src/media_foundation_writer.h",
+      "sha256": "0784489fe6e1111bbcc597a59d6121f88017d0f39074ce995819bba465ce52d3",
+      "bytes": 1441
+    },
+    "inputs/observer/dinox_interop.vala": {
+      "origin": "local/monocles-dinox-interop-20261015/harness/legacy3_followup/auth-observer-session-public-20261016/dinox_interop.vala",
+      "sha256": "0a1f4b9bd1ce41d2967b2c705ee7608adc781e716a1cfe89ecb2759eec768feb",
+      "bytes": 37994
+    },
+    "inputs/observer/observer_scope.vala": {
+      "origin": "local/monocles-dinox-interop-20261015/harness/legacy3_followup/auth-observer-session-public-20261016/observer_scope.vala",
+      "sha256": "345b1506a941a833c1bb6bd6e221250726cbfd9473f8d1c88f95902ed47344c9",
+      "bytes": 22032
+    },
+    "inputs/observer/muji_presence_observer.vala": {
+      "origin": "local/monocles-dinox-interop-20261015/harness/legacy3_followup/auth-observer-session-public-20261016/muji_presence_observer.vala",
+      "sha256": "537cc002fa578383cd76d21e3ac98a51de256e607e11fab7f26c428e64ac4b08",
+      "bytes": 8682
+    },
+    "inputs/observer/fingerprint_rewrite_observer.vala": {
+      "origin": "local/monocles-dinox-interop-20261015/harness/legacy3_followup/auth-observer-session-public-20261016/fingerprint_rewrite_observer.vala",
+      "sha256": "64eafb75027e5052fa72d4c4c5a4e72231ec10bbe9f22e9cb0a12b8e0ad74a90",
+      "bytes": 14533
+    },
+    "inputs/existing-plugin/omemo.so": {
+      "origin": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/actual-server-job/artifacts/plugin/omemo.so",
+      "sha256": "7a58f4fb8d94d8ca8a7d53ded73c840fc0dd8a48f18f05e9920537c4ddacc948",
+      "bytes": 4604376
+    },
+    "inputs/existing-plugin/omemo.vapi": {
+      "origin": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/actual-server-job/artifacts/plugin/omemo.vapi",
+      "sha256": "a4cc13c98b054588d7d34188b57a78e346cb6280dd4619c31463f6a202bb715b",
+      "bytes": 41874
+    },
+    "inputs/existing-plugin/omemo.h": {
+      "origin": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/actual-server-job/artifacts/plugin/omemo.h",
+      "sha256": "885cfec075a4c3021bcc08731a48437f429def5e303dd68079902437fd7d4e8b",
+      "bytes": 207513
+    },
+    "inputs/existing-plugin/omemo-internal.vapi": {
+      "origin": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/actual-server-job/artifacts/plugin/omemo-internal.vapi",
+      "sha256": "b70b985dd491b04294a38687e851fd6dc4311dcbdccd039df54e0bedfe1cc1f5",
+      "bytes": 72417
+    },
+    "inputs/existing-plugin/omemo-internal.h": {
+      "origin": "local/muji-device-binding-auth-20261016/native-session-public-direct-link-20261016T202431Z/actual-server-job/artifacts/plugin/omemo-internal.h",
+      "sha256": "65b574929dde2cd077f6b5ab7d4aac4dfd527ed7c19720e6b865d1c93b1cd10e",
+      "bytes": 142910
+    },
+    "inputs/plugins/omemo/src/native/helper.h": {
+      "origin": "plugins/omemo/src/native/helper.h",
+      "sha256": "5e1380d9212bc71da56870311c4a76a6f863de1c71a807651b35d030b3b1a939",
+      "bytes": 3049
+    },
+    "inputs/lib/libdino.so.0": {
+      "origin": "build/libdino/libdino.so.0.0",
+      "sha256": "8ff8ed6e7a6ef77af0041ed1c236856161878e7f71270191be21ccb6f53c81af",
+      "bytes": 5477984
+    },
+    "inputs/lib/libxmpp-vala.so.0": {
+      "origin": "build/xmpp-vala/libxmpp-vala.so.0.1",
+      "sha256": "2808c28b2a84c2e08e7a38a8a9b144eef7c034973ebc46c787d1d95fe42467f5",
+      "bytes": 3605992
+    },
+    "inputs/qualified-runtime/FFMPEG-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/FFMPEG-LICENSE",
+      "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+      "bytes": 26517
+    },
+    "inputs/qualified-runtime/FFMPEG-VP8-VAAPI.json": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/FFMPEG-VP8-VAAPI.json",
+      "sha256": "4d412d3f5a1425c8acb0a3fee760f5e7b752382b849b85d1855dbb0ca1d47db9",
+      "bytes": 2408
+    },
+    "inputs/qualified-runtime/LIBVA-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/LIBVA-LICENSE",
+      "sha256": "c86a782ee845b52472dae9b9d79fb915d333628ac0efe49cdce63644814931de",
+      "bytes": 1130
+    },
+    "inputs/qualified-runtime/LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/LICENSE",
+      "sha256": "ab00a482b6a3902e40211b43c5d0441962ea99b6cc7c25c0f243fa270b78d482",
+      "bytes": 1511
+    },
+    "inputs/qualified-runtime/LICENSE.md": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/LICENSE.md",
+      "sha256": "733fd158c98fccb759d8e6206bcbfc4d8f672b6f7f59ee6c58fa647882405a6c",
+      "bytes": 209351
+    },
+    "inputs/qualified-runtime/NVIDIA-CODEC-HEADERS-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/NVIDIA-CODEC-HEADERS-LICENSE",
+      "sha256": "1c75138295c689e5188852f0f1f00ef78300d8b32249798a88a7e7aa335256c5",
+      "bytes": 6034
+    },
+    "inputs/qualified-runtime/PATENTS": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/PATENTS",
+      "sha256": "01462e2068d1a04c2274f3389773014c14ed9bc3446b28303543bd3e3c064145",
+      "bytes": 1388
+    },
+    "inputs/qualified-runtime/WEBRTC-CODECS.json": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/WEBRTC-CODECS.json",
+      "sha256": "6b8847e59ac8518374575506b044d1eddf912c5d4d4f5d4ed1f3cf0166ed5d98",
+      "bytes": 909
+    },
+    "inputs/qualified-runtime/WEBRTC-GN-ARGS.gn": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/WEBRTC-GN-ARGS.gn",
+      "sha256": "db09b3af40e6f48bdd29a318b2cfeb6ea2f33ac1b89db95b1462b73bce22bec3",
+      "bytes": 360
+    },
+    "inputs/qualified-runtime/include/dinox_webrtc.h": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/include/dinox_webrtc.h",
+      "sha256": "e82847dc9f26f32a51f2eb96c9f310b040e76e5085bfca0c37c7bf414a353e2d",
+      "bytes": 30195
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-SHA256SUMS": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-SHA256SUMS",
+      "sha256": "10622705a97ada4e03b805ef27448d4cae14b6a3b568945256b1d17721cd3449",
+      "bytes": 2568
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/MODEL_AND_CUSTOM_OP_LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/MODEL_AND_CUSTOM_OP_LICENSE",
+      "sha256": "8707eef0533987efc5b155d64761eeb6e20793f50b9bd1a68dad1cf4719d0ed8",
+      "bytes": 12331
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/PROJECT_LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/PROJECT_LICENSE",
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "bytes": 35149
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/abseil-cpp/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/abseil-cpp/0-LICENSE",
+      "sha256": "c79a7fea0e3cac04cd43f20e7b648e5a0ff8fa5344e644b0ee09ca1162b62747",
+      "bytes": 11361
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/boringssl/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/boringssl/0-LICENSE",
+      "sha256": "827c8d8fc207c2392794eef9e00fe246f9f61fdcc132556c275be3dd8c3cd97f",
+      "bytes": 13115
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/compiler-rt/0-LICENSE.TXT": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/compiler-rt/0-LICENSE.TXT",
+      "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d",
+      "bytes": 16708
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/cpuinfo/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/cpuinfo/0-LICENSE",
+      "sha256": "8e7e60636c3aa0cb03571a1a841ce5697f9551ff92b3c426c2561613d15ade70",
+      "bytes": 1424
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/farmhash/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/farmhash/0-LICENSE",
+      "sha256": "4162dd091caae234f72d3b57e138174f733e736b2430a4c51b098b17d866fcb6",
+      "bytes": 1110
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/fft2d/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/fft2d/0-LICENSE",
+      "sha256": "64a68ebd98d10064bfd8f6c8dc4fa094747bd33af191f694183ce163cba5c9b5",
+      "bytes": 185
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/flatbuffers/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/flatbuffers/0-LICENSE",
+      "sha256": "7ec9661a8afafab1eee3523d6f1a193eff76314a5ab10b4ce96aefd87621b0c3",
+      "bytes": 11342
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/fp16/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/fp16/0-LICENSE",
+      "sha256": "c91377adafa2f498211a4fe017788e20c38892124673860f068f2919c289193d",
+      "bytes": 1158
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/fxdiv/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/fxdiv/0-LICENSE",
+      "sha256": "7cac00006125b1486a27e4801ed66357236e984c540bd323945ab7b66b078ec3",
+      "bytes": 1117
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/gemmlowp/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/gemmlowp/0-LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/neon_2_sse/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/neon_2_sse/0-LICENSE",
+      "sha256": "7022f51b439a5915e933ecc270c83e24ca0cb2cceeb08b0132dcd4dbb03ed2dc",
+      "bytes": 1662
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/protobuf/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/protobuf/0-LICENSE",
+      "sha256": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d",
+      "bytes": 1732
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/pthreadpool/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/pthreadpool/0-LICENSE",
+      "sha256": "57814a606b4d0fb087d9a534919084b6c11b58a4174cb5a4aef200187780dc3a",
+      "bytes": 1378
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/ruy/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/ruy/0-LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/tflite/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/tflite/0-LICENSE",
+      "sha256": "bccef418d4c4ca9ded5818eabce995b99c1e4e062293f6291ee81ef41e963837",
+      "bytes": 11421
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-licenses/dependencies/xnnpack/0-LICENSE": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-licenses/dependencies/xnnpack/0-LICENSE",
+      "sha256": "63f519e15726f4c4f830bd958f694c84fecb4e0a4cacc527d2696bb71ef95ada",
+      "bytes": 1560
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-models/blaze_face_short_range-v1.tflite": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-models/blaze_face_short_range-v1.tflite",
+      "sha256": "b4578f35940bf5a1a655214a1cce5cab13eba73c1297cd78e1a04c2380b0152f",
+      "bytes": 229746
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-models/selfie_segmenter_landscape-v1.tflite": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-models/selfie_segmenter_landscape-v1.tflite",
+      "sha256": "490e9ea734313e0de10fa0cd9e3c6133e36ea4db2b7a49bde9ef019f72796b8e",
+      "bytes": 250177
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-runtime-manifest.json": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-runtime-manifest.json",
+      "sha256": "7990cde26c6e5e623e8bf6ba2e06a98f3ff64e5c134bf0fed43e735bceb95096",
+      "bytes": 514993
+    },
+    "inputs/qualified-runtime/lib/dinox-vision-worker": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-vision-worker",
+      "sha256": "56194cc3e51b6615b7a396b7e3602896465178ff986745b034a12d1163970214",
+      "bytes": 5922680
+    },
+    "inputs/qualified-runtime/lib/dinox-webrtc-worker": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/dinox-webrtc-worker",
+      "sha256": "5ed8a7919211f3fbb8dd52ad745c44f31fdab678a05613d94244feb7b0248eeb",
+      "bytes": 97104
+    },
+    "inputs/qualified-runtime/lib/libavcodec-dinox-hw.so.62": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/libavcodec-dinox-hw.so.62",
+      "sha256": "5b6593f2af86b55ecf0950371c767531d1755248ff26640ce65f4856d0f9b37f",
+      "bytes": 2246441
+    },
+    "inputs/qualified-runtime/lib/libavutil-dinox-hw.so.60": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/libavutil-dinox-hw.so.60",
+      "sha256": "2dde8c7087502216f5e63971100c308b6c1f69ad5fc5e88693436f896f65e106",
+      "bytes": 912769
+    },
+    "inputs/qualified-runtime/lib/libdinox-google-webrtc.so": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/lib/libdinox-google-webrtc.so",
+      "sha256": "1cc82999cf0c50e28377c1fdace815e82260e7e017cbda5233bbdaad6f4f93d3",
+      "bytes": 32092528
+    },
+    "inputs/qualified-runtime/manifest.json": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/manifest.json",
+      "sha256": "f2fc23040b2b88a4b6465172b33c0d2e686b66fa88b60ae2b3d29f51446964af",
+      "bytes": 8809
+    },
+    "inputs/qualified-runtime/sources/ffmpeg-8.1.2.tar.xz": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/ffmpeg-8.1.2.tar.xz",
+      "sha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+      "bytes": 11710924
+    },
+    "inputs/qualified-runtime/sources/ffmpeg-dinox-symbol-versions.patch": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/ffmpeg-dinox-symbol-versions.patch",
+      "sha256": "e3630fac46c8459340de0b1eb58916f1f3dada03899bded00bca332486375903",
+      "bytes": 331
+    },
+    "inputs/qualified-runtime/sources/libva-2.20.0.tar.gz": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/libva-2.20.0.tar.gz",
+      "sha256": "117f8d658a5fc9ea406ca80a3eb4ae1d70b15a54807c9ed77199c812bed73b60",
+      "bytes": 280079
+    },
+    "inputs/qualified-runtime/sources/nv-codec-headers-n8.1.24.15.tar.gz": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/nv-codec-headers-n8.1.24.15.tar.gz",
+      "sha256": "1e1600606cde2c04f5b1a71cb3b2e966b3ffe4e252a6ddec5781151d982e259f",
+      "bytes": 58488
+    },
+    "inputs/qualified-runtime/sources/webrtc-m152-codec-sources-6f37672d3584-sha256-2b17c14cc13b.tar.gz": {
+      "origin": "local/call-mobile-interop-20261017/qualified-runtime/sources/webrtc-m152-codec-sources-6f37672d3584-sha256-2b17c14cc13b.tar.gz",
+      "sha256": "2b17c14cc13b4b661c4a2be9b25c26240c97cec4a1c938196ed81dc9fd24278c",
+      "bytes": 78647821
+    },
+    "inputs/current/build/libdino/libdino.h": {
+      "origin": "build/libdino/libdino.h",
+      "bytes": 826351,
+      "sha256": "046d681231485cae49252e6fa9397132f3d0de4ce9cd78f69bb29d24c29c3dc7"
+    },
+    "inputs/current/build/qlite/qlite.h": {
+      "origin": "build/qlite/qlite.h",
+      "bytes": 59465,
+      "sha256": "812a5b65284115e73e25b5e8fd792d81273b5a54dd45f81397fddef22853bb58"
+    },
+    "inputs/current/build/crypto-vala/crypto-vala.h": {
+      "origin": "build/crypto-vala/crypto-vala.h",
+      "bytes": 17880,
+      "sha256": "a415356a00dc2bb4c80153a655295122718bf9f4c11b0d21e43e3d2f640add1f"
+    },
+    "inputs/current/libdino/src/dino_i18n.h": {
+      "origin": "libdino/src/dino_i18n.h",
+      "bytes": 261,
+      "sha256": "11da3c9857421373742bb30f9d9dec6ab0725ac96c73fb0bb8cc4aa51933addb"
+    },
+    "inputs/current/qlite/vapi/sqlcipher.vapi": {
+      "origin": "qlite/vapi/sqlcipher.vapi",
+      "bytes": 17665,
+      "sha256": "2ec3ea3aa78649d1ed170d71ff3fd3169aa861f73c2121521bec1171d32fedba"
+    },
+    "inputs/current/plugins/omemo/vapi/libomemo-c.vapi": {
+      "origin": "plugins/omemo/vapi/libomemo-c.vapi",
+      "bytes": 38170,
+      "sha256": "cc05c44d230ea90cc37358070605921ee01fa28f49146a73c3f8f6224b244bd4"
+    },
+    "inputs/current/plugins/omemo/vapi/libgcrypt.vapi": {
+      "origin": "plugins/omemo/vapi/libgcrypt.vapi",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "selected_sources": [
+    "inputs/current/plugins/google-webrtc/src/media_foundation_writer.vapi",
+    "inputs/current/plugins/google-webrtc/src/native_handles.vapi",
+    "inputs/current/plugins/google-webrtc/src/audio_message_recorder_v2.vala",
+    "inputs/current/plugins/google-webrtc/src/audio_message_writer.vala",
+    "inputs/current/plugins/google-webrtc/src/engine_media_device.vala",
+    "inputs/current/plugins/google-webrtc/src/engine_jmi_iq_interceptor.vala",
+    "inputs/current/plugins/google-webrtc/src/engine_jmi_session_router.vala",
+    "inputs/current/plugins/google-webrtc/src/engine_jmi_session.vala",
+    "inputs/current/plugins/google-webrtc/src/engine_jingle_session.vala",
+    "inputs/current/plugins/google-webrtc/src/engine_jingle_wire_session.vala",
+    "inputs/current/plugins/google-webrtc/src/engine_muji_codec_probe.vala",
+    "inputs/current/plugins/google-webrtc/src/engine_muji_group_session.vala",
+    "inputs/current/plugins/google-webrtc/src/ice_servers.vala",
+    "inputs/current/plugins/google-webrtc/src/media_message_playback_provider.vala",
+    "inputs/current/plugins/google-webrtc/src/media_message_recorder_provider.vala",
+    "inputs/current/plugins/google-webrtc/src/media_message_recorder_native.vala",
+    "inputs/current/plugins/google-webrtc/src/media_policy.vala",
+    "inputs/current/plugins/google-webrtc/src/native.vala",
+    "inputs/current/plugins/google-webrtc/src/native_video_effects.vala",
+    "inputs/current/plugins/google-webrtc/src/signaling_session.vala",
+    "inputs/current/plugins/google-webrtc/src/session_owner.vala",
+    "inputs/current/plugins/google-webrtc/src/video_effect_config.vala",
+    "inputs/current/plugins/google-webrtc/src/video_effect_pipeline.vala",
+    "inputs/current/plugins/google-webrtc/src/video_message_recorder_v2.vala",
+    "inputs/current/plugins/google-webrtc/src/video_message_writer.vala",
+    "inputs/current/plugins/google-webrtc/src/plugin.vala",
+    "inputs/current/build/libdino/libdino.vapi",
+    "inputs/current/build/qlite/qlite.vapi",
+    "inputs/current/build/crypto-vala/crypto-vala.vapi",
+    "inputs/current/build/xmpp-vala/xmpp-vala.vapi",
+    "inputs/observer/dinox_interop.vala",
+    "inputs/observer/observer_scope.vala",
+    "inputs/observer/muji_presence_observer.vala",
+    "inputs/observer/fingerprint_rewrite_observer.vala",
+    "inputs/existing-plugin/omemo.vapi"
+  ],
+  "retained_payload_sha256": {
+    "libdino.so.0": "47f2aec35fac12abb725ae9cf861ce5aafe031af0d422b3d4a146d11c1438ec9",
+    "libqlite.so.0": "40d248ee368868b4e3dc7807c51f7a30bcb618e25b307705016ec164b193daa3",
+    "libxmpp-vala.so.0": "57e44ee2c6b21dbe2202ad89a5ac59ba7c70ce70e281c00b0fa6ae8092714916",
+    "libdinox-google-webrtc.so": "7f18a3970b4107c106cfe62011ca8328aaea80f1449d87c06d9fb0d3da166ef6",
+    "omemo.so": "38c5f53387afbe4be31bd99b377fd07b77a96326a1e379d6f1d5b5d8ce6dd633",
+    "libcrypto-vala.so.0": "de8e7c09f5bde05803c0f3134bc165f094cfd04fe75eda3f95cbab8d75adead2",
+    "libomemo-c.so.0": "c9daded3b2ab289caa7f93276b86ea1d4e081547ed3280b37b71244f3defd484"
+  },
+  "link_libraries": {
+    "libdino.so.0": "inputs/lib/libdino.so.0",
+    "libxmpp-vala.so.0": "inputs/lib/libxmpp-vala.so.0",
+    "libdinox-google-webrtc.so": "inputs/qualified-runtime/lib/libdinox-google-webrtc.so",
+    "omemo.so": "inputs/existing-plugin/omemo.so"
+  },
+  "retained_link_libraries": [
+    "libqlite.so.0",
+    "libcrypto-vala.so.0",
+    "libomemo-c.so.0"
+  ],
+  "required_symbols": {
+    "libdino.so.0": [
+      "dino_stream_interactor_get_connected_stream_for_action",
+      "dino_connection_manager_disconnect_account",
+      "dino_connection_manager_disconnect_account_finish"
+    ],
+    "libxmpp-vala.so.0": [
+      "xmpp_iq_module_local_failure",
+      "xmpp_iq_module_add_incoming_request_filter",
+      "xmpp_iq_module_remove_incoming_request_filter",
+      "xmpp_stanza_node_to_xml",
+      "xmpp_stanza_attribute_new_build"
+    ],
+    "libomemo-c.so.0": [
+      "session_record_get_state",
+      "session_state_get_remote_identity_key",
+      "session_state_get_session_version",
+      "ec_public_key_serialize"
+    ]
+  },
+  "observer_provenance": {
+    "manifest_sha256": "d94d588b0e1b5299ce9a8726636a2f3da34840bb42f07ae9132d56a10bbae70c",
+    "review_sha256": "3907706fc9f9fac542590f0801085d2b1d98cd1ecea56e24b0e0cd158fd2b49e",
+    "scope": "Unchanged single-fingerprint PostDraft SessionPublic observer; multi-fingerprint AV containers remain diagnostic only"
+  },
+  "runtime_provenance": {
+    "directory": "local/call-mobile-interop-20261017/qualified-runtime",
+    "qualified_manifest_sha256": "f2fc23040b2b88a4b6465172b33c0d2e686b66fa88b60ae2b3d29f51446964af",
+    "qualification_receipt_sha256": "495711b9a5fda7f79914a8923f64998bff3b750eb42607eda1b0c09eea7cff8f",
+    "publication_receipt_sha256": "67e45d1babeee4c7f9f5405d49cac9959b9fc5c81cf3b3338061fcd37cc2e0cf",
+    "published_archive_sha256": "2479cdb9ab7eace826e28d519a9dd33478329e34c303ed716c196005d9cec46f",
+    "wrapper_abi": 40,
+    "ipc_protocol_version": 10,
+    "complete_runtime_tree_included": true
+  },
+  "no_core_IQ_OMEMO_SDK_APK_JNI_or_native_library_rebuild": true,
+  "no_profile_changes": true,
+  "no_scenario_or_auth_semantics_changes": true,
+  "cache_dependency_removed": {
+    "historical_container_id": "7928c84b5b32d5346c0bfec74fd414508e6ee5fd6d296df91d921914a30c1535",
+    "actual_absent": true,
+    "historical_cache_in_base_probe_files": 0,
+    "no_reconstruction_of_obsolete_comparison_sources": true
+  },
+  "builder_image": {
+    "id": "sha256:bfcc7b8942a7656a90b2ab40b73c9d29f1843b0df681b6994f89a67132b62391",
+    "must_already_exist": true,
+    "no_pull_commit_or_snapshot": true,
+    "stopped_probe_receipt": "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/native-current-driver/actual-job-20261018T014655Z-cb0aec01/stopped-image-probe.json",
+    "stopped_probe_receipt_sha256": "a6dabbd557beca3edd7abc3a160798ef62a465efb31a68c07830e3ce18de4e84"
+  },
+  "derivation": {
+    "original_source_manifest_sha256": "cd2a9fea6d907d99693b4ab5b9585eaed9871d0b8c5e216f2a69cd0deb365e7b",
+    "original_input_manifest_sha256": "0e561ea789e456709fb725bd312ea9a8c8c9ed70e099779dc23d89db7393f8d3",
+    "compiler_sha256": "8613975e320ed981a67c80add58d701e9b62f9641eff25a10fb2be14cd82fc00",
+    "runner_sha256": "7943552f5b1385d4f0c000a1a73da70863fff8b1049d91995795b6418c9a4519",
+    "minimal_plan_sha256": "fec49f16c154addbc2d7b6396edf9ad61e7fadf666971940ad8107090c6dffbe",
+    "only_project_header_vapi_closure_and_existing_image_runner_change": true
+  }
+}

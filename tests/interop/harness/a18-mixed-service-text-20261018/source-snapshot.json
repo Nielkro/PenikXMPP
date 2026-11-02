@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "scope": "SOURCE_ONLY_A18_MIXED_SERVICE_TEXT_PRESERVATION",
+  "portable_test_framework": false,
+  "runtime_permission_granted": false,
+  "runtime_result_claimed": false,
+  "source_document_context": "The copied README, REVIEW, freeze and source manifest preserve their original source-preparation context and original hashes. Thirteen copies are byte-identical. service_support.py only removes one redundant EOF blank line with unchanged Python AST; derivation.diff is regenerated as a valid zero-context unified diff from the same pinned before/after sources. Per-file original and snapshot hashes record both derivations. Fixed lab paths, private dependencies and the preserved original source pins prevent direct snapshot execution. Live admissions, runtime evidence and interoperability outcomes are excluded.",
+  "files": {
+    "runtime.py": {
+      "origin": "local/monocles-dinox-interop-20261018/runtime.py",
+      "sha256": "a4f1b23d9a1b6759543cea757ec15551f4697caed834cb5b19f48f1bef81cf5f",
+      "bytes": 49153
+    },
+    "control.py": {
+      "origin": "local/monocles-dinox-interop-20261018/control.py",
+      "sha256": "e51e28b94dfc2a09b5424592d79e19d9b057ed0e6c3371be8cf9e2e1a756f42c",
+      "bytes": 9274
+    },
+    "recorder.py": {
+      "origin": "local/monocles-dinox-interop-20261018/recorder.py",
+      "sha256": "588219cf99c4b94ab5215447988571299ad64bc999b17b238c88171cf1335b3a",
+      "bytes": 4513
+    },
+    "scenario.py": {
+      "origin": "local/monocles-dinox-interop-20261018/scenario.py",
+      "sha256": "86222e30ed66b8d2670cc2a3bbeea12fc48752103a8c29d9a9407346f357bd11",
+      "bytes": 11996
+    },
+    "service_support.py": {
+      "origin": "local/monocles-dinox-interop-20261018/service_support.py",
+      "sha256": "3f243863d1ebc70c017f92f67b221d8206dce89a93cac74457dc6d2a2127fd40",
+      "bytes": 4879,
+      "origin_sha256": "0a74b6302f07bc62c6b475953e495de4a66d38c0682ba476f637af7a521a2daf",
+      "origin_bytes": 4880,
+      "normalization": "Remove one redundant blank line at EOF; no other bytes changed",
+      "unchanged_python_ast": true
+    },
+    "room_scope.py": {
+      "origin": "local/monocles-dinox-interop-20261018/room_scope.py",
+      "sha256": "b78eab85823a6aae378ebfed1bd906aa5f0a8fd454e6de9bb40e02891ec1bbfd",
+      "bytes": 10044
+    },
+    "monitor.py": {
+      "origin": "local/monocles-dinox-interop-20261018/monitor.py",
+      "sha256": "f66b72dd17b59862d3649f932d12dbf1d6e670c6f7ba0d8df556fb7e858b06f9",
+      "bytes": 3649
+    },
+    "derive.py": {
+      "origin": "local/monocles-dinox-interop-20261018/derive.py",
+      "sha256": "7b54ff6d775b85156157cafef6db4d3590a8121d53ac643db39d4691a0006fdd",
+      "bytes": 15444
+    },
+    "test_offline.py": {
+      "origin": "local/monocles-dinox-interop-20261018/test_offline.py",
+      "sha256": "299ec7a143fd3f678204f524a9f2e84bfd595b25f410eb4c9426a36effcf72e3",
+      "bytes": 15346
+    },
+    "README.md": {
+      "origin": "local/monocles-dinox-interop-20261018/README.md",
+      "sha256": "e1243da6fb98f00e71c0a839973893f01a42d3e0f6f328f8db36cdbc10eb7e3d",
+      "bytes": 15570
+    },
+    "REVIEW.md": {
+      "origin": "local/monocles-dinox-interop-20261018/REVIEW.md",
+      "sha256": "21690bbc0fba1b0916046d9d991f873dc74c6c9cc1bfd8dede21b42f4ed59b37",
+      "bytes": 2833
+    },
+    "derivation.diff": {
+      "origin": "local/monocles-dinox-interop-20261018/derivation.diff",
+      "sha256": "4b93ade196a794bba8d5ec9e5abb6c46961ac6bd22ec27629702cef760773750",
+      "bytes": 9478,
+      "origin_sha256": "a98b92de3c3c6b6499438426048b66e049a0e3ace5c40fff9f6d64e868653086",
+      "origin_bytes": 16411,
+      "normalization": "Regenerate a valid zero-context unified diff from the same SHA-256-pinned before/after source pairs; no patch-line stripping",
+      "unified_diff_context_lines": 0,
+      "diff_inputs": [
+        {
+          "before_origin": "local/monocles-dinox-interop-20261015/harness/devicefix_nora_runtime/runtime.py",
+          "before_sha256": "3eb5100e0ddcaeb60f87929b01ff9e75e8e350eb7bf3b718d1ef2755bccbac31",
+          "after_origin": "local/monocles-dinox-interop-20261018/runtime.py",
+          "after_sha256": "a4f1b23d9a1b6759543cea757ec15551f4697caed834cb5b19f48f1bef81cf5f",
+          "fromfile": "frozen-A/runtime.py",
+          "tofile": "A18/runtime.py"
+        },
+        {
+          "before_origin": "local/monocles-dinox-interop-20261015/harness/devicefix_nora_runtime/control.py",
+          "before_sha256": "96b54078b0b958d23b8f13f7546877ac0ee5f2c47c92ce368aacd2efe86b7617",
+          "after_origin": "local/monocles-dinox-interop-20261018/control.py",
+          "after_sha256": "e51e28b94dfc2a09b5424592d79e19d9b057ed0e6c3371be8cf9e2e1a756f42c",
+          "fromfile": "frozen-A/control.py",
+          "tofile": "A18/control.py"
+        },
+        {
+          "before_origin": "local/monocles-dinox-interop-20261015/harness/devicefix_nora_runtime/recorder.py",
+          "before_sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+          "after_origin": "local/monocles-dinox-interop-20261018/recorder.py",
+          "after_sha256": "588219cf99c4b94ab5215447988571299ad64bc999b17b238c88171cf1335b3a",
+          "fromfile": "frozen-A/recorder.py",
+          "tofile": "A18/recorder.py"
+        },
+        {
+          "before_origin": "local/monocles-dinox-interop-20261015/harness/resume-completion-plan-20261016T190157Z/ui-owner-resume/persistent-service-text/persistent_service_text.py",
+          "before_sha256": "e9c49a2bf9ceb1ba134508e895cca1e97467fbcf0bd0c4460e3d3cb334a7b721",
+          "after_origin": "local/monocles-dinox-interop-20261018/scenario.py",
+          "after_sha256": "86222e30ed66b8d2670cc2a3bbeea12fc48752103a8c29d9a9407346f357bd11",
+          "fromfile": "frozen-service/scenario.py",
+          "tofile": "A18/scenario.py"
+        }
+      ]
+    },
+    "freeze.json": {
+      "origin": "local/monocles-dinox-interop-20261018/freeze.json",
+      "sha256": "73c64b7aba80ff49c83e3425cb20b37fcc33d562aa96b7751e4973ea4ff91c04",
+      "bytes": 2853
+    },
+    "source-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/source-manifest.json",
+      "sha256": "20b99ed7d7df75de3969eb7971a527a920cb56080b27e9e38321456cb813c69b",
+      "bytes": 2734
+    },
+    "live-20261018T0100Z/config_owner.py": {
+      "origin": "local/monocles-dinox-interop-20261018/live-20261018T0100Z/config_owner.py",
+      "sha256": "f4ce6ff692b50650705b88aa034d38f414ac732eee85e177bb76f226eead8561",
+      "bytes": 6863
+    }
+  },
+  "copied_files": 15,
+  "copied_bytes": 164629,
+  "byte_identical_files": 13,
+  "normalized_files": 2
+}

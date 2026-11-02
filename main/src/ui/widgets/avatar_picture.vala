@@ -1,0 +1,726 @@
+using Dino.Entities;
+using Gtk;
+using Xmpp;
+
+public class Dino.Ui.ViewModel.AvatarPictureTileModel : Object {
+    public string display_text { get; set; }
+    public Gdk.RGBA background_color { get; set; }
+    public Bytes? image_bytes { get; set; }
+}
+
+public class Dino.Ui.ViewModel.AvatarPictureModel : Object {
+    public ListModel tiles { get; set; }
+}
+
+public class Dino.Ui.ViewModel.ConversationParticipantAvatarPictureTileModel : AvatarPictureTileModel {
+    private StreamInteractor stream_interactor;
+    private AvatarManager? avatar_manager { owned get { return stream_interactor == null ? null : stream_interactor.get_module<AvatarManager>(AvatarManager.IDENTITY); } }
+    private Conversation? conversation;
+    private Jid? primary_avatar_jid;
+    private Jid? secondary_avatar_jid;
+    private Jid? display_name_jid;
+    private Dino.AvatarReadPolicy avatar_read_policy;
+    // Signal handler IDs for cleanup in dispose() (D6)
+    private ulong roster_updated_handler_id;
+    private AvatarObserver? primary_avatar_observer;
+    private AvatarObserver? secondary_avatar_observer;
+
+    private static void connect_signals_weak(ConversationParticipantAvatarPictureTileModel model_) {
+        WeakRef model_weak = WeakRef(model_);
+        
+        var roster_mgr = model_.stream_interactor.get_module<RosterManager>(RosterManager.IDENTITY);
+        if (roster_mgr != null) {
+            model_.roster_updated_handler_id = roster_mgr.updated_roster_item.connect((account, jid, item) => {
+                var model = (ConversationParticipantAvatarPictureTileModel) model_weak.get();
+                if (model != null) {
+                    model.on_roster_updated(account, jid);
+                } else {
+                    // It's impossible to easily disconnect here without capturing the ID, which creates a cycle, 
+                    // but we don't care because the weak reference doesn't prevent GC. 
+                    // When the signal fires and model is null, it's a no-op.
+                }
+            });
+        }
+        
+        var avatar_mgr = model_.avatar_manager;
+        if (avatar_mgr != null) {
+            model_.primary_avatar_observer = avatar_mgr.observe_avatar(((!) model_.conversation).account, (!) model_.primary_avatar_jid,
+                (jid, account) => {
+                    var model = (ConversationParticipantAvatarPictureTileModel) model_weak.get();
+                    if (model == null) return false;
+                    model.on_received_avatar(jid, account);
+                    return true;
+                });
+            if (model_.secondary_avatar_jid != null && !((!) model_.secondary_avatar_jid).equals(model_.primary_avatar_jid)) {
+                model_.secondary_avatar_observer = avatar_mgr.observe_avatar(((!) model_.conversation).account, (!) model_.secondary_avatar_jid,
+                    (jid, account) => {
+                        var model = (ConversationParticipantAvatarPictureTileModel) model_weak.get();
+                        if (model == null) return false;
+                        model.on_received_avatar(jid, account);
+                        return true;
+                    });
+            }
+        }
+    }
+
+    public ConversationParticipantAvatarPictureTileModel(StreamInteractor stream_interactor, Conversation conversation, Jid jid, Dino.AvatarReadPolicy avatar_read_policy = Dino.AvatarReadPolicy.NETWORK_ALLOWED) {
+        this.stream_interactor = stream_interactor;
+        this.conversation = conversation;
+        this.display_name_jid = jid;
+        this.avatar_read_policy = avatar_read_policy;
+
+        AvatarManager manager = (!) avatar_manager;
+        Jid resolved_primary_jid;
+        Jid? resolved_secondary_jid;
+        string color_id;
+        manager.resolve_participant_avatar_identity(conversation, jid,
+            out resolved_primary_jid, out resolved_secondary_jid, out color_id);
+        this.primary_avatar_jid = resolved_primary_jid;
+        this.secondary_avatar_jid = resolved_secondary_jid;
+
+        string display = Util.get_participant_display_name(stream_interactor, conversation, display_name_jid);
+        display_text = display.get_char(0).toupper().to_string();
+
+        float[] rgbf = color_id != null ? Xep.ConsistentColor.string_to_rgbf(color_id) : new float[] {0.5f, 0.5f, 0.5f};
+        background_color = Gdk.RGBA() { red = rgbf[0], green = rgbf[1], blue = rgbf[2], alpha = 1.0f};
+
+        update_image_bytes();
+        connect_signals_weak(this);
+    }
+
+    ~ConversationParticipantAvatarPictureTileModel() {
+        cleanup();
+    }
+
+    public void cleanup() {
+        // Disconnect signal handlers to break reference cycles (D6)
+        // These closures capture 'this' via instance method refs, preventing
+        // GObject finalisation. Must be called explicitly since the destructor
+        // can't fire while signals keep refcount > 0.
+        if (roster_updated_handler_id != 0) {
+            var roster_mgr = stream_interactor != null ? stream_interactor.get_module<RosterManager>(RosterManager.IDENTITY) : null;
+            if (roster_mgr != null && SignalHandler.is_connected(roster_mgr, roster_updated_handler_id)) {
+                SignalHandler.disconnect(roster_mgr, roster_updated_handler_id);
+            }
+            roster_updated_handler_id = 0;
+        }
+        var am = avatar_manager;
+        if (am != null) {
+            if (primary_avatar_observer != null) {
+                ((!) primary_avatar_observer).unsubscribe();
+                primary_avatar_observer = null;
+            }
+            if (secondary_avatar_observer != null) {
+                ((!) secondary_avatar_observer).unsubscribe();
+                secondary_avatar_observer = null;
+            }
+        }
+        image_bytes = null;
+    }
+
+    private void update_image_bytes() {
+        Bytes? image_bytes = avatar_manager.get_avatar_bytes_with_policy(conversation.account, primary_avatar_jid, avatar_read_policy);
+        if (image_bytes == null && secondary_avatar_jid != null) {
+            image_bytes = avatar_manager.get_avatar_bytes_with_policy(conversation.account, secondary_avatar_jid, avatar_read_policy);
+        }
+        this.image_bytes = image_bytes;
+    }
+
+    private void on_received_avatar(Jid jid, Account account) {
+        if (account.equals(conversation.account) && (jid.equals(primary_avatar_jid) || jid.equals(secondary_avatar_jid))) {
+            update_image_bytes();
+        }
+    }
+
+    private void on_roster_updated(Account account, Jid jid) {
+        if (account.equals(conversation.account) && jid.equals(display_name_jid)) {
+            string display = Util.get_participant_display_name(stream_interactor, conversation, display_name_jid);
+            display_text = display.get_char(0).toupper().to_string();
+        }
+    }
+}
+
+public class Dino.Ui.ViewModel.CompatAvatarPictureModel : AvatarPictureModel {
+    private StreamInteractor stream_interactor;
+    private AvatarManager? avatar_manager { owned get { return stream_interactor == null ? null : stream_interactor.get_module<AvatarManager>(AvatarManager.IDENTITY); } }
+    private MucManager? muc_manager { owned get { return stream_interactor == null ? null : stream_interactor.get_module<MucManager>(MucManager.IDENTITY); } }
+    private PresenceManager? presence_manager { owned get { return stream_interactor == null ? null : stream_interactor.get_module<PresenceManager>(PresenceManager.IDENTITY); } }
+    private ConnectionManager? connection_manager { owned get { return stream_interactor == null ? null : stream_interactor.connection_manager; } }
+    private Conversation? conversation;
+    private uint conversation_generation = 0;
+    private MucRoomObserver? room_state_observer = null;
+    private AvatarObserver? room_avatar_observer = null;
+
+    construct {
+        tiles = new GLib.ListStore(typeof(ViewModel.AvatarPictureTileModel));
+    }
+
+    public CompatAvatarPictureModel(StreamInteractor? stream_interactor) {
+        this.stream_interactor = stream_interactor;
+    }
+
+    private uint room_update_timeout = 0;
+
+    private void on_room_updated(Account account, Jid room) {
+        if (conversation != null && account.equals(conversation.account) && conversation.counterpart.equals_bare(room)) {
+            // Debounce: during login many occupant updates arrive rapidly.
+            // Collect them and rebuild once after 150ms.
+            if (room_update_timeout != 0) {
+                Source.remove(room_update_timeout);
+            }
+            room_update_timeout = Timeout.add(150, () => {
+                room_update_timeout = 0;
+                if (conversation != null) {
+                    reset();
+                    set_conversation(conversation);
+                }
+                return false;
+            });
+        }
+    }
+
+    private void on_received_avatar(Jid jid, Account account) {
+        if (conversation == null || !account.equals(conversation.account)) return;
+        if (!conversation.counterpart.equals_bare(jid)) return;
+
+        // For 1:1 chats: individual tile handles its own avatar update
+        if (conversation.type_ != Conversation.Type.GROUPCHAT) return;
+
+        // For groupchats: only rebuild if the room-level avatar (bare JID) changed.
+        // Occupant avatars (full JIDs like room@conf/nick) are handled by
+        // ConversationParticipantAvatarPictureTileModel's own signal handler.
+        if (jid.is_full()) return;
+
+        // Room's own avatar changed — may need layout switch
+        on_room_updated(account, jid);
+    }
+
+    public void reset() {
+        var store = tiles as GLib.ListStore;
+        if (store != null) {
+            // Cleanup tile models to break signal reference cycles before dropping references
+            for (uint i = 0; i < store.get_n_items(); i++) {
+                var tile = store.get_item(i) as ConversationParticipantAvatarPictureTileModel;
+                if (tile != null) tile.cleanup();
+            }
+            store.remove_all();
+        }
+    }
+
+    public void cleanup() {
+        if (room_update_timeout != 0) {
+            Source.remove(room_update_timeout);
+            room_update_timeout = 0;
+        }
+
+        if (room_state_observer != null) {
+            ((!) room_state_observer).unsubscribe();
+            room_state_observer = null;
+        }
+
+        if (room_avatar_observer != null) {
+            ((!) room_avatar_observer).unsubscribe();
+            room_avatar_observer = null;
+        }
+
+        reset();
+        conversation = null;
+    }
+
+    ~CompatAvatarPictureModel() {
+        cleanup();
+    }
+
+    public CompatAvatarPictureModel set_conversation(Conversation conversation) {
+        int64 t0_us = Dino.Ui.UiTiming.now_us();
+        uint gen = ++conversation_generation;
+        if (stream_interactor == null) {
+            critical("set_conversation() used on CompatAvatarPictureModel without stream_interactor");
+            return this;
+        }
+        if (room_avatar_observer != null) {
+            ((!) room_avatar_observer).unsubscribe();
+            room_avatar_observer = null;
+        }
+        if (room_state_observer != null) {
+            ((!) room_state_observer).unsubscribe();
+            room_state_observer = null;
+        }
+        this.conversation = conversation;
+        if (conversation.type_ == Conversation.Type.GROUPCHAT) {
+            WeakRef model_weak = WeakRef(this);
+            room_state_observer = muc_manager.observe_room(conversation.account, conversation.counterpart.bare_jid,
+                (kind, account, room, occupant) => {
+                    CompatAvatarPictureModel? model = (CompatAvatarPictureModel) model_weak.get();
+                    if (model == null) return false;
+                    if (kind == MucRoomUpdateKind.ROOM_INFO || kind == MucRoomUpdateKind.PRIVATE_OCCUPANT) {
+                        ((!) model).on_room_updated(account, room);
+                    }
+                    return true;
+                });
+            room_avatar_observer = avatar_manager.observe_avatar(conversation.account, conversation.counterpart.bare_jid,
+                (jid, account) => {
+                    CompatAvatarPictureModel? model = (CompatAvatarPictureModel) model_weak.get();
+                    if (model == null) return false;
+                    model.on_received_avatar(jid, account);
+                    return true;
+                });
+            if (avatar_manager.has_avatar(conversation.account, conversation.counterpart)) {
+                add_internal("#", conversation.counterpart.to_string(), avatar_manager.get_avatar_bytes(conversation.account, conversation.counterpart));
+            } else {
+                // Fast placeholder first; private-room occupant avatar composition can be expensive.
+                add_internal("#", conversation.counterpart.to_string());
+
+                // Defer private-room avatar composition to keep chat switching responsive.
+                if (muc_manager.is_private_room(conversation.account, conversation.counterpart)) {
+                    Idle.add(() => {
+                        // Conversation changed since scheduling?
+                        if (this.conversation_generation != gen || this.conversation == null) return false;
+
+                        int64 t_occ_us = Dino.Ui.UiTiming.now_us();
+                        Gee.List<Jid>? occupants = muc_manager.get_other_offline_members(conversation.counterpart, conversation.account);
+                        Dino.Ui.UiTiming.log_ms("CompatAvatarPictureModel.set_conversation: get_other_offline_members", t_occ_us);
+
+                        if (occupants != null && !occupants.is_empty) {
+                            reset();
+                            int count = occupants.size > 4 ? 3 : occupants.size;
+                            for (int i = 0; i < count; i++) {
+                                add_participant(conversation, occupants[i]);
+                            }
+                            if (occupants.size > 4) {
+                                add_internal("+");
+                            }
+                        }
+                        return false;
+                    });
+                }
+            }
+        } else {
+            add_participant(conversation, conversation.counterpart);
+        }
+
+        Dino.Ui.UiTiming.log_ms("CompatAvatarPictureModel.set_conversation: total", t0_us);
+        return this;
+    }
+
+    public CompatAvatarPictureModel add_participant(Conversation conversation, Jid jid, bool defer_network_fetch = false) {
+        return add_participant_with_policy(conversation, jid, defer_network_fetch ? Dino.AvatarReadPolicy.LOCAL_CACHE_ONLY : Dino.AvatarReadPolicy.NETWORK_ALLOWED);
+    }
+
+    public CompatAvatarPictureModel add_participant_with_policy(Conversation conversation, Jid jid, Dino.AvatarReadPolicy avatar_read_policy) {
+        if (stream_interactor == null) {
+            critical("add_participant() used on CompatAvatarPictureModel without stream_interactor");
+            return this;
+        }
+        var store = tiles as GLib.ListStore;
+        if (store != null) {
+            store.append(new ConversationParticipantAvatarPictureTileModel(stream_interactor, conversation, jid, avatar_read_policy));
+        }
+        return this;
+    }
+
+    public CompatAvatarPictureModel add(string display, string? color_id = null, Bytes? image_bytes = null) {
+        add_internal(display, color_id, image_bytes);
+        return this;
+    }
+
+    private AvatarPictureTileModel add_internal(string display, string? color_id = null, Bytes? image_bytes = null) {
+        GLib.ListStore store = tiles as GLib.ListStore;
+        float[] rgbf = color_id != null ? Xep.ConsistentColor.string_to_rgbf(color_id) : new float[] {0.5f, 0.5f, 0.5f};
+        var model = new ViewModel.AvatarPictureTileModel() {
+            display_text = display.get_char(0).toupper().to_string(),
+            background_color = Gdk.RGBA() { red = rgbf[0], green = rgbf[1], blue = rgbf[2], alpha = 1.0f},
+            image_bytes = image_bytes
+        };
+        store.append(model);
+        return model;
+    }
+}
+
+
+public class Dino.Ui.CompatAvatarDrawer {
+    public float radius_percent { get; set; default = 0.2f; }
+    public ViewModel.AvatarPictureModel? model { get; set; }
+    public int height_request { get; set; default = 35; }
+    public int width_request { get; set; default = 35; }
+#if WINDOWS
+    public string font_family { get; set; default = "Segoe UI"; }
+#else
+    public string font_family { get; set; default = "Sans"; }
+#endif
+
+    public Cairo.ImageSurface draw_image_surface() {
+        Cairo.ImageSurface surface = new Cairo.ImageSurface(Cairo.Format.ARGB32, width_request, height_request);
+        draw_on_context(new Cairo.Context(surface));
+        return surface;
+    }
+
+    public void draw_on_context(Cairo.Context ctx) {
+        double radius = (width_request + height_request) * 0.25f * radius_percent;
+        double degrees = Math.PI / 180.0;
+        ctx.new_sub_path();
+        ctx.arc(width_request - radius, radius, radius, -90 * degrees, 0 * degrees);
+        ctx.arc(width_request - radius, height_request - radius, radius, 0 * degrees, 90 * degrees);
+        ctx.arc(radius, height_request - radius, radius, 90 * degrees, 180 * degrees);
+        ctx.arc(radius, radius, radius, 180 * degrees, 270 * degrees);
+        ctx.close_path();
+        ctx.clip();
+
+        if (this.model.tiles.get_n_items() == 4) {
+            Cairo.Surface buffer = new Cairo.Surface.similar(ctx.get_target(), Cairo.Content.COLOR_ALPHA, width_request, height_request);
+            Cairo.Context bufctx = new Cairo.Context(buffer);
+            bufctx.scale(0.5, 0.5);
+            bufctx.set_source_surface(sub_surface_idx(ctx, 0, width_request - 1, height_request - 1, 2), 0, 0);
+            bufctx.paint();
+            bufctx.set_source_surface(sub_surface_idx(ctx, 1, width_request - 1, height_request - 1, 2), width_request + 1, 0);
+            bufctx.paint();
+            bufctx.set_source_surface(sub_surface_idx(ctx, 2, width_request - 1, height_request - 1, 2), 0, height_request + 1);
+            bufctx.paint();
+            bufctx.set_source_surface(sub_surface_idx(ctx, 3, width_request - 1, height_request - 1, 2), width_request + 1, height_request + 1);
+            bufctx.paint();
+
+            ctx.set_source_surface(buffer, 0, 0);
+            ctx.paint();
+        } else if (this.model.tiles.get_n_items() == 3) {
+            Cairo.Surface buffer = new Cairo.Surface.similar(ctx.get_target(), Cairo.Content.COLOR_ALPHA, width_request, height_request);
+            Cairo.Context bufctx = new Cairo.Context(buffer);
+            bufctx.scale(0.5, 0.5);
+            bufctx.set_source_surface(sub_surface_idx(ctx, 0, width_request - 1, height_request - 1, 2), 0, 0);
+            bufctx.paint();
+            bufctx.set_source_surface(sub_surface_idx(ctx, 1, width_request - 1, height_request * 2, 2), width_request + 1, 0);
+            bufctx.paint();
+            bufctx.set_source_surface(sub_surface_idx(ctx, 2, width_request - 1, height_request - 1, 2), 0, width_request + 1);
+            bufctx.paint();
+
+            ctx.set_source_surface(buffer, 0, 0);
+            ctx.paint();
+        } else if (this.model.tiles.get_n_items() == 2) {
+            Cairo.Surface buffer = new Cairo.Surface.similar(ctx.get_target(), Cairo.Content.COLOR_ALPHA, width_request, height_request);
+            Cairo.Context bufctx = new Cairo.Context(buffer);
+            bufctx.scale(0.5, 0.5);
+            bufctx.set_source_surface(sub_surface_idx(ctx, 0, width_request - 1, height_request * 2, 2), 0, 0);
+            bufctx.paint();
+            bufctx.set_source_surface(sub_surface_idx(ctx, 1, width_request - 1, height_request * 2, 2), width_request + 1, 0);
+            bufctx.paint();
+
+            ctx.set_source_surface(buffer, 0, 0);
+            ctx.paint();
+        } else if (this.model.tiles.get_n_items() == 1) {
+            ctx.set_source_surface(sub_surface_idx(ctx, 0, width_request, height_request, 1), 0, 0);
+            ctx.paint();
+        } else if (this.model.tiles.get_n_items() == 0) {
+            ctx.set_source_surface(sub_surface_idx(ctx, -1, width_request, height_request, 1), 0, 0);
+            ctx.paint();
+        }
+        ctx.set_source_rgb(0, 0, 0);
+    }
+
+    private Cairo.Surface sub_surface_idx(Cairo.Context ctx, int idx, int width, int height, int font_factor = 1) {
+        ViewModel.AvatarPictureTileModel? tile = (idx >= 0) ? (ViewModel.AvatarPictureTileModel) this.model.tiles.get_item(idx) : null;
+        Gdk.Pixbuf? avatar = null;
+        if (tile != null && tile.image_bytes != null) {
+            try {
+                var stream = new MemoryInputStream.from_data(tile.image_bytes.get_data(), null);
+                avatar = new Gdk.Pixbuf.from_stream(stream);
+            } catch (Error e) {
+                warning("Failed to load avatar from bytes: %s", e.message);
+            }
+        }
+        string? name = (idx >= 0 && tile != null) ? tile.display_text : "";
+        Gdk.RGBA hex_color = (tile != null) ? tile.background_color : Gdk.RGBA() { red = 0.5f, green = 0.5f, blue = 0.5f, alpha = 1.0f };
+        return sub_surface(ctx, font_family, avatar, name, hex_color, width, height, font_factor);
+    }
+
+    private static Cairo.Surface sub_surface(Cairo.Context ctx, string font_family, Gdk.Pixbuf? avatar, string? name, Gdk.RGBA background_color, int width, int height, int font_factor = 1) {
+        Cairo.Surface buffer = new Cairo.Surface.similar(ctx.get_target(), Cairo.Content.COLOR_ALPHA, width, height);
+        Cairo.Context bufctx = new Cairo.Context(buffer);
+        if (avatar == null) {
+            Gdk.cairo_set_source_rgba(bufctx, background_color);
+            bufctx.rectangle(0, 0, width, height);
+            bufctx.fill();
+
+            string text = name == null ? "…" : name.get_char(0).toupper().to_string();
+            bufctx.select_font_face(font_family, Cairo.FontSlant.NORMAL, Cairo.FontWeight.NORMAL);
+            bufctx.set_font_size(width / font_factor < 40 ? font_factor * 17 : font_factor * 25);
+            Cairo.TextExtents extents;
+            bufctx.text_extents(text, out extents);
+            double x_pos = width/2 - (extents.width/2 + extents.x_bearing);
+            double y_pos = height/2 - (extents.height/2 + extents.y_bearing);
+            bufctx.move_to(x_pos, y_pos);
+            bufctx.set_source_rgba(1, 1, 1, 1);
+            bufctx.show_text(text);
+        } else {
+            double w_scale = (double) width / avatar.width;
+            double h_scale = (double) height / avatar.height;
+            double scale = double.max(w_scale, h_scale);
+            bufctx.scale(scale, scale);
+
+            double x_off = 0, y_off = 0;
+            if (scale == h_scale) {
+                x_off = (width / scale - avatar.width) / 2.0;
+            } else {
+                y_off = (height / scale - avatar.height) / 2.0;
+            }
+
+            Cairo.ImageSurface avatar_surface = cairo_surface_from_pixbuf(avatar);
+            bufctx.set_source_surface(avatar_surface, x_off, y_off);
+            bufctx.get_source().set_filter(Cairo.Filter.BEST);
+            bufctx.paint();
+        }
+        return buffer;
+    }
+
+    private static Cairo.ImageSurface cairo_surface_from_pixbuf(Gdk.Pixbuf pixbuf) {
+        int width = pixbuf.width;
+        int height = pixbuf.height;
+        int src_stride = pixbuf.rowstride;
+        int channels = pixbuf.n_channels;
+        bool has_alpha = pixbuf.has_alpha;
+        Cairo.ImageSurface surface = new Cairo.ImageSurface(Cairo.Format.ARGB32, width, height);
+        int dst_stride = surface.get_stride();
+        unowned uchar[] data = surface.get_data();
+        unowned uint8[] pixels = pixbuf.get_pixels();
+
+        for (int y = 0; y < height; y++) {
+            int src_row = y * src_stride;
+            int dst_row = y * dst_stride;
+            for (int x = 0; x < width; x++) {
+                int src = src_row + x * channels;
+                int dst = dst_row + x * 4;
+                uint8 r = pixels[src];
+                uint8 g = pixels[src + 1];
+                uint8 b = pixels[src + 2];
+                uint8 a = has_alpha ? pixels[src + 3] : 255;
+                uint8 pr = (uint8) (((uint) r * a + 127) / 255);
+                uint8 pg = (uint8) (((uint) g * a + 127) / 255);
+                uint8 pb = (uint8) (((uint) b * a + 127) / 255);
+
+                if (GLib.BYTE_ORDER == GLib.ByteOrder.LITTLE_ENDIAN) {
+                    data[dst] = pb;
+                    data[dst + 1] = pg;
+                    data[dst + 2] = pr;
+                    data[dst + 3] = a;
+                } else {
+                    data[dst] = a;
+                    data[dst + 1] = pr;
+                    data[dst + 2] = pg;
+                    data[dst + 3] = pb;
+                }
+            }
+        }
+
+        surface.mark_dirty();
+        return surface;
+    }
+}
+
+public class Dino.Ui.AvatarPicture : Gtk.Widget {
+    public float radius_percent { get; set; default = 0.2f; }
+    public ViewModel.AvatarPictureModel? model { get; set; }
+    private Gee.List<Tile> tiles = new Gee.ArrayList<Tile>();
+
+    private ViewModel.AvatarPictureModel? old_model;
+    private ulong model_tiles_items_changed_handler;
+
+    construct {
+        height_request = 35;
+        width_request = 35;
+        set_css_name("picture");
+        add_css_class("avatar");
+        notify["radius-percent"].connect(queue_draw);
+        notify["model"].connect(on_model_changed);
+    }
+
+    private void on_model_changed() {
+        if (old_model != null) {
+            old_model.tiles.disconnect(model_tiles_items_changed_handler);
+        }
+        foreach (Tile tile in tiles) {
+            tile.unparent();
+            tile.dispose();
+        }
+        tiles.clear();
+        old_model = model;
+        if (model != null) {
+            model_tiles_items_changed_handler = model.tiles.items_changed.connect(on_model_items_changed);
+            for(int i = 0; i < model.tiles.get_n_items(); i++) {
+                Tile tile = new Tile();
+                tile.model = model.tiles.get_item(i) as ViewModel.AvatarPictureTileModel;
+                tile.insert_after(this, tiles.is_empty ? null : tiles.last());
+                tiles.add(tile);
+            }
+        }
+    }
+
+    private void on_model_items_changed(uint position, uint removed, uint added) {
+        while (removed > 0) {
+            Tile old = tiles.remove_at((int) position);
+            old.unparent();
+            old.dispose();
+            removed--;
+        }
+        while (added > 0) {
+            Tile tile = new Tile();
+            tile.model = model.tiles.get_item(position) as ViewModel.AvatarPictureTileModel;
+            tile.insert_after(this, position == 0 ? null : tiles[(int) position - 1]);
+            tiles.insert((int) position, tile);
+            position++;
+            added--;
+        }
+        queue_allocate();
+    }
+
+    public override void measure(Orientation orientation, int for_size, out int minimum, out int natural, out int minimum_baseline, out int natural_baseline) {
+        minimum_baseline = natural_baseline = -1;
+        if (orientation == Orientation.HORIZONTAL) {
+            minimum = natural = width_request;
+        } else {
+            minimum = natural = height_request;
+        }
+    }
+
+    public override void size_allocate(int width, int height, int baseline) {
+        int half_width_size = width / 2;
+        int half_height_size = height / 2;
+        int half_width_offset = (width % 2 == 0) ? half_width_size : half_width_size + 1;
+        int half_height_offset = (height % 2 == 0) ? half_height_size : half_height_size + 1;
+        if (tiles.size == 1) {
+            tiles[0].allocate(width, height, baseline, null);
+        } else if (tiles.size == 2) {
+            tiles[0].allocate_size(Allocation() { x = 0, y = 0, width = half_width_size, height = height }, baseline);
+            tiles[1].allocate_size(Allocation() { x = half_width_offset, y = 0, width = half_width_size, height = height }, baseline);
+        } else if (tiles.size == 3) {
+            tiles[0].allocate_size(Allocation() { x = 0, y = 0, width = half_width_size, height = height }, baseline);
+            tiles[1].allocate_size(Allocation() { x = half_width_offset, y = 0, width = half_width_size, height = half_height_size }, baseline);
+            tiles[2].allocate_size(Allocation() { x = half_width_offset, y = half_height_offset, width = half_width_size, height = half_height_size }, baseline);
+        } else if (tiles.size == 4) {
+            tiles[0].allocate_size(Allocation() { x = 0, y = 0, width = half_width_size, height = half_height_size }, baseline);
+            tiles[1].allocate_size(Allocation() { x = half_width_offset, y = 0, width = half_width_size, height = half_height_size }, baseline);
+            tiles[2].allocate_size(Allocation() { x = 0, y = half_height_offset, width = half_width_size, height = half_height_size }, baseline);
+            tiles[3].allocate_size(Allocation() { x = half_width_offset, y = half_height_offset, width = half_width_size, height = half_height_size }, baseline);
+        }
+    }
+
+    public override SizeRequestMode get_request_mode() {
+        return SizeRequestMode.CONSTANT_SIZE;
+    }
+
+    public override void snapshot(Gtk.Snapshot snapshot) {
+        Graphene.Rect bounds = Graphene.Rect();
+        bounds.init(0, 0, get_width(), get_height());
+        Gsk.RoundedRect rounded_rect = Gsk.RoundedRect();
+        rounded_rect.init_from_rect(bounds, (get_width() + get_height()) * 0.25f * radius_percent);
+        snapshot.push_rounded_clip(rounded_rect);
+        base.snapshot(snapshot);
+        snapshot.pop();
+    }
+
+    public override void dispose() {
+        model = null;
+        on_model_changed();
+        base.dispose();
+    }
+
+    private class Tile : Gtk.Widget {
+        public ViewModel.AvatarPictureTileModel? model { get; set; }
+        public Gdk.RGBA background_color { get; set; default = Gdk.RGBA(){ red = 1.0f, green = 1.0f, blue = 1.0f, alpha = 0.0f }; }
+        public string display_text { get { return label.get_text(); } set { label.set_text(value); } }
+        public Bytes? image_bytes {
+            get { return _image_bytes; }
+            set {
+                _image_bytes = value;
+                if (value != null) {
+                    try {
+                        picture.paintable = Gdk.Texture.from_bytes(value);
+                    } catch (Error e) {
+                        picture.paintable = null;
+                    }
+                } else {
+                    picture.paintable = null;
+                }
+            }
+        }
+        private Bytes? _image_bytes;
+
+        private Binding? background_color_binding;
+        private Binding? display_text_binding;
+        private Binding? image_bytes_binding;
+
+        private ulong notify_model_handler_id;
+        private ulong notify_bg_color_handler_id;
+
+        private Label label = new Label("");
+        private Picture picture = new Picture();
+
+        construct {
+            label.insert_after(this, null);
+            label.attributes = new Pango.AttrList();
+            label.attributes.insert(Pango.attr_foreground_new(uint16.MAX, uint16.MAX, uint16.MAX));
+#if GTK_4_8 && (VALA_0_56_GREATER_5 || VALA_0_58)
+            picture.content_fit = Gtk.ContentFit.COVER;
+#elif GTK_4_8
+            picture.@set("content-fit", 2);
+#endif
+            picture.insert_after(this, label);
+            notify_model_handler_id = this.notify["model"].connect(on_model_changed);
+            notify_bg_color_handler_id = this.notify["background-color"].connect(queue_draw);
+        }
+
+        private void on_model_changed() {
+            if (background_color_binding != null) background_color_binding.unbind();
+            if (display_text_binding != null) display_text_binding.unbind();
+            if (image_bytes_binding != null) image_bytes_binding.unbind();
+            if (model != null) {
+                background_color_binding = model.bind_property("background-color", this, "background-color", BindingFlags.SYNC_CREATE);
+                display_text_binding = model.bind_property("display-text", this, "display-text", BindingFlags.SYNC_CREATE);
+                image_bytes_binding = model.bind_property("image-bytes", this, "image-bytes", BindingFlags.SYNC_CREATE);
+            } else {
+                background_color_binding = null;
+                display_text_binding = null;
+                image_bytes_binding = null;
+            }
+        }
+
+        public override void dispose() {
+            if (notify_model_handler_id != 0) { this.disconnect(notify_model_handler_id); notify_model_handler_id = 0; }
+            if (notify_bg_color_handler_id != 0) { this.disconnect(notify_bg_color_handler_id); notify_bg_color_handler_id = 0; }
+            if (background_color_binding != null) background_color_binding.unbind();
+            if (display_text_binding != null) display_text_binding.unbind();
+            if (image_bytes_binding != null) image_bytes_binding.unbind();
+            background_color_binding = null;
+            display_text_binding = null;
+            image_bytes_binding = null;
+            // Clean up avatar tile model to break signal reference cycles
+            // Removed: The tile should not destroy the shared model! Weak signals now break the cycle.
+            label.unparent();
+            picture.unparent();
+            base.dispose();
+        }
+
+        public override void size_allocate(int width, int height, int baseline) {
+            int min, nat, bl_min, bl_nat;
+            picture.measure(Orientation.HORIZONTAL, -1, out min, out nat, out bl_min, out bl_nat);
+            if (nat > 0) {
+                picture.allocate(width, height, baseline, null);
+                label.visible = false;
+            } else {
+                picture.allocate(0, 0, 0, null);
+                label.attributes = new Pango.AttrList();
+                label.attributes.insert(Pango.attr_foreground_new(uint16.MAX, uint16.MAX, uint16.MAX));
+                label.attributes.insert(Pango.attr_scale_new(double.min((double)width, (double)height) * 0.05));
+                label.margin_bottom = height/40;
+                label.visible = true;
+                label.allocate(width, height, baseline, null);
+            }
+        }
+
+        public override void snapshot(Gtk.Snapshot snapshot) {
+            if (label.visible) {
+                Graphene.Rect bounds = Graphene.Rect();
+                bounds.init(0, 0, get_width(), get_height());
+                snapshot.append_node(new Gsk.ColorNode(background_color, bounds));
+            }
+            base.snapshot(snapshot);
+        }
+    }
+}

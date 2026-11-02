@@ -1,0 +1,868 @@
+/*
+ * MqttBridgeManager — Forward MQTT messages to real XMPP contacts.
+ *
+ * Bridge rules map MQTT topics to XMPP JIDs.  When a message arrives
+ * on a bridged topic, it is automatically sent as a chat message to
+ * the configured XMPP contact.
+ *
+ * Commands (handled by MqttCommandHandler):
+ *   /mqtt bridge <topic> <jid>  — Create a bridge rule
+ *   /mqtt bridges               — List bridge rules
+ *   /mqtt rmbridge <number>     — Remove a bridge rule
+ *
+ * Copyright (C) 2026 Ralf Peter <dinox@handwerker.jetzt>
+ */
+
+using Gee;
+using Xmpp;
+using Dino.Entities;
+
+namespace Dino.Plugins.Mqtt {
+
+/**
+ * A single bridge rule: MQTT topic → XMPP JID.
+ */
+public class BridgeRule : Object {
+    public string id;
+    public string topic;        /* MQTT topic pattern (exact or wildcard) */
+    public string target_jid;   /* Bare JID of the XMPP recipient */
+    public bool enabled;
+    public string? format;      /* Optional format: "full" (default), "payload", "short" */
+    public string? alias;       /* Human-readable display name for the topic */
+    public string client_label; /* Which MQTT client owns this rule: "standalone" or account bare JID */
+    public string? send_account; /* Bare JID of the XMPP account to send from (mandatory for delivery) */
+
+    public BridgeRule() {
+        id = Xmpp.random_uuid();
+        enabled = true;
+        format = "full";
+        alias = null;
+        client_label = "standalone";
+        send_account = null;
+    }
+
+    /**
+     * Check if this rule matches an MQTT topic.
+     */
+    public bool matches_topic(string incoming_topic) {
+        return MqttUtils.topic_matches(topic, incoming_topic);
+    }
+
+    /**
+     * Format the bridged message body.
+     * Uses the alias (if set) instead of the raw topic path.
+     */
+    public string format_message(string topic_name, string payload) {
+        string display = (alias != null && alias.strip() != "") ? alias : topic_name;
+        return MqttUtils.format_bridge_message(format ?? "full", display, payload);
+    }
+
+    /**
+     * Serialize to JSON.
+     */
+    public Json.Object to_json() {
+        var obj = new Json.Object();
+        obj.set_string_member("id", id);
+        obj.set_string_member("topic", topic);
+        obj.set_string_member("target_jid", target_jid);
+        obj.set_boolean_member("enabled", enabled);
+        if (format != null) obj.set_string_member("format", format);
+        if (alias != null) obj.set_string_member("alias", alias);
+        obj.set_string_member("client_label", client_label);
+        if (send_account != null) obj.set_string_member("send_account", send_account);
+        return obj;
+    }
+
+    /**
+     * Deserialize from JSON.
+     */
+    public static BridgeRule? from_json(Json.Object obj) {
+        var rule = new BridgeRule();
+
+        if (!obj.has_member("topic") || !obj.has_member("target_jid"))
+            return null;
+
+        if (obj.has_member("id"))
+            rule.id = obj.get_string_member("id");
+        rule.topic = obj.get_string_member("topic");
+        rule.target_jid = obj.get_string_member("target_jid");
+
+        if (obj.has_member("enabled"))
+            rule.enabled = obj.get_boolean_member("enabled");
+        if (obj.has_member("format"))
+            rule.format = obj.get_string_member("format");
+        if (obj.has_member("alias"))
+            rule.alias = obj.get_string_member("alias");
+        if (obj.has_member("client_label"))
+            rule.client_label = obj.get_string_member("client_label");
+        if (obj.has_member("send_account"))
+            rule.send_account = obj.get_string_member("send_account");
+
+        return rule;
+    }
+}
+
+
+/**
+ * Manages bridge rules and forwards MQTT messages to XMPP contacts.
+ */
+public class MqttBridgeManager : Object {
+
+    /* DB key for bridge rules JSON */
+    internal const string KEY_BRIDGES = "mqtt_bridges";
+
+    /* Back-references */
+    private Plugin plugin;
+
+    /* Bridge rules (loaded from DB) */
+    private ArrayList<BridgeRule> rules = new ArrayList<BridgeRule>();
+
+    /* Pending messages queued when no XMPP account is connected.
+     * Drained automatically when an account connects (flush_pending). */
+    private struct PendingMsg {
+        public string source;
+        public string target_jid;
+        public string body;
+        public string? format;   /* OOB URL if file transfer, null for text-only */
+    }
+    private ArrayList<PendingMsg?> pending_messages = new ArrayList<PendingMsg?>();
+    private const int MAX_PENDING = 50;  /* prevent unbounded growth */
+    private const int MAX_BRIDGE_PAYLOAD = 65536;  /* 64 KB — XMPP stanza limit */
+
+    /**
+     * Extract the first http(s):// URL from a string.
+     * Returns null if no URL is found.
+     */
+    private static string? extract_url(string text) {
+        string trimmed = text.strip();
+        /* Fast path: payload is just a URL */
+        if (trimmed.has_prefix("https://") || trimmed.has_prefix("http://")) {
+            /* Find end of URL (first whitespace/control char or end of string) */
+            int end = trimmed.length;
+            for (int i = 0; i < trimmed.length; i++) {
+                unichar c = trimmed[i];
+                if (c <= 0x20 || c == 0x7F) { end = i; break; }
+            }
+            string url = trimmed.substring(0, end);
+            return validate_url(url);
+        }
+        /* Slower path: search for URL anywhere in text */
+        int idx = trimmed.index_of("https://");
+        if (idx < 0) idx = trimmed.index_of("http://");
+        if (idx < 0) return null;
+        string from_url = trimmed.substring(idx);
+        int end = from_url.length;
+        for (int i = 0; i < from_url.length; i++) {
+            unichar c = from_url[i];
+            if (c <= 0x20 || c == 0x7F) { end = i; break; }
+        }
+        string url = from_url.substring(0, end);
+        return validate_url(url);
+    }
+
+    /** Verify URL is parseable by GLib.Uri (same check libsoup uses). */
+    private static string? validate_url(string url) {
+        try {
+            Uri.parse(url, UriFlags.NONE);
+            return url;
+        } catch (Error e) {
+            debug("MQTT Bridge: Invalid URL rejected: %s", url);
+            return null;
+        }
+    }
+
+    /**
+     * Check if text looks like a local file path and the file exists.
+     * Returns the path if it's a readable local file, null otherwise.
+     *
+     * SECURITY: Only allows paths under /tmp/ matching the dinox-mqtt-*
+     * naming pattern to prevent arbitrary file exfiltration via MQTT.
+     */
+    private static string? extract_local_path(string text) {
+        string trimmed = text.strip();
+        if (trimmed == "") return null;
+        /* Must be an absolute path */
+        if (!Path.is_absolute(trimmed)) return null;
+        /* Reject paths with suspicious characters (path traversal etc.) */
+        if (trimmed.contains("..")) return null;
+        /* Find end of path (first whitespace or end of string) */
+        int space = trimmed.index_of(" ");
+        int newline = trimmed.index_of("\n");
+        int end = trimmed.length;
+        if (space >= 0 && space < end) end = space;
+        if (newline >= 0 && newline < end) end = newline;
+        string path = trimmed.substring(0, end);
+        /* Whitelist: only allow MQTT temp files created by save_binary_payload() */
+        string tmp_dir = GLib.Environment.get_tmp_dir();
+        string basename = GLib.Path.get_basename(path);
+        if (GLib.Path.get_dirname(path) != tmp_dir || !basename.has_prefix("dinox-mqtt-")) {
+            return null;
+        }
+        /* Check if the file actually exists and is readable */
+        if (GLib.FileUtils.test(path, GLib.FileTest.EXISTS | GLib.FileTest.IS_REGULAR)) {
+            return path;
+        }
+        return null;
+    }
+
+    /**
+     * Send a local file via HTTP Upload (XEP-0363) to an XMPP contact.
+     * Uses DinoX's FileManager to upload and send with OOB element.
+     */
+    private void send_local_file(string source, string target_jid_str,
+                                  string file_path) {
+        try {
+            Jid target_jid = new Jid(target_jid_str);
+
+            Account? account = find_account(source);
+            if (account == null) {
+                if (pending_messages.size < MAX_PENDING) {
+                    PendingMsg pm = PendingMsg();
+                    pm.source = source;
+                    pm.target_jid = target_jid_str;
+                    pm.body = file_path;
+                    pm.format = "local_file";
+                    pending_messages.add(pm);
+                    debug("MQTT Bridge: Queued local file for %s (no XMPP account)",
+                            target_jid_str);
+                }
+                return;
+            }
+
+            deliver_local_file(account, target_jid, file_path, source);
+
+        } catch (InvalidJidError e) {
+            warning("MQTT Bridge: Invalid JID '%s': %s",
+                    target_jid_str, e.message);
+        }
+    }
+
+    /**
+     * Upload a local file via FileManager.send_file() and deliver to XMPP contact.
+     */
+    private void deliver_local_file(Account account, Jid target_jid,
+                                     string file_path, string source) {
+        var muc_manager = plugin.app.stream_interactor.get_module<MucManager>(
+            MucManager.IDENTITY);
+        Conversation.Type conv_type = Conversation.Type.CHAT;
+        if (muc_manager != null && muc_manager.is_groupchat(target_jid, account)) {
+            conv_type = Conversation.Type.GROUPCHAT;
+        }
+
+        var cm = plugin.app.stream_interactor.get_module<ConversationManager>(
+            ConversationManager.IDENTITY);
+        Conversation conv = cm.create_conversation(
+            target_jid, account, conv_type);
+
+        var fm = plugin.app.stream_interactor.get_module<FileManager>(
+            FileManager.IDENTITY);
+
+        /* Verify the XMPP stream is ready before attempting HTTP Upload.
+         * If the stream isn't connected yet, the upload would crash. */
+        var stream = plugin.app.stream_interactor.get_stream(account);
+        if (stream == null) {
+            warning("MQTT Bridge: XMPP stream not ready for %s — re-queuing file '%s'",
+                    account.bare_jid.to_string(), file_path);
+            if (pending_messages.size < MAX_PENDING) {
+                PendingMsg pm = PendingMsg();
+                pm.source = source;
+                pm.target_jid = target_jid.to_string();
+                pm.body = file_path;
+                pm.format = "local_file";
+                pending_messages.add(pm);
+            }
+            return;
+        }
+
+        debug("MQTT Bridge: deliver_local_file — uploading '%s' for %s (encryption=%d)",
+              file_path, target_jid.to_string(), conv.encryption);
+
+        string path_copy = file_path;
+        string source_copy = source;
+        Conversation conv_ref = conv;
+        Jid jid_copy = target_jid;
+        Idle.add(() => {
+            GLib.File file = GLib.File.new_for_path(path_copy);
+            fm.send_file.begin(file, conv_ref, null, (obj, res) => {
+                fm.send_file.end(res);
+                debug("MQTT Bridge: Local file sent [%s] → %s: %s",
+                        source_copy, jid_copy.to_string(), path_copy);
+                /* Temp file cleanup is handled by the caller
+                 * (delayed cleanup) — not here, because multiple
+                 * bridge rules may match the same binary payload
+                 * and each needs to read the file. (Robustness R1) */
+            });
+            return false;
+        });
+    }
+
+    /* ── Construction ────────────────────────────────────────────── */
+
+    public MqttBridgeManager(Plugin plugin) {
+        this.plugin = plugin;
+        load_rules();
+    }
+
+    /* ── Rule Management ─────────────────────────────────────────── */
+
+    public void add_rule(BridgeRule rule) {
+        rules.add(rule);
+        save_rules();
+    }
+
+    public bool remove_rule_by_index(int index) {
+        if (index < 1 || index > rules.size) return false;
+        rules.remove_at(index - 1);
+        save_rules();
+        return true;
+    }
+
+    /**
+     * Remove a bridge rule by its UUID.
+     */
+    public bool remove_rule(string id) {
+        BridgeRule? target = null;
+        foreach (var rule in rules) {
+            if (rule.id == id) {
+                target = rule;
+                break;
+            }
+        }
+        if (target != null) {
+            rules.remove(target);
+            save_rules();
+            return true;
+        }
+        return false;
+    }
+
+    public ArrayList<BridgeRule> get_rules() {
+        return rules;
+    }
+
+    /**
+     * Get bridge rules filtered by client label.
+     * Returns only rules belonging to the specified MQTT client.
+     */
+    public ArrayList<BridgeRule> get_rules_for_client(string client_label) {
+        var filtered = new ArrayList<BridgeRule>();
+        foreach (var rule in rules) {
+            if (rule.client_label == client_label) {
+                filtered.add(rule);
+            }
+        }
+        return filtered;
+    }
+
+    /**
+     * Update an existing bridge rule by its UUID.
+     * Returns true if the rule was found and updated.
+     */
+    public bool update_rule(string id, string topic, string target_jid,
+                             string? format, string? alias, string? send_account) {
+        foreach (var rule in rules) {
+            if (rule.id == id) {
+                rule.topic = topic;
+                rule.target_jid = target_jid;
+                rule.format = format ?? "full";
+                rule.alias = alias;
+                rule.send_account = send_account;
+                /* client_label is NOT changed on edit — the rule stays
+                 * bound to the same MQTT client it was created for. */
+                save_rules();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get a bridge rule by its UUID.
+     */
+    public BridgeRule? get_rule(string id) {
+        foreach (var rule in rules) {
+            if (rule.id == id) return rule;
+        }
+        return null;
+    }
+
+    /* ── Message Forwarding ──────────────────────────────────────── */
+
+    /**
+     * Check an incoming MQTT message against all bridge rules.
+     * If a match is found, send it as an XMPP message to the target JID.
+     *
+     * @param source  The MQTT connection label (account JID or "standalone")
+     * @param topic   The MQTT topic
+     * @param payload The MQTT payload (UTF-8)
+     */
+    /**
+     * Evaluate bridge rules for an incoming MQTT message.
+     * @return true if at least one rule matched and forwarded the message.
+     */
+    public bool evaluate(string source, string topic, string payload) {
+        bool forwarded = false;
+        debug("MQTT Bridge: evaluate() called — source='%s', topic='%s', rules=%d",
+              source, topic, rules.size);
+
+        /* Guard: reject payloads that exceed the XMPP stanza size limit.
+         * Forwarding 200KB+ text as a chat message would break servers. */
+        if (payload.length > MAX_BRIDGE_PAYLOAD) {
+            debug("MQTT Bridge: Payload too large (%d bytes > %d limit) — skipping",
+                  payload.length, MAX_BRIDGE_PAYLOAD);
+            return false;
+        }
+
+        foreach (var rule in rules) {
+            if (!rule.enabled) {
+                debug("MQTT Bridge:   rule '%s' skipped (disabled)", rule.topic);
+                continue;
+            }
+            /* Only evaluate rules belonging to the MQTT client that
+             * received this message — prevents cross-broker duplicates. */
+            if (rule.client_label != source) {
+                debug("MQTT Bridge:   rule '%s' skipped (client_label='%s' != source='%s')",
+                      rule.topic, rule.client_label, source);
+                continue;
+            }
+            if (!rule.matches_topic(topic)) {
+                debug("MQTT Bridge:   rule '%s' skipped (topic mismatch: rule='%s' vs incoming='%s')",
+                      rule.topic, rule.topic, topic);
+                continue;
+            }
+
+            /* Skip rules without a configured send account */
+            if (rule.send_account == null || rule.send_account.strip() == "") {
+                warning("MQTT Bridge: Rule '%s' has no send_account, skipping", rule.topic);
+                continue;
+            }
+
+            /* Format the body and detect file URLs or local paths */
+            string body;
+            string? oob_url = null;
+            string? local_file = null;
+
+            if (rule.format == "file") {
+                /* File-only mode: body = raw URL or path */
+                body = payload.strip();
+                /* Check if it's a local file path */
+                local_file = extract_local_path(body);
+                if (local_file == null) {
+                    oob_url = body;
+                }
+            } else {
+                body = rule.format_message(topic, payload);
+                /* Auto-detect URL in payload for all formats */
+                oob_url = extract_url(payload);
+                /* Also check for local file paths */
+                if (oob_url == null) {
+                    local_file = extract_local_path(payload.strip());
+                }
+            }
+
+            /* Validate OOB URL — only http(s):// */
+            if (oob_url != null && !oob_url.has_prefix("https://") && !oob_url.has_prefix("http://")) {
+                oob_url = null;
+            }
+
+            /* Local file: upload via HTTP Upload + send OOB */
+            if (local_file != null) {
+                debug("MQTT Bridge:   rule '%s' MATCHED — sending local file '%s' to JID='%s' via account='%s'",
+                      rule.topic, local_file, rule.target_jid, rule.send_account);
+                send_local_file(rule.send_account, rule.target_jid, local_file);
+                forwarded = true;
+                continue;
+            }
+
+            debug("MQTT Bridge:   rule '%s' MATCHED — sending to JID='%s' via account='%s' (oob=%s)",
+                  rule.topic, rule.target_jid, rule.send_account,
+                  oob_url != null ? "yes" : "no");
+            send_xmpp_message(rule.send_account, rule.target_jid, body, oob_url);
+            forwarded = true;
+        }
+        return forwarded;
+    }
+
+    /**
+     * Evaluate bridge rules for a binary MQTT payload that was saved
+     * to a temp file.  Matches rules like evaluate(), but sends the
+     * local file via HTTP Upload instead of a text message.
+     *
+     * @param source     MQTT connection label
+     * @param topic      MQTT topic
+     * @param file_path  Path to the temp file with the binary data
+     * @return true if at least one rule matched
+     */
+    public bool evaluate_binary(string source, string topic, string file_path) {
+        bool forwarded = false;
+        foreach (var rule in rules) {
+            if (!rule.enabled) continue;
+            if (rule.client_label != source) continue;
+            if (!rule.matches_topic(topic)) continue;
+            if (rule.send_account == null || rule.send_account.strip() == "") continue;
+
+            debug("MQTT Bridge:   rule '%s' MATCHED (binary) — uploading file '%s' to JID='%s'",
+                  rule.topic, file_path, rule.target_jid);
+            send_local_file(rule.send_account, rule.target_jid, file_path);
+            forwarded = true;
+        }
+        return forwarded;
+    }
+
+    /**
+     * Send a chat message to an XMPP contact.
+     * If no XMPP account is connected, queues the message for later delivery.
+     * If oob_url is set, an Out-of-Band Data element (XEP-0066) is attached
+     * so XMPP clients render it as a file/image preview.
+     */
+    private void send_xmpp_message(string source, string target_jid_str,
+                                    string body, string? oob_url = null) {
+        try {
+            Jid target_jid = new Jid(target_jid_str);
+
+            /* Find the right account to send from */
+            Account? account = find_account(source);
+            if (account == null) {
+                /* Queue for later delivery instead of silently dropping */
+                if (pending_messages.size < MAX_PENDING) {
+                    PendingMsg pm = PendingMsg();
+                    pm.source = source;
+                    pm.target_jid = target_jid_str;
+                    pm.body = body;
+                    pm.format = oob_url;  /* reuse format field for OOB URL */
+                    pending_messages.add(pm);
+                    debug("MQTT Bridge: Queued message for %s (no XMPP account connected, %d pending)",
+                            target_jid_str, pending_messages.size);
+                } else {
+                    warning("MQTT Bridge: Pending queue full (%d), dropping message for %s",
+                            MAX_PENDING, target_jid_str);
+                }
+                return;
+            }
+
+            deliver_message(account, target_jid, body, source, oob_url);
+
+        } catch (InvalidJidError e) {
+            warning("MQTT Bridge: Invalid JID '%s': %s",
+                    target_jid_str, e.message);
+        }
+    }
+
+    /**
+     * Actually deliver a bridge message via XMPP.
+     * If oob_url is set, attaches an OOB element (XEP-0066) so XMPP
+     * clients render the URL as an inline file/image preview.
+     */
+    private void deliver_message(Account account, Jid target_jid,
+                                  string body, string source,
+                                  string? oob_url = null) {
+        /* Determine conversation type: MUC (groupchat) or regular chat.
+         * If the target JID is a known MUC, send as GROUPCHAT so the
+         * message goes to the room.  Otherwise send as a 1:1 CHAT. */
+        var muc_manager = plugin.app.stream_interactor.get_module<MucManager>(
+            MucManager.IDENTITY);
+        Conversation.Type conv_type = Conversation.Type.CHAT;
+        if (muc_manager != null && muc_manager.is_groupchat(target_jid, account)) {
+            conv_type = Conversation.Type.GROUPCHAT;
+        }
+
+        /* Get the conversation (or create one).
+         * Respect existing encryption: if the conversation already uses
+         * OMEMO, keep it — bridge messages should honour the user's
+         * per-conversation encryption choice.  Only force NONE when
+         * there is no prior conversation (fresh create). */
+        var cm = plugin.app.stream_interactor.get_module<ConversationManager>(
+            ConversationManager.IDENTITY);
+        Conversation conv = cm.create_conversation(
+            target_jid, account, conv_type);
+
+        debug("MQTT Bridge: deliver_message — conv encryption=%d for %s (type=%d)",
+              conv.encryption, target_jid.to_string(), conv_type);
+
+        /* Send via MessageProcessor — create + send on main loop */
+        var mp = plugin.app.stream_interactor.get_module<MessageProcessor>(
+            MessageProcessor.IDENTITY);
+        var cis = plugin.app.stream_interactor.get_module<ContentItemStore>(
+            ContentItemStore.IDENTITY);
+
+        string body_copy = body;
+        string? url_copy = oob_url;
+        Conversation conv_ref = conv;
+        Idle.add(() => {
+            Message out_msg = mp.create_out_message(body_copy, conv_ref);
+
+            /* If we have an OOB URL, hook into stanza building to attach
+             * the Out-of-Band Data element (XEP-0066).  This makes XMPP
+             * clients render the URL as an inline file/image preview. */
+            if (url_copy != null) {
+                ulong signal_id = 0;
+                bool[] disconnected = { false };
+                signal_id = mp.build_message_stanza.connect((msg, stanza, c) => {
+                    if (msg.id == out_msg.id) {
+                        Xmpp.Xep.OutOfBandData.add_url_to_message(stanza, url_copy);
+                        if (!disconnected[0]) {
+                            disconnected[0] = true;
+                            mp.disconnect(signal_id);
+                        }
+                    }
+                });
+
+                /* Safety net: auto-disconnect the handler after 30 s in case
+                 * the message is never sent (e.g. stream goes down).
+                 * Without this, leaked handlers accumulate on
+                 * build_message_stanza and scan every future outgoing
+                 * message — causing slowdowns and interference with
+                 * file transfers and video calls. */
+                ulong leaked_id = signal_id;
+                MessageProcessor mp_ref = mp;
+                Timeout.add_seconds(30, () => {
+                    if (!disconnected[0]) {
+                        disconnected[0] = true;
+                        mp_ref.disconnect(leaked_id);
+                    }
+                    return false;
+                });
+            }
+
+            cis.insert_message(out_msg, conv_ref);
+            mp.send_xmpp_message(out_msg, conv_ref);
+            mp.message_sent(out_msg, conv_ref);
+            return false;
+        });
+
+        debug("MQTT Bridge: Forwarded [%s] → %s (%d chars, oob=%s)",
+                source, target_jid.to_string(), body.length,
+                oob_url != null ? oob_url : "none");
+    }
+
+    /**
+     * Flush pending bridge messages.
+     * Called when an XMPP account connects (from Plugin connection_state_changed).
+     */
+    public void flush_pending() {
+        if (pending_messages.size == 0) return;
+
+        /* Snapshot-then-clear: take ownership of the current queue
+         * so that any re-queues during delivery (e.g. deliver_local_file
+         * finding stream==null) go into the fresh pending_messages list
+         * and survive.  (Robustness R4) */
+        var snapshot = new ArrayList<PendingMsg?>();
+        snapshot.add_all(pending_messages);
+        pending_messages.clear();
+
+        int delivered = 0;
+        var still_pending = new ArrayList<PendingMsg?>();
+
+        foreach (var pm in snapshot) {
+            try {
+                Account? acct = find_account(pm.source);
+                if (acct != null) {
+                    Jid jid = new Jid(pm.target_jid);
+                    if (pm.format == "local_file") {
+                        deliver_local_file(acct, jid, pm.body, pm.source);
+                    } else {
+                        deliver_message(acct, jid, pm.body, pm.source, pm.format);
+                    }
+                    delivered++;
+                } else {
+                    still_pending.add(pm);
+                }
+            } catch (InvalidJidError e) {
+                warning("MQTT Bridge: flush_pending: Invalid JID '%s': %s",
+                        pm.target_jid, e.message);
+            }
+        }
+
+        /* Merge still_pending (account not found) with any messages
+         * that were re-queued during delivery (e.g. stream null). */
+        pending_messages.add_all(still_pending);
+
+        if (delivered > 0) {
+            debug("MQTT Bridge: Flushed %d pending messages (%d still pending)",
+                    delivered, pending_messages.size);
+        }
+    }
+
+    /**
+     * Find the Account for a given bare JID.
+     */
+    private Account? find_account(string bare_jid) {
+        var accounts = plugin.app.stream_interactor.get_accounts();
+
+        foreach (var acct in accounts) {
+            if (acct.bare_jid.to_string() == bare_jid) {
+                var state = plugin.app.stream_interactor.connection_manager
+                    .get_state(acct);
+                if (state == ConnectionManager.ConnectionState.CONNECTED) {
+                    return acct;
+                }
+                /* Account exists but not connected */
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /* ── Persistence ─────────────────────────────────────────────── */
+
+    private void load_rules() {
+        /* Phase 1c: Try loading from mqtt.db first */
+        if (plugin.mqtt_db != null) {
+            var iter = plugin.mqtt_db.bridge_rules.select()
+                .order_by(plugin.mqtt_db.bridge_rules.created_at, "ASC")
+                .iterator();
+            while (iter.next()) {
+                var row = iter.get();
+                var rule = new BridgeRule();
+                rule.id = plugin.mqtt_db.bridge_rules.id[row];
+                rule.topic = plugin.mqtt_db.bridge_rules.topic[row];
+                rule.target_jid = plugin.mqtt_db.bridge_rules.target_jid[row];
+                rule.format = plugin.mqtt_db.bridge_rules.format[row];
+                rule.enabled = plugin.mqtt_db.bridge_rules.enabled[row];
+                rule.alias = plugin.mqtt_db.bridge_rules.alias[row];
+                rule.client_label = plugin.mqtt_db.bridge_rules.client_label[row];
+                rule.send_account = plugin.mqtt_db.bridge_rules.send_account[row];
+                rules.add(rule);
+            }
+
+            if (rules.size > 0) {
+                /* Auto-fill send_account for legacy rules that still
+                 * have it unset after the DB migration (e.g. standalone
+                 * rules where client_label == "standalone"). */
+                bool needs_save = false;
+                string? first_acct = null;
+                var accounts = plugin.app.stream_interactor.get_accounts();
+                foreach (var acct in accounts) {
+                    var st = plugin.app.stream_interactor.connection_manager
+                        .get_state(acct);
+                    if (st == ConnectionManager.ConnectionState.CONNECTED) {
+                        first_acct = acct.bare_jid.to_string();
+                        break;
+                    }
+                }
+                /* Fallback: first account even if not connected */
+                if (first_acct == null && accounts.size > 0) {
+                    first_acct = accounts.first().bare_jid.to_string();
+                }
+
+                foreach (var r in rules) {
+                    if (r.send_account == null || r.send_account.strip() == "") {
+                        if (r.client_label != "standalone") {
+                            r.send_account = r.client_label;
+                            needs_save = true;
+                        } else if (first_acct != null) {
+                            r.send_account = first_acct;
+                            needs_save = true;
+                        }
+                    }
+                }
+                if (needs_save) {
+                    debug("MQTT BridgeManager: Auto-filled send_account for legacy rules");
+                    save_rules();
+                }
+
+                debug("MQTT BridgeManager: Loaded %d bridge rules from mqtt.db", rules.size);
+                return;
+            }
+        }
+
+        /* Fallback: load from JSON in settings (legacy) */
+        string? json_str = get_db_setting(KEY_BRIDGES);
+        if (json_str == null || json_str.strip() == "") return;
+
+        try {
+            var parser = new Json.Parser();
+            parser.load_from_data(json_str, -1);
+            var root = parser.get_root();
+            if (root == null || root.get_node_type() != Json.NodeType.ARRAY)
+                return;
+
+            var array = root.get_array();
+            for (uint i = 0; i < array.get_length(); i++) {
+                var node = array.get_element(i);
+                if (node.get_node_type() != Json.NodeType.OBJECT) continue;
+                BridgeRule? rule = BridgeRule.from_json(node.get_object());
+                if (rule != null) {
+                    rules.add(rule);
+                }
+            }
+
+            debug("MQTT BridgeManager: Loaded %d bridge rules from JSON (legacy)", rules.size);
+
+            /* One-time migration: write rules to mqtt.db */
+            if (rules.size > 0 && plugin.mqtt_db != null) {
+                save_rules();
+                debug("MQTT BridgeManager: Migrated %d rules from JSON → mqtt.db", rules.size);
+            }
+        } catch (GLib.Error e) {
+            warning("MQTT BridgeManager: Failed to load rules: %s", e.message);
+        }
+    }
+
+    public void save_rules() {
+        /* Phase 1c: Save to mqtt.db */
+        if (plugin.mqtt_db != null) {
+            /* Wrap DELETE ALL + INSERT ALL in a transaction for atomicity.
+             * On any error, ROLLBACK to preserve existing data (BUG-2 fix). */
+            try {
+                plugin.mqtt_db.exec("BEGIN TRANSACTION");
+
+                /* Delete all existing rules and re-insert */
+                plugin.mqtt_db.bridge_rules.delete().perform();
+
+                long now = (long) MqttUtils.now_unix();
+                foreach (var rule in rules) {
+                    plugin.mqtt_db.bridge_rules.insert()
+                        .value<string>(plugin.mqtt_db.bridge_rules.id, rule.id)
+                        .value<string>(plugin.mqtt_db.bridge_rules.topic, rule.topic)
+                        .value<string>(plugin.mqtt_db.bridge_rules.target_jid, rule.target_jid)
+                        .value<string>(plugin.mqtt_db.bridge_rules.format, rule.format ?? "full")
+                        .value<bool>(plugin.mqtt_db.bridge_rules.enabled, rule.enabled)
+                        .value<string?>(plugin.mqtt_db.bridge_rules.alias, rule.alias)
+                        .value<string>(plugin.mqtt_db.bridge_rules.client_label, rule.client_label)
+                        .value<string?>(plugin.mqtt_db.bridge_rules.send_account, rule.send_account)
+                        .value<long>(plugin.mqtt_db.bridge_rules.created_at, now)
+                        .perform();
+                }
+
+                plugin.mqtt_db.exec("COMMIT");
+            } catch (Error e) {
+                warning("MQTT BridgeManager: save_rules failed, rolling back: %s", e.message);
+                try { plugin.mqtt_db.exec("ROLLBACK"); } catch (Error e2) {
+                    warning("MQTT BridgeManager: ROLLBACK also failed: %s", e2.message);
+                }
+            }
+            return;
+        }
+
+        /* Fallback: save as JSON in settings (legacy) */
+        var array = new Json.Array();
+        foreach (var rule in rules) {
+            var node = new Json.Node(Json.NodeType.OBJECT);
+            node.set_object(rule.to_json());
+            array.add_element(node);
+        }
+
+        var root = new Json.Node(Json.NodeType.ARRAY);
+        root.set_array(array);
+
+        var gen = new Json.Generator();
+        gen.set_root(root);
+        string json_str = gen.to_data(null);
+
+        set_db_setting(KEY_BRIDGES, json_str);
+    }
+
+    /* ── DB helpers (delegated to Plugin) ─────────────────────────── */
+
+    private string? get_db_setting(string key) {
+        return plugin.get_app_db_setting(key);
+    }
+
+    private void set_db_setting(string key, string val) {
+        plugin.set_app_db_setting(key, val);
+    }
+}
+
+}

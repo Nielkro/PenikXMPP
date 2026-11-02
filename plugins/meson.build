@@ -1,0 +1,16 @@
+subdir('http-files')
+subdir('ice')
+subdir('notification-sound')
+subdir('omemo')
+subdir('openpgp')
+subdir('rtp')
+if get_option('plugin-google-webrtc').enabled() and dep_dinox_google_webrtc.found()
+    subdir('google-webrtc')
+elif get_option('plugin-google-webrtc').enabled()
+    error('plugin-google-webrtc requires -Dgoogle-libwebrtc-wrapper=enabled and a valid google-libwebrtc-runtime-root (preferred) or google-libwebrtc-artifact-root')
+else
+    summary('Google/libwebrtc call engine (google-webrtc)', false, bool_yn: true, section: 'Plugins')
+endif
+subdir('tor-manager')
+subdir('bot-features')
+subdir('mqtt')

@@ -1,0 +1,94 @@
+--- a/libavcodec/mfenc.c
++++ b/libavcodec/mfenc.c
+@@ -58,6 +58,7 @@
+     int stream_started;
+     int async_need_input, async_have_output, async_marker;
+     int64_t reorder_delay;
++    int64_t applied_video_bitrate;
+     ICodecAPI *codec_api;
+     // set by AVOption
+     int opt_enc_rc;
+@@ -81,16 +82,34 @@
+     if (!c->async_events)
+         return 0;
+ 
++    /* A lost hardware device must not leave a realtime codec thread blocked
++     * forever inside GetEvent. Preserve the event state machine, but bound
++     * waiting so the caller can switch to its software codec. */
++    const int64_t deadline = av_gettime_relative() + 2000000;
+     while (!(c->async_need_input || c->async_have_output || c->draining_done || c->async_marker)) {
+         IMFMediaEvent *ev = NULL;
+         MediaEventType ev_id = 0;
+-        HRESULT hr = IMFMediaEventGenerator_GetEvent(c->async_events, 0, &ev);
++        HRESULT event_status = S_OK;
++        HRESULT hr;
++        if (av_gettime_relative() >= deadline) {
++            av_log(avctx, AV_LOG_ERROR, "Hardware MFT event timeout\n");
++            return AVERROR(ETIMEDOUT);
++        }
++        hr = IMFMediaEventGenerator_GetEvent(c->async_events, MF_EVENT_FLAG_NO_WAIT, &ev);
++        if (hr == MF_E_NO_EVENTS_AVAILABLE) {
++            av_usleep(1000);
++            continue;
++        }
+         if (FAILED(hr)) {
+             av_log(avctx, AV_LOG_ERROR, "IMFMediaEventGenerator_GetEvent() failed: %s\n",
+                    ff_hr_str(hr));
+             return AVERROR_EXTERNAL;
+         }
+-        IMFMediaEvent_GetType(ev, &ev_id);
++        hr = IMFMediaEvent_GetStatus(ev, &event_status);
++        if (FAILED(hr) || FAILED(event_status) || FAILED(IMFMediaEvent_GetType(ev, &ev_id))) {
++            IMFMediaEvent_Release(ev);
++            return AVERROR_EXTERNAL;
++        }
+         switch (ev_id) {
+         case ff_METransformNeedInput:
+             if (!c->draining)
+@@ -639,6 +658,22 @@
+             return ret;
+     }
+ 
++    /* WebRTC updates AVCodecContext.bit_rate while the encoder is active.
++     * Apply it to the hardware MFT without resetting its reference frames. */
++    if (c->is_video && c->frame->buf[0] &&
++        avctx->bit_rate != c->applied_video_bitrate) {
++        HRESULT hr;
++        if (!c->codec_api || avctx->bit_rate <= 0 || avctx->bit_rate > UINT32_MAX)
++            return AVERROR(EINVAL);
++        hr = ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVEncCommonMeanBitRate,
++                               FF_VAL_VT_UI4(avctx->bit_rate));
++        if (FAILED(hr)) {
++            av_log(avctx, AV_LOG_ERROR, "MFT bitrate update failed: %s\n", ff_hr_str(hr));
++            return AVERROR_EXTERNAL;
++        }
++        c->applied_video_bitrate = avctx->bit_rate;
++    }
++
+     if (c->frame->buf[0]) {
+         ret = mf_avframe_to_sample(avctx, c->frame, &sample);
+         if (ret < 0) {
+@@ -825,6 +860,10 @@
+     if (avctx->codec_id == AV_CODEC_ID_H264) {
+         UINT32 profile = ff_eAVEncH264VProfile_Base;
+         switch (avctx->profile) {
++        case AV_PROFILE_H264_CONSTRAINED_BASELINE:
++            /* eAVEncH264VProfile_ConstrainedBase from codecapi.h. */
++            profile = 256;
++            break;
+         case AV_PROFILE_H264_MAIN:
+             profile = ff_eAVEncH264VProfile_Main;
+             break;
+@@ -832,7 +871,11 @@
+             profile = ff_eAVEncH264VProfile_High;
+             break;
+         }
+-        IMFAttributes_SetUINT32(type, &MF_MT_MPEG2_PROFILE, profile);
++        if (FAILED(IMFAttributes_SetUINT32(type, &MF_MT_MPEG2_PROFILE, profile)))
++            return AVERROR_EXTERNAL;
++        if (avctx->level > 0 &&
++            FAILED(IMFAttributes_SetUINT32(type, &MF_MT_MPEG2_LEVEL, avctx->level)))
++            return AVERROR_EXTERNAL;
+     }
+ 
+     IMFAttributes_SetUINT32(type, &MF_MT_AVG_BITRATE, avctx->bit_rate);

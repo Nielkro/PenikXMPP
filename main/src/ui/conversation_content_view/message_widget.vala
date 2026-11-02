@@ -1,0 +1,762 @@
+/*
+ * Copyright (C) 2025 Ralf Peter <dinox@handwerker.jetzt>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
+
+using Gee;
+using Gdk;
+using Gtk;
+using Pango;
+using Xmpp;
+
+using Dino.Entities;
+
+namespace Dino.Ui.ConversationSummary {
+
+public class MessageMetaItem : ContentMetaItem {
+
+    enum AdditionalInfo {
+        NONE,
+        PENDING,
+        DELIVERY_FAILED
+    }
+
+    private StreamInteractor stream_interactor;
+    private MessageItem message_item;
+    public Message.Marked marked { get; set; }
+    // The skeleton owns the meta item. Keeping the reverse UI link strong
+    // creates an uncollectable skeleton -> item -> skeleton cycle on every
+    // conversation rebuild.
+    public weak Plugins.ConversationItemWidgetInterface outer = null;
+
+    MessageItemEditMode? edit_mode = null;
+    ChatTextViewController? controller = null;
+    ulong edit_cancelled_handler_id = 0;
+    ulong edit_send_handler_id = 0;
+    uint edit_session_generation = 0;
+    uint edit_leave_source_id = 0;
+    bool edit_leave_pending = false;
+    bool edit_lifecycle_disposed = false;
+    AdditionalInfo additional_info = AdditionalInfo.NONE;
+
+    ulong realize_id = -1;
+    ulong marked_notify_handler_id = -1;
+    ulong delivery_error_text_notify_handler_id = -1;
+    uint pending_timeout_id = -1;
+    Binding? marked_binding = null;
+    Message? observed_message = null;
+    bool cached_dark_theme = false;
+
+    public Label label = new Label("") { use_markup=true, xalign=0, selectable=true, wrap=true, wrap_mode=Pango.WrapMode.WORD_CHAR, hexpand=true, vexpand=true };
+
+    public MessageMetaItem(ContentItem content_item, StreamInteractor stream_interactor) {
+        base(content_item);
+        message_item = content_item as MessageItem;
+        this.stream_interactor = stream_interactor;
+
+        label.add_css_class("dino-chat-text");
+
+        stream_interactor.get_module<MessageCorrection>(MessageCorrection.IDENTITY).received_correction.connect(on_updated_item);
+        stream_interactor.get_module<MessageDeletion>(MessageDeletion.IDENTITY).item_deleted.connect(on_updated_item);
+
+        label.activate_link.connect(on_label_activate_link);
+
+        bind_message_observers(((MessageItem) content_item).message);
+
+        update_label();
+    }
+
+    private void bind_message_observers(Message message) {
+        disconnect_message_observers();
+        observed_message = message;
+
+        if (message.direction == Message.DIRECTION_SENT && !(message.marked in Message.MARKED_RECEIVED)) {
+            marked_binding = message.bind_property("marked", this, "marked");
+            marked_notify_handler_id = this.notify["marked"].connect(() => {
+                if (observed_message != message) return;
+
+                // Currently "pending", but not anymore
+                if (additional_info == AdditionalInfo.PENDING &&
+                        message.marked != Message.Marked.SENDING && message.marked != Message.Marked.UNSENT) {
+                    update_label();
+                }
+
+                // Currently "error", but not anymore
+                if (additional_info == AdditionalInfo.DELIVERY_FAILED && message.marked != Message.Marked.ERROR && message.marked != Message.Marked.WONTSEND) {
+                    update_label();
+                }
+
+                // Currently not error, but should be
+                if (additional_info != AdditionalInfo.DELIVERY_FAILED && (message.marked == Message.Marked.ERROR || message.marked == Message.Marked.WONTSEND)) {
+                    update_label();
+                }
+
+                // Nothing bad can happen anymore
+                if (message.marked in Message.MARKED_RECEIVED) {
+                    if (marked_binding != null) { marked_binding.unbind(); marked_binding = null; }
+                    ulong handler_id = marked_notify_handler_id;
+                    marked_notify_handler_id = -1;
+                    if (handler_id != -1 && SignalHandler.is_connected(this, handler_id)) {
+                        this.disconnect(handler_id);
+                    }
+                }
+            });
+            delivery_error_text_notify_handler_id = message.notify["delivery-error-text"].connect(() => {
+                if (observed_message == message && (message.marked == Message.Marked.ERROR || message.marked == Message.Marked.WONTSEND)) {
+                    update_label();
+                }
+            });
+        }
+    }
+
+    private void disconnect_message_observers() {
+        if (marked_binding != null) {
+            marked_binding.unbind();
+            marked_binding = null;
+        }
+
+        if (marked_notify_handler_id != -1) {
+            ulong handler_id = marked_notify_handler_id;
+            marked_notify_handler_id = -1;
+            if (SignalHandler.is_connected(this, handler_id)) {
+                this.disconnect(handler_id);
+            }
+        }
+
+        Message? signal_owner = observed_message;
+        observed_message = null;
+        if (delivery_error_text_notify_handler_id != -1) {
+            ulong handler_id = delivery_error_text_notify_handler_id;
+            delivery_error_text_notify_handler_id = -1;
+            if (signal_owner != null && SignalHandler.is_connected(signal_owner, handler_id)) {
+                ((!) signal_owner).disconnect(handler_id);
+            }
+        }
+    }
+
+    private void generate_markup_text(ContentItem item, Label label) {
+        MessageItem message_item = item as MessageItem;
+        Conversation conversation = message_item.conversation;
+        Message message = message_item.message;
+
+        bool local_diagnostic = MessageDiagnostics.is_local_decryption_failure(message);
+
+        // Failed encrypted content must not carry unauthenticated formatting
+        // or fallback ranges onto the localized local diagnostic.
+        var markups = new ArrayList<Xep.MessageMarkup.Span>();
+        if (!local_diagnostic) {
+            foreach (var markup in message.get_markups()) {
+                markups.add(new Xep.MessageMarkup.Span() { types=markup.types, start_char=markup.start_char, end_char=markup.end_char });
+            }
+        }
+
+        string markup_text = MessageDiagnostics.body_for_display(message);
+
+        var attrs = new AttrList();
+        label.set_attributes(attrs);
+
+        if (markup_text == null) return; // TODO remove
+
+        // Truncate extremely long messages to prevent UI freeze.
+        // Base64/binary data without whitespace is especially expensive for
+        // regex processing and Pango layout, so detect and truncate early.
+        bool message_truncated = false;
+        if (markup_text.length > 10000) {
+            // Check if the text looks like non-textual data (no whitespace in first 500 chars)
+            bool has_whitespace = false;
+            int check_len = int.min(500, markup_text.length);
+            for (int i = 0; i < check_len; i++) {
+                unichar c = markup_text[i];
+                if (c == ' ' || c == '\n' || c == '\t') {
+                    has_whitespace = true;
+                    break;
+                }
+            }
+            if (!has_whitespace && markup_text.length > 1000) {
+                // Likely base64 or binary data — truncate aggressively
+                markup_text = markup_text.substring(0, 200) + " …";
+                message_truncated = true;
+            } else if (markup_text.length > 50000) {
+                markup_text = markup_text.substring(0, 50000);
+                message_truncated = true;
+            }
+        }
+
+        bool theme_dependent = false;
+
+        if (!local_diagnostic) {
+            markup_text = Util.remove_fallbacks_adjust_markups(markup_text, message.quoted_item_id > 0, message.get_fallbacks(), markups);
+        }
+
+        var bold_attr = Pango.attr_weight_new(Pango.Weight.BOLD);
+        var italic_attr = Pango.attr_style_new(Pango.Style.ITALIC);
+
+        bool is_me_message = false;
+        string me_display_name = "";
+
+        // Prefix message with name instead of /me
+        if (markup_text.has_prefix("/me ")) {
+            string display_name = Util.get_participant_display_name(stream_interactor, conversation, message.from);
+            markup_text = display_name + " " + markup_text.substring(4);
+            is_me_message = true;
+            me_display_name = display_name;
+
+            foreach (Xep.MessageMarkup.Span span in markups) {
+                int length = display_name.char_count() - 4 + 1;
+                span.start_char += length;
+                span.end_char += length;
+            }
+        }
+
+        // Work around pango bug - must happen BEFORE computing AttrList byte indices,
+        // because NBSP (U+00A0) is 2 bytes in UTF-8 vs 1 byte for regular space
+        markup_text = Util.unbreak_space_around_non_spacing_mark((owned) markup_text);
+
+        // Compute /me bold/italic AFTER unbreak_space so byte indices are correct
+        if (is_me_message) {
+            // Recompute byte length after potential NBSP expansion
+            int name_byte_len = markup_text.index_of_nth_char(me_display_name.char_count());
+            bold_attr.end_index = name_byte_len;
+            italic_attr.end_index = name_byte_len;
+            attrs.insert(bold_attr.copy());
+            attrs.insert(italic_attr.copy());
+        }
+
+        foreach (var markup in markups) {
+            foreach (var ty in markup.types) {
+                Attribute attr = null;
+                switch (ty) {
+                    case Xep.MessageMarkup.SpanType.EMPHASIS:
+                        attr = Pango.attr_style_new(Pango.Style.ITALIC);
+                        break;
+                    case Xep.MessageMarkup.SpanType.STRONG_EMPHASIS:
+                        attr = Pango.attr_weight_new(Pango.Weight.BOLD);
+                        break;
+                    case Xep.MessageMarkup.SpanType.DELETED:
+                        attr = Pango.attr_strikethrough_new(true);
+                        break;
+                }
+                attr.start_index = markup_text.index_of_nth_char(markup.start_char);
+                attr.end_index = markup_text.index_of_nth_char(markup.end_char);
+                attrs.insert(attr.copy());
+            }
+        }
+
+        if (conversation.type_ == Conversation.Type.GROUPCHAT) {
+            markup_text = Util.parse_add_markup_theme(markup_text, conversation.nickname, true, true, true, Util.is_dark_theme(this.label), ref theme_dependent);
+        } else {
+            markup_text = Util.parse_add_markup_theme(markup_text, null, true, true, true, Util.is_dark_theme(this.label), ref theme_dependent);
+        }
+
+        int only_emoji_count = Util.get_only_emoji_count(markup_text);
+        if (only_emoji_count != -1) {
+            string size_str = only_emoji_count < 5 ? "xx-large" : "large";
+            markup_text = @"<span size=\'$size_str\'>" + markup_text + "</span>";
+        }
+
+        string dim_color = Util.is_dark_theme(this.label) ? "#BDBDBD" : "#707070";
+
+        if (message.body == "") {
+            markup_text = @"<i><span size='small' color='$dim_color'>%s</span></i>".printf(_("Message deleted"));
+            theme_dependent = true;
+        }
+        if (message.edit_to != null) {
+            markup_text += @"  <span size='small' color='$dim_color'>(%s)</span>".printf(_("edited"));
+            theme_dependent = true;
+        }
+        if (message_truncated) {
+            markup_text += @"\n<i><span size='small' color='$dim_color'>[%s]</span></i>".printf(_("Message truncated - exceeds 50,000 characters"));
+            theme_dependent = true;
+        }
+
+        if (message.encryption == Encryption.OMEMO && message.encryption_time_mismatch && !local_diagnostic) {
+            string warning_color = Util.rgba_to_hex(Util.get_label_pango_color(label, "@warning"));
+            markup_text += "  <span size='small' color='%s'>%s</span>".printf(warning_color,
+                Markup.escape_text(_("The encrypted timestamp differs from the delivery time.")));
+            theme_dependent = true;
+        }
+
+        // Append message status info
+        additional_info = AdditionalInfo.NONE;
+        if (message.direction == Message.DIRECTION_SENT && (message.marked == Message.Marked.SENDING || message.marked == Message.Marked.UNSENT)) {
+            // Append "pending..." iff message has not been sent yet
+            if (message.time.compare(new DateTime.now_utc().add_seconds(-10)) < 0) {
+                markup_text += @"  <span size='small' color='$dim_color'>%s</span>".printf(_("pending…"));
+                theme_dependent = true;
+                additional_info = AdditionalInfo.PENDING;
+            } else {
+                int time_diff = (- (int) message.time.difference(new DateTime.now_utc()) / 1000);
+                if (pending_timeout_id != -1) Source.remove(pending_timeout_id);
+                pending_timeout_id = Timeout.add(10000 - time_diff, () => {
+                    update_label();
+                    pending_timeout_id = -1;
+                    return false;
+                });
+            }
+        } else if (message.direction == Message.DIRECTION_SENT && (message.marked == Message.Marked.ERROR || message.marked == Message.Marked.WONTSEND)) {
+            // Append "delivery failed" if there was a server error
+            string error_color = Util.rgba_to_hex(Util.get_label_pango_color(label, "@error_color"));
+            string error_text = MessageDiagnostics.delivery_error_for_display(message.delivery_error_text);
+            markup_text += "  <span size='small' color='%s'>%s</span>".printf(error_color, Markup.escape_text(error_text));
+            theme_dependent = true;
+            additional_info = AdditionalInfo.DELIVERY_FAILED;
+        }
+
+        if (theme_dependent && realize_id == -1) {
+            cached_dark_theme = Util.is_dark_theme(label);
+            realize_id = label.realize.connect(() => {
+                bool dark_now = Util.is_dark_theme(label);
+                if (dark_now != cached_dark_theme) {
+                    cached_dark_theme = dark_now;
+                    update_label();
+                }
+            });
+        } else if (!theme_dependent && realize_id != -1) {
+            label.disconnect(realize_id);
+            realize_id = -1;
+        }
+
+        // Reset selectable before changing text to avoid stale cursor index
+        // (Pango-CRITICAL: pango_layout_get_cursor_pos assertion failure)
+        label.selectable = false;
+        label.label = Util.sanitize_utf8(markup_text);
+        label.selectable = true;
+    }
+
+
+    public void update_label() {
+        generate_markup_text(content_item, label);
+    }
+
+    // Shared session + tile cache for all map widgets (avoids per-widget Soup.Session and duplicate downloads)
+    private static Soup.Session? shared_tile_session = null;
+    private static HashMap<string, Gdk.Texture> tile_cache = new HashMap<string, Gdk.Texture>();
+    private static Gee.LinkedList<string> tile_cache_lru = new Gee.LinkedList<string>();
+    private const int MAX_TILE_CACHE_SIZE = 100;
+
+    private static Soup.Session get_tile_session() {
+        if (shared_tile_session == null) {
+            shared_tile_session = new Soup.Session();
+            shared_tile_session.user_agent = @"Dino/$(Dino.get_short_version()) ";
+            shared_tile_session.timeout = 15;
+        }
+        return shared_tile_session;
+    }
+
+    private Widget? create_map_widget(string geo_uri) {
+        debug("MessageMetaItem: Creating map widget for URI: %s", geo_uri);
+        // geo:lat,lon[?params]
+        string content = geo_uri.substring(4).split("?")[0]; // strip query params
+        string[] parts = content.split(",");
+        if (parts.length < 2) {
+            debug("MessageMetaItem: Invalid geo URI format (split count: %d)", parts.length);
+            return null;
+        }
+
+        double lat = double.parse(parts[0].strip());
+        double lon = double.parse(parts[1].strip());
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+            warning("MessageMetaItem: Coordinates out of range: %f, %f", lat, lon);
+            return null;
+        }
+        debug("MessageMetaItem: Parsed coordinates: %f, %f", lat, lon);
+
+        // Calculate OSM tile (Zoom 15)
+        int zoom = 15;
+        double lat_rad = lat * Math.PI / 180.0;
+        double n = Math.pow(2, zoom);
+        int xtile = (int)(n * ((lon + 180.0) / 360.0));
+        int ytile = (int)(n * (1.0 - (Math.log(Math.tan(lat_rad) + 1.0/Math.cos(lat_rad)) / Math.PI)) / 2.0);
+        
+        string tile_url = "https://tile.openstreetmap.org/%d/%d/%d.png".printf(zoom, xtile, ytile);
+        debug("MessageMetaItem: Tile URL: %s", tile_url);
+
+        Box box = new Box(Orientation.VERTICAL, 0);
+        box.add_css_class("message-content");
+        box.halign = Align.START;
+        box.hexpand = false;
+        box.width_request = 256;
+        
+        Overlay overlay = new Overlay();
+        overlay.set_size_request(256, 256);
+        overlay.halign = Align.START;
+        overlay.hexpand = false;
+
+        Picture picture = new Picture();
+        picture.content_fit = ContentFit.COVER;
+        picture.can_shrink = true;
+
+        // Use cached tile or fetch from network
+        if (tile_cache.has_key(tile_url)) {
+            picture.set_paintable(tile_cache[tile_url]);
+            // LRU touch: move to end so frequently-used tiles are not evicted
+            tile_cache_lru.remove(tile_url);
+            tile_cache_lru.add(tile_url);
+        } else {
+            var cancel = new Cancellable();
+            var msg = new Soup.Message("GET", tile_url);
+
+            // Cancel download when widget is destroyed
+            box.destroy.connect(() => { cancel.cancel(); });
+
+            get_tile_session().send_and_read_async.begin(msg, Priority.DEFAULT, cancel, (obj, res) => {
+                try {
+                    Bytes bytes = get_tile_session().send_and_read_async.end(res);
+                    if (bytes != null && bytes.get_size() > 0) {
+                        debug("MessageMetaItem: Map tile downloaded (%d bytes)", (int)bytes.get_size());
+                        var stream = new MemoryInputStream.from_bytes(bytes);
+                        var pixbuf = new Gdk.Pixbuf.from_stream(stream);
+                        if (pixbuf == null || pixbuf.get_pixels() == null) return;
+                        var texture = Dino.Ui.Util.texture_from_pixbuf(pixbuf);
+                        tile_cache[tile_url] = texture;
+                        tile_cache_lru.add(tile_url);
+                        while (tile_cache_lru.size > MAX_TILE_CACHE_SIZE) {
+                            string oldest = tile_cache_lru.remove_at(0);
+                            tile_cache.unset(oldest);
+                        }
+                        picture.set_paintable(texture);
+                    }
+                } catch (Error e) {
+                    if (!(e is IOError.CANCELLED)) {
+                        warning("Failed to load map tile: %s", e.message);
+                    }
+                }
+            });
+        }
+
+        overlay.set_child(picture);
+
+        // Add Marker
+        Image marker = new Image.from_icon_name("mark-location-symbolic");
+        marker.pixel_size = 32;
+        marker.halign = Align.CENTER;
+        marker.valign = Align.CENTER;
+        marker.add_css_class("error");
+        overlay.add_overlay(marker);
+
+        box.append(overlay);
+        
+        Label caption = new Label(_("Navigate to location"));
+        caption.add_css_class("dim-label");
+        caption.margin_top = 5;
+        box.append(caption);
+
+        // Use parsed doubles for safe URL construction (prevents injection from malicious geo URIs)
+        string safe_lat = "%.6f".printf(lat).replace(",", ".");
+        string safe_lon = "%.6f".printf(lon).replace(",", ".");
+        var gesture = new GestureClick();
+        gesture.pressed.connect(() => {
+            string link = "https://www.google.com/maps/dir/?api=1&destination=%s,%s".printf(safe_lat, safe_lon);
+            var launcher = new Gtk.UriLauncher(link);
+            launcher.launch.begin(null, null, (obj, res) => {
+                try {
+                    launcher.launch.end(res);
+                } catch (Error e) {
+                    warning("Failed to open link: %s", e.message);
+                }
+            });
+        });
+        box.add_controller(gesture);
+        box.set_cursor(new Gdk.Cursor.from_name("pointer", null));
+
+        return box;
+    }
+
+    public override Object? get_widget(Plugins.ConversationItemWidgetInterface outer, Plugins.WidgetType type) {
+        this.outer = outer;
+
+        this.notify["in-edit-mode"].connect(on_in_edit_mode_changed);
+
+        Widget? main_widget = label;
+
+        if (message_item.message.body != null && message_item.message.body.has_prefix("geo:")) {
+            var map_widget = create_map_widget(message_item.message.body);
+            if (map_widget != null) {
+                outer.set_widget(map_widget, Plugins.WidgetType.GTK4, 2);
+                main_widget = map_widget;
+            } else {
+                outer.set_widget(label, Plugins.WidgetType.GTK4, 2);
+            }
+        } else {
+            outer.set_widget(label, Plugins.WidgetType.GTK4, 2);
+        }
+
+        if (message_item.message.quoted_item_id > 0) {
+            var quoted_content_item = stream_interactor.get_module<ContentItemStore>(ContentItemStore.IDENTITY).get_item_by_id(message_item.conversation, message_item.message.quoted_item_id);
+            if (quoted_content_item != null) {
+                var quote_model = new Quote.Model.from_content_item(quoted_content_item, message_item.conversation, stream_interactor);
+                quote_model.jump_to.connect(() => {
+                    GLib.Application.get_default().activate_action("jump-to-conversation-message", new GLib.Variant.tuple(new GLib.Variant[] { new GLib.Variant.int32(message_item.conversation.id), new GLib.Variant.int32(quoted_content_item.id) }));
+                });
+                var quote_widget = Quote.get_widget(quote_model);
+                outer.set_widget(quote_widget, Plugins.WidgetType.GTK4, 1);
+            }
+        }
+
+        // URL link preview (Telegram-style)
+        string? preview_url = Dino.Ui.extract_preview_url(message_item.message.body);
+        if (preview_url != null) {
+            var preview_widget = new Dino.Ui.UrlPreviewWidget(preview_url);
+            outer.set_widget(preview_widget, Plugins.WidgetType.GTK4, 3);
+        }
+
+        return main_widget;
+    }
+
+    public override Gee.List<Plugins.MessageAction>? get_item_actions(Plugins.WidgetType type) {
+        if (in_edit_mode) return null;
+
+        Gee.List<Plugins.MessageAction> actions = new ArrayList<Plugins.MessageAction>();
+
+        bool correction_allowed = stream_interactor.get_module<MessageCorrection>(MessageCorrection.IDENTITY).is_own_correction_allowed(message_item.conversation, message_item.message);
+        if (correction_allowed) {
+            Plugins.MessageAction action1 = new Plugins.MessageAction();
+            action1.name = "correction";
+            action1.icon_name = "document-edit-symbolic";
+            action1.tooltip = _("Edit message");
+            action1.callback = () => {
+                this.in_edit_mode = true;
+            };
+            actions.add(action1);
+        }
+
+        actions.add(get_reply_action(content_item, message_item.conversation, stream_interactor));
+        actions.add(get_reaction_action(content_item, message_item.conversation, stream_interactor));
+
+        // var kick_action = get_kick_action(content_item, message_item.conversation, stream_interactor);
+        // if (kick_action != null) actions.add(kick_action);
+
+        // var ban_action = get_ban_action(content_item, message_item.conversation, stream_interactor);
+        // if (ban_action != null) actions.add(ban_action);
+
+        var delete_action = get_delete_action(content_item, message_item.conversation, stream_interactor);
+        if (delete_action != null) actions.add(delete_action);
+
+        return actions;
+    }
+
+    private void on_in_edit_mode_changed() {
+        if (in_edit_mode == false) return;
+        bool allowed = stream_interactor.get_module<MessageCorrection>(MessageCorrection.IDENTITY).is_own_correction_allowed(message_item.conversation, message_item.message);
+        if (allowed) {
+            cleanup_edit_mode();
+            MessageItem message_item = content_item as MessageItem;
+            Message message = message_item.message;
+
+            edit_mode = new MessageItemEditMode();
+            controller = new ChatTextViewController(edit_mode.chat_text_view, stream_interactor);
+            Conversation edit_conversation = message_item.conversation;
+            Message correction_target = message_item.message;
+            int quoted_item_id = correction_target.quoted_item_id;
+            controller.initialize_for_conversation(edit_conversation);
+            uint session_generation = edit_session_generation;
+            MessageItemEditMode session_edit_mode = (!) edit_mode;
+
+            edit_cancelled_handler_id = edit_mode.cancelled.connect(() => {
+                schedule_edit_mode_leave(session_edit_mode,
+                    session_generation);
+            });
+            edit_send_handler_id = edit_mode.send.connect(() => {
+                if (!claim_edit_mode_leave(session_edit_mode,
+                        session_generation)) {
+                    return;
+                }
+
+                string text = session_edit_mode.chat_text_view.get_text();
+                var markups = session_edit_mode.chat_text_view.get_markups();
+                text = Util.sanitize_utf8(text);
+                // send_message() synchronously replaces this MessageMetaItem's
+                // backing message with the new correction. Use the values
+                // captured for this edit session, never the mutated field.
+                Dino.send_message(edit_conversation, text, quoted_item_id,
+                    correction_target, markups);
+            });
+
+            edit_mode.chat_text_view.set_text(message);
+
+            outer.set_widget(edit_mode, Plugins.WidgetType.GTK4, 2);
+            edit_mode.chat_text_view.text_view.grab_focus();
+        } else {
+            this.in_edit_mode = false;
+        }
+    }
+
+    private void schedule_edit_mode_leave(MessageItemEditMode expected_edit_mode,
+            uint expected_generation) {
+        claim_edit_mode_leave(expected_edit_mode, expected_generation);
+    }
+
+    private bool claim_edit_mode_leave(MessageItemEditMode expected_edit_mode,
+            uint expected_generation) {
+        if (edit_lifecycle_disposed || edit_leave_pending ||
+                edit_mode != expected_edit_mode ||
+                edit_session_generation != expected_generation) {
+            return false;
+        }
+
+        edit_leave_pending = true;
+        edit_leave_source_id = Idle.add(() => {
+            // A stale callback must not clear the source/pending state of a
+            // newer edit session.
+            if (!edit_leave_pending || edit_lifecycle_disposed ||
+                    edit_mode != expected_edit_mode ||
+                    edit_session_generation != expected_generation) {
+                return false;
+            }
+            edit_leave_source_id = 0;
+
+            // Keep the focused edit widget parented until GTK has returned
+            // from the button/key event that emitted send/cancel. Hierarchy
+            // changes are then delegated to ConversationItemSkeleton, which
+            // clears root focus synchronously before detaching the subtree.
+            Plugins.ConversationItemWidgetInterface? current_outer = outer;
+            if (current_outer != null) {
+                ((!) current_outer).set_widget(label,
+                    Plugins.WidgetType.GTK4, 2);
+            }
+            if (edit_lifecycle_disposed ||
+                    edit_mode != expected_edit_mode ||
+                    edit_session_generation != expected_generation) {
+                return false;
+            }
+            in_edit_mode = false;
+            if (edit_lifecycle_disposed ||
+                    edit_mode != expected_edit_mode ||
+                    edit_session_generation != expected_generation) {
+                return false;
+            }
+            cleanup_edit_mode();
+            return false;
+        });
+        return true;
+    }
+
+    private void cleanup_edit_mode() {
+        edit_session_generation++;
+        edit_leave_pending = false;
+        if (edit_leave_source_id != 0) {
+            Source.remove(edit_leave_source_id);
+            edit_leave_source_id = 0;
+        }
+        if (edit_mode != null) {
+            if (edit_cancelled_handler_id != 0 &&
+                    SignalHandler.is_connected((!) edit_mode, edit_cancelled_handler_id)) {
+                ((!) edit_mode).disconnect(edit_cancelled_handler_id);
+            }
+            if (edit_send_handler_id != 0 &&
+                    SignalHandler.is_connected((!) edit_mode, edit_send_handler_id)) {
+                ((!) edit_mode).disconnect(edit_send_handler_id);
+            }
+            edit_cancelled_handler_id = 0;
+            edit_send_handler_id = 0;
+            edit_mode = null;
+        }
+        if (controller != null) {
+            ((!) controller).unset_conversation();
+            controller = null;
+        }
+    }
+
+    private void on_updated_item(ContentItem content_item) {
+        if (this.content_item.id == content_item.id) {
+            this.content_item = content_item;
+            message_item = content_item as MessageItem;
+            bind_message_observers(message_item.message);
+            update_label();
+        }
+    }
+
+    public bool on_label_activate_link(string uri) {
+        // Always handle xmpp URIs with Dino
+        if (!uri.has_prefix("xmpp:")) return false;
+
+        // Bot command links: send command directly in the current conversation
+        if (uri.contains("?message;body=")) {
+            int body_idx = uri.index_of("?message;body=") + "?message;body=".length;
+            string? body = GLib.Uri.unescape_string(uri.substring(body_idx));
+            if (body != null && body != "" && message_item != null) {
+                Conversation conv = message_item.conversation;
+                Dino.send_message(conv, Util.sanitize_utf8(body), 0, null, new Gee.ArrayList<Xmpp.Xep.MessageMarkup.Span>());
+                return true;
+            }
+        }
+
+        File file = File.new_for_uri(uri);
+        Dino.Application.get_default().open(new File[]{file}, "");
+        return true;
+    }
+
+    public override void dispose() {
+        edit_lifecycle_disposed = true;
+        // Break the row ownership link explicitly as well. dispose() may run
+        // while the skeleton itself is still alive during ConversationView.clear().
+        outer = null;
+        cleanup_edit_mode();
+        if (stream_interactor != null) {
+            stream_interactor.get_module<MessageCorrection>(MessageCorrection.IDENTITY).received_correction.disconnect(on_updated_item);
+            stream_interactor.get_module<MessageDeletion>(MessageDeletion.IDENTITY).item_deleted.disconnect(on_updated_item);
+            this.notify["in-edit-mode"].disconnect(on_in_edit_mode_changed);
+            stream_interactor = null;
+        }
+        disconnect_message_observers();
+        if (realize_id != -1) {
+            if (label != null && SignalHandler.is_connected(label, realize_id)) {
+                label.disconnect(realize_id);
+            }
+            realize_id = -1;
+        }
+        if (pending_timeout_id != -1) {
+            Source.remove(pending_timeout_id);
+            pending_timeout_id = -1;
+        }
+        // The ConversationItemSkeleton owns the rendered widget lifecycle.
+        // In remove_item() it is disposed before this meta item; in clear()
+        // this reference is dropped first and the skeleton disposes it next.
+        // Disposing it here as well double-disposes the same GTK widget.
+        if (label != null) {
+            label = null;
+        }
+        message_item = null;
+        base.dispose();
+    }
+}
+
+[GtkTemplate (ui = "/im/dinox/dinox/message_item_widget_edit_mode.ui")]
+public class MessageItemEditMode : Box {
+
+    public signal void cancelled();
+    public signal void send();
+
+    [GtkChild] public unowned MenuButton emoji_button;
+    [GtkChild] public unowned ChatTextView chat_text_view;
+    [GtkChild] public unowned Button cancel_button;
+    [GtkChild] public unowned Button send_button;
+    [GtkChild] public unowned Frame frame;
+
+    construct {
+        Util.force_css(frame, "* { border-radius: 3px; padding: 0px 7px; }");
+
+        EmojiChooser chooser = new EmojiChooser();
+        chooser.emoji_picked.connect((emoji) => {
+            chat_text_view.text_view.buffer.insert_at_cursor(emoji, emoji.data.length);
+        });
+        Util.set_menu_button_popover(emoji_button, chooser);
+
+        chat_text_view.text_view.buffer.changed.connect_after(on_text_view_changed);
+
+        cancel_button.clicked.connect(() => cancelled());
+        send_button.clicked.connect(() => send());
+        chat_text_view.cancel_input.connect(() => cancelled());
+        chat_text_view.send_text.connect(() => send());
+    }
+
+    private void on_text_view_changed() {
+        send_button.sensitive = chat_text_view.get_text() != "";
+    }
+}
+
+}

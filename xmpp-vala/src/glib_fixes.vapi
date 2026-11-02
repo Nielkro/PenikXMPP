@@ -1,0 +1,54 @@
+[CCode (cprefix = "G", gir_namespace = "Gio", gir_version = "2.0", lower_case_cprefix = "g_")]
+namespace GLibFixes {
+
+    // Fix for g_tls_connection_get_channel_binding_data:
+    // The standard Vala binding uses "out unowned ByteArray" which passes NULL.
+    // The C function expects a pre-allocated GByteArray* to fill.
+    [CCode (cname = "g_tls_connection_get_channel_binding_data", cheader_filename = "gio/gio.h")]
+    public static bool tls_get_channel_binding(GLib.TlsConnection conn, GLib.TlsChannelBindingType type, GLib.ByteArray data) throws GLib.Error;
+
+    // Fix for g_tls_client_connection_new:
+    // The C function returns GIOStream*, while current Vala bindings expose
+    // TlsClientConnection and generate incompatible-pointer warnings.
+    [CCode (cname = "g_tls_client_connection_new", cheader_filename = "gio/gio.h")]
+    public static GLib.IOStream tls_client_connection_new(GLib.IOStream base_io_stream, GLib.SocketConnectable? server_identity) throws GLib.Error;
+
+    [CCode (cheader_filename = "gio/gio.h", type_id = "g_resolver_get_type ()")]
+    public class Resolver : GLib.Object {
+        [CCode (has_construct_function = false)]
+        protected Resolver();
+
+        [Version (since = "2.22")]
+        public static Resolver get_default();
+
+        [Version (since = "2.22")]
+        public virtual string lookup_by_address(GLib.InetAddress address, GLib.Cancellable? cancellable = null) throws GLib.Error ;
+
+        [Version (since = "2.22")]
+        public virtual async string lookup_by_address_async(GLib.InetAddress address, GLib.Cancellable? cancellable = null) throws GLib.Error ;
+
+        [Version (since = "2.22")]
+        public virtual GLib.List<GLib.InetAddress> lookup_by_name(string hostname, GLib.Cancellable? cancellable = null) throws GLib.Error ;
+
+        [Version (since = "2.22")]
+        public virtual async GLib.List<GLib.InetAddress> lookup_by_name_async(string hostname, GLib.Cancellable? cancellable = null) throws GLib.Error ;
+
+        [Version (since = "2.34")]
+        public virtual GLib.List<GLib.Variant> lookup_records(string rrname, GLib.ResolverRecordType record_type, GLib.Cancellable? cancellable = null) throws GLib.Error ;
+
+        [Version (since = "2.34")]
+        public virtual async GLib.List<GLib.Variant> lookup_records_async(string rrname, GLib.ResolverRecordType record_type, GLib.Cancellable? cancellable = null) throws GLib.Error ;
+
+        [Version (since = "2.22")]
+        public virtual GLib.List<GLib.SrvTarget> lookup_service(string service, string protocol, string domain, GLib.Cancellable? cancellable = null) throws GLib.Error ;
+
+        [CCode (finish_vfunc_name = "lookup_service_finish", vfunc_name = "lookup_service_async")]
+        public async GLib.List<GLib.SrvTarget> lookup_service_async (string service, string protocol, string domain, GLib.Cancellable? cancellable = null) throws GLib.Error;
+
+        [Version (since = "2.22")]
+        public void set_default();
+
+        public virtual signal void reload ();
+    }
+
+}

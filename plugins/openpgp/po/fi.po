@@ -1,0 +1,1860 @@
+# Finnish translations for DinoX.
+# This file is distributed under the same license as the DinoX package.
+msgid ""
+msgstr ""
+"Project-Id-Version: DinoX\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-26 12:04+0100\n"
+"PO-Revision-Date: 2026-10-26 19:23+0100\n"
+"Last-Translator: DinoX contributors\n"
+"Language-Team: Finnish\n"
+"Language: fi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: plugins/openpgp/src/contact_details_provider.vala:163
+msgid "OpenPGP Legacy (XEP-0027/keyserver)"
+msgstr "Vanha OpenPGP (XEP-0027/avainpalvelin)"
+
+#: plugins/openpgp/src/contact_details_provider.vala:176
+msgid "Search keyserver"
+msgstr "Etsi avainpalvelimelta"
+
+#: plugins/openpgp/src/contact_details_provider.vala:184
+msgid "OpenPGP XMPP (XEP-0373/0374)"
+msgstr "OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/contact_details_provider.vala:196
+msgid "Copy XMPP-published OpenPGP fingerprint"
+msgstr "Kopioi XMPP:ssä julkaistu OpenPGP-sormenjälki"
+
+#: plugins/openpgp/src/contact_details_provider.vala:205
+msgid "Mark XMPP-published key as verified"
+msgstr "Merkitse XMPP:ssä julkaistu avain vahvistetuksi"
+
+#: plugins/openpgp/src/contact_details_provider.vala:211
+msgid "Reset XMPP-published key verification"
+msgstr "Nollaa XMPP:ssä julkaistun avaimen vahvistus"
+
+#: plugins/openpgp/src/contact_details_provider.vala:226
+msgid "Refresh XMPP-published key"
+msgstr "Päivitä XMPP:ssä julkaistu avain"
+
+#: plugins/openpgp/src/contact_details_provider.vala:337
+msgid "Checking XMPP-published OpenPGP key..."
+msgstr "Tarkistetaan XMPP:ssä julkaistua OpenPGP-avainta..."
+
+#: plugins/openpgp/src/contact_details_provider.vala:350
+msgid "Checking the XMPP-published OpenPGP key timed out."
+msgstr "XMPP:ssä julkaistun OpenPGP-avaimen tarkistus aikakatkaistiin."
+
+#: plugins/openpgp/src/contact_details_provider.vala:389
+msgid "Checking keyring..."
+msgstr "Tarkistetaan avainrengasta..."
+
+#: plugins/openpgp/src/contact_details_provider.vala:427
+msgid "Invalid for legacy XEP-0027/keyserver: key has no email user ID."
+msgstr ""
+"Ei kelpaa vanhaan XEP-0027/avainpalvelinkäyttöön: avaimella ei ole "
+"sähköpostikäyttäjätunnusta."
+
+#: plugins/openpgp/src/contact_details_provider.vala:428
+msgid "Invalid for OpenPGP for XMPP: key has no matching xmpp: user ID."
+msgstr ""
+"Ei kelpaa OpenPGP for XMPP -käyttöön: avaimella ei ole vastaavaa "
+"xmpp:-käyttäjätunnusta."
+
+#: plugins/openpgp/src/contact_details_provider.vala:439
+msgid "Key not in keyring"
+msgstr "Avain ei ole avainrenkaassa"
+
+#: plugins/openpgp/src/contact_details_provider.vala:446
+msgid ""
+"Active: legacy XEP-0027/keyserver key is currently usable for this contact."
+msgstr ""
+"Aktiivinen: vanha XEP-0027/avainpalvelinavain on tällä hetkellä "
+"käytettävissä tälle yhteystiedolle."
+
+#: plugins/openpgp/src/contact_details_provider.vala:449
+msgid ""
+"Stored: legacy XEP-0027/keyserver key is known, but is not currently active "
+"for this contact."
+msgstr ""
+"Tallennettu: vanha XEP-0027/avainpalvelinavain tunnetaan, mutta se ei ole "
+"tällä hetkellä aktiivinen tälle yhteystiedolle."
+
+#: plugins/openpgp/src/contact_details_provider.vala:451
+msgid "Inactive: no legacy XEP-0027/keyserver key is stored."
+msgstr ""
+"Ei aktiivinen: vanhaa XEP-0027/avainpalvelinavainta ei ole tallennettu."
+
+#: plugins/openpgp/src/contact_details_provider.vala:457
+msgid "Verified: XMPP-published OpenPGP key is stored and manually verified."
+msgstr ""
+"Vahvistettu: XMPP:ssä julkaistu OpenPGP-avain on tallennettu ja vahvistettu "
+"käsin."
+
+#: plugins/openpgp/src/contact_details_provider.vala:460
+msgid ""
+"Changed: XMPP-published OpenPGP key differs from the previously verified "
+"key. Verify the fingerprint before trusting this identity."
+msgstr ""
+"Muuttunut: XMPP:ssä julkaistu OpenPGP-avain poikkeaa aiemmin vahvistetusta "
+"avaimesta. Vahvista sormenjälki ennen tähän henkilöllisyyteen luottamista."
+
+#: plugins/openpgp/src/contact_details_provider.vala:462
+msgid ""
+"Unverified: XMPP-published OpenPGP key is stored. Compare the fingerprint "
+"before trusting this identity."
+msgstr ""
+"Vahvistamaton: XMPP:ssä julkaistu OpenPGP-avain on tallennettu. Vertaa "
+"sormenjälkeä ennen tähän henkilöllisyyteen luottamista."
+
+#: plugins/openpgp/src/contact_details_provider.vala:465
+msgid ""
+"Supported: contact advertises OpenPGP for XMPP, but no retrievable XMPP-"
+"published key is stored."
+msgstr ""
+"Tuettu: yhteystieto ilmoittaa OpenPGP for XMPP -tuen, mutta noudettavissa "
+"olevaa XMPP:ssä julkaistua avainta ei ole tallennettu."
+
+#: plugins/openpgp/src/contact_details_provider.vala:467
+msgid "Inactive: no OpenPGP-for-XMPP support or XMPP-published key is known."
+msgstr ""
+"Ei aktiivinen: OpenPGP for XMPP -tukea tai XMPP:ssä julkaistua avainta ei "
+"tunneta."
+
+#: plugins/openpgp/src/contact_details_provider.vala:497
+msgid "Fingerprint copied"
+msgstr "Sormenjälki kopioitu"
+
+#: plugins/openpgp/src/contact_details_provider.vala:520
+msgid "Verifying OpenPGP-for-XMPP key..."
+msgstr "Vahvistetaan OpenPGP for XMPP -avainta..."
+
+#: plugins/openpgp/src/contact_details_provider.vala:554
+msgid ""
+"Cannot verify: key is not in the keyring or has no matching xmpp: user ID."
+msgstr ""
+"Ei voida vahvistaa: avain ei ole avainrenkaassa tai sillä ei ole vastaavaa "
+"xmpp:-käyttäjätunnusta."
+
+#: plugins/openpgp/src/contact_details_provider.vala:611
+msgid "Searching keyserver with fingerprint: "
+msgstr "Etsitään avainpalvelimelta sormenjäljellä: "
+
+#: plugins/openpgp/src/contact_details_provider.vala:626
+msgid ""
+"Key not found or has no verified email on keyserver.\n"
+"Ask the contact to verify their email on keys.openpgp.org\n"
+"or send you their public key file directly."
+msgstr ""
+"Avainta ei löytynyt tai sillä ei ole vahvistettua sähköpostiosoitetta avainpalvelimella.\n"
+"Pyydä yhteystietoa vahvistamaan sähköpostinsa osoitteessa keys.openpgp.org\n"
+"tai lähettämään julkisen avaimensa tiedosto sinulle suoraan."
+
+#: plugins/openpgp/src/contact_details_provider.vala:628
+msgid "Failed: "
+msgstr "Epäonnistui: "
+
+#: plugins/openpgp/src/contact_details_provider.vala:636
+msgid "Searching keyserver with JID..."
+msgstr "Etsitään avainpalvelimelta JID-osoitteella..."
+
+#: plugins/openpgp/src/contact_details_provider.vala:657
+msgid "Not found with JID. Enter email address:"
+msgstr "Ei löytynyt JID-osoitteella. Anna sähköpostiosoite:"
+
+#: plugins/openpgp/src/contact_details_provider.vala:668
+msgid "Enter Email Address"
+msgstr "Anna sähköpostiosoite"
+
+#: plugins/openpgp/src/contact_details_provider.vala:669
+msgid ""
+"The key was not found using the JID.\n"
+"\n"
+"Enter the email address that is in the contact's OpenPGP key:"
+msgstr ""
+"Avainta ei löytynyt JID-osoitteella.\n"
+"\n"
+"Anna yhteystiedon OpenPGP-avaimessa oleva sähköpostiosoite:"
+
+#: plugins/openpgp/src/contact_details_provider.vala:671
+#: plugins/openpgp/src/key_management_dialog.vala:1045
+#: plugins/openpgp/src/key_management_dialog.vala:1486
+#: plugins/openpgp/src/key_management_dialog.vala:1654
+#: plugins/openpgp/src/key_management_dialog.vala:1694
+#: plugins/openpgp/src/key_management_dialog.vala:1789
+#: plugins/openpgp/src/key_management_dialog.vala:1924
+#: plugins/openpgp/src/key_management_dialog.vala:2108
+#: plugins/openpgp/src/key_management_dialog.vala:2270
+#: plugins/openpgp/src/key_management_dialog.vala:2866
+#: plugins/openpgp/src/key_management_dialog.vala:3211
+#: plugins/openpgp/src/key_management_dialog.vala:3213
+#: plugins/openpgp/src/plugin.vala:453
+msgid "Cancel"
+msgstr "Peruuta"
+
+#: plugins/openpgp/src/contact_details_provider.vala:672
+msgid "Search"
+msgstr "Etsi"
+
+#: plugins/openpgp/src/contact_details_provider.vala:709
+msgid "Searching keyserver for: "
+msgstr "Etsitään avainpalvelimelta: "
+
+#: plugins/openpgp/src/contact_details_provider.vala:719
+msgid "Not found: "
+msgstr "Ei löytynyt: "
+
+#: plugins/openpgp/src/encryption_list_entry.vala:66
+msgid "No conversation selected."
+msgstr "Keskustelua ei ole valittu."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:75
+msgid ""
+"You didn't configure OpenPGP for this account. You can do that in the "
+"Accounts Dialog."
+msgstr ""
+"Et ole määrittänyt OpenPGP:tä tälle tilille. Voit tehdä sen tilien "
+"hallintaikkunassa."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:113
+#: plugins/openpgp/src/encryption_list_entry.vala:240
+msgid "OpenPGP manager not available."
+msgstr "OpenPGP-hallinta ei ole käytettävissä."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:121
+msgid "OpenPGP-for-XMPP key manager not available."
+msgstr "OpenPGP for XMPP -avainten hallinta ei ole käytettävissä."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:129
+msgid "Checking OpenPGP key via PubSub..."
+msgstr "Tarkistetaan OpenPGP-avainta PubSubin kautta..."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:138
+msgid ""
+"Checking the OpenPGP-for-XMPP key via PubSub timed out. Try again, or switch"
+" to legacy XEP-0027 if the contact has a keyserver key."
+msgstr ""
+"OpenPGP for XMPP -avaimen tarkistus PubSubin kautta aikakatkaistiin. Yritä "
+"uudelleen tai vaihda vanhaan XEP-0027-tilaan, jos yhteystiedolla on "
+"avainpalvelinavain."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:150
+msgid ""
+"This contact's OpenPGP-for-XMPP key has not been refreshed yet. Try again "
+"after the contact republishes it, or use the refresh button in contact "
+"details."
+msgstr ""
+"Tämän yhteystiedon OpenPGP for XMPP -avainta ei ole vielä päivitetty. Yritä "
+"uudelleen, kun yhteystieto on julkaissut sen uudelleen, tai käytä "
+"yhteystiedon tietojen päivityspainiketta."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:159
+#: plugins/openpgp/src/encryption_list_entry.vala:215
+msgid ""
+"This contact has no legacy OpenPGP/XEP-0027 key. Switch your OpenPGP key "
+"usage to DinoX / OpenPGP for XMPP."
+msgstr ""
+"Tällä yhteystiedolla ei ole vanhaa OpenPGP/XEP-0027-avainta. Vaihda OpenPGP-"
+"avaimen käyttötavaksi DinoX / OpenPGP for XMPP."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:161
+#: plugins/openpgp/src/encryption_list_entry.vala:211
+msgid ""
+"This contact has no OpenPGP-for-XMPP key. Switch to a legacy XEP-0027 key or"
+" ask the contact to publish an OpenPGP-for-XMPP key."
+msgstr ""
+"Tällä yhteystiedolla ei ole OpenPGP for XMPP -avainta. Vaihda vanhaan "
+"XEP-0027-avaimeen tai pyydä yhteystietoa julkaisemaan OpenPGP for XMPP "
+"-avain."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:171
+#: plugins/openpgp/src/manager.vala:1119
+msgid ""
+"This contact's OpenPGP-for-XMPP key changed. Verify the fingerprint in "
+"contact details before sending."
+msgstr ""
+"Tämän yhteystiedon OpenPGP for XMPP -avain muuttui. Vahvista sormenjälki "
+"yhteystiedon tiedoissa ennen lähettämistä."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:172
+#: plugins/openpgp/src/manager.vala:1120
+msgid ""
+"This contact's OpenPGP-for-XMPP key is not verified. Verify the fingerprint "
+"in contact details before sending."
+msgstr ""
+"Tämän yhteystiedon OpenPGP for XMPP -avainta ei ole vahvistettu. Vahvista "
+"sormenjälki yhteystiedon tiedoissa ennen lähettämistä."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:180
+#: plugins/openpgp/src/encryption_list_entry.vala:219
+#: plugins/openpgp/src/manager.vala:429
+msgid ""
+"This contact has a stored legacy OpenPGP/XEP-0027 key, but it is not "
+"currently active."
+msgstr ""
+"Tälle yhteystiedolle on tallennettu vanha OpenPGP/XEP-0027-avain, mutta se "
+"ei ole tällä hetkellä aktiivinen."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:200
+msgid "This contact's OpenPGP key is not in your keyring."
+msgstr "Tämän yhteystiedon OpenPGP-avain ei ole avainrenkaassasi."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:229
+msgid "Legacy OpenPGP (XEP-0027/keyserver) is active for outgoing messages."
+msgstr ""
+"Vanha OpenPGP (XEP-0027/avainpalvelin) on käytössä lähteville viesteille."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:231
+msgid "OpenPGP for XMPP (XEP-0373/0374) is active for outgoing messages."
+msgstr "OpenPGP for XMPP (XEP-0373/0374) on käytössä lähteville viesteille."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:249
+#, c-format
+msgid "A member's OpenPGP key is not configured: %s"
+msgstr "Jäsenen OpenPGP-avainta ei ole määritetty: %s"
+
+#: plugins/openpgp/src/encryption_list_entry.vala:285
+#, c-format
+msgid "A member's OpenPGP key is not in your keyring: %s"
+msgstr "Jäsenen OpenPGP-avain ei ole avainrenkaassasi: %s"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:51
+msgid "Loading keys..."
+msgstr "Ladataan avaimia..."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:121
+#: plugins/openpgp/src/encryption_preferences_entry.vala:127
+#: plugins/openpgp/src/encryption_preferences_entry.vala:157
+msgid "Outgoing OpenPGP messages"
+msgstr "Lähtevät OpenPGP-viestit"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:121
+msgid "Error in GnuPG"
+msgstr "Virhe GnuPG:ssä"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:127
+msgid "No keys available. Generate or import one!"
+msgstr "Ei avaimia saatavilla. Luo tai tuo yksi!"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:159
+msgid ""
+"DinoX currently sends OpenPGP as legacy XEP-0027 using keyserver/contact "
+"keys."
+msgstr ""
+"DinoX lähettää tällä hetkellä OpenPGP-viestit vanhassa XEP-0027-muodossa "
+"avainpalvelin- tai yhteystietoavaimilla."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:162
+msgid "DinoX currently sends OpenPGP for XMPP using XEP-0373/0374."
+msgstr ""
+"DinoX lähettää tällä hetkellä OpenPGP for XMPP -viestit "
+"XEP-0373/0374-muodossa."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:165
+msgid "No OpenPGP send key is active for this account."
+msgstr "Tällä tilillä ei ole aktiivista OpenPGP-lähetysavainta."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:229
+msgid "Manage Keys"
+msgstr "Hallitse avaimia"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:230
+msgid "Generate, import, export, or delete keys"
+msgstr "Luo, tuo, vie tai poista avaimia"
+
+#: plugins/openpgp/src/key_management_dialog.vala:171
+msgid "OpenPGP Key Management"
+msgstr "OpenPGP-avainten hallinta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:197
+msgid "Actions"
+msgstr "Toiminnot"
+
+#: plugins/openpgp/src/key_management_dialog.vala:199
+#, c-format
+msgid "Keys and server backups for %s"
+msgstr "Tilin %s avaimet ja palvelinvarmuuskopiot"
+
+#: plugins/openpgp/src/key_management_dialog.vala:204
+msgid "Generate New Key"
+msgstr "Luo uusi avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:205
+msgid "Create a new OpenPGP key pair"
+msgstr "Luo uusi OpenPGP-avainpari"
+
+#: plugins/openpgp/src/key_management_dialog.vala:222
+msgid "Import Key"
+msgstr "Tuo avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:223
+msgid ""
+"Import a private key for this account or a public key from a contact. "
+"Importing does not activate a key."
+msgstr ""
+"Tuo yksityinen avain tälle tilille tai yhteystiedon julkinen avain. Tuonti "
+"ei aktivoi avainta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:240
+#: plugins/openpgp/src/key_management_dialog.vala:1655
+msgid "Delete Server Backup"
+msgstr "Poista palvelinvarmuuskopio"
+
+#: plugins/openpgp/src/key_management_dialog.vala:241
+msgid ""
+"Remove this account's encrypted private-key backup. Local keys and public-"
+"key publications are kept."
+msgstr ""
+"Poista tämän tilin salattu yksityisen avaimen varmuuskopio. Paikalliset "
+"avaimet ja julkisten avainten julkaisut säilytetään."
+
+#: plugins/openpgp/src/key_management_dialog.vala:247
+msgid "Fetch Key from Server (Sync)"
+msgstr "Hae avain palvelimelta (synkronointi)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:248
+msgid "Import your secret key backup from your server"
+msgstr "Tuo salaisen avaimesi varmuuskopio palvelimeltasi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:290
+msgid "Your Keys"
+msgstr "Avaimesi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:291
+msgid "Private keys available for signing and decryption"
+msgstr "Yksityiset avaimet allekirjoitukseen ja salauksen purkuun"
+
+#: plugins/openpgp/src/key_management_dialog.vala:386
+#: plugins/openpgp/src/key_management_dialog.vala:400
+#: plugins/openpgp/src/key_management_dialog.vala:456
+msgid "GnuPG did not respond."
+msgstr "GnuPG ei vastannut."
+
+#: plugins/openpgp/src/key_management_dialog.vala:412
+msgid "Server Backup Cleanup Pending"
+msgstr "Palvelinvarmuuskopion poisto odottaa"
+
+#: plugins/openpgp/src/key_management_dialog.vala:413
+msgid ""
+"The key was kept locally. DinoX will retry removing its matching backup when"
+" this account reconnects. Then retry revoking the key."
+msgstr ""
+"Avain säilytettiin paikallisesti. DinoX yrittää poistaa vastaavan "
+"varmuuskopion, kun tämä tili yhdistyy uudelleen. Yritä sitten avaimen "
+"peruuttamista uudelleen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:455
+msgid "Could not load OpenPGP keys"
+msgstr "OpenPGP-avaimia ei voitu ladata"
+
+#: plugins/openpgp/src/key_management_dialog.vala:470
+msgid "No private keys found"
+msgstr "Yksityisiä avaimia ei löytynyt"
+
+#: plugins/openpgp/src/key_management_dialog.vala:471
+msgid "Generate or import a key to get started"
+msgstr "Luo tai tuo avain aloittaaksesi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:646
+msgid "Published to keyserver"
+msgstr "Julkaistu avainpalvelimelle"
+
+#: plugins/openpgp/src/key_management_dialog.vala:652
+msgid "Active legacy and XMPP account key"
+msgstr "Aktiivinen vanhan tilan ja XMPP:n tiliavain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:653
+msgid "Active legacy XEP-0027 account key"
+msgstr "Aktiivinen vanhan XEP-0027-tilan tiliavain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:653
+msgid "Active XMPP account key"
+msgstr "Aktiivinen XMPP-tiliavain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:659
+msgid "Fingerprint"
+msgstr "Sormenjälki"
+
+#: plugins/openpgp/src/key_management_dialog.vala:672
+msgid "Remove Assignment to This Account"
+msgstr "Poista liitos tähän tiliin"
+
+#: plugins/openpgp/src/key_management_dialog.vala:673
+msgid ""
+"Keep the key in DinoX's keyring and remove only its manual assignment to "
+"this account."
+msgstr ""
+"Säilytä avain DinoXin avainrenkaassa ja poista vain sen käsin tehty liitos "
+"tähän tiliin."
+
+#: plugins/openpgp/src/key_management_dialog.vala:684
+msgid "OpenPGP for XMPP (XEP-0373/0374)"
+msgstr "OpenPGP for XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:686
+msgid ""
+"Active for this account. DinoX publishes this key through XMPP for OpenPGP-"
+"capable clients."
+msgstr ""
+"Aktiivinen tälle tilille. DinoX julkaisee tämän avaimen XMPP:n kautta "
+"OpenPGP:tä tukeville sovelluksille."
+
+#: plugins/openpgp/src/key_management_dialog.vala:688
+msgid ""
+"Stored for OpenPGP for XMPP, but not active while legacy XEP-0027/keyserver "
+"mode is selected."
+msgstr ""
+"Tallennettu OpenPGP for XMPP -käyttöön, mutta ei aktiivinen, kun vanha "
+"XEP-0027/avainpalvelintila on valittu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:690
+msgid ""
+"Inactive. This key is currently selected for legacy XEP-0027/keyserver use."
+msgstr ""
+"Ei aktiivinen. Tämä avain on tällä hetkellä valittu vanhaan "
+"XEP-0027/avainpalvelinkäyttöön."
+
+#: plugins/openpgp/src/key_management_dialog.vala:692
+msgid ""
+"Not available for this account. OpenPGP for XMPP keys must contain an xmpp: "
+"user ID for this XMPP address."
+msgstr ""
+"Ei käytettävissä tällä tilillä. OpenPGP for XMPP -avaimen on sisällettävä "
+"tämän XMPP-osoitteen xmpp:-käyttäjätunnus."
+
+#: plugins/openpgp/src/key_management_dialog.vala:694
+msgid ""
+"Not active for this account. Select it below to publish it through XMPP."
+msgstr ""
+"Ei aktiivinen tälle tilille. Valitse se alta julkaistaksesi sen XMPP:n "
+"kautta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:702
+msgid "Selected for OpenPGP for XMPP"
+msgstr "Valittu OpenPGP for XMPP -käyttöön"
+
+#: plugins/openpgp/src/key_management_dialog.vala:703
+msgid "Use for OpenPGP for XMPP"
+msgstr "Käytä OpenPGP for XMPP -avaimena"
+
+#: plugins/openpgp/src/key_management_dialog.vala:705
+msgid ""
+"DinoX uses this key for XEP-0373/0374 messages and publishes it through "
+"XMPP."
+msgstr ""
+"DinoX käyttää tätä avainta XEP-0373/0374-viesteihin ja julkaisee sen XMPP:n "
+"kautta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:708
+msgid ""
+"Selects this key for XEP-0373/0374 messages and publishes it through XMPP."
+msgstr ""
+"Valitsee tämän avaimen XEP-0373/0374-viesteihin ja julkaisee sen XMPP:n "
+"kautta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:715
+msgid "OpenPGP for XMPP Key Selected"
+msgstr "OpenPGP for XMPP -avain valittu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:715
+msgid ""
+"DinoX will use this key for OpenPGP for XMPP and publish it through XMPP for"
+" this account."
+msgstr ""
+"DinoX käyttää tätä avainta OpenPGP for XMPP -viesteihin ja julkaisee sen "
+"XMPP:n kautta tälle tilille."
+
+#: plugins/openpgp/src/key_management_dialog.vala:723
+#: plugins/openpgp/src/key_management_dialog.vala:2237
+msgid "Backup Secret Key to Server"
+msgstr "Varmuuskopioi salainen avain palvelimelle"
+
+#: plugins/openpgp/src/key_management_dialog.vala:724
+msgid ""
+"Securely encrypt this key and store it on the server to sync across your "
+"devices."
+msgstr ""
+"Salaa tämä avain turvallisesti ja tallenna se palvelimelle synkronoitavaksi "
+"laitteidesi välillä."
+
+#: plugins/openpgp/src/key_management_dialog.vala:735
+msgid "Disable OpenPGP for XMPP for this account"
+msgstr "Poista OpenPGP for XMPP käytöstä tältä tililtä"
+
+#: plugins/openpgp/src/key_management_dialog.vala:736
+msgid ""
+"Removes the XMPP PubSub publication and keeps the secret key locally. Legacy"
+" XEP-0027/keyserver state is not changed."
+msgstr ""
+"Poistaa XMPP PubSub -julkaisun ja säilyttää salaisen avaimen paikallisesti. "
+"Vanhan XEP-0027/avainpalvelintilan asetuksia ei muuteta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:747
+msgid "Legacy keyserver publication"
+msgstr "Julkaisu vanhalle avainpalvelimelle"
+
+#: plugins/openpgp/src/key_management_dialog.vala:749
+msgid ""
+"This key is revoked, expired, or not usable for signing and encryption."
+msgstr ""
+"Tämä avain on peruutettu, vanhentunut tai ei kelpaa allekirjoitukseen ja "
+"salaukseen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:751
+msgid ""
+"Stored for legacy XEP-0027/keyserver, but this key has no email user ID for "
+"new keyserver publishing."
+msgstr ""
+"Tallennettu vanhaan XEP-0027/avainpalvelinkäyttöön, mutta avaimella ei ole "
+"sähköpostikäyttäjätunnusta uutta avainpalvelinjulkaisua varten."
+
+#: plugins/openpgp/src/key_management_dialog.vala:753
+msgid ""
+"Active for legacy XEP-0027. The email address on the key must still be "
+"verified on the keyserver."
+msgstr ""
+"Aktiivinen vanhalle XEP-0027:lle. Avaimen sähköpostiosoite on vielä "
+"vahvistettava avainpalvelimella."
+
+#: plugins/openpgp/src/key_management_dialog.vala:755
+msgid ""
+"Stored for legacy XEP-0027/keyserver, but not active while OpenPGP for XMPP "
+"mode is selected."
+msgstr ""
+"Tallennettu vanhaan XEP-0027/avainpalvelinkäyttöön, mutta ei aktiivinen, kun"
+" OpenPGP for XMPP -tila on valittu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:757
+msgid ""
+"Uploaded for legacy OpenPGP clients. The email address on the key must still"
+" be verified on the keyserver."
+msgstr ""
+"Lähetetty vanhoja OpenPGP-sovelluksia varten. Avaimen sähköpostiosoite on "
+"vielä vahvistettava avainpalvelimella."
+
+#: plugins/openpgp/src/key_management_dialog.vala:759
+msgid ""
+"Not uploaded. Legacy OpenPGP clients may not find this key unless you "
+"publish it to a keyserver."
+msgstr ""
+"Ei lähetetty. Vanhat OpenPGP-sovellukset eivät välttämättä löydä tätä "
+"avainta, ellet julkaise sitä avainpalvelimelle."
+
+#: plugins/openpgp/src/key_management_dialog.vala:768
+msgid "Selected for legacy XEP-0027/keyserver"
+msgstr "Valittu vanhaan XEP-0027/avainpalvelinkäyttöön"
+
+#: plugins/openpgp/src/key_management_dialog.vala:769
+msgid "Use for legacy XEP-0027/keyserver"
+msgstr "Käytä vanhaan XEP-0027/avainpalvelintilaan"
+
+#: plugins/openpgp/src/key_management_dialog.vala:771
+msgid ""
+"DinoX uses this key for legacy OpenPGP messages and keyserver-based "
+"contacts."
+msgstr ""
+"DinoX käyttää tätä avainta vanhoihin OpenPGP-viesteihin ja avainpalvelinta "
+"käyttäviin yhteystietoihin."
+
+#: plugins/openpgp/src/key_management_dialog.vala:773
+msgid ""
+"Selects this key for legacy OpenPGP messages. The keyserver entry still "
+"needs a verified email address."
+msgstr ""
+"Valitsee tämän avaimen vanhoihin OpenPGP-viesteihin. Avainpalvelinmerkintä "
+"tarvitsee vielä vahvistetun sähköpostiosoitteen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:780
+#: plugins/openpgp/src/key_management_dialog.vala:790
+msgid "Legacy OpenPGP Key Selected"
+msgstr "Vanha OpenPGP-avain valittu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:780
+msgid "DinoX will use this key for XEP-0027/keyserver OpenPGP."
+msgstr "DinoX käyttää tätä avainta XEP-0027/avainpalvelin-OpenPGP:hen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:783
+msgid ""
+"Not published to a keyserver. You can select it, but other legacy clients "
+"may not find it automatically."
+msgstr ""
+"Ei julkaistu avainpalvelimelle. Voit valita sen, mutta muut vanhat "
+"sovellukset eivät välttämättä löydä sitä automaattisesti."
+
+#: plugins/openpgp/src/key_management_dialog.vala:790
+msgid ""
+"DinoX will use this key for XEP-0027. Publish it to a keyserver if legacy "
+"clients should find it automatically."
+msgstr ""
+"DinoX käyttää tätä avainta XEP-0027:ään. Julkaise se avainpalvelimelle, jos "
+"vanhojen sovellusten pitää löytää se automaattisesti."
+
+#: plugins/openpgp/src/key_management_dialog.vala:802
+msgid "Stop using for legacy XEP-0027/keyserver"
+msgstr "Lopeta käyttö vanhassa XEP-0027/avainpalvelintilassa"
+
+#: plugins/openpgp/src/key_management_dialog.vala:803
+msgid "Remove stored legacy XEP-0027/keyserver selection"
+msgstr "Poista tallennettu vanhan XEP-0027/avainpalvelintilan valinta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:805
+msgid ""
+"Keeps the key locally and on the keyserver. DinoX stops announcing it in "
+"signed presence."
+msgstr ""
+"Säilyttää avaimen paikallisesti ja avainpalvelimella. DinoX lopettaa sen "
+"ilmoittamisen allekirjoitetuissa läsnäolotiedoissa."
+
+#: plugins/openpgp/src/key_management_dialog.vala:806
+msgid ""
+"Keeps the key locally and on the keyserver. DinoX removes this inactive "
+"legacy account selection."
+msgstr ""
+"Säilyttää avaimen paikallisesti ja avainpalvelimella. DinoX poistaa tämän "
+"passiivisen vanhan tilin avainvalinnan."
+
+#: plugins/openpgp/src/key_management_dialog.vala:813
+msgid "Legacy OpenPGP Disabled"
+msgstr "Vanha OpenPGP poistettu käytöstä"
+
+#: plugins/openpgp/src/key_management_dialog.vala:813
+msgid ""
+"DinoX will no longer use or announce this key for XEP-0027/keyserver "
+"OpenPGP. The key remains in your keyring and on the keyserver if it was "
+"published."
+msgstr ""
+"DinoX ei enää käytä eikä ilmoita tätä avainta XEP-0027/avainpalvelin-"
+"OpenPGP:ssä. Avain säilyy avainrenkaassasi ja avainpalvelimella, jos se "
+"julkaistiin."
+
+#: plugins/openpgp/src/key_management_dialog.vala:821
+msgid "Publish public key to keyserver for legacy discovery"
+msgstr ""
+"Julkaise julkinen avain avainpalvelimelle vanhojen sovellusten löydettäväksi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:822
+msgid "Requires a real email address you can verify."
+msgstr "Vaatii todellisen sähköpostiosoitteen, jonka voit vahvistaa."
+
+#: plugins/openpgp/src/key_management_dialog.vala:831
+#: plugins/openpgp/src/key_management_dialog.vala:1333
+msgid "Export Public Key"
+msgstr "Vie julkinen avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:839
+#: plugins/openpgp/src/key_management_dialog.vala:1330
+msgid "Export Secret Key (Backup)"
+msgstr "Vie salainen avain (varmuuskopio)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:840
+msgid "Required for restoring your key"
+msgstr "Tarvitaan avaimen palauttamiseen"
+
+#: plugins/openpgp/src/key_management_dialog.vala:849
+msgid "Revoke Key"
+msgstr "Peruuta avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:850
+msgid "Invalidate key, keep locally for old messages"
+msgstr "Mitätöi avain, säilytä paikallisesti vanhoja viestejä varten"
+
+#: plugins/openpgp/src/key_management_dialog.vala:859
+msgid "Revoke &amp; Delete Key"
+msgstr "Peruuta ja poista avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:860
+msgid "Invalidate and remove key completely"
+msgstr "Mitätöi ja poista avain kokonaan"
+
+#: plugins/openpgp/src/key_management_dialog.vala:870
+msgid "Delete Key"
+msgstr "Poista avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:871
+msgid ""
+"Remove locally without revocation; active XMPP publication is removed first"
+msgstr ""
+"Poista paikallisesti peruuttamatta; aktiivinen XMPP-julkaisu poistetaan "
+"ensin"
+
+#: plugins/openpgp/src/key_management_dialog.vala:895
+msgid "Revoked"
+msgstr "Peruutettu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:898
+msgid "Active OpenPGP XMPP (XEP-0373/0374)"
+msgstr "Aktiivinen OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:900
+msgid "Stored OpenPGP XMPP (XEP-0373/0374)"
+msgstr "Tallennettu OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:902
+msgid "OpenPGP XMPP key (XEP-0373/0374)"
+msgstr "OpenPGP XMPP -avain (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:906
+msgid "Active legacy XEP-0027/keyserver"
+msgstr "Aktiivinen vanha XEP-0027/avainpalvelin"
+
+#: plugins/openpgp/src/key_management_dialog.vala:908
+msgid "Stored legacy XEP-0027/keyserver"
+msgstr "Tallennettu vanha XEP-0027/avainpalvelin"
+
+#: plugins/openpgp/src/key_management_dialog.vala:910
+msgid "Legacy-capable key"
+msgstr "Vanhaa tilaa tukeva avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:914
+msgid "Keyserver uploaded"
+msgstr "Lähetetty avainpalvelimelle"
+
+#: plugins/openpgp/src/key_management_dialog.vala:935
+msgid "Generate New OpenPGP Key"
+msgstr "Luo uusi OpenPGP-avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:936
+msgid "Enter your details to create a new key pair."
+msgstr "Syötä tietosi luodaksesi uuden avainparin."
+
+#: plugins/openpgp/src/key_management_dialog.vala:944
+msgid "Name"
+msgstr "Nimi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:949
+msgid "Your Name"
+msgstr "Nimesi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:952
+msgid "Key usage"
+msgstr "Avaimen käyttötapa"
+
+#: plugins/openpgp/src/key_management_dialog.vala:960
+msgid "DinoX / OpenPGP for XMPP"
+msgstr "DinoX / OpenPGP for XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:963
+msgid ""
+"Uses your XMPP address and publishes the selected account key through XMPP. "
+"No email verification is needed."
+msgstr ""
+"Käyttää XMPP-osoitettasi ja julkaisee valitun tiliavaimen XMPP:n kautta. "
+"Sähköpostivahvistusta ei tarvita."
+
+#: plugins/openpgp/src/key_management_dialog.vala:976
+msgid "Legacy keyserver / XEP-0027"
+msgstr "Vanha avainpalvelin / XEP-0027"
+
+#: plugins/openpgp/src/key_management_dialog.vala:979
+msgid ""
+"Uses a real email address and uploads the key for older OpenPGP clients. The"
+" email address must be verified."
+msgstr ""
+"Käyttää todellista sähköpostiosoitetta ja lähettää avaimen vanhempia "
+"OpenPGP-sovelluksia varten. Sähköpostiosoite on vahvistettava."
+
+#: plugins/openpgp/src/key_management_dialog.vala:989
+#: plugins/openpgp/src/key_management_dialog.vala:1024
+msgid "XMPP address"
+msgstr "XMPP-osoite"
+
+#: plugins/openpgp/src/key_management_dialog.vala:995
+#: plugins/openpgp/src/key_management_dialog.vala:1025
+msgid "xmpp@example.com"
+msgstr "xmpp@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1001
+#: plugins/openpgp/src/key_management_dialog.vala:1029
+msgid ""
+"This key will be selected for this DinoX account and published through XMPP "
+"for OpenPGP-for-XMPP capable clients."
+msgstr ""
+"Tämä avain valitaan tälle DinoX-tilille ja julkaistaan XMPP:n kautta OpenPGP"
+" for XMPP -sovelluksille."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1009
+msgid "Passphrase (optional)"
+msgstr "Salasanalause (valinnainen)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1020
+msgid "Email address"
+msgstr "Sähköpostiosoite"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1021
+msgid "name@example.com"
+msgstr "name@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1022
+msgid ""
+"Use a mailbox you can access. keys.openpgp.org requires email verification "
+"before older XEP-0027 clients can find this key."
+msgstr ""
+"Käytä postilaatikkoa, johon sinulla on pääsy. keys.openpgp.org vaatii "
+"sähköpostivahvistuksen, ennen kuin vanhat XEP-0027-sovellukset voivat löytää"
+" tämän avaimen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1038
+msgid "4096-bit RSA key, valid for 2 years."
+msgstr "4096-bittinen RSA-avain, voimassa 2 vuotta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1046
+msgid "Generate"
+msgstr "Luo"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1059
+#: plugins/openpgp/src/key_management_dialog.vala:1064
+#: plugins/openpgp/src/key_management_dialog.vala:1071
+#: plugins/openpgp/src/key_management_dialog.vala:1076
+#: plugins/openpgp/src/key_management_dialog.vala:1080
+#: plugins/openpgp/src/key_management_dialog.vala:1195
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+#: plugins/openpgp/src/key_management_dialog.vala:1318
+#: plugins/openpgp/src/key_management_dialog.vala:1390
+#: plugins/openpgp/src/key_management_dialog.vala:1394
+#: plugins/openpgp/src/key_management_dialog.vala:1398
+#: plugins/openpgp/src/key_management_dialog.vala:1512
+#: plugins/openpgp/src/key_management_dialog.vala:1730
+#: plugins/openpgp/src/key_management_dialog.vala:1737
+#: plugins/openpgp/src/key_management_dialog.vala:1779
+#: plugins/openpgp/src/key_management_dialog.vala:1837
+#: plugins/openpgp/src/key_management_dialog.vala:1844
+#: plugins/openpgp/src/key_management_dialog.vala:1914
+#: plugins/openpgp/src/key_management_dialog.vala:1975
+#: plugins/openpgp/src/key_management_dialog.vala:1982
+#: plugins/openpgp/src/key_management_dialog.vala:2033
+#: plugins/openpgp/src/key_management_dialog.vala:2085
+#: plugins/openpgp/src/key_management_dialog.vala:2139
+msgid "Error"
+msgstr "Virhe"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1059
+msgid "Name must be at least 2 characters"
+msgstr "Nimen on oltava vähintään 2 merkkiä"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1064
+msgid "Please enter a valid email address"
+msgstr "Syötä kelvollinen sähköpostiosoite"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1071
+msgid "Please enter a bare XMPP address, for example name@example.com"
+msgstr ""
+"Anna pelkkä XMPP-osoite ilman resurssiosaa, esimerkiksi name@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1076
+msgid "OpenPGP for XMPP keys must use this account's XMPP address."
+msgstr "OpenPGP for XMPP -avainten on käytettävä tämän tilin XMPP-osoitetta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1080
+msgid "Please enter a valid XMPP address"
+msgstr "Anna kelvollinen XMPP-osoite"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1101
+msgid "Generating Key..."
+msgstr "Luodaan avainta..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1102
+msgid "Please wait while your key is being generated. This may take a moment."
+msgstr "Odota, kunnes avaimesi luodaan. Tämä voi kestää hetken."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1161
+#: plugins/openpgp/src/key_management_dialog.vala:1182
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+#: plugins/openpgp/src/key_management_dialog.vala:1386
+#: plugins/openpgp/src/key_management_dialog.vala:1772
+#: plugins/openpgp/src/key_management_dialog.vala:1908
+#: plugins/openpgp/src/key_management_dialog.vala:2079
+#: plugins/openpgp/src/key_management_dialog.vala:2137
+msgid "Success"
+msgstr "Onnistui"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1161
+msgid ""
+"Key generated and uploaded to the keyserver. Check your email to verify it "
+"before XEP-0027 clients can reliably find it."
+msgstr ""
+"Avain luotu ja lähetetty avainpalvelimelle. Tarkista sähköpostisi ja "
+"vahvista osoite, jotta XEP-0027-sovellukset voivat löytää avaimen "
+"luotettavasti."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1163
+#: plugins/openpgp/src/key_management_dialog.vala:1174
+msgid "Partial Success"
+msgstr "Osittainen onnistuminen"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1163
+msgid ""
+"Key generated locally, but keyserver upload failed. It is not published for "
+"legacy XEP-0027 clients yet. You can retry from Key Management."
+msgstr ""
+"Avain luotu paikallisesti, mutta lähetys avainpalvelimelle epäonnistui. Sitä"
+" ei ole vielä julkaistu vanhoille XEP-0027-sovelluksille. Voit yrittää "
+"uudelleen avainten hallinnassa."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1174
+msgid ""
+"Key generated locally, but it was not selected because it does not contain "
+"the required xmpp: user ID for this account."
+msgstr ""
+"Avain luotu paikallisesti, mutta sitä ei valittu, koska se ei sisällä tämän "
+"tilin vaatimaa xmpp:-käyttäjätunnusta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1182
+msgid ""
+"Key generated and selected for OpenPGP for XMPP. DinoX will publish it "
+"through XMPP for this account."
+msgstr ""
+"Avain luotu ja valittu OpenPGP for XMPP -käyttöön. DinoX julkaisee sen "
+"XMPP:n kautta tälle tilille."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1195
+msgid "Failed to generate key."
+msgstr "Avaimen luonti epäonnistui."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1219
+msgid "Import OpenPGP Key"
+msgstr "Tuo OpenPGP-avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1224
+msgid "OpenPGP Keys (*.asc, *.gpg)"
+msgstr "OpenPGP-avaimet (*.asc, *.gpg)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1231
+msgid "All Files"
+msgstr "Kaikki tiedostot"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1259
+msgid "Importing Key..."
+msgstr "Tuodaan avainta..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1259
+msgid ""
+"Checking and importing the selected key into DinoX's private keyring..."
+msgstr ""
+"Tarkistetaan ja tuodaan valittua avainta DinoXin omaan avainrenkaaseen..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1272
+msgid "The key file is too large. Choose an OpenPGP key file up to 16 MiB."
+msgstr ""
+"Avaintiedosto on liian suuri. Valitse enintään 16 MiB:n OpenPGP-"
+"avaintiedosto."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1308
+msgid "Key Imported"
+msgstr "Avain tuotu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1309
+msgid ""
+"The key is available below. Select it to use it for this account; the "
+"current encryption mode has not changed."
+msgstr ""
+"Avain on saatavilla alla. Valitse se käyttääksesi sitä tälle tilille. "
+"Nykyistä salaustilaa ei ole muutettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1310
+msgid ""
+"The public key was imported into DinoX's keyring. Your account's encryption "
+"mode and key selection have not changed."
+msgstr ""
+"Julkinen avain tuotiin DinoXin avainrenkaaseen. Tilisi salaustilaa ja "
+"avainvalintaa ei ole muutettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+msgid "Import failed: "
+msgstr "Tuonti epäonnistui: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+msgid "The file does not contain an importable OpenPGP key."
+msgstr "Tiedosto ei sisällä tuotavaa OpenPGP-avainta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+msgid "Secret key exported to: "
+msgstr "Salainen avain viety kohteeseen: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+msgid ""
+"Keep this file safe! Anyone with this file can read your encrypted messages."
+msgstr ""
+"Säilytä tämä tiedosto turvallisesti! Kuka tahansa tämän tiedoston saanut voi"
+" lukea salatut viestisi."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1386
+msgid "Key exported to: "
+msgstr "Avain viety kohteeseen: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1394
+msgid "Export failed."
+msgstr "Vienti epäonnistui."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1483
+msgid "Disable OpenPGP for XMPP?"
+msgstr "Poistetaanko OpenPGP for XMPP käytöstä?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1484
+msgid ""
+"This removes the XMPP PubSub publication and stops using this key for "
+"XEP-0373/0374 on this account. The secret key stays local and legacy "
+"XEP-0027/keyserver state is not changed."
+msgstr ""
+"Tämä poistaa XMPP PubSub -julkaisun ja lopettaa tämän avaimen käytön "
+"XEP-0373/0374:ään tällä tilillä. Salainen avain säilyy paikallisesti eikä "
+"vanhan XEP-0027/avainpalvelintilan asetuksia muuteta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1487
+msgid "Disable XMPP Publishing"
+msgstr "Poista XMPP-julkaisu käytöstä"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1495
+msgid "Disabling OpenPGP for XMPP..."
+msgstr "Poistetaan OpenPGP for XMPP käytöstä..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1495
+msgid "Removing the XMPP PubSub publication..."
+msgstr "Poistetaan XMPP PubSub -julkaisua..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1510
+msgid "OpenPGP for XMPP Disabled"
+msgstr "OpenPGP for XMPP poistettu käytöstä"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1510
+msgid ""
+"DinoX no longer publishes this key through XMPP PubSub for this account. The"
+" secret key stays local and legacy XEP-0027/keyserver state was not changed."
+msgstr ""
+"DinoX ei enää julkaise tätä avainta XMPP PubSubin kautta tälle tilille. "
+"Salainen avain säilyy paikallisesti eikä vanhan XEP-0027/avainpalvelintilan "
+"asetuksia muutettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1512
+msgid ""
+"Could not remove the XMPP publication. OpenPGP for XMPP was not disabled."
+msgstr ""
+"XMPP-julkaisua ei voitu poistaa. OpenPGP for XMPP:tä ei poistettu käytöstä."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1609
+msgid "Key Assigned to Another Account"
+msgstr "Avain on liitetty toiseen tiliin"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1610
+msgid ""
+"This key is also assigned to another DinoX account. Revoking or deleting it "
+"would affect that account too. Remove its key selections and manual "
+"assignment there first, or keep the key locally."
+msgstr ""
+"Tämä avain on liitetty myös toiseen DinoX-tiliin. Sen peruuttaminen tai "
+"poistaminen vaikuttaisi myös siihen tiliin. Poista ensin sen avainvalinnat "
+"ja käsin tehty liitos kyseisestä tilistä tai säilytä avain paikallisesti."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1616
+#: plugins/openpgp/src/key_management_dialog.vala:1643
+msgid "Server Backup Not Checked"
+msgstr "Palvelinvarmuuskopiota ei tarkistettu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1617
+#: plugins/openpgp/src/key_management_dialog.vala:1644
+msgid ""
+"The server backup could not be checked. The key was not revoked or deleted. "
+"Connect this account and try again."
+msgstr ""
+"Palvelinvarmuuskopiota ei voitu tarkistaa. Avainta ei peruutettu eikä "
+"poistettu. Yhdistä tämä tili ja yritä uudelleen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1629
+msgid "Server Backup Not Identified"
+msgstr "Palvelinvarmuuskopiota ei tunnistettu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1630
+msgid ""
+"DinoX cannot safely identify the keys in this account's current server "
+"backup. Restore it using its backup code to identify it, or use Delete "
+"Server Backup to remove the whole backup explicitly. The key was not revoked"
+" or deleted."
+msgstr ""
+"DinoX ei voi turvallisesti tunnistaa tämän tilin nykyisen "
+"palvelinvarmuuskopion avaimia. Palauta se varmuuskopiokoodilla "
+"tunnistaaksesi sen tai poista koko varmuuskopio erikseen toiminnolla Poista "
+"palvelinvarmuuskopio. Avainta ei peruutettu eikä poistettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1633
+msgid "Server Backup Contains Other Keys"
+msgstr "Palvelinvarmuuskopio sisältää muita avaimia"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1634
+msgid ""
+"This backup also contains other private keys and cannot be removed for just "
+"this key. Save a local copy of all keys you need, then use Delete Server "
+"Backup and create a new backup for the keys you want to keep. The key was "
+"not revoked or deleted."
+msgstr ""
+"Tämä varmuuskopio sisältää myös muita yksityisiä avaimia, eikä sitä voi "
+"poistaa vain tämän avaimen osalta. Tallenna paikallinen kopio kaikista "
+"tarvitsemistasi avaimista, valitse sitten Poista palvelinvarmuuskopio ja luo"
+" uusi varmuuskopio säilytettäville avaimille. Avainta ei peruutettu eikä "
+"poistettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1638
+#: plugins/openpgp/src/key_management_dialog.vala:1680
+#: plugins/openpgp/src/key_management_dialog.vala:1683
+msgid "Server Backup Cleanup Failed"
+msgstr "Palvelinvarmuuskopion poisto epäonnistui"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1639
+msgid ""
+"The matching server backup could not be removed. The key was not revoked or "
+"deleted. DinoX will retry the cleanup when this account reconnects; then "
+"retry revoking the key."
+msgstr ""
+"Vastaavaa palvelinvarmuuskopiota ei voitu poistaa. Avainta ei peruutettu "
+"eikä poistettu. DinoX yrittää poistoa uudelleen tämän tilin yhdistyessä. "
+"Yritä sitten avaimen peruuttamista uudelleen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1652
+msgid "Delete This Account's Server Backup?"
+msgstr "Poistetaanko tämän tilin palvelinvarmuuskopio?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1653
+#, c-format
+msgid ""
+"This removes the entire encrypted private-key backup for %s from the server,"
+" including every key it contains. Other devices will no longer be able to "
+"restore it. Local keys and public-key publications are kept."
+msgstr ""
+"Tämä poistaa tilin %s koko salatun yksityisten avainten varmuuskopion "
+"palvelimelta, myös kaikki sen sisältämät avaimet. Muut laitteet eivät voi "
+"enää palauttaa sitä. Paikalliset avaimet ja julkisten avainten julkaisut "
+"säilytetään."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1667
+msgid "Deleting Server Backup..."
+msgstr "Poistetaan palvelinvarmuuskopiota..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1667
+msgid "Checking and removing this account's server backup..."
+msgstr "Tarkistetaan ja poistetaan tämän tilin palvelinvarmuuskopiota..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1678
+msgid "Server Backup Removed"
+msgstr "Palvelinvarmuuskopio poistettu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1678
+msgid ""
+"This account has no server backup now. Local keys and public-key "
+"publications were kept."
+msgstr ""
+"Tällä tilillä ei nyt ole palvelinvarmuuskopiota. Paikalliset avaimet ja "
+"julkisten avainten julkaisut säilytettiin."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1680
+#: plugins/openpgp/src/key_management_dialog.vala:1684
+msgid ""
+"The backup was not removed. The server may be unavailable or another device "
+"may have replaced the backup. Try again."
+msgstr ""
+"Varmuuskopiota ei poistettu. Palvelin ei ehkä ole käytettävissä tai toinen "
+"laite on saattanut korvata varmuuskopion. Yritä uudelleen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1691
+msgid "Delete Key?"
+msgstr "Poistetaanko avain?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1692
+#, c-format
+msgid ""
+"Delete this key?\n"
+"\n"
+"%s\n"
+"\n"
+"Warning: The key will be removed locally without revocation. If it is currently published for OpenPGP for XMPP, DinoX must remove the XMPP publication before deleting it.\n"
+"\n"
+"Consider using 'Revoke and Delete' instead.\n"
+"\n"
+"This cannot be undone!"
+msgstr ""
+"Poistetaanko tämä avain?\n"
+"\n"
+"%s\n"
+"\n"
+"Varoitus: Avain poistetaan paikallisesti peruuttamatta sitä. Jos se on tällä hetkellä julkaistu OpenPGP for XMPP -käyttöön, DinoXin on poistettava XMPP-julkaisu ennen avaimen poistamista.\n"
+"\n"
+"Harkitse sen sijaan toimintoa 'Peruuta ja poista'.\n"
+"\n"
+"Tätä ei voi perua!"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1695
+msgid "Delete"
+msgstr "Poista"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1713
+msgid "Deleting..."
+msgstr "Poistetaan..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1713
+msgid "Deleting key from the local OpenPGP keyring..."
+msgstr "Poistetaan avainta paikallisesta OpenPGP-avainrenkaasta..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1730
+#: plugins/openpgp/src/key_management_dialog.vala:1737
+msgid "Could not remove the XMPP publication. The key was not deleted."
+msgstr "XMPP-julkaisua ei voitu poistaa. Avainta ei poistettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1772
+msgid "Key deleted."
+msgstr "Avain poistettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1775
+msgid "Delete failed: "
+msgstr "Poisto epäonnistui: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1775
+#: plugins/openpgp/src/key_management_dialog.vala:1910
+#: plugins/openpgp/src/key_management_dialog.vala:2081
+msgid "Unknown error"
+msgstr "Tuntematon virhe"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1777
+#: plugins/openpgp/src/key_management_dialog.vala:1912
+#: plugins/openpgp/src/key_management_dialog.vala:2083
+msgid "The XMPP publication was already removed; the key was kept locally."
+msgstr "XMPP-julkaisu oli jo poistettu. Avain säilytettiin paikallisesti."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1786
+msgid "Revoke Key?"
+msgstr "Peruutetaanko avain?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1787
+#, c-format
+msgid ""
+"Revoke this key?\n"
+"\n"
+"%s\n"
+"\n"
+"The key will be permanently marked as invalid. This cannot be undone!\n"
+"\n"
+"DinoX will update only the publications that apply to this key: XMPP publication for OpenPGP-for-XMPP keys, and keyserver revocation upload for legacy keys that were uploaded to a keyserver."
+msgstr ""
+"Peruutetaanko tämä avain?\n"
+"\n"
+"%s\n"
+"\n"
+"Avain merkitään pysyvästi mitättömäksi. Tätä ei voi perua!\n"
+"\n"
+"DinoX päivittää vain tätä avainta koskevat julkaisut: XMPP-julkaisun OpenPGP for XMPP -avaimille ja peruutuksen avainpalvelimelle vanhoille avaimille, jotka on lähetetty avainpalvelimelle."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1790
+msgid "Revoke"
+msgstr "Peruuta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1809
+msgid "Revoking..."
+msgstr "Peruutetaan..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1809
+msgid "Revoking key and updating applicable publications..."
+msgstr "Peruutetaan avainta ja päivitetään sitä koskevia julkaisuja..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1837
+#: plugins/openpgp/src/key_management_dialog.vala:1844
+msgid "Could not remove the XMPP publication. The key was not revoked."
+msgstr "XMPP-julkaisua ei voitu poistaa. Avainta ei peruutettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1901
+msgid "Key revoked successfully."
+msgstr "Avain peruutettu onnistuneesti."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1903
+msgid "Revocation published to keyserver."
+msgstr "Peruutus julkaistu avainpalvelimelle."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1906
+msgid "Key removed from XMPP server."
+msgstr "Avain poistettu XMPP-palvelimelta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1910
+#: plugins/openpgp/src/key_management_dialog.vala:2081
+msgid "Revocation failed: "
+msgstr "Peruutus epäonnistui: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1921
+msgid "Revoke and Delete Key?"
+msgstr "Peruutetaanko ja poistetaanko avain?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1922
+#, c-format
+msgid ""
+"Revoke and delete this key?\n"
+"\n"
+"%s\n"
+"\n"
+"The key will be permanently invalidated and then removed. DinoX will update only the publications that apply to this key: XMPP publication for OpenPGP-for-XMPP keys, and keyserver revocation upload for legacy keys that were uploaded to a keyserver.\n"
+"\n"
+"You will no longer be able to decrypt old messages encrypted with this key.\n"
+"\n"
+"This cannot be undone!"
+msgstr ""
+"Peruutetaanko ja poistetaanko tämä avain?\n"
+"\n"
+"%s\n"
+"\n"
+"Avain mitätöidään pysyvästi ja poistetaan sitten. DinoX päivittää vain tätä avainta koskevat julkaisut: XMPP-julkaisun OpenPGP for XMPP -avaimille ja peruutuksen avainpalvelimelle vanhoille avaimille, jotka on lähetetty avainpalvelimelle.\n"
+"\n"
+"Et voi enää purkaa tällä avaimella salattujen vanhojen viestien salausta.\n"
+"\n"
+"Tätä ei voi perua!"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1925
+msgid "Revoke and Delete"
+msgstr "Peruuta ja poista"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1944
+msgid "Revoking & Deleting..."
+msgstr "Peruutetaan ja poistetaan..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1944
+msgid "Revoking key, updating applicable publications, and deleting..."
+msgstr ""
+"Peruutetaan avainta, päivitetään sitä koskevia julkaisuja ja poistetaan..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1975
+#: plugins/openpgp/src/key_management_dialog.vala:1982
+msgid ""
+"Could not remove the XMPP publication. The key was not revoked or deleted."
+msgstr ""
+"XMPP-julkaisua ei voitu poistaa. Avainta ei peruutettu eikä poistettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2033
+msgid ""
+"The key was revoked locally, but the revocation could not be uploaded to the"
+" keyserver. The key was kept locally so you can retry publishing the "
+"revocation."
+msgstr ""
+"Avain peruutettiin paikallisesti, mutta peruutusta ei voitu lähettää "
+"avainpalvelimelle. Avain säilytettiin paikallisesti, jotta voit yrittää "
+"peruutuksen julkaisua uudelleen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2068
+msgid "Key revoked"
+msgstr "Avain peruutettu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2070
+msgid "keyserver notified"
+msgstr "avainpalvelimelle ilmoitettu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2073
+msgid "XMPP server updated"
+msgstr "XMPP-palvelin päivitetty"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2076
+msgid "key deleted"
+msgstr "avain poistettu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2091
+#: plugins/openpgp/src/key_management_dialog.vala:2592
+#: plugins/openpgp/src/key_management_dialog.vala:2959
+#: plugins/openpgp/src/key_management_dialog.vala:2981
+#: plugins/openpgp/src/key_management_dialog.vala:3384
+msgid "OK"
+msgstr "OK"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2099
+msgid "Not Available"
+msgstr "Ei tavoitettavissa"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2099
+msgid ""
+"This key has no email user ID for legacy keyserver publishing. Create a "
+"legacy key with a real email address for XEP-0027/keyserver use."
+msgstr ""
+"Tällä avaimella ei ole sähköpostikäyttäjätunnusta vanhaa "
+"avainpalvelinjulkaisua varten. Luo vanhan tilan avain todellisella "
+"sähköpostiosoitteella XEP-0027/avainpalvelinkäyttöä varten."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2105
+msgid "Publish Key?"
+msgstr "Julkaistaanko avain?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2106
+msgid ""
+"This uploads your public key to keys.openpgp.org. You must verify the email "
+"address on the key before XEP-0027 clients can reliably find it."
+msgstr ""
+"Tämä lähettää julkisen avaimesi osoitteeseen keys.openpgp.org. Avaimen "
+"sähköpostiosoite on vahvistettava, jotta XEP-0027-sovellukset voivat löytää "
+"sen luotettavasti."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2109
+msgid "Publish"
+msgstr "Julkaise"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2117
+msgid "Publishing..."
+msgstr "Julkaistaan..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2117
+msgid "Uploading key to keyserver..."
+msgstr "Lähetetään avainta avainpalvelimelle..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2137
+msgid ""
+"Key uploaded to the OpenPGP keyserver. Check your email to verify it before "
+"XEP-0027 clients can reliably find it. The active OpenPGP mode for this "
+"account was not changed."
+msgstr ""
+"Avain lähetetty OpenPGP-avainpalvelimelle. Tarkista sähköpostisi ja vahvista"
+" osoite, jotta XEP-0027-sovellukset voivat löytää avaimen luotettavasti. "
+"Tämän tilin aktiivista OpenPGP-tilaa ei muutettu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2139
+msgid "Failed to publish key. Check your internet connection."
+msgstr "Avaimen julkaisu epäonnistui. Tarkista internetyhteytesi."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2232
+#: plugins/openpgp/src/key_management_dialog.vala:2362
+#: plugins/openpgp/src/key_management_dialog.vala:2414
+#: plugins/openpgp/src/key_management_dialog.vala:2434
+#: plugins/openpgp/src/key_management_dialog.vala:2460
+msgid "Backup Failed"
+msgstr "Varmuuskopiointi epäonnistui"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2232
+msgid "Failed to generate a secure backup code."
+msgstr "Turvallisen varmuuskopiokoodin luominen epäonnistui."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2238
+msgid ""
+"Save this backup code before uploading the key. You will need exactly this "
+"code to restore the key on another device."
+msgstr ""
+"Tallenna tämä varmuuskopiokoodi ennen avaimen lähettämistä. Tarvitset "
+"täsmälleen tämän koodin palauttaaksesi avaimen toiselle laitteelle."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2247
+#: plugins/openpgp/src/key_management_dialog.vala:3199
+msgid "Backup Code"
+msgstr "Varmuuskopiokoodi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2259
+msgid "Copy Backup Code"
+msgstr "Kopioi varmuuskopiokoodi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2263
+msgid "Backup Code Copied"
+msgstr "Varmuuskopiokoodi kopioitu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2271
+msgid "Backup to Server"
+msgstr "Varmuuskopioi palvelimelle"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2330
+msgid "Backing up..."
+msgstr "Varmuuskopioidaan..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2330
+msgid "Encrypting and uploading key..."
+msgstr "Salataan ja lähetetään avainta..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2362
+msgid "GnuPG or the server did not respond while backing up the secret key."
+msgstr ""
+"GnuPG tai palvelin ei vastannut salaisen avaimen varmuuskopioinnin aikana."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2406
+msgid "Encryption Error"
+msgstr "Salausvirhe"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2414
+msgid "Failed to prepare the encrypted secret key backup."
+msgstr "Salatun salaisen avaimen varmuuskopion valmistelu epäonnistui."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2434
+#: plugins/openpgp/src/key_management_dialog.vala:2460
+msgid "Failed to publish the backup to the server."
+msgstr "Varmuuskopion julkaisu palvelimelle epäonnistui."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2458
+msgid "Backup Successful"
+msgstr "Varmuuskopiointi onnistui"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2458
+msgid "Your encrypted secret key has been securely stored on the server."
+msgstr "Salattu salainen avaimesi on tallennettu turvallisesti palvelimelle."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2858
+msgid "Checking Server..."
+msgstr "Tarkistetaan palvelinta..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2858
+msgid "Looking for a secret key backup..."
+msgstr "Etsitään salaisen avaimen varmuuskopiota..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2898
+#: plugins/openpgp/src/key_management_dialog.vala:2957
+#: plugins/openpgp/src/key_management_dialog.vala:3003
+#: plugins/openpgp/src/key_management_dialog.vala:3322
+#: plugins/openpgp/src/key_management_dialog.vala:3354
+#: plugins/openpgp/src/key_management_dialog.vala:3360
+msgid "Import Failed"
+msgstr "Tuonti epäonnistui"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2898
+msgid "The server did not respond while fetching the secret key backup."
+msgstr "Palvelin ei vastannut salaisen avaimen varmuuskopion haun aikana."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2958
+msgid ""
+"Could not retrieve this account's server backup. Check the account "
+"connection and try again."
+msgstr ""
+"Tämän tilin palvelinvarmuuskopiota ei voitu hakea. Tarkista tilin yhteys ja "
+"yritä uudelleen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2979
+#: plugins/openpgp/src/key_management_dialog.vala:3048
+msgid "No Backup Found"
+msgstr "Varmuuskopiota ei löytynyt"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2980
+#: plugins/openpgp/src/key_management_dialog.vala:3049
+msgid "There is no secret key backup stored on the server for this account."
+msgstr ""
+"Tälle tilille ei ole tallennettu salaisen avaimen varmuuskopiota "
+"palvelimelle."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3003
+msgid "GnuPG did not respond while checking the server key data."
+msgstr "GnuPG ei vastannut palvelimen avaintietojen tarkistuksen aikana."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3087
+#: plugins/openpgp/src/key_management_dialog.vala:3092
+#: plugins/openpgp/src/key_management_dialog.vala:3116
+msgid "No Secret Key Backup"
+msgstr "Ei salaisen avaimen varmuuskopiota"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3088
+msgid ""
+"The public XMPP key is published on the server and the matching private key "
+"is already available locally, but no secret key backup was found on the "
+"server."
+msgstr ""
+"Julkinen XMPP-avain on julkaistu palvelimella ja vastaava yksityinen avain "
+"on jo saatavilla paikallisesti, mutta palvelimelta ei löytynyt salaisen "
+"avaimen varmuuskopiota."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3093
+msgid ""
+"The public XMPP key is published on the server, but no private key backup "
+"was found for this account."
+msgstr ""
+"Julkinen XMPP-avain on julkaistu palvelimella, mutta tälle tilille ei "
+"löytynyt yksityisen avaimen varmuuskopiota."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3111
+#: plugins/openpgp/src/key_management_dialog.vala:3134
+#: plugins/openpgp/src/key_management_dialog.vala:3356
+msgid "Key Already Present"
+msgstr "Avain on jo olemassa"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3112
+msgid ""
+"The key from the server is already available for this account. No import was"
+" needed."
+msgstr "Palvelimen avain on jo saatavilla tälle tilille. Tuontia ei tarvittu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3117
+msgid ""
+"The server contains public OpenPGP key data, but no private key backup for "
+"this account."
+msgstr ""
+"Palvelin sisältää julkisia OpenPGP-avaintietoja, mutta ei tämän tilin "
+"yksityisen avaimen varmuuskopiota."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3135
+#: plugins/openpgp/src/key_management_dialog.vala:3356
+msgid ""
+"The secret key from the server is already available for this account. No "
+"import was needed."
+msgstr ""
+"Palvelimen salainen avain on jo saatavilla tälle tilille. Tuontia ei "
+"tarvittu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3150
+msgid "Unsupported Backup Format"
+msgstr "Varmuuskopion muotoa ei tueta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3151
+msgid ""
+"The server contains unencrypted secret key data. DinoX now expects an "
+"encrypted XEP-0373 secret key backup. Create a new server backup to replace "
+"it."
+msgstr ""
+"Palvelin sisältää salaamattomia salaisen avaimen tietoja. DinoX odottaa nyt "
+"salattua XEP-0373-varmuuskopiota salaisesta avaimesta. Korvaa se luomalla "
+"uusi palvelinvarmuuskopio."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3194
+msgid "Import Secret Key"
+msgstr "Tuo salainen avain"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3195
+msgid ""
+"A secret key backup was found on the server. Enter your backup code to "
+"decrypt and import it."
+msgstr ""
+"Palvelimelta löytyi salaisen avaimen varmuuskopio. Anna varmuuskopiokoodisi "
+"purkaaksesi salauksen ja tuodaksesi sen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3216
+#: plugins/openpgp/src/key_management_dialog.vala:3218
+msgid "Import"
+msgstr "Tuo"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3322
+msgid "GnuPG did not respond while importing the secret key backup."
+msgstr "GnuPG ei vastannut salaisen avaimen varmuuskopion tuonnin aikana."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3358
+msgid "Import Successful"
+msgstr "Tuonti onnistui"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3358
+msgid "The secret key was successfully imported from the server."
+msgstr "Salainen avain tuotiin onnistuneesti palvelimelta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3360
+msgid ""
+"The backup code was incorrect or the secret key backup could not be "
+"imported."
+msgstr ""
+"Varmuuskopiokoodi oli väärä tai salaisen avaimen varmuuskopiota ei voitu "
+"tuoda."
+
+#: plugins/openpgp/src/manager.vala:377
+msgid ""
+"The selected OpenPGP-for-XMPP account key does not contain the required "
+"xmpp: user ID for this account."
+msgstr ""
+"Valittu OpenPGP for XMPP -tiliavain ei sisällä tämän tilin vaatimaa "
+"xmpp:-käyttäjätunnusta."
+
+#: plugins/openpgp/src/manager.vala:381
+msgid ""
+"The selected legacy OpenPGP/XEP-0027 account key has no email user ID for "
+"keyserver use."
+msgstr ""
+"Valitulla vanhan OpenPGP/XEP-0027-tilan tiliavaimella ei ole "
+"sähköpostikäyttäjätunnusta avainpalvelinkäyttöä varten."
+
+#: plugins/openpgp/src/manager.vala:385
+#, c-format
+msgid "OpenPGP account key validation failed: %s"
+msgstr "OpenPGP-tiliavaimen tarkistus epäonnistui: %s"
+
+#: plugins/openpgp/src/manager.vala:398
+msgid "No legacy OpenPGP/XEP-0027 account key is active."
+msgstr "Vanhan OpenPGP/XEP-0027-tilan tiliavainta ei ole aktiivisena."
+
+#: plugins/openpgp/src/manager.vala:399
+msgid "No OpenPGP-for-XMPP account key is active."
+msgstr "OpenPGP for XMPP -tiliavainta ei ole aktiivisena."
+
+#: plugins/openpgp/src/manager.vala:410
+msgid "This contact has no OpenPGP-for-XMPP key."
+msgstr "Tällä yhteystiedolla ei ole OpenPGP for XMPP -avainta."
+
+#: plugins/openpgp/src/manager.vala:420
+msgid "The contact's OpenPGP-for-XMPP key has not been refreshed yet."
+msgstr "Yhteystiedon OpenPGP for XMPP -avainta ei ole vielä päivitetty."
+
+#: plugins/openpgp/src/manager.vala:425
+msgid "This contact has no legacy OpenPGP/XEP-0027 key."
+msgstr "Tällä yhteystiedolla ei ole vanhaa OpenPGP/XEP-0027-avainta."
+
+#: plugins/openpgp/src/manager.vala:438
+#, c-format
+msgid "OpenPGP key lookup failed: %s"
+msgstr "OpenPGP-avaimen haku epäonnistui: %s"
+
+#: plugins/openpgp/src/manager.vala:442
+msgid "No OpenPGP keys are available for the group members."
+msgstr "Ryhmän jäsenille ei ole OpenPGP-avaimia."
+
+#: plugins/openpgp/src/plugin.vala:432
+msgid "OpenPGP Passphrase Required"
+msgstr "OpenPGP-salasanalause vaaditaan"
+
+#: plugins/openpgp/src/plugin.vala:433
+msgid "Enter the passphrase for your OpenPGP key to continue."
+msgstr "Anna OpenPGP-avaimesi salasanalause jatkaaksesi."
+
+#: plugins/openpgp/src/plugin.vala:449
+msgid "Passphrase"
+msgstr "Salasanalause"
+
+#: plugins/openpgp/src/plugin.vala:454
+msgid "Unlock"
+msgstr "Avaa lukitus"
+
+#~ msgid "Key not in keychain"
+#~ msgstr "Avain ei ole avainnipussa"
+
+#~ msgid "Announce key"
+#~ msgstr "Ilmoita avain"
+
+#~ msgid "Disabled"
+#~ msgstr "Pois käytöstä"
+
+#~ msgid "Select OpenPGP Key"
+#~ msgstr "Valitse OpenPGP-avain"
+
+#~ msgid "Choose a key to announce to your contacts."
+#~ msgstr "Valitse avain julkaistavaksi yhteystiedoillesi."
+
+#~ msgid "Enter GPG passphrase to confirm:"
+#~ msgstr "Syötä GPG-tunnuslause vahvistaaksesi:"
+
+#~ msgid "Wrong passphrase"
+#~ msgstr "Väärä tunnuslause"
+
+#~ msgid "Import a key from file (.asc, .gpg)"
+#~ msgstr "Tuo avain tiedostosta (.asc, .gpg)"
+
+#~ msgid "Email"
+#~ msgstr "Sähköposti"
+
+#~ msgid "you@example.com"
+#~ msgstr "sinä@esimerkki.fi"
+
+#~ msgid "Key generated successfully!"
+#~ msgstr "Avain luotu onnistuneesti!"
+
+#~ msgid "Key imported! Re-open Key Management to see it."
+#~ msgstr "Avain tuotu! Avaa avainten hallinta uudelleen nähdäksesi sen."
+
+#, c-format
+#~ msgid ""
+#~ "Delete this key?\n"
+#~ "\n"
+#~ "%s\n"
+#~ "\n"
+#~ "This cannot be undone!"
+#~ msgstr ""
+#~ "Poistetaanko tämä avain?\n"
+#~ "\n"
+#~ "%s\n"
+#~ "\n"
+#~ "Tätä ei voi kumota!"
+
+#~ msgid "Querying GnuPG"
+#~ msgstr "Kysellään GnuPG:tä"
+
+#~ msgid "Encryption"
+#~ msgstr "Salaus"
+
+#~ msgid "Key publishing disabled"
+#~ msgstr "Avaimen julkaiseminen pois käytöstä"
+
+#~ msgid "Loading…"
+#~ msgstr "Ladataan…"

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface domain="dino">
+    <requires lib="gtk" version="4.0"/>
+    <object class="GtkGrid" id="main_grid">
+        <property name="margin-top">3</property>
+        <property name="margin-start">7</property>
+        <property name="margin-bottom">3</property>
+        <property name="margin-end">7</property>
+        <property name="column-spacing">10</property>
+        <child>
+            <object class="GtkOverlay">
+                <child>
+                    <object class="DinoUiAvatarPicture" id="picture">
+                        <property name="height-request">30</property>
+                        <property name="width-request">30</property>
+                    </object>
+                </child>
+                <child type="overlay">
+                    <object class="GtkImage" id="status_image">
+                        <property name="halign">end</property>
+                        <property name="valign">end</property>
+                        <property name="visible">0</property>
+                        <property name="pixel-size">10</property>
+                    </object>
+                </child>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">0</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel" id="name_label">
+                <property name="max_width_chars">1</property>
+                <property name="ellipsize">end</property>
+                <property name="hexpand">1</property>
+                <property name="xalign">0</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">0</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkBox" id="metadata_box">
+                <property name="orientation">vertical</property>
+                <property name="spacing">3</property>
+                <property name="hexpand">1</property>
+                <property name="visible">0</property>
+                <child>
+                    <object class="GtkLabel" id="role_label">
+                        <property name="max_width_chars">1</property>
+                        <property name="ellipsize">end</property>
+                        <property name="xalign">0</property>
+                        <property name="visible">0</property>
+                        <style>
+                            <class name="dim-label"/>
+                            <class name="caption"/>
+                        </style>
+                    </object>
+                </child>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">1</property>
+                </layout>
+            </object>
+        </child>
+    </object>
+</interface>

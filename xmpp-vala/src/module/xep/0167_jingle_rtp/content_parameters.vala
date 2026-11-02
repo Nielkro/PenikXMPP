@@ -1,0 +1,386 @@
+using Gee;
+using Xmpp;
+using Xmpp.Xep;
+
+public class Xmpp.Xep.JingleRtp.Parameters : Jingle.ContentParameters, Object {
+
+    public signal void stream_created(Stream stream);
+    public signal void connection_ready();
+
+    public string media { get; private set; }
+    public string? ssrc { get; set; }  // Made public for setting from Stream
+    public bool rtcp_mux { get; private set; }
+
+    public string? bandwidth { get; private set; }
+    public string? bandwidth_type { get; private set; }
+
+    public bool encryption_required { get; private set; default = false; }
+    public PayloadType? agreed_payload_type { get; private set; }
+    public Gee.List<PayloadType> payload_types = new ArrayList<PayloadType>(PayloadType.equals_func);
+    public Gee.List<HeaderExtension> header_extensions = new ArrayList<HeaderExtension>();
+    public Gee.List<Crypto> remote_cryptos = new ArrayList<Crypto>();
+    public Crypto? local_crypto = null;
+    public Crypto? remote_crypto = null;
+
+    public bool rtp_ready { get; private set; default=false; }
+    public bool rtcp_ready { get; private set; default=false; }
+
+    public weak Stream? stream { get; private set; }
+
+    private Module parent;
+
+    private void unset_stream() {
+        this.stream = null;
+    }
+
+    private string payload_list_to_string(Gee.Iterable<PayloadType> pts) {
+        var sb = new StringBuilder();
+        bool first = true;
+        foreach (PayloadType pt in pts) {
+            if (!first) sb.append(", ");
+            first = false;
+            sb.append("%s/%u id=%u".printf(pt.name ?? "?", pt.clockrate, pt.id));
+        }
+        return sb.str;
+    }
+
+    public Parameters(Module parent,
+                      string media, Gee.List<PayloadType> payload_types,
+                      string? ssrc = null, bool rtcp_mux = false,
+                      string? bandwidth = null, string? bandwidth_type = null,
+                      bool encryption_required = false, Crypto? local_crypto = null
+    ) {
+        this.parent = parent;
+        this.media = media;
+        // Generate random SSRC if not provided (needed for WebRTC compatibility)
+        this.ssrc = ssrc ?? Random.next_int().to_string();
+        this.rtcp_mux = true;
+        this.bandwidth = bandwidth;
+        this.bandwidth_type = bandwidth_type;
+        this.encryption_required = encryption_required;
+        this.payload_types = payload_types;
+        this.local_crypto = local_crypto;
+    }
+
+    public Parameters.from_node(Module parent, StanzaNode node) throws Jingle.IqError {
+        this.parent = parent;
+        this.media = node.get_attribute("media");
+        // For incoming calls, generate our own SSRC for sending
+        // (the remote SSRC is theirs, we need our own for sending)
+        this.ssrc = Random.next_int().to_string();
+        this.rtcp_mux = node.get_subnode("rtcp-mux") != null;
+        StanzaNode? encryption = node.get_subnode("encryption");
+        if (encryption != null) {
+            this.encryption_required = encryption.get_attribute_bool("required", this.encryption_required);
+            foreach (StanzaNode crypto in encryption.get_subnodes("crypto")) {
+                this.remote_cryptos.add(Crypto.parse(crypto));
+            }
+        }
+        foreach (StanzaNode payloadType in node.get_subnodes(PayloadType.NAME)) {
+            this.payload_types.add(PayloadType.parse(payloadType));
+        }
+        foreach (StanzaNode subnode in node.get_subnodes(HeaderExtension.NAME, HeaderExtension.NS_URI)) {
+            this.header_extensions.add(HeaderExtension.parse(subnode));
+        }
+    }
+
+    public async void handle_proposed_content(XmppStream stream, Jingle.Session session, Jingle.Content content) {
+        agreed_payload_type = yield parent.pick_payload_type(media, payload_types);
+        if (agreed_payload_type == null) {
+            debug("no usable payload type");
+            content.reject();
+            return;
+        }
+        debug("Jingle RTP proposed(%s): offered=[%s] selected=%s/%u id=%u", media, payload_list_to_string(payload_types),
+            agreed_payload_type.name ?? "?", agreed_payload_type.clockrate, agreed_payload_type.id);
+        // Drop unsupported header extensions
+        var iter = header_extensions.iterator();
+        while(iter.next()) {
+            if (!parent.is_header_extension_supported(media, iter.@get())) iter.remove();
+        }
+        remote_crypto = parent.pick_remote_crypto(remote_cryptos);
+        if (local_crypto == null && remote_crypto != null) {
+            local_crypto = parent.pick_local_crypto(remote_crypto);
+        }
+        if ((local_crypto == null || remote_crypto == null) && encryption_required) {
+            debug("no usable encryption, but encryption required");
+            content.reject();
+            return;
+        }
+    }
+
+    public void accept(XmppStream stream, Jingle.Session session, Jingle.Content content) {
+        debug("[%p] Jingle RTP on_accept", stream);
+
+        Jingle.DatagramConnection rtp_datagram = (Jingle.DatagramConnection) content.get_transport_connection(1);
+        Jingle.DatagramConnection rtcp_datagram = (Jingle.DatagramConnection) content.get_transport_connection(2);
+
+        ulong rtcp_ready_handler_id = 0;
+        rtcp_ready_handler_id = rtcp_datagram.notify["ready"].connect((rtcp_datagram, _) => {
+            this.stream.on_rtcp_ready();
+            this.rtcp_ready = true;
+
+            ((Jingle.DatagramConnection)rtcp_datagram).disconnect(rtcp_ready_handler_id);
+            rtcp_ready_handler_id = 0;
+        });
+
+        ulong rtp_ready_handler_id = 0;
+        rtp_ready_handler_id = rtp_datagram.notify["ready"].connect((rtp_datagram, _) => {
+            this.stream.on_rtp_ready();
+            this.rtp_ready = true;
+            if (rtcp_mux) {
+                this.stream.on_rtcp_ready();
+                this.rtcp_ready = true;
+            }
+            connection_ready();
+
+            ((Jingle.DatagramConnection)rtp_datagram).disconnect(rtp_ready_handler_id);
+            rtp_ready_handler_id = 0;
+        });
+
+        ulong rtp_recv_handler_id = 0;
+        ulong rtcp_recv_handler_id = 0;
+        ulong rtp_send_handler_id = 0;
+        ulong rtcp_send_handler_id = 0;
+
+        ulong session_state_handler_id = 0;
+        session_state_handler_id = session.notify["state"].connect((obj, _) => {
+            Jingle.Session session2 = (Jingle.Session) obj;
+            if (session2.state == Jingle.Session.State.ENDED) {
+                if (rtcp_ready_handler_id != 0 && SignalHandler.is_connected(rtcp_datagram, rtcp_ready_handler_id)) {
+                    rtcp_datagram.disconnect(rtcp_ready_handler_id);
+                }
+                rtcp_ready_handler_id = 0;
+                if (rtp_ready_handler_id != 0 && SignalHandler.is_connected(rtp_datagram, rtp_ready_handler_id)) {
+                    rtp_datagram.disconnect(rtp_ready_handler_id);
+                }
+                rtp_ready_handler_id = 0;
+                // Disconnect data signal connections to break reference cycles.
+                // These use g_signal_connect_object (Vala instance-method delegates),
+                // so they may already be auto-disconnected if the stream was finalized.
+                if (rtp_recv_handler_id != 0 && SignalHandler.is_connected(rtp_datagram, rtp_recv_handler_id)) {
+                    rtp_datagram.disconnect(rtp_recv_handler_id);
+                }
+                rtp_recv_handler_id = 0;
+                if (rtcp_recv_handler_id != 0 && SignalHandler.is_connected(rtcp_datagram, rtcp_recv_handler_id)) {
+                    rtcp_datagram.disconnect(rtcp_recv_handler_id);
+                }
+                rtcp_recv_handler_id = 0;
+                if (rtp_send_handler_id != 0 && this.stream != null && SignalHandler.is_connected(this.stream, rtp_send_handler_id)) {
+                    this.stream.disconnect(rtp_send_handler_id);
+                }
+                rtp_send_handler_id = 0;
+                if (rtcp_send_handler_id != 0 && this.stream != null && SignalHandler.is_connected(this.stream, rtcp_send_handler_id)) {
+                    this.stream.disconnect(rtcp_send_handler_id);
+                }
+                rtcp_send_handler_id = 0;
+                if (session_state_handler_id != 0 && SignalHandler.is_connected(session2, session_state_handler_id)) {
+                    session2.disconnect(session_state_handler_id);
+                }
+                session_state_handler_id = 0;
+            }
+        });
+
+        if (remote_crypto == null || local_crypto == null) {
+            if (encryption_required) {
+                warning("Encryption required but not provided in both directions");
+                return;
+            }
+            remote_crypto = null;
+            local_crypto = null;
+        }
+        if (remote_crypto != null && local_crypto != null) {
+            var content_encryption = new Xmpp.Xep.Jingle.ContentEncryption("", "SRTP", local_crypto.key, remote_crypto.key);
+            content.encryptions[content_encryption.encryption_name] = content_encryption;
+        }
+
+        this.stream = parent.create_stream(content);
+        this.stream.weak_ref(unset_stream);
+        rtp_recv_handler_id = rtp_datagram.datagram_received.connect(this.stream.on_recv_rtp_data);
+        rtcp_recv_handler_id = rtcp_datagram.datagram_received.connect(this.stream.on_recv_rtcp_data);
+        rtp_send_handler_id = this.stream.on_send_rtp_data.connect(rtp_datagram.send_datagram);
+        rtcp_send_handler_id = this.stream.on_send_rtcp_data.connect(rtcp_datagram.send_datagram);
+        this.stream_created(this.stream);
+        this.stream.create();
+    }
+
+    // Check if codec matches (only name and clockrate, not ID or RTCP-FB)
+    private bool codec_matches(PayloadType a, PayloadType b) {
+        if (a.name == null || b.name == null) return false;
+        return a.name.ascii_down() == b.name.ascii_down() && a.clockrate == b.clockrate;
+    }
+
+    public void handle_accept(XmppStream stream, Jingle.Session session, Jingle.Content content, StanzaNode description_node) {
+        rtcp_mux = description_node.get_subnode("rtcp-mux") != null;
+        Gee.List<StanzaNode> payload_type_nodes = description_node.get_subnodes("payload-type");
+        if (payload_type_nodes.size == 0) {
+            warning("Counterpart didn't include any payload types");
+            return;
+        }
+        PayloadType preferred_payload_type = PayloadType.parse(payload_type_nodes[0]);
+        
+        // Check if this codec matches any of our supported codecs (by name and clockrate, not by exact match)
+        bool found_matching_codec = false;
+        foreach (PayloadType our_pt in payload_types) {
+            if (codec_matches(our_pt, preferred_payload_type)) {
+                found_matching_codec = true;
+                debug("Codec match found: %s at %u Hz (their id=%u, our id=%u)", 
+                      preferred_payload_type.name, preferred_payload_type.clockrate,
+                      preferred_payload_type.id, our_pt.id);
+                break;
+            }
+        }
+        if (!found_matching_codec) {
+            warning("Counterpart's preferred codec '%s' doesn't match any of our supported codecs", 
+                    preferred_payload_type.name ?? "null");
+        }
+        agreed_payload_type = preferred_payload_type;
+        debug("Jingle RTP accept(%s): peer selected=%s/%u id=%u", media,
+            preferred_payload_type.name ?? "?", preferred_payload_type.clockrate, preferred_payload_type.id);
+
+        Gee.List<StanzaNode> crypto_nodes = description_node.get_deep_subnodes("encryption", "crypto");
+        if (crypto_nodes.size == 0) {
+            debug("Counterpart didn't include any cryptos");
+            if (encryption_required) {
+                return;
+            }
+        } else {
+            Crypto preferred_crypto = Crypto.parse(crypto_nodes[0]);
+            if (local_crypto.crypto_suite != preferred_crypto.crypto_suite) {
+                warning("Counterpart's crypto suite doesn't match any of our sent ones");
+            }
+            remote_crypto = preferred_crypto;
+        }
+
+        accept(stream, session, content);
+    }
+
+    public void terminate(bool we_terminated, string? reason_name, string? reason_text) {
+        if (stream != null) {
+            // Remove the weak_ref callback BEFORE closing the stream.
+            // Otherwise, if Stream outlives this Parameters object (e.g. held
+            // by a closure), the weak_ref callback fires on a freed Parameters
+            // and triggers g_object_notify_by_pspec on a dead object.
+            stream.weak_unref(unset_stream);
+            var s = stream;
+            stream = null;
+            parent.close_stream(s);
+        }
+        // Release heavyweight collections
+        payload_types.clear();
+        header_extensions.clear();
+        remote_cryptos.clear();
+        local_crypto = null;
+        remote_crypto = null;
+    }
+
+    public StanzaNode get_description_node() {
+        StanzaNode ret = new StanzaNode.build("description", NS_URI)
+                .add_self_xmlns()
+                .put_attribute("media", media);
+        
+        // Add SSRC if available
+        if (ssrc != null) {
+            ret.put_attribute("ssrc", ssrc);
+        }
+
+        if (agreed_payload_type != null) {
+            ret.put_node(agreed_payload_type.to_xml());
+        } else {
+            foreach (PayloadType payload_type in payload_types) {
+                ret.put_node(payload_type.to_xml());
+            }
+        }
+        foreach (HeaderExtension ext in header_extensions) {
+            ret.put_node(ext.to_xml());
+        }
+        if (local_crypto != null) {
+            ret.put_node(new StanzaNode.build("encryption", NS_URI)
+                .put_node(local_crypto.to_xml()));
+        }
+        if (rtcp_mux) {
+            ret.put_node(new StanzaNode.build("rtcp-mux", NS_URI));
+        }
+        return ret;
+    }
+}
+
+public class Xmpp.Xep.JingleRtp.HeaderExtension {
+    public const string NS_URI = "urn:xmpp:jingle:apps:rtp:rtp-hdrext:0";
+    public const string NAME = "rtp-hdrext";
+
+    public uint16 id { get; private set; }
+    public string uri { get; private set; }
+    public Jingle.Senders senders { get; private set; default = Jingle.Senders.BOTH; }
+    public Gee.List<HeaderExtensionParameter> parameters = new ArrayList<HeaderExtensionParameter>();
+
+    public HeaderExtension(
+            uint16 id,
+            string uri,
+            Jingle.Senders senders = Jingle.Senders.BOTH) {
+        this.id = id;
+        this.uri = uri;
+        this.senders = senders;
+    }
+
+    public static HeaderExtension parse(StanzaNode node) throws Jingle.IqError {
+        uint id = node.get_attribute_uint("id");
+        string? uri = node.get_attribute("uri");
+        if (!id_is_valid(id)) {
+            throw new Jingle.IqError.BAD_REQUEST("invalid XEP-0294 RTP header extension id");
+        }
+        if (uri == null || ((!) uri).strip() == "" ||
+                ((!) uri).contains("\r") || ((!) uri).contains("\n")) {
+            throw new Jingle.IqError.BAD_REQUEST("invalid XEP-0294 RTP header extension URI");
+        }
+
+        var extension = new HeaderExtension(
+            (uint16) id,
+            (!) uri,
+            Jingle.Senders.parse(node.get_attribute("senders")));
+        foreach (StanzaNode parameter in node.get_subnodes("parameter", NS_URI)) {
+            string? name = parameter.get_attribute("name");
+            string? value = parameter.get_attribute("value");
+            if (name == null || ((!) name).strip() == "" ||
+                    ((!) name).contains("\r") || ((!) name).contains("\n") ||
+                    (value != null && (((!) value).contains("\r") || ((!) value).contains("\n")))) {
+                throw new Jingle.IqError.BAD_REQUEST("invalid XEP-0294 RTP header extension parameter");
+            }
+            extension.parameters.add(new HeaderExtensionParameter((!) name, value));
+        }
+        return extension;
+    }
+
+    public StanzaNode to_xml() {
+        var node = new StanzaNode.build(NAME, NS_URI)
+                .add_self_xmlns()
+                .put_attribute("id", id.to_string())
+                .put_attribute("uri", uri);
+        if (senders != Jingle.Senders.BOTH) {
+            node.put_attribute("senders", senders.to_string());
+        }
+        foreach (HeaderExtensionParameter parameter in parameters) {
+            var parameter_node = new StanzaNode.build("parameter", NS_URI)
+                    .put_attribute("name", parameter.name);
+            if (parameter.value != null) {
+                parameter_node.put_attribute("value", (!) parameter.value);
+            }
+            node.put_node(parameter_node);
+        }
+        return node;
+    }
+
+    public static bool id_is_valid(uint id) {
+        return (id >= 1 && id <= 256) || (id >= 4096 && id <= 4351);
+    }
+}
+
+public class Xmpp.Xep.JingleRtp.HeaderExtensionParameter {
+    public string name { get; private set; }
+    public string? value { get; private set; }
+
+    public HeaderExtensionParameter(string name, string? value = null) {
+        this.name = name;
+        this.value = value;
+    }
+}

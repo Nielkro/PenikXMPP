@@ -1,0 +1,40 @@
+--- a/tls/gnutls/gtlsfiledatabase-gnutls.c
++++ b/tls/gnutls/gtlsfiledatabase-gnutls.c
+@@ -143,9 +143,34 @@
+                                                 gnutls_x509_trust_list_t   trust_list,
+                                                 GError                   **error)
+ {
+-  int ret = gnutls_x509_trust_list_add_trust_file (trust_list,
+-                                                   G_TLS_FILE_DATABASE_GNUTLS (self)->anchor_filename,
+-                                                   NULL, GNUTLS_X509_FMT_PEM, 0, 0);
++  int ret;
++#ifdef G_OS_WIN32
++  /* GnuTLS uses narrow C filenames here, whereas GLib paths are UTF-8.
++   * Read via GLib's Windows-aware file API, then import the identical PEM
++   * bytes. Do not weaken trust verification or relocate the user's bundle. */
++  gchar *contents = NULL;
++  gsize length = 0;
++  gnutls_datum_t pem;
++  if (!g_file_get_contents (G_TLS_FILE_DATABASE_GNUTLS (self)->anchor_filename,
++                            &contents, &length, error))
++    return FALSE;
++  if (length == 0 || length > 16 * 1024 * 1024)
++    {
++      g_free (contents);
++      g_set_error_literal (error, G_TLS_ERROR, G_TLS_ERROR_MISC,
++                           "Invalid TLS trust bundle size");
++      return FALSE;
++    }
++  pem.data = (unsigned char *) contents;
++  pem.size = (unsigned int) length;
++  ret = gnutls_x509_trust_list_add_trust_mem (trust_list, &pem, NULL,
++                                            GNUTLS_X509_FMT_PEM, 0, 0);
++  g_free (contents);
++#else
++  ret = gnutls_x509_trust_list_add_trust_file (trust_list,
++                                             G_TLS_FILE_DATABASE_GNUTLS (self)->anchor_filename,
++                                             NULL, GNUTLS_X509_FMT_PEM, 0, 0);
++#endif
+ 
+   if (ret < 0)
+     {

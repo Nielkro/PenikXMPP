@@ -1,0 +1,39 @@
+# Keep every original GPU/ownership/capacity/native-OFF guard. Only current
+# product lookups use a proxy; historical functions keep original module globals.
+PRODUCT = _PRODUCT_
+NORMAL_CONSENT_UI_SHA256 = _CONSENT_SHA_
+CONSENT_HELPER = Path(_CONSENT_PATH_)
+APKS = {'main.apk': PRODUCT['main_sha256'], 'android-test.apk': PRODUCT['test_sha256']}
+APK_PATHS = {'main.apk': Path(PRODUCT['main_path']), 'android-test.apk': Path(PRODUCT['test_path'])}
+JOIN_PRODUCT_PROOF = dict(JOIN_PRODUCT_PROOF, main_sha256=PRODUCT['main_sha256'],
+    source_manifest_sha256=PRODUCT['source']['sha256'], actual_jvm_tests=616,
+    reviewed_source_commit=PRODUCT['commit'],local_handoff_path=PRODUCT['handoff']['path'],
+    local_handoff_sha256=PRODUCT['handoff']['sha256'])
+_historical_base = base
+
+def _current_product():
+    for name in ('handoff','build','jvm','source'):
+        assert sha(Path(PRODUCT[name]['path']))==PRODUCT[name]['sha256']
+    handoff=read(PRODUCT['handoff']['path']);build=read(PRODUCT['build']['path']);jvm=read(PRODUCT['jvm']['path'])
+    assert handoff['result']==build['result']==jvm['result']=='PASS'
+    assert handoff['apk_sha256']==build['apk_sha256']==APKS['main.apk']
+    assert handoff['actual_jvm_tests']==build['actual_jvm_tests']==jvm['tests']==jvm['unique_cases']==616
+    assert jvm['failures']==jvm['errors']==jvm['skipped']==0
+    return dict(JOIN_PRODUCT_PROOF)
+
+class _CurrentProductBase:
+    APKS=APKS
+    APK_PATHS=APK_PATHS
+    PROOFS=dict(_historical_base.PROOFS,join_source=(Path(PRODUCT['source']['path']),PRODUCT['source']['sha256']))
+    def __getattr__(self,name):return getattr(_historical_base,name)
+    def verify_join_product(self):return _current_product()
+    def verify_install_apks(self):
+        for name,path in APK_PATHS.items():assert path.is_file() and not path.is_symlink() and sha(path)==APKS[name]
+
+base = _CurrentProductBase()
+_original_frozen_files = frozen_files
+def frozen_files():
+    value=_original_frozen_files()
+    assert sha(CONSENT_HELPER)==NORMAL_CONSENT_UI_SHA256
+    assert read(HERE/'freeze.json')['product']==PRODUCT
+    _current_product();return value

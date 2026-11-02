@@ -1,0 +1,11 @@
+[Unit]
+Description=Shared limits for the two owned Monocles Android test devices
+
+[Slice]
+CPUAccounting=yes
+CPUQuota=200%
+MemoryAccounting=yes
+MemoryMax=7G
+MemorySwapMax=0
+TasksAccounting=yes
+TasksMax=512

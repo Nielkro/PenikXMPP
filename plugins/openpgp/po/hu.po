@@ -1,0 +1,1857 @@
+# Hungarian translations for DinoX.
+# This file is distributed under the same license as the DinoX package.
+msgid ""
+msgstr ""
+"Project-Id-Version: DinoX\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-26 12:04+0100\n"
+"PO-Revision-Date: 2026-10-27 05:24+0100\n"
+"Last-Translator: DinoX contributors\n"
+"Language-Team: Hungarian\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: plugins/openpgp/src/contact_details_provider.vala:163
+msgid "OpenPGP Legacy (XEP-0027/keyserver)"
+msgstr "Régi OpenPGP (XEP-0027/kulcsszerver)"
+
+#: plugins/openpgp/src/contact_details_provider.vala:176
+msgid "Search keyserver"
+msgstr "Keresés a kulcsszerveren"
+
+#: plugins/openpgp/src/contact_details_provider.vala:184
+msgid "OpenPGP XMPP (XEP-0373/0374)"
+msgstr "OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/contact_details_provider.vala:196
+msgid "Copy XMPP-published OpenPGP fingerprint"
+msgstr "XMPP-n közzétett OpenPGP-ujjlenyomat másolása"
+
+#: plugins/openpgp/src/contact_details_provider.vala:205
+msgid "Mark XMPP-published key as verified"
+msgstr "XMPP-n közzétett kulcs megjelölése ellenőrzöttként"
+
+#: plugins/openpgp/src/contact_details_provider.vala:211
+msgid "Reset XMPP-published key verification"
+msgstr "XMPP-n közzétett kulcs ellenőrzésének alaphelyzetbe állítása"
+
+#: plugins/openpgp/src/contact_details_provider.vala:226
+msgid "Refresh XMPP-published key"
+msgstr "XMPP-n közzétett kulcs frissítése"
+
+#: plugins/openpgp/src/contact_details_provider.vala:337
+msgid "Checking XMPP-published OpenPGP key..."
+msgstr "XMPP-n közzétett OpenPGP-kulcs ellenőrzése..."
+
+#: plugins/openpgp/src/contact_details_provider.vala:350
+msgid "Checking the XMPP-published OpenPGP key timed out."
+msgstr ""
+"Az XMPP-n közzétett OpenPGP-kulcs ellenőrzése túllépte az időkorlátot."
+
+#: plugins/openpgp/src/contact_details_provider.vala:389
+msgid "Checking keyring..."
+msgstr "Kulcstartó ellenőrzése..."
+
+#: plugins/openpgp/src/contact_details_provider.vala:427
+msgid "Invalid for legacy XEP-0027/keyserver: key has no email user ID."
+msgstr ""
+"Érvénytelen a régi XEP-0027/kulcsszerver használatához: a kulcsnak nincs "
+"e-mailes felhasználóazonosítója."
+
+#: plugins/openpgp/src/contact_details_provider.vala:428
+msgid "Invalid for OpenPGP for XMPP: key has no matching xmpp: user ID."
+msgstr ""
+"Érvénytelen az OpenPGP for XMPP használatához: a kulcsnak nincs megfelelő "
+"xmpp: felhasználóazonosítója."
+
+#: plugins/openpgp/src/contact_details_provider.vala:439
+msgid "Key not in keyring"
+msgstr "A kulcs nincs a kulcstartóban"
+
+#: plugins/openpgp/src/contact_details_provider.vala:446
+msgid ""
+"Active: legacy XEP-0027/keyserver key is currently usable for this contact."
+msgstr ""
+"Aktív: a régi XEP-0027/kulcsszerver-kulcs jelenleg használható ennél a "
+"partnernél."
+
+#: plugins/openpgp/src/contact_details_provider.vala:449
+msgid ""
+"Stored: legacy XEP-0027/keyserver key is known, but is not currently active "
+"for this contact."
+msgstr ""
+"Tárolt: a régi XEP-0027/kulcsszerver-kulcs ismert, de jelenleg nem aktív "
+"ennél a partnernél."
+
+#: plugins/openpgp/src/contact_details_provider.vala:451
+msgid "Inactive: no legacy XEP-0027/keyserver key is stored."
+msgstr "Inaktív: nincs tárolt régi XEP-0027/kulcsszerver-kulcs."
+
+#: plugins/openpgp/src/contact_details_provider.vala:457
+msgid "Verified: XMPP-published OpenPGP key is stored and manually verified."
+msgstr ""
+"Ellenőrzött: az XMPP-n közzétett OpenPGP-kulcs tárolva és kézzel "
+"ellenőrizve."
+
+#: plugins/openpgp/src/contact_details_provider.vala:460
+msgid ""
+"Changed: XMPP-published OpenPGP key differs from the previously verified "
+"key. Verify the fingerprint before trusting this identity."
+msgstr ""
+"Megváltozott: az XMPP-n közzétett OpenPGP-kulcs eltér a korábban "
+"ellenőrzöttől. Az identitás megbízhatónak tekintése előtt ellenőrizd az "
+"ujjlenyomatot."
+
+#: plugins/openpgp/src/contact_details_provider.vala:462
+msgid ""
+"Unverified: XMPP-published OpenPGP key is stored. Compare the fingerprint "
+"before trusting this identity."
+msgstr ""
+"Ellenőrizetlen: az XMPP-n közzétett OpenPGP-kulcs tárolva. Az identitás "
+"megbízhatónak tekintése előtt hasonlítsd össze az ujjlenyomatot."
+
+#: plugins/openpgp/src/contact_details_provider.vala:465
+msgid ""
+"Supported: contact advertises OpenPGP for XMPP, but no retrievable XMPP-"
+"published key is stored."
+msgstr ""
+"Támogatott: a partner hirdeti az OpenPGP for XMPP támogatását, de nincs "
+"tárolt, lekérhető XMPP-n közzétett kulcs."
+
+#: plugins/openpgp/src/contact_details_provider.vala:467
+msgid "Inactive: no OpenPGP-for-XMPP support or XMPP-published key is known."
+msgstr ""
+"Inaktív: nem ismert OpenPGP for XMPP támogatás vagy XMPP-n közzétett kulcs."
+
+#: plugins/openpgp/src/contact_details_provider.vala:497
+msgid "Fingerprint copied"
+msgstr "Ujjlenyomat másolva"
+
+#: plugins/openpgp/src/contact_details_provider.vala:520
+msgid "Verifying OpenPGP-for-XMPP key..."
+msgstr "OpenPGP for XMPP kulcs ellenőrzése..."
+
+#: plugins/openpgp/src/contact_details_provider.vala:554
+msgid ""
+"Cannot verify: key is not in the keyring or has no matching xmpp: user ID."
+msgstr ""
+"Nem ellenőrizhető: a kulcs nincs a kulcstartóban, vagy nincs megfelelő xmpp:"
+" felhasználóazonosítója."
+
+#: plugins/openpgp/src/contact_details_provider.vala:611
+msgid "Searching keyserver with fingerprint: "
+msgstr "Keresés a kulcsszerveren ezzel az ujjlenyomattal: "
+
+#: plugins/openpgp/src/contact_details_provider.vala:626
+msgid ""
+"Key not found or has no verified email on keyserver.\n"
+"Ask the contact to verify their email on keys.openpgp.org\n"
+"or send you their public key file directly."
+msgstr ""
+"A kulcs nem található, vagy nincs ellenőrzött e-mail-címe a kulcsszerveren.\n"
+"Kérd meg a partnert, hogy igazolja e-mail-címét a keys.openpgp.org oldalon,\n"
+"vagy küldje el közvetlenül a nyilvános kulcsfájlját."
+
+#: plugins/openpgp/src/contact_details_provider.vala:628
+msgid "Failed: "
+msgstr "Sikertelen: "
+
+#: plugins/openpgp/src/contact_details_provider.vala:636
+msgid "Searching keyserver with JID..."
+msgstr "Keresés a kulcsszerveren JID alapján..."
+
+#: plugins/openpgp/src/contact_details_provider.vala:657
+msgid "Not found with JID. Enter email address:"
+msgstr "JID alapján nem található. Adj meg e-mail-címet:"
+
+#: plugins/openpgp/src/contact_details_provider.vala:668
+msgid "Enter Email Address"
+msgstr "E-mail-cím megadása"
+
+#: plugins/openpgp/src/contact_details_provider.vala:669
+msgid ""
+"The key was not found using the JID.\n"
+"\n"
+"Enter the email address that is in the contact's OpenPGP key:"
+msgstr ""
+"A kulcs JID alapján nem található.\n"
+"\n"
+"Add meg a partner OpenPGP-kulcsában szereplő e-mail-címet:"
+
+#: plugins/openpgp/src/contact_details_provider.vala:671
+#: plugins/openpgp/src/key_management_dialog.vala:1045
+#: plugins/openpgp/src/key_management_dialog.vala:1486
+#: plugins/openpgp/src/key_management_dialog.vala:1654
+#: plugins/openpgp/src/key_management_dialog.vala:1694
+#: plugins/openpgp/src/key_management_dialog.vala:1789
+#: plugins/openpgp/src/key_management_dialog.vala:1924
+#: plugins/openpgp/src/key_management_dialog.vala:2108
+#: plugins/openpgp/src/key_management_dialog.vala:2270
+#: plugins/openpgp/src/key_management_dialog.vala:2866
+#: plugins/openpgp/src/key_management_dialog.vala:3211
+#: plugins/openpgp/src/key_management_dialog.vala:3213
+#: plugins/openpgp/src/plugin.vala:453
+msgid "Cancel"
+msgstr "Mégse"
+
+#: plugins/openpgp/src/contact_details_provider.vala:672
+msgid "Search"
+msgstr "Keresés"
+
+#: plugins/openpgp/src/contact_details_provider.vala:709
+msgid "Searching keyserver for: "
+msgstr "Keresés a kulcsszerveren: "
+
+#: plugins/openpgp/src/contact_details_provider.vala:719
+msgid "Not found: "
+msgstr "Nem található: "
+
+#: plugins/openpgp/src/encryption_list_entry.vala:66
+msgid "No conversation selected."
+msgstr "Nincs kiválasztott beszélgetés."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:75
+msgid ""
+"You didn't configure OpenPGP for this account. You can do that in the "
+"Accounts Dialog."
+msgstr ""
+"Ehhez a fiókhoz nem állítottad be az OpenPGP-t. Ezt a Fiókok ablakban "
+"teheted meg."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:113
+#: plugins/openpgp/src/encryption_list_entry.vala:240
+msgid "OpenPGP manager not available."
+msgstr "Az OpenPGP-kezelő nem érhető el."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:121
+msgid "OpenPGP-for-XMPP key manager not available."
+msgstr "Az OpenPGP for XMPP kulcskezelő nem érhető el."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:129
+msgid "Checking OpenPGP key via PubSub..."
+msgstr "OpenPGP-kulcs ellenőrzése PubSubon keresztül..."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:138
+msgid ""
+"Checking the OpenPGP-for-XMPP key via PubSub timed out. Try again, or switch"
+" to legacy XEP-0027 if the contact has a keyserver key."
+msgstr ""
+"Az OpenPGP for XMPP kulcs PubSub-ellenőrzése túllépte az időkorlátot. "
+"Próbáld újra, vagy válts a régi XEP-0027-re, ha a partnernek van "
+"kulcsszerver-kulcsa."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:150
+msgid ""
+"This contact's OpenPGP-for-XMPP key has not been refreshed yet. Try again "
+"after the contact republishes it, or use the refresh button in contact "
+"details."
+msgstr ""
+"A partner OpenPGP for XMPP kulcsa még nincs frissítve. Próbáld újra a "
+"partner újbóli közzététele után, vagy használd a frissítés gombot a partner "
+"részleteinél."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:159
+#: plugins/openpgp/src/encryption_list_entry.vala:215
+msgid ""
+"This contact has no legacy OpenPGP/XEP-0027 key. Switch your OpenPGP key "
+"usage to DinoX / OpenPGP for XMPP."
+msgstr ""
+"Ennek a partnernek nincs régi OpenPGP/XEP-0027 kulcsa. Váltsd az OpenPGP-"
+"kulcs használatát DinoX / OpenPGP for XMPP módra."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:161
+#: plugins/openpgp/src/encryption_list_entry.vala:211
+msgid ""
+"This contact has no OpenPGP-for-XMPP key. Switch to a legacy XEP-0027 key or"
+" ask the contact to publish an OpenPGP-for-XMPP key."
+msgstr ""
+"Ennek a partnernek nincs OpenPGP for XMPP kulcsa. Válts régi XEP-0027 "
+"kulcsra, vagy kérd meg a partnert egy OpenPGP for XMPP kulcs közzétételére."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:171
+#: plugins/openpgp/src/manager.vala:1119
+msgid ""
+"This contact's OpenPGP-for-XMPP key changed. Verify the fingerprint in "
+"contact details before sending."
+msgstr ""
+"A partner OpenPGP for XMPP kulcsa megváltozott. Küldés előtt ellenőrizd az "
+"ujjlenyomatot a partner részleteinél."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:172
+#: plugins/openpgp/src/manager.vala:1120
+msgid ""
+"This contact's OpenPGP-for-XMPP key is not verified. Verify the fingerprint "
+"in contact details before sending."
+msgstr ""
+"A partner OpenPGP for XMPP kulcsa nincs ellenőrizve. Küldés előtt ellenőrizd"
+" az ujjlenyomatot a partner részleteinél."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:180
+#: plugins/openpgp/src/encryption_list_entry.vala:219
+#: plugins/openpgp/src/manager.vala:429
+msgid ""
+"This contact has a stored legacy OpenPGP/XEP-0027 key, but it is not "
+"currently active."
+msgstr ""
+"A partnernek van tárolt régi OpenPGP/XEP-0027 kulcsa, de az jelenleg nem "
+"aktív."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:200
+msgid "This contact's OpenPGP key is not in your keyring."
+msgstr "A partner OpenPGP-kulcsa nincs a kulcstartódban."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:229
+msgid "Legacy OpenPGP (XEP-0027/keyserver) is active for outgoing messages."
+msgstr "A kimenő üzenetekhez a régi OpenPGP (XEP-0027/kulcsszerver) aktív."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:231
+msgid "OpenPGP for XMPP (XEP-0373/0374) is active for outgoing messages."
+msgstr "A kimenő üzenetekhez az OpenPGP for XMPP (XEP-0373/0374) aktív."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:249
+#, c-format
+msgid "A member's OpenPGP key is not configured: %s"
+msgstr "Egy tag OpenPGP-kulcsa nincs beállítva: %s"
+
+#: plugins/openpgp/src/encryption_list_entry.vala:285
+#, c-format
+msgid "A member's OpenPGP key is not in your keyring: %s"
+msgstr "Egy tag OpenPGP-kulcsa nincs a kulcstartódban: %s"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:51
+msgid "Loading keys..."
+msgstr "Kulcsok betöltése..."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:121
+#: plugins/openpgp/src/encryption_preferences_entry.vala:127
+#: plugins/openpgp/src/encryption_preferences_entry.vala:157
+msgid "Outgoing OpenPGP messages"
+msgstr "Kimenő OpenPGP-üzenetek"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:121
+msgid "Error in GnuPG"
+msgstr "Hiba a GnuPG-ben"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:127
+msgid "No keys available. Generate or import one!"
+msgstr "Nincsenek elérhető kulcsok. Hozz létre vagy importálj egyet!"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:159
+msgid ""
+"DinoX currently sends OpenPGP as legacy XEP-0027 using keyserver/contact "
+"keys."
+msgstr ""
+"A DinoX jelenleg régi XEP-0027 módban, kulcsszerver-/partnerkulcsokkal küld "
+"OpenPGP-üzeneteket."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:162
+msgid "DinoX currently sends OpenPGP for XMPP using XEP-0373/0374."
+msgstr ""
+"A DinoX jelenleg OpenPGP for XMPP üzeneteket küld XEP-0373/0374 "
+"használatával."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:165
+msgid "No OpenPGP send key is active for this account."
+msgstr "Ehhez a fiókhoz nincs aktív OpenPGP-küldőkulcs."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:229
+msgid "Manage Keys"
+msgstr "Kulcskezelés"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:230
+msgid "Generate, import, export, or delete keys"
+msgstr "Kulcsok létrehozása, importálása, exportálása vagy törlése"
+
+#: plugins/openpgp/src/key_management_dialog.vala:171
+msgid "OpenPGP Key Management"
+msgstr "OpenPGP-kulcskezelés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:197
+msgid "Actions"
+msgstr "Műveletek"
+
+#: plugins/openpgp/src/key_management_dialog.vala:199
+#, c-format
+msgid "Keys and server backups for %s"
+msgstr "%s kulcsai és szervermentései"
+
+#: plugins/openpgp/src/key_management_dialog.vala:204
+msgid "Generate New Key"
+msgstr "Új kulcs létrehozása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:205
+msgid "Create a new OpenPGP key pair"
+msgstr "Új OpenPGP-kulcspár létrehozása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:222
+msgid "Import Key"
+msgstr "Kulcs importálása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:223
+msgid ""
+"Import a private key for this account or a public key from a contact. "
+"Importing does not activate a key."
+msgstr ""
+"Importálj magánkulcsot ehhez a fiókhoz, vagy nyilvános kulcsot egy "
+"partnertől. Az importálás nem aktiválja a kulcsot."
+
+#: plugins/openpgp/src/key_management_dialog.vala:240
+#: plugins/openpgp/src/key_management_dialog.vala:1655
+msgid "Delete Server Backup"
+msgstr "Szervermentés törlése"
+
+#: plugins/openpgp/src/key_management_dialog.vala:241
+msgid ""
+"Remove this account's encrypted private-key backup. Local keys and public-"
+"key publications are kept."
+msgstr ""
+"A fiók titkosított magánkulcsmentésének eltávolítása. A helyi kulcsok és a "
+"nyilvános kulcsok közzététele megmarad."
+
+#: plugins/openpgp/src/key_management_dialog.vala:247
+msgid "Fetch Key from Server (Sync)"
+msgstr "Kulcs lekérése a szerverről (szinkronizálás)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:248
+msgid "Import your secret key backup from your server"
+msgstr "Titkoskulcs-mentésed importálása a szerveredről"
+
+#: plugins/openpgp/src/key_management_dialog.vala:290
+msgid "Your Keys"
+msgstr "Saját kulcsaid"
+
+#: plugins/openpgp/src/key_management_dialog.vala:291
+msgid "Private keys available for signing and decryption"
+msgstr "Aláíráshoz és visszafejtéshez elérhető magánkulcsok"
+
+#: plugins/openpgp/src/key_management_dialog.vala:386
+#: plugins/openpgp/src/key_management_dialog.vala:400
+#: plugins/openpgp/src/key_management_dialog.vala:456
+msgid "GnuPG did not respond."
+msgstr "A GnuPG nem válaszolt."
+
+#: plugins/openpgp/src/key_management_dialog.vala:412
+msgid "Server Backup Cleanup Pending"
+msgstr "Szervermentés tisztítása függőben"
+
+#: plugins/openpgp/src/key_management_dialog.vala:413
+msgid ""
+"The key was kept locally. DinoX will retry removing its matching backup when"
+" this account reconnects. Then retry revoking the key."
+msgstr ""
+"A kulcs helyben megmaradt. A DinoX a fiók újracsatlakozásakor újrapróbálja a"
+" hozzá tartozó mentés eltávolítását. Ezután próbáld újra visszavonni a "
+"kulcsot."
+
+#: plugins/openpgp/src/key_management_dialog.vala:455
+msgid "Could not load OpenPGP keys"
+msgstr "Nem sikerült betölteni az OpenPGP-kulcsokat"
+
+#: plugins/openpgp/src/key_management_dialog.vala:470
+msgid "No private keys found"
+msgstr "Nem találhatók magánkulcsok"
+
+#: plugins/openpgp/src/key_management_dialog.vala:471
+msgid "Generate or import a key to get started"
+msgstr "A kezdéshez hozz létre vagy importálj egy kulcsot"
+
+#: plugins/openpgp/src/key_management_dialog.vala:646
+msgid "Published to keyserver"
+msgstr "Kulcsszerveren közzétéve"
+
+#: plugins/openpgp/src/key_management_dialog.vala:652
+msgid "Active legacy and XMPP account key"
+msgstr "Aktív régi és XMPP-fiókkulcs"
+
+#: plugins/openpgp/src/key_management_dialog.vala:653
+msgid "Active legacy XEP-0027 account key"
+msgstr "Aktív régi XEP-0027-fiókkulcs"
+
+#: plugins/openpgp/src/key_management_dialog.vala:653
+msgid "Active XMPP account key"
+msgstr "Aktív XMPP-fiókkulcs"
+
+#: plugins/openpgp/src/key_management_dialog.vala:659
+msgid "Fingerprint"
+msgstr "Ujjlenyomat"
+
+#: plugins/openpgp/src/key_management_dialog.vala:672
+msgid "Remove Assignment to This Account"
+msgstr "Hozzárendelés eltávolítása ennél a fióknál"
+
+#: plugins/openpgp/src/key_management_dialog.vala:673
+msgid ""
+"Keep the key in DinoX's keyring and remove only its manual assignment to "
+"this account."
+msgstr ""
+"A kulcs megtartása a DinoX kulcstartójában, és csak az ehhez a fiókhoz "
+"tartozó kézi hozzárendelés eltávolítása."
+
+#: plugins/openpgp/src/key_management_dialog.vala:684
+msgid "OpenPGP for XMPP (XEP-0373/0374)"
+msgstr "OpenPGP for XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:686
+msgid ""
+"Active for this account. DinoX publishes this key through XMPP for OpenPGP-"
+"capable clients."
+msgstr ""
+"Aktív ennél a fióknál. A DinoX XMPP-n teszi közzé ezt a kulcsot az OpenPGP-"
+"képes kliensek számára."
+
+#: plugins/openpgp/src/key_management_dialog.vala:688
+msgid ""
+"Stored for OpenPGP for XMPP, but not active while legacy XEP-0027/keyserver "
+"mode is selected."
+msgstr ""
+"OpenPGP for XMPP használatra tárolva, de nem aktív, amíg a régi "
+"XEP-0027/kulcsszerver mód van kiválasztva."
+
+#: plugins/openpgp/src/key_management_dialog.vala:690
+msgid ""
+"Inactive. This key is currently selected for legacy XEP-0027/keyserver use."
+msgstr ""
+"Inaktív. Ez a kulcs jelenleg a régi XEP-0027/kulcsszerver használatához van "
+"kiválasztva."
+
+#: plugins/openpgp/src/key_management_dialog.vala:692
+msgid ""
+"Not available for this account. OpenPGP for XMPP keys must contain an xmpp: "
+"user ID for this XMPP address."
+msgstr ""
+"Nem érhető el ehhez a fiókhoz. Az OpenPGP for XMPP kulcsoknak tartalmazniuk "
+"kell az XMPP-címhez tartozó xmpp: felhasználóazonosítót."
+
+#: plugins/openpgp/src/key_management_dialog.vala:694
+msgid ""
+"Not active for this account. Select it below to publish it through XMPP."
+msgstr ""
+"Nem aktív ennél a fióknál. Válaszd ki lent az XMPP-n való közzétételhez."
+
+#: plugins/openpgp/src/key_management_dialog.vala:702
+msgid "Selected for OpenPGP for XMPP"
+msgstr "OpenPGP for XMPP használatra kiválasztva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:703
+msgid "Use for OpenPGP for XMPP"
+msgstr "Használat OpenPGP for XMPP céljára"
+
+#: plugins/openpgp/src/key_management_dialog.vala:705
+msgid ""
+"DinoX uses this key for XEP-0373/0374 messages and publishes it through "
+"XMPP."
+msgstr ""
+"A DinoX ezt a kulcsot használja XEP-0373/0374 üzenetekhez, és közzéteszi "
+"XMPP-n."
+
+#: plugins/openpgp/src/key_management_dialog.vala:708
+msgid ""
+"Selects this key for XEP-0373/0374 messages and publishes it through XMPP."
+msgstr ""
+"Kiválasztja ezt a kulcsot XEP-0373/0374 üzenetekhez, és közzéteszi XMPP-n."
+
+#: plugins/openpgp/src/key_management_dialog.vala:715
+msgid "OpenPGP for XMPP Key Selected"
+msgstr "OpenPGP for XMPP kulcs kiválasztva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:715
+msgid ""
+"DinoX will use this key for OpenPGP for XMPP and publish it through XMPP for"
+" this account."
+msgstr ""
+"A DinoX ezt a kulcsot használja az OpenPGP for XMPP-hez, és közzéteszi "
+"XMPP-n ennél a fióknál."
+
+#: plugins/openpgp/src/key_management_dialog.vala:723
+#: plugins/openpgp/src/key_management_dialog.vala:2237
+msgid "Backup Secret Key to Server"
+msgstr "Titkos kulcs mentése a szerverre"
+
+#: plugins/openpgp/src/key_management_dialog.vala:724
+msgid ""
+"Securely encrypt this key and store it on the server to sync across your "
+"devices."
+msgstr ""
+"A kulcs biztonságos titkosítása és tárolása a szerveren az eszközeid közötti"
+" szinkronizáláshoz."
+
+#: plugins/openpgp/src/key_management_dialog.vala:735
+msgid "Disable OpenPGP for XMPP for this account"
+msgstr "OpenPGP for XMPP letiltása ennél a fióknál"
+
+#: plugins/openpgp/src/key_management_dialog.vala:736
+msgid ""
+"Removes the XMPP PubSub publication and keeps the secret key locally. Legacy"
+" XEP-0027/keyserver state is not changed."
+msgstr ""
+"Eltávolítja az XMPP PubSub-közzétételt, és helyben megtartja a titkos "
+"kulcsot. A régi XEP-0027/kulcsszerver állapota nem változik."
+
+#: plugins/openpgp/src/key_management_dialog.vala:747
+msgid "Legacy keyserver publication"
+msgstr "Régi kulcsszerveres közzététel"
+
+#: plugins/openpgp/src/key_management_dialog.vala:749
+msgid ""
+"This key is revoked, expired, or not usable for signing and encryption."
+msgstr ""
+"Ez a kulcs visszavont, lejárt, vagy nem használható aláírásra és "
+"titkosításra."
+
+#: plugins/openpgp/src/key_management_dialog.vala:751
+msgid ""
+"Stored for legacy XEP-0027/keyserver, but this key has no email user ID for "
+"new keyserver publishing."
+msgstr ""
+"Régi XEP-0027/kulcsszerver használatra tárolva, de a kulcsnak nincs e-mailes"
+" felhasználóazonosítója az új kulcsszerveres közzétételhez."
+
+#: plugins/openpgp/src/key_management_dialog.vala:753
+msgid ""
+"Active for legacy XEP-0027. The email address on the key must still be "
+"verified on the keyserver."
+msgstr ""
+"Aktív a régi XEP-0027-hez. A kulcs e-mail-címét még igazolni kell a "
+"kulcsszerveren."
+
+#: plugins/openpgp/src/key_management_dialog.vala:755
+msgid ""
+"Stored for legacy XEP-0027/keyserver, but not active while OpenPGP for XMPP "
+"mode is selected."
+msgstr ""
+"Régi XEP-0027/kulcsszerver használatra tárolva, de nem aktív, amíg az "
+"OpenPGP for XMPP mód van kiválasztva."
+
+#: plugins/openpgp/src/key_management_dialog.vala:757
+msgid ""
+"Uploaded for legacy OpenPGP clients. The email address on the key must still"
+" be verified on the keyserver."
+msgstr ""
+"Feltöltve a régi OpenPGP-kliensekhez. A kulcs e-mail-címét még igazolni kell"
+" a kulcsszerveren."
+
+#: plugins/openpgp/src/key_management_dialog.vala:759
+msgid ""
+"Not uploaded. Legacy OpenPGP clients may not find this key unless you "
+"publish it to a keyserver."
+msgstr ""
+"Nincs feltöltve. A régi OpenPGP-kliensek nem feltétlenül találják meg ezt a "
+"kulcsot, amíg nem teszed közzé kulcsszerveren."
+
+#: plugins/openpgp/src/key_management_dialog.vala:768
+msgid "Selected for legacy XEP-0027/keyserver"
+msgstr "Régi XEP-0027/kulcsszerver használatra kiválasztva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:769
+msgid "Use for legacy XEP-0027/keyserver"
+msgstr "Használat a régi XEP-0027/kulcsszerver módhoz"
+
+#: plugins/openpgp/src/key_management_dialog.vala:771
+msgid ""
+"DinoX uses this key for legacy OpenPGP messages and keyserver-based "
+"contacts."
+msgstr ""
+"A DinoX ezt a kulcsot használja a régi OpenPGP-üzenetekhez és kulcsszerver-"
+"alapú partnerekhez."
+
+#: plugins/openpgp/src/key_management_dialog.vala:773
+msgid ""
+"Selects this key for legacy OpenPGP messages. The keyserver entry still "
+"needs a verified email address."
+msgstr ""
+"Kiválasztja ezt a kulcsot a régi OpenPGP-üzenetekhez. A kulcsszerver-"
+"bejegyzéshez továbbra is igazolt e-mail-cím szükséges."
+
+#: plugins/openpgp/src/key_management_dialog.vala:780
+#: plugins/openpgp/src/key_management_dialog.vala:790
+msgid "Legacy OpenPGP Key Selected"
+msgstr "Régi OpenPGP-kulcs kiválasztva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:780
+msgid "DinoX will use this key for XEP-0027/keyserver OpenPGP."
+msgstr ""
+"A DinoX ezt a kulcsot használja az XEP-0027/kulcsszerveres OpenPGP-hez."
+
+#: plugins/openpgp/src/key_management_dialog.vala:783
+msgid ""
+"Not published to a keyserver. You can select it, but other legacy clients "
+"may not find it automatically."
+msgstr ""
+"Nincs közzétéve kulcsszerveren. Kiválaszthatod, de más régi kliensek nem "
+"feltétlenül találják meg automatikusan."
+
+#: plugins/openpgp/src/key_management_dialog.vala:790
+msgid ""
+"DinoX will use this key for XEP-0027. Publish it to a keyserver if legacy "
+"clients should find it automatically."
+msgstr ""
+"A DinoX ezt a kulcsot használja az XEP-0027-hez. Tedd közzé kulcsszerveren, "
+"ha a régi klienseknek automatikusan meg kell találniuk."
+
+#: plugins/openpgp/src/key_management_dialog.vala:802
+msgid "Stop using for legacy XEP-0027/keyserver"
+msgstr "Régi XEP-0027/kulcsszerver használatának leállítása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:803
+msgid "Remove stored legacy XEP-0027/keyserver selection"
+msgstr "Tárolt régi XEP-0027/kulcsszerver-választás eltávolítása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:805
+msgid ""
+"Keeps the key locally and on the keyserver. DinoX stops announcing it in "
+"signed presence."
+msgstr ""
+"A kulcsot helyben és a kulcsszerveren is megtartja. A DinoX nem hirdeti "
+"tovább aláírt jelenlétben."
+
+#: plugins/openpgp/src/key_management_dialog.vala:806
+msgid ""
+"Keeps the key locally and on the keyserver. DinoX removes this inactive "
+"legacy account selection."
+msgstr ""
+"A kulcsot helyben és a kulcsszerveren is megtartja. A DinoX eltávolítja ezt "
+"az inaktív régi fiókválasztást."
+
+#: plugins/openpgp/src/key_management_dialog.vala:813
+msgid "Legacy OpenPGP Disabled"
+msgstr "Régi OpenPGP letiltva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:813
+msgid ""
+"DinoX will no longer use or announce this key for XEP-0027/keyserver "
+"OpenPGP. The key remains in your keyring and on the keyserver if it was "
+"published."
+msgstr ""
+"A DinoX többé nem használja és nem hirdeti ezt a kulcsot az "
+"XEP-0027/kulcsszerveres OpenPGP-hez. A kulcs megmarad a kulcstartódban és, "
+"ha közzé lett téve, a kulcsszerveren."
+
+#: plugins/openpgp/src/key_management_dialog.vala:821
+msgid "Publish public key to keyserver for legacy discovery"
+msgstr ""
+"Nyilvános kulcs közzététele kulcsszerveren régi kliensek általi "
+"felderítéshez"
+
+#: plugins/openpgp/src/key_management_dialog.vala:822
+msgid "Requires a real email address you can verify."
+msgstr "Valódi, általad igazolható e-mail-cím szükséges."
+
+#: plugins/openpgp/src/key_management_dialog.vala:831
+#: plugins/openpgp/src/key_management_dialog.vala:1333
+msgid "Export Public Key"
+msgstr "Nyilvános kulcs exportálása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:839
+#: plugins/openpgp/src/key_management_dialog.vala:1330
+msgid "Export Secret Key (Backup)"
+msgstr "Titkos kulcs exportálása (mentés)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:840
+msgid "Required for restoring your key"
+msgstr "A kulcsod visszaállításához szükséges"
+
+#: plugins/openpgp/src/key_management_dialog.vala:849
+msgid "Revoke Key"
+msgstr "Kulcs visszavonása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:850
+msgid "Invalidate key, keep locally for old messages"
+msgstr "Kulcs érvénytelenítése, helyi megtartással a régi üzenetekhez"
+
+#: plugins/openpgp/src/key_management_dialog.vala:859
+msgid "Revoke &amp; Delete Key"
+msgstr "Kulcs visszavonása és törlése"
+
+#: plugins/openpgp/src/key_management_dialog.vala:860
+msgid "Invalidate and remove key completely"
+msgstr "Kulcs érvénytelenítése és teljes eltávolítása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:870
+msgid "Delete Key"
+msgstr "Kulcs törlése"
+
+#: plugins/openpgp/src/key_management_dialog.vala:871
+msgid ""
+"Remove locally without revocation; active XMPP publication is removed first"
+msgstr ""
+"Helyi eltávolítás visszavonás nélkül; az aktív XMPP-közzététel előbb "
+"eltávolításra kerül"
+
+#: plugins/openpgp/src/key_management_dialog.vala:895
+msgid "Revoked"
+msgstr "Visszavont"
+
+#: plugins/openpgp/src/key_management_dialog.vala:898
+msgid "Active OpenPGP XMPP (XEP-0373/0374)"
+msgstr "Aktív OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:900
+msgid "Stored OpenPGP XMPP (XEP-0373/0374)"
+msgstr "Tárolt OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:902
+msgid "OpenPGP XMPP key (XEP-0373/0374)"
+msgstr "OpenPGP XMPP kulcs (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:906
+msgid "Active legacy XEP-0027/keyserver"
+msgstr "Aktív régi XEP-0027/kulcsszerver"
+
+#: plugins/openpgp/src/key_management_dialog.vala:908
+msgid "Stored legacy XEP-0027/keyserver"
+msgstr "Tárolt régi XEP-0027/kulcsszerver"
+
+#: plugins/openpgp/src/key_management_dialog.vala:910
+msgid "Legacy-capable key"
+msgstr "Régi módot támogató kulcs"
+
+#: plugins/openpgp/src/key_management_dialog.vala:914
+msgid "Keyserver uploaded"
+msgstr "Kulcsszerverre feltöltve"
+
+#: plugins/openpgp/src/key_management_dialog.vala:935
+msgid "Generate New OpenPGP Key"
+msgstr "Új OpenPGP-kulcs létrehozása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:936
+msgid "Enter your details to create a new key pair."
+msgstr "Add meg az adataidat egy új kulcspár létrehozásához."
+
+#: plugins/openpgp/src/key_management_dialog.vala:944
+msgid "Name"
+msgstr "Név"
+
+#: plugins/openpgp/src/key_management_dialog.vala:949
+msgid "Your Name"
+msgstr "Neved"
+
+#: plugins/openpgp/src/key_management_dialog.vala:952
+msgid "Key usage"
+msgstr "Kulcs használata"
+
+#: plugins/openpgp/src/key_management_dialog.vala:960
+msgid "DinoX / OpenPGP for XMPP"
+msgstr "DinoX / OpenPGP for XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:963
+msgid ""
+"Uses your XMPP address and publishes the selected account key through XMPP. "
+"No email verification is needed."
+msgstr ""
+"Az XMPP-címedet használja, és a kiválasztott fiókkulcsot XMPP-n teszi közzé."
+" E-mail-igazolás nem szükséges."
+
+#: plugins/openpgp/src/key_management_dialog.vala:976
+msgid "Legacy keyserver / XEP-0027"
+msgstr "Régi kulcsszerver / XEP-0027"
+
+#: plugins/openpgp/src/key_management_dialog.vala:979
+msgid ""
+"Uses a real email address and uploads the key for older OpenPGP clients. The"
+" email address must be verified."
+msgstr ""
+"Valódi e-mail-címet használ, és feltölti a kulcsot a régebbi OpenPGP-"
+"kliensek számára. Az e-mail-címet igazolni kell."
+
+#: plugins/openpgp/src/key_management_dialog.vala:989
+#: plugins/openpgp/src/key_management_dialog.vala:1024
+msgid "XMPP address"
+msgstr "XMPP-cím"
+
+#: plugins/openpgp/src/key_management_dialog.vala:995
+#: plugins/openpgp/src/key_management_dialog.vala:1025
+msgid "xmpp@example.com"
+msgstr "xmpp@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1001
+#: plugins/openpgp/src/key_management_dialog.vala:1029
+msgid ""
+"This key will be selected for this DinoX account and published through XMPP "
+"for OpenPGP-for-XMPP capable clients."
+msgstr ""
+"Ez a kulcs ehhez a DinoX-fiókhoz lesz kiválasztva, és XMPP-n közzétéve az "
+"OpenPGP for XMPP-képes kliensek számára."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1009
+msgid "Passphrase (optional)"
+msgstr "Jelmondat (nem kötelező)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1020
+msgid "Email address"
+msgstr "E-mail-cím"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1021
+msgid "name@example.com"
+msgstr "name@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1022
+msgid ""
+"Use a mailbox you can access. keys.openpgp.org requires email verification "
+"before older XEP-0027 clients can find this key."
+msgstr ""
+"Olyan postafiókot használj, amelyhez hozzáférsz. A keys.openpgp.org e-mail-"
+"igazolást követel, mielőtt a régebbi XEP-0027 kliensek megtalálhatják ezt a "
+"kulcsot."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1038
+msgid "4096-bit RSA key, valid for 2 years."
+msgstr "4096 bites RSA-kulcs, 2 évig érvényes."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1046
+msgid "Generate"
+msgstr "Létrehozás"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1059
+#: plugins/openpgp/src/key_management_dialog.vala:1064
+#: plugins/openpgp/src/key_management_dialog.vala:1071
+#: plugins/openpgp/src/key_management_dialog.vala:1076
+#: plugins/openpgp/src/key_management_dialog.vala:1080
+#: plugins/openpgp/src/key_management_dialog.vala:1195
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+#: plugins/openpgp/src/key_management_dialog.vala:1318
+#: plugins/openpgp/src/key_management_dialog.vala:1390
+#: plugins/openpgp/src/key_management_dialog.vala:1394
+#: plugins/openpgp/src/key_management_dialog.vala:1398
+#: plugins/openpgp/src/key_management_dialog.vala:1512
+#: plugins/openpgp/src/key_management_dialog.vala:1730
+#: plugins/openpgp/src/key_management_dialog.vala:1737
+#: plugins/openpgp/src/key_management_dialog.vala:1779
+#: plugins/openpgp/src/key_management_dialog.vala:1837
+#: plugins/openpgp/src/key_management_dialog.vala:1844
+#: plugins/openpgp/src/key_management_dialog.vala:1914
+#: plugins/openpgp/src/key_management_dialog.vala:1975
+#: plugins/openpgp/src/key_management_dialog.vala:1982
+#: plugins/openpgp/src/key_management_dialog.vala:2033
+#: plugins/openpgp/src/key_management_dialog.vala:2085
+#: plugins/openpgp/src/key_management_dialog.vala:2139
+msgid "Error"
+msgstr "Hiba"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1059
+msgid "Name must be at least 2 characters"
+msgstr "A névnek legalább 2 karakter hosszúnak kell lennie"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1064
+msgid "Please enter a valid email address"
+msgstr "Adj meg egy érvényes e-mail-címet"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1071
+msgid "Please enter a bare XMPP address, for example name@example.com"
+msgstr "Adj meg egy csupasz XMPP-címet, például name@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1076
+msgid "OpenPGP for XMPP keys must use this account's XMPP address."
+msgstr "Az OpenPGP for XMPP kulcsoknak e fiók XMPP-címét kell használniuk."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1080
+msgid "Please enter a valid XMPP address"
+msgstr "Adj meg érvényes XMPP-címet"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1101
+msgid "Generating Key..."
+msgstr "Kulcs létrehozása…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1102
+msgid "Please wait while your key is being generated. This may take a moment."
+msgstr "Várj, amíg elkészül a kulcsod. Ez eltarthat egy ideig."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1161
+#: plugins/openpgp/src/key_management_dialog.vala:1182
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+#: plugins/openpgp/src/key_management_dialog.vala:1386
+#: plugins/openpgp/src/key_management_dialog.vala:1772
+#: plugins/openpgp/src/key_management_dialog.vala:1908
+#: plugins/openpgp/src/key_management_dialog.vala:2079
+#: plugins/openpgp/src/key_management_dialog.vala:2137
+msgid "Success"
+msgstr "Siker"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1161
+msgid ""
+"Key generated and uploaded to the keyserver. Check your email to verify it "
+"before XEP-0027 clients can reliably find it."
+msgstr ""
+"Kulcs létrehozva és feltöltve a kulcsszerverre. Ellenőrizd az e-mailjeidet "
+"az igazoláshoz, mielőtt az XEP-0027 kliensek megbízhatóan megtalálhatják."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1163
+#: plugins/openpgp/src/key_management_dialog.vala:1174
+msgid "Partial Success"
+msgstr "Részleges siker"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1163
+msgid ""
+"Key generated locally, but keyserver upload failed. It is not published for "
+"legacy XEP-0027 clients yet. You can retry from Key Management."
+msgstr ""
+"A kulcs helyben létrejött, de a kulcsszerverre feltöltés sikertelen. Még "
+"nincs közzétéve a régi XEP-0027 kliensek számára. A Kulcskezelésben "
+"újrapróbálhatod."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1174
+msgid ""
+"Key generated locally, but it was not selected because it does not contain "
+"the required xmpp: user ID for this account."
+msgstr ""
+"A kulcs helyben létrejött, de nem lett kiválasztva, mert nem tartalmazza a "
+"fiók szükséges xmpp: felhasználóazonosítóját."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1182
+msgid ""
+"Key generated and selected for OpenPGP for XMPP. DinoX will publish it "
+"through XMPP for this account."
+msgstr ""
+"Kulcs létrehozva és kiválasztva OpenPGP for XMPP használatra. A DinoX XMPP-n"
+" közzéteszi ennél a fióknál."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1195
+msgid "Failed to generate key."
+msgstr "A kulcs létrehozása sikertelen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1219
+msgid "Import OpenPGP Key"
+msgstr "OpenPGP-kulcs importálása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1224
+msgid "OpenPGP Keys (*.asc, *.gpg)"
+msgstr "OpenPGP-kulcsok (*.asc, *.gpg)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1231
+msgid "All Files"
+msgstr "Minden fájl"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1259
+msgid "Importing Key..."
+msgstr "Kulcs importálása…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1259
+msgid ""
+"Checking and importing the selected key into DinoX's private keyring..."
+msgstr ""
+"A kiválasztott kulcs ellenőrzése és importálása a DinoX saját "
+"kulcstartójába…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1272
+msgid "The key file is too large. Choose an OpenPGP key file up to 16 MiB."
+msgstr ""
+"A kulcsfájl túl nagy. Válassz legfeljebb 16 MiB méretű OpenPGP-kulcsfájlt."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1308
+msgid "Key Imported"
+msgstr "Kulcs importálva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1309
+msgid ""
+"The key is available below. Select it to use it for this account; the "
+"current encryption mode has not changed."
+msgstr ""
+"A kulcs lent elérhető. Válaszd ki, ha ehhez a fiókhoz szeretnéd használni; a"
+" jelenlegi titkosítási mód nem változott."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1310
+msgid ""
+"The public key was imported into DinoX's keyring. Your account's encryption "
+"mode and key selection have not changed."
+msgstr ""
+"A nyilvános kulcs importálva lett a DinoX kulcstartójába. A fiók titkosítási"
+" módja és a kiválasztott kulcs nem változott."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+msgid "Import failed: "
+msgstr "Az importálás sikertelen: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+msgid "The file does not contain an importable OpenPGP key."
+msgstr "A fájl nem tartalmaz importálható OpenPGP-kulcsot."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+msgid "Secret key exported to: "
+msgstr "A titkos kulcs ide lett exportálva: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+msgid ""
+"Keep this file safe! Anyone with this file can read your encrypted messages."
+msgstr ""
+"Őrizd biztonságos helyen ezt a fájlt! Bárki, aki hozzáfér, elolvashatja a "
+"titkosított üzeneteidet."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1386
+msgid "Key exported to: "
+msgstr "Kulcs exportálva ide: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1394
+msgid "Export failed."
+msgstr "Az exportálás sikertelen."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1483
+msgid "Disable OpenPGP for XMPP?"
+msgstr "Kikapcsolod az OpenPGP for XMPP használatát?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1484
+msgid ""
+"This removes the XMPP PubSub publication and stops using this key for "
+"XEP-0373/0374 on this account. The secret key stays local and legacy "
+"XEP-0027/keyserver state is not changed."
+msgstr ""
+"Ez eltávolítja a kulcs XMPP PubSub-közzétételét, és a fiók többé nem "
+"használja ezt a kulcsot az XEP-0373/0374 protokollhoz. A titkos kulcs "
+"helyben megmarad, és a régi XEP-0027/kulcsszerver állapota nem változik."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1487
+msgid "Disable XMPP Publishing"
+msgstr "XMPP-közzététel kikapcsolása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1495
+msgid "Disabling OpenPGP for XMPP..."
+msgstr "OpenPGP for XMPP kikapcsolása…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1495
+msgid "Removing the XMPP PubSub publication..."
+msgstr "XMPP PubSub-közzététel eltávolítása…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1510
+msgid "OpenPGP for XMPP Disabled"
+msgstr "OpenPGP for XMPP kikapcsolva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1510
+msgid ""
+"DinoX no longer publishes this key through XMPP PubSub for this account. The"
+" secret key stays local and legacy XEP-0027/keyserver state was not changed."
+msgstr ""
+"A DinoX többé nem teszi közzé ezt a kulcsot XMPP PubSubon keresztül ehhez a "
+"fiókhoz. A titkos kulcs helyben megmarad, és a régi XEP-0027/kulcsszerver "
+"állapota nem változott."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1512
+msgid ""
+"Could not remove the XMPP publication. OpenPGP for XMPP was not disabled."
+msgstr ""
+"Az XMPP-közzététel nem távolítható el. Az OpenPGP for XMPP nem lett "
+"kikapcsolva."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1609
+msgid "Key Assigned to Another Account"
+msgstr "Másik fiókhoz is hozzárendelt kulcs"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1610
+msgid ""
+"This key is also assigned to another DinoX account. Revoking or deleting it "
+"would affect that account too. Remove its key selections and manual "
+"assignment there first, or keep the key locally."
+msgstr ""
+"Ez a kulcs egy másik DinoX-fiókhoz is hozzá van rendelve. Visszavonása vagy "
+"törlése azt a fiókot is érintené. Előbb szüntesd meg ott a kulcs "
+"kiválasztását és kézi hozzárendelését, vagy tartsd meg helyben a kulcsot."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1616
+#: plugins/openpgp/src/key_management_dialog.vala:1643
+msgid "Server Backup Not Checked"
+msgstr "A szervermentés nincs ellenőrizve"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1617
+#: plugins/openpgp/src/key_management_dialog.vala:1644
+msgid ""
+"The server backup could not be checked. The key was not revoked or deleted. "
+"Connect this account and try again."
+msgstr ""
+"A szervermentés nem ellenőrizhető. A kulcs nem lett visszavonva vagy "
+"törölve. Csatlakoztasd ezt a fiókot, és próbáld újra."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1629
+msgid "Server Backup Not Identified"
+msgstr "A szervermentés nincs azonosítva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1630
+msgid ""
+"DinoX cannot safely identify the keys in this account's current server "
+"backup. Restore it using its backup code to identify it, or use Delete "
+"Server Backup to remove the whole backup explicitly. The key was not revoked"
+" or deleted."
+msgstr ""
+"A DinoX nem tudja biztonságosan azonosítani a fiók jelenlegi "
+"szervermentésében lévő kulcsokat. Az azonosításhoz állítsd vissza a mentési "
+"kóddal, vagy a Szervermentés törlése művelettel töröld kifejezetten az egész"
+" mentést. A kulcs nem lett visszavonva vagy törölve."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1633
+msgid "Server Backup Contains Other Keys"
+msgstr "A szervermentés más kulcsokat is tartalmaz"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1634
+msgid ""
+"This backup also contains other private keys and cannot be removed for just "
+"this key. Save a local copy of all keys you need, then use Delete Server "
+"Backup and create a new backup for the keys you want to keep. The key was "
+"not revoked or deleted."
+msgstr ""
+"Ez a mentés más magánkulcsokat is tartalmaz, ezért nem távolítható el csak "
+"ehhez a kulcshoz. Ments helyi másolatot minden szükséges kulcsról, majd "
+"válaszd a Szervermentés törlése műveletet, és készíts új mentést a "
+"megtartani kívánt kulcsokról. A kulcs nem lett visszavonva vagy törölve."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1638
+#: plugins/openpgp/src/key_management_dialog.vala:1680
+#: plugins/openpgp/src/key_management_dialog.vala:1683
+msgid "Server Backup Cleanup Failed"
+msgstr "A szervermentés eltávolítása sikertelen"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1639
+msgid ""
+"The matching server backup could not be removed. The key was not revoked or "
+"deleted. DinoX will retry the cleanup when this account reconnects; then "
+"retry revoking the key."
+msgstr ""
+"A megfelelő szervermentés nem távolítható el. A kulcs nem lett visszavonva "
+"vagy törölve. A DinoX a fiók újracsatlakozásakor újra megpróbálja az "
+"eltávolítást; ezután próbáld újra visszavonni a kulcsot."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1652
+msgid "Delete This Account's Server Backup?"
+msgstr "Törlöd a fiók szervermentését?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1653
+#, c-format
+msgid ""
+"This removes the entire encrypted private-key backup for %s from the server,"
+" including every key it contains. Other devices will no longer be able to "
+"restore it. Local keys and public-key publications are kept."
+msgstr ""
+"Ez eltávolítja a(z) %s teljes titkosított magánkulcsmentését a szerverről, "
+"annak minden kulcsával együtt. Más eszközök ezután nem tudják "
+"visszaállítani. A helyi kulcsok és a nyilvános kulcsok közzétételei "
+"megmaradnak."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1667
+msgid "Deleting Server Backup..."
+msgstr "Szervermentés törlése…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1667
+msgid "Checking and removing this account's server backup..."
+msgstr "A fiók szervermentésének ellenőrzése és eltávolítása…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1678
+msgid "Server Backup Removed"
+msgstr "Szervermentés eltávolítva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1678
+msgid ""
+"This account has no server backup now. Local keys and public-key "
+"publications were kept."
+msgstr ""
+"Ehhez a fiókhoz már nincs szervermentés. A helyi kulcsok és a nyilvános "
+"kulcsok közzétételei megmaradtak."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1680
+#: plugins/openpgp/src/key_management_dialog.vala:1684
+msgid ""
+"The backup was not removed. The server may be unavailable or another device "
+"may have replaced the backup. Try again."
+msgstr ""
+"A mentés nem lett eltávolítva. Lehet, hogy a szerver nem érhető el, vagy egy"
+" másik eszköz lecserélte a mentést. Próbáld újra."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1691
+msgid "Delete Key?"
+msgstr "Törlöd a kulcsot?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1692
+#, c-format
+msgid ""
+"Delete this key?\n"
+"\n"
+"%s\n"
+"\n"
+"Warning: The key will be removed locally without revocation. If it is currently published for OpenPGP for XMPP, DinoX must remove the XMPP publication before deleting it.\n"
+"\n"
+"Consider using 'Revoke and Delete' instead.\n"
+"\n"
+"This cannot be undone!"
+msgstr ""
+"Törlöd ezt a kulcsot?\n"
+"\n"
+"%s\n"
+"\n"
+"Figyelem: a kulcs visszavonás nélkül lesz eltávolítva helyben. Ha jelenleg közzé van téve az OpenPGP for XMPP számára, a DinoX-nak törlés előtt el kell távolítania az XMPP-közzétételt.\n"
+"\n"
+"Érdemes inkább a „Visszavonás és törlés” műveletet választani.\n"
+"\n"
+"Ez nem vonható vissza!"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1695
+msgid "Delete"
+msgstr "Törlés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1713
+msgid "Deleting..."
+msgstr "Törlés…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1713
+msgid "Deleting key from the local OpenPGP keyring..."
+msgstr "Kulcs törlése a helyi OpenPGP-kulcstartóból…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1730
+#: plugins/openpgp/src/key_management_dialog.vala:1737
+msgid "Could not remove the XMPP publication. The key was not deleted."
+msgstr "Az XMPP-közzététel nem távolítható el. A kulcs nem lett törölve."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1772
+msgid "Key deleted."
+msgstr "Kulcs törölve."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1775
+msgid "Delete failed: "
+msgstr "A törlés sikertelen: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1775
+#: plugins/openpgp/src/key_management_dialog.vala:1910
+#: plugins/openpgp/src/key_management_dialog.vala:2081
+msgid "Unknown error"
+msgstr "Ismeretlen hiba"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1777
+#: plugins/openpgp/src/key_management_dialog.vala:1912
+#: plugins/openpgp/src/key_management_dialog.vala:2083
+msgid "The XMPP publication was already removed; the key was kept locally."
+msgstr "Az XMPP-közzététel már el lett távolítva; a kulcs helyben megmaradt."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1786
+msgid "Revoke Key?"
+msgstr "Visszavonod a kulcsot?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1787
+#, c-format
+msgid ""
+"Revoke this key?\n"
+"\n"
+"%s\n"
+"\n"
+"The key will be permanently marked as invalid. This cannot be undone!\n"
+"\n"
+"DinoX will update only the publications that apply to this key: XMPP publication for OpenPGP-for-XMPP keys, and keyserver revocation upload for legacy keys that were uploaded to a keyserver."
+msgstr ""
+"Visszavonod ezt a kulcsot?\n"
+"\n"
+"%s\n"
+"\n"
+"A kulcs véglegesen érvénytelennek lesz jelölve. Ez nem vonható vissza!\n"
+"\n"
+"A DinoX csak az ehhez a kulcshoz tartozó közzétételeket frissíti: az OpenPGP for XMPP kulcsok XMPP-közzétételét, illetve feltölti a visszavonást a kulcsszerverre azon régi kulcsok esetében, amelyeket korábban kulcsszerverre töltöttek fel."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1790
+msgid "Revoke"
+msgstr "Visszavonás"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1809
+msgid "Revoking..."
+msgstr "Visszavonás…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1809
+msgid "Revoking key and updating applicable publications..."
+msgstr "Kulcs visszavonása és a hozzá tartozó közzétételek frissítése…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1837
+#: plugins/openpgp/src/key_management_dialog.vala:1844
+msgid "Could not remove the XMPP publication. The key was not revoked."
+msgstr "Az XMPP-közzététel nem távolítható el. A kulcs nem lett visszavonva."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1901
+msgid "Key revoked successfully."
+msgstr "A kulcs sikeresen visszavonva."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1903
+msgid "Revocation published to keyserver."
+msgstr "A visszavonás közzétéve a kulcsszerveren."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1906
+msgid "Key removed from XMPP server."
+msgstr "A kulcs eltávolítva az XMPP-szerverről."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1910
+#: plugins/openpgp/src/key_management_dialog.vala:2081
+msgid "Revocation failed: "
+msgstr "A visszavonás sikertelen: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1921
+msgid "Revoke and Delete Key?"
+msgstr "Visszavonod és törlöd a kulcsot?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1922
+#, c-format
+msgid ""
+"Revoke and delete this key?\n"
+"\n"
+"%s\n"
+"\n"
+"The key will be permanently invalidated and then removed. DinoX will update only the publications that apply to this key: XMPP publication for OpenPGP-for-XMPP keys, and keyserver revocation upload for legacy keys that were uploaded to a keyserver.\n"
+"\n"
+"You will no longer be able to decrypt old messages encrypted with this key.\n"
+"\n"
+"This cannot be undone!"
+msgstr ""
+"Visszavonod és törlöd ezt a kulcsot?\n"
+"\n"
+"%s\n"
+"\n"
+"A kulcs véglegesen érvénytelenítve, majd eltávolítva lesz. A DinoX csak az ehhez a kulcshoz tartozó közzétételeket frissíti: az OpenPGP for XMPP kulcsok XMPP-közzétételét, illetve feltölti a visszavonást a kulcsszerverre azon régi kulcsok esetében, amelyeket korábban kulcsszerverre töltöttek fel.\n"
+"\n"
+"A továbbiakban nem tudod visszafejteni az ezzel a kulccsal titkosított régi üzeneteket.\n"
+"\n"
+"Ez nem vonható vissza!"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1925
+msgid "Revoke and Delete"
+msgstr "Visszavonás és törlés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1944
+msgid "Revoking & Deleting..."
+msgstr "Visszavonás és törlés…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1944
+msgid "Revoking key, updating applicable publications, and deleting..."
+msgstr ""
+"Kulcs visszavonása, a hozzá tartozó közzétételek frissítése és törlés…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1975
+#: plugins/openpgp/src/key_management_dialog.vala:1982
+msgid ""
+"Could not remove the XMPP publication. The key was not revoked or deleted."
+msgstr ""
+"Az XMPP-közzététel nem távolítható el. A kulcs nem lett visszavonva vagy "
+"törölve."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2033
+msgid ""
+"The key was revoked locally, but the revocation could not be uploaded to the"
+" keyserver. The key was kept locally so you can retry publishing the "
+"revocation."
+msgstr ""
+"A kulcs helyben vissza lett vonva, de a visszavonás nem tölthető fel a "
+"kulcsszerverre. A kulcs helyben megmaradt, hogy újra megpróbálhasd "
+"közzétenni a visszavonást."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2068
+msgid "Key revoked"
+msgstr "Kulcs visszavonva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2070
+msgid "keyserver notified"
+msgstr "kulcsszerver értesítve"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2073
+msgid "XMPP server updated"
+msgstr "XMPP-szerver frissítve"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2076
+msgid "key deleted"
+msgstr "kulcs törölve"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2091
+#: plugins/openpgp/src/key_management_dialog.vala:2592
+#: plugins/openpgp/src/key_management_dialog.vala:2959
+#: plugins/openpgp/src/key_management_dialog.vala:2981
+#: plugins/openpgp/src/key_management_dialog.vala:3384
+msgid "OK"
+msgstr "OK"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2099
+msgid "Not Available"
+msgstr "Nem elérhető"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2099
+msgid ""
+"This key has no email user ID for legacy keyserver publishing. Create a "
+"legacy key with a real email address for XEP-0027/keyserver use."
+msgstr ""
+"Ehhez a kulcshoz nem tartozik e-mailes felhasználói azonosító a régi "
+"kulcsszerveres közzétételhez. Hozz létre egy régi típusú kulcsot valódi "
+"e-mail-címmel az XEP-0027/kulcsszerver használatához."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2105
+msgid "Publish Key?"
+msgstr "Közzéteszed a kulcsot?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2106
+msgid ""
+"This uploads your public key to keys.openpgp.org. You must verify the email "
+"address on the key before XEP-0027 clients can reliably find it."
+msgstr ""
+"Ez feltölti a nyilvános kulcsodat a keys.openpgp.org oldalra. Meg kell "
+"erősítened a kulcshoz tartozó e-mail-címet, hogy az XEP-0027-kliensek "
+"megbízhatóan megtalálhassák."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2109
+msgid "Publish"
+msgstr "Közzététel"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2117
+msgid "Publishing..."
+msgstr "Közzététel…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2117
+msgid "Uploading key to keyserver..."
+msgstr "Kulcs feltöltése a kulcsszerverre…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2137
+msgid ""
+"Key uploaded to the OpenPGP keyserver. Check your email to verify it before "
+"XEP-0027 clients can reliably find it. The active OpenPGP mode for this "
+"account was not changed."
+msgstr ""
+"A kulcs feltöltve az OpenPGP-kulcsszerverre. Nézd meg az e-mailjeidet, és "
+"erősítsd meg a címedet, hogy az XEP-0027-kliensek megbízhatóan "
+"megtalálhassák. A fiók aktív OpenPGP-módja nem változott."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2139
+msgid "Failed to publish key. Check your internet connection."
+msgstr "A kulcs közzététele sikertelen. Ellenőrizd az internetkapcsolatot."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2232
+#: plugins/openpgp/src/key_management_dialog.vala:2362
+#: plugins/openpgp/src/key_management_dialog.vala:2414
+#: plugins/openpgp/src/key_management_dialog.vala:2434
+#: plugins/openpgp/src/key_management_dialog.vala:2460
+msgid "Backup Failed"
+msgstr "A biztonsági mentés sikertelen"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2232
+msgid "Failed to generate a secure backup code."
+msgstr "Nem sikerült biztonságos mentési kódot létrehozni."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2238
+msgid ""
+"Save this backup code before uploading the key. You will need exactly this "
+"code to restore the key on another device."
+msgstr ""
+"Mentsd el ezt a mentési kódot a kulcs feltöltése előtt. Pontosan erre a "
+"kódra lesz szükséged a kulcs másik eszközön történő visszaállításához."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2247
+#: plugins/openpgp/src/key_management_dialog.vala:3199
+msgid "Backup Code"
+msgstr "Mentési kód"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2259
+msgid "Copy Backup Code"
+msgstr "Mentési kód másolása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2263
+msgid "Backup Code Copied"
+msgstr "Mentési kód másolva"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2271
+msgid "Backup to Server"
+msgstr "Mentés a szerverre"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2330
+msgid "Backing up..."
+msgstr "Mentés…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2330
+msgid "Encrypting and uploading key..."
+msgstr "Kulcs titkosítása és feltöltése…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2362
+msgid "GnuPG or the server did not respond while backing up the secret key."
+msgstr "A GnuPG vagy a szerver nem válaszolt a titkos kulcs mentése közben."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2406
+msgid "Encryption Error"
+msgstr "Titkosítási hiba"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2414
+msgid "Failed to prepare the encrypted secret key backup."
+msgstr "Nem sikerült előkészíteni a titkos kulcs titkosított mentését."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2434
+#: plugins/openpgp/src/key_management_dialog.vala:2460
+msgid "Failed to publish the backup to the server."
+msgstr "Nem sikerült közzétenni a mentést a szerveren."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2458
+msgid "Backup Successful"
+msgstr "Sikeres mentés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2458
+msgid "Your encrypted secret key has been securely stored on the server."
+msgstr ""
+"A titkosított titkos kulcsod biztonságosan el lett tárolva a szerveren."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2858
+msgid "Checking Server..."
+msgstr "Szerver ellenőrzése…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2858
+msgid "Looking for a secret key backup..."
+msgstr "Titkoskulcs-mentés keresése…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2898
+#: plugins/openpgp/src/key_management_dialog.vala:2957
+#: plugins/openpgp/src/key_management_dialog.vala:3003
+#: plugins/openpgp/src/key_management_dialog.vala:3322
+#: plugins/openpgp/src/key_management_dialog.vala:3354
+#: plugins/openpgp/src/key_management_dialog.vala:3360
+msgid "Import Failed"
+msgstr "Az importálás sikertelen"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2898
+msgid "The server did not respond while fetching the secret key backup."
+msgstr "A szerver nem válaszolt a titkos kulcs mentésének lekérése közben."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2958
+msgid ""
+"Could not retrieve this account's server backup. Check the account "
+"connection and try again."
+msgstr ""
+"A fiók szervermentése nem kérhető le. Ellenőrizd a fiók kapcsolatát, és "
+"próbáld újra."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2979
+#: plugins/openpgp/src/key_management_dialog.vala:3048
+msgid "No Backup Found"
+msgstr "Nem található mentés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2980
+#: plugins/openpgp/src/key_management_dialog.vala:3049
+msgid "There is no secret key backup stored on the server for this account."
+msgstr "Ehhez a fiókhoz nincs titkoskulcs-mentés a szerveren."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3003
+msgid "GnuPG did not respond while checking the server key data."
+msgstr ""
+"A GnuPG nem válaszolt a szerveren lévő kulcsadatok ellenőrzése közben."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3087
+#: plugins/openpgp/src/key_management_dialog.vala:3092
+#: plugins/openpgp/src/key_management_dialog.vala:3116
+msgid "No Secret Key Backup"
+msgstr "Nincs titkoskulcs-mentés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3088
+msgid ""
+"The public XMPP key is published on the server and the matching private key "
+"is already available locally, but no secret key backup was found on the "
+"server."
+msgstr ""
+"A nyilvános XMPP-kulcs közzé van téve a szerveren, és a hozzá tartozó "
+"magánkulcs már helyben is elérhető, de nem található titkoskulcs-mentés a "
+"szerveren."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3093
+msgid ""
+"The public XMPP key is published on the server, but no private key backup "
+"was found for this account."
+msgstr ""
+"A nyilvános XMPP-kulcs közzé van téve a szerveren, de ehhez a fiókhoz nem "
+"található magánkulcsmentés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3111
+#: plugins/openpgp/src/key_management_dialog.vala:3134
+#: plugins/openpgp/src/key_management_dialog.vala:3356
+msgid "Key Already Present"
+msgstr "A kulcs már megvan"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3112
+msgid ""
+"The key from the server is already available for this account. No import was"
+" needed."
+msgstr ""
+"A szerveren lévő kulcs már elérhető ehhez a fiókhoz. Nem volt szükség "
+"importálásra."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3117
+msgid ""
+"The server contains public OpenPGP key data, but no private key backup for "
+"this account."
+msgstr ""
+"A szerver nyilvános OpenPGP-kulcsadatokat tartalmaz, de ehhez a fiókhoz "
+"nincs magánkulcsmentés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3135
+#: plugins/openpgp/src/key_management_dialog.vala:3356
+msgid ""
+"The secret key from the server is already available for this account. No "
+"import was needed."
+msgstr ""
+"A szerveren lévő titkos kulcs már elérhető ehhez a fiókhoz. Nem volt szükség"
+" importálásra."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3150
+msgid "Unsupported Backup Format"
+msgstr "Nem támogatott mentési formátum"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3151
+msgid ""
+"The server contains unencrypted secret key data. DinoX now expects an "
+"encrypted XEP-0373 secret key backup. Create a new server backup to replace "
+"it."
+msgstr ""
+"A szerver titkosítatlan titkoskulcs-adatokat tartalmaz. A DinoX most már "
+"titkosított XEP-0373 titkoskulcs-mentést vár. Hozz létre új szervermentést a"
+" régi lecseréléséhez."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3194
+msgid "Import Secret Key"
+msgstr "Titkos kulcs importálása"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3195
+msgid ""
+"A secret key backup was found on the server. Enter your backup code to "
+"decrypt and import it."
+msgstr ""
+"Titkoskulcs-mentés található a szerveren. Add meg a mentési kódot a "
+"visszafejtéshez és az importáláshoz."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3216
+#: plugins/openpgp/src/key_management_dialog.vala:3218
+msgid "Import"
+msgstr "Importálás"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3322
+msgid "GnuPG did not respond while importing the secret key backup."
+msgstr "A GnuPG nem válaszolt a titkos kulcs mentésének importálása közben."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3358
+msgid "Import Successful"
+msgstr "Sikeres importálás"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3358
+msgid "The secret key was successfully imported from the server."
+msgstr "A titkos kulcs sikeresen importálva lett a szerverről."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3360
+msgid ""
+"The backup code was incorrect or the secret key backup could not be "
+"imported."
+msgstr ""
+"A mentési kód helytelen, vagy a titkos kulcs mentése nem importálható."
+
+#: plugins/openpgp/src/manager.vala:377
+msgid ""
+"The selected OpenPGP-for-XMPP account key does not contain the required "
+"xmpp: user ID for this account."
+msgstr ""
+"A fiókhoz kiválasztott OpenPGP for XMPP kulcs nem tartalmazza az ehhez a "
+"fiókhoz szükséges xmpp: felhasználói azonosítót."
+
+#: plugins/openpgp/src/manager.vala:381
+msgid ""
+"The selected legacy OpenPGP/XEP-0027 account key has no email user ID for "
+"keyserver use."
+msgstr ""
+"A fiókhoz kiválasztott régi OpenPGP/XEP-0027-kulcs nem tartalmaz e-mailes "
+"felhasználói azonosítót a kulcsszerver használatához."
+
+#: plugins/openpgp/src/manager.vala:385
+#, c-format
+msgid "OpenPGP account key validation failed: %s"
+msgstr "Az OpenPGP-fiókkulcs ellenőrzése sikertelen: %s"
+
+#: plugins/openpgp/src/manager.vala:398
+msgid "No legacy OpenPGP/XEP-0027 account key is active."
+msgstr "Nincs aktív régi OpenPGP/XEP-0027-fiókkulcs."
+
+#: plugins/openpgp/src/manager.vala:399
+msgid "No OpenPGP-for-XMPP account key is active."
+msgstr "Nincs aktív OpenPGP for XMPP fiókkulcs."
+
+#: plugins/openpgp/src/manager.vala:410
+msgid "This contact has no OpenPGP-for-XMPP key."
+msgstr "Ennek a partnernek nincs OpenPGP for XMPP kulcsa."
+
+#: plugins/openpgp/src/manager.vala:420
+msgid "The contact's OpenPGP-for-XMPP key has not been refreshed yet."
+msgstr "A partner OpenPGP for XMPP kulcsa még nem lett frissítve."
+
+#: plugins/openpgp/src/manager.vala:425
+msgid "This contact has no legacy OpenPGP/XEP-0027 key."
+msgstr "Ennek a partnernek nincs régi OpenPGP/XEP-0027-kulcsa."
+
+#: plugins/openpgp/src/manager.vala:438
+#, c-format
+msgid "OpenPGP key lookup failed: %s"
+msgstr "Az OpenPGP-kulcs keresése sikertelen: %s"
+
+#: plugins/openpgp/src/manager.vala:442
+msgid "No OpenPGP keys are available for the group members."
+msgstr "A csoport tagjaihoz nem érhetők el OpenPGP-kulcsok."
+
+#: plugins/openpgp/src/plugin.vala:432
+msgid "OpenPGP Passphrase Required"
+msgstr "OpenPGP-jelmondat szükséges"
+
+#: plugins/openpgp/src/plugin.vala:433
+msgid "Enter the passphrase for your OpenPGP key to continue."
+msgstr "A folytatáshoz add meg az OpenPGP-kulcsod jelmondatát."
+
+#: plugins/openpgp/src/plugin.vala:449
+msgid "Passphrase"
+msgstr "Jelmondat"
+
+#: plugins/openpgp/src/plugin.vala:454
+msgid "Unlock"
+msgstr "Feloldás"
+
+#~ msgid "Key not in keychain"
+#~ msgstr "A kulcs nincs a kulcstartóban"
+
+#~ msgid "Announce key"
+#~ msgstr "Kulcs bejelentése"
+
+#~ msgid "Disabled"
+#~ msgstr "Letiltva"
+
+#~ msgid "Select OpenPGP Key"
+#~ msgstr "OpenPGP kulcs kiválasztása"
+
+#~ msgid "Choose a key to announce to your contacts."
+#~ msgstr "Válasszon egy kulcsot, amelyet közzétesz a kapcsolatai számára."
+
+#~ msgid "Enter GPG passphrase to confirm:"
+#~ msgstr "Adja meg a GPG jelmondatot a megerősítéshez:"
+
+#~ msgid "Wrong passphrase"
+#~ msgstr "Hibás jelmondat"
+
+#~ msgid "Import a key from file (.asc, .gpg)"
+#~ msgstr "Kulcs importálása fájlból (.asc, .gpg)"
+
+#~ msgid "Email"
+#~ msgstr "E-mail"
+
+#~ msgid "you@example.com"
+#~ msgstr "on@pelda.hu"
+
+#~ msgid "Key generated successfully!"
+#~ msgstr "A kulcs sikeresen létrehozva!"
+
+#~ msgid "Key imported! Re-open Key Management to see it."
+#~ msgstr "Kulcs importálva! Nyissa meg újra a Kulcskezelést a megtekintéshez."
+
+#, c-format
+#~ msgid ""
+#~ "Delete this key?\n"
+#~ "\n"
+#~ "%s\n"
+#~ "\n"
+#~ "This cannot be undone!"
+#~ msgstr ""
+#~ "Törli ezt a kulcsot?\n"
+#~ "\n"
+#~ "%s\n"
+#~ "\n"
+#~ "Ez nem vonható vissza!"
+
+#~ msgid "Querying GnuPG"
+#~ msgstr "A GnuPG lekérése"
+
+#~ msgid "Encryption"
+#~ msgstr "Titkosítás"
+
+#~ msgid "Key publishing disabled"
+#~ msgstr "Kulcsközzététel letiltva"
+
+#~ msgid "Loading…"
+#~ msgstr "Betöltés…"
