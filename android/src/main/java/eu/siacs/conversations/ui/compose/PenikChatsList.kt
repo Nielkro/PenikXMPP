@@ -318,8 +318,9 @@ fun PenikMainScreen(
         Scaffold(
             containerColor = background,
             topBar = {
-                if (tab == PenikTab.CHATS) {
-                    TopAppBar(
+                when (tab) {
+                    PenikTab.CHATS -> {
+                        TopAppBar(
                             title = {
                                 if (isSearchActive) {
                                     OutlinedTextField(
@@ -427,7 +428,64 @@ fun PenikMainScreen(
                                     )
                     )
                 }
-            },
+                PenikTab.CALLS -> {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "Звонки",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp
+                            )
+                        },
+                        navigationIcon = {
+                            if (isDrawerMode) {
+                                IconButton(
+                                    onClick = { scope.launch { drawerState.open() } }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Menu,
+                                        contentDescription = "Меню",
+                                        tint = textPrimary
+                                    )
+                                }
+                            }
+                        },
+                        colors =
+                            TopAppBarDefaults.topAppBarColors(
+                                containerColor = background,
+                                titleContentColor = textPrimary
+                            )
+                    )
+                }
+                PenikTab.PROFILE -> {
+                    if (isDrawerMode) {
+                        TopAppBar(
+                            title = {
+                                Text(
+                                    text = "Профиль",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 22.sp
+                                )
+                            },
+                            navigationIcon = {
+                                IconButton(onClick = { tab = PenikTab.CHATS }) {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Назад",
+                                        tint = textPrimary
+                                    )
+                                }
+                            },
+                            colors =
+                                TopAppBarDefaults.topAppBarColors(
+                                    containerColor = background,
+                                    titleContentColor = textPrimary
+                                )
+                        )
+                    }
+                }
+            }
+        },
             bottomBar = {},
             floatingActionButton = {
                 if (tab == PenikTab.CHATS && !isArchiveOpen) {
@@ -1885,53 +1943,26 @@ fun PenikCallsTab(
             }
         }
     }
-    Column(modifier = Modifier.fillMaxSize().background(background)) {
-        TopAppBar(
-                title = {
-                    Text(
-                            text = "Звонки",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp
-                    )
-                },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                    Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Назад",
-                                    tint = colorResource(R.color.penik_text_primary)
-                            )
-                        }
-                    }
-                },
-                colors =
-                        TopAppBarDefaults.topAppBarColors(
-                                containerColor = background,
-                                titleContentColor = colorResource(R.color.penik_text_primary)
-                        )
-        )
-        if (!loaded) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Загрузка...", color = textMuted, fontSize = 16.sp)
-            }
-        } else if (calls.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Звонков пока нет", color = textMuted, fontSize = 16.sp)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = if (!isDrawerMode) 92.dp else 16.dp)
-            ) {
-                items(calls, key = { it.message.uuid }) { entry ->
-                    PenikCallRow(
-                            entry = entry,
-                            activity = activity,
-                            onClick = { listener.onConversationClick(entry.conversation) }
-                    )
-                    HorizontalDivider(color = border, modifier = Modifier.padding(horizontal = 16.dp))
-                }
+    if (!loaded) {
+        Box(modifier = Modifier.fillMaxSize().background(background), contentAlignment = Alignment.Center) {
+            Text(text = "Загрузка...", color = textMuted, fontSize = 16.sp)
+        }
+    } else if (calls.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize().background(background), contentAlignment = Alignment.Center) {
+            Text(text = "Звонков пока нет", color = textMuted, fontSize = 16.sp)
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().background(background),
+            contentPadding = PaddingValues(bottom = if (!isDrawerMode) 92.dp else 16.dp)
+        ) {
+            items(calls, key = { it.message.uuid }) { entry ->
+                PenikCallRow(
+                        entry = entry,
+                        activity = activity,
+                        onClick = { listener.onConversationClick(entry.conversation) }
+                )
+                HorizontalDivider(color = border, modifier = Modifier.padding(horizontal = 16.dp))
             }
         }
     }
@@ -2138,34 +2169,7 @@ fun PenikProfileTab(
                             .padding(bottom = if (!isDrawerMode) 96.dp else 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (onBack != null) {
-            TopAppBar(
-                    title = {
-                        Text(
-                                text = "Профиль",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 22.sp
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                    Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Назад",
-                                    tint = textPrimary
-                            )
-                        }
-                    },
-                    colors =
-                            TopAppBarDefaults.topAppBarColors(
-                                    containerColor = background,
-                                    titleContentColor = textPrimary
-                            )
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        } else {
-            Spacer(modifier = Modifier.height(40.dp))
-        }
+        Spacer(modifier = Modifier.height(24.dp))
         Box(modifier = Modifier.size(104.dp), contentAlignment = Alignment.Center) {
             val loaded = bitmap
             Box(
