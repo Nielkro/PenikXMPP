@@ -1,0 +1,251 @@
+name: Bug Report
+description: Report a bug in DinoX (for crashes, use the Crash Report template)
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        **If DinoX crashes or freezes**, please use the [Crash Report](https://git.dinox.im/dinoxim/dinox/issues/new?template=CrashReport.yml) template instead — it collects additional info we need for debugging.
+
+        Please check the [DEBUG guide](https://git.dinox.im/dinoxim/dinox/src/branch/master/docs/internal/DEBUG.md) for instructions on how to collect logs.
+
+  # ─── Environment ───────────────────────────────────────────────
+
+  - type: input
+    id: dinox_version
+    attributes:
+      label: DinoX version
+      description: "Check *About* dialog or run `dinox --version`. Example: `2.0.0`"
+      placeholder: "2.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation method
+      multiple: false
+      options:
+        - Debian package (.deb)
+        - Flatpak (x86_64)
+        - AppImage (x86_64)
+        - AppImage (aarch64)
+        - Compiled from source
+        - Windows (ZIP from Releases)
+        - AppMan / AM
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      multiple: false
+      options:
+        - Ubuntu 24.04
+        - Ubuntu 26.04
+        - Debian 12 (Bookworm)
+        - Debian 13 (Trixie)
+        - Fedora
+        - Arch Linux
+        - openSUSE Tumbleweed
+        - openSUSE Leap
+        - Linux Mint 22
+        - Linux Mint 23
+        - Manjaro
+        - EndeavourOS
+        - NixOS
+        - Gentoo
+        - Raspberry Pi OS (aarch64)
+        - Windows 10
+        - Windows 11
+        - Other Linux (specify below)
+    validations:
+      required: true
+
+  - type: input
+    id: os_detail
+    attributes:
+      label: OS details (if "Other" or additional info)
+      description: "Kernel version, 32/64-bit, ARM/x86, Wayland/X11, etc."
+      placeholder: "e.g. Alpine 3.20, Wayland, kernel 6.8"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: desktop_environment
+    attributes:
+      label: Desktop environment
+      description: "Linux only — skip for Windows"
+      multiple: false
+      options:
+        - GNOME 48
+        - GNOME 49
+        - KDE Plasma 6
+        - XFCE 4
+        - Cinnamon
+        - MATE
+        - Budgie
+        - Sway / wlroots
+        - Hyprland
+        - i3 / i3-gaps
+        - COSMIC
+        - Windows (N/A)
+    validations:
+      required: false
+
+  - type: dropdown
+    id: display_server
+    attributes:
+      label: Display server
+      multiple: false
+      options:
+        - Wayland
+        - X11 / Xorg
+        - XWayland (mixed)
+        - Windows (N/A)
+        - Don't know
+    validations:
+      required: false
+
+  # ─── XMPP Details ─────────────────────────────────────────────
+
+  - type: input
+    id: xmpp_server
+    attributes:
+      label: XMPP server (domain)
+      description: "The domain after the @ in your JID"
+      placeholder: "chat.example.org"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: xmpp_server_software
+    attributes:
+      label: XMPP server software
+      description: "Ask your provider if you're not sure."
+      multiple: false
+      options:
+        - Prosody
+        - ejabberd
+        - Openfire
+        - Jackal
+        - Tigase
+        - MongooseIM
+        - Don't know
+    validations:
+      required: false
+
+  - type: dropdown
+    id: encryption
+    attributes:
+      label: Encryption active?
+      multiple: false
+      options:
+        - OMEMO (v1 / legacy)
+        - OMEMO v2
+        - OpenPGP (XEP-0374)
+        - Legacy PGP (XEP-0027)
+        - None (unencrypted)
+        - Not applicable
+    validations:
+      required: false
+
+  # ─── Affected Area ────────────────────────────────────────────
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: "Select all areas that apply"
+      multiple: true
+      options:
+        - Chat / Messaging
+        - Group Chat (MUC)
+        - Voice / Video Calls
+        - File Transfer
+        - OMEMO Encryption
+        - OpenPGP Encryption
+        - MQTT Plugin
+        - Bot Features Plugin
+        - Botmother API / CloudBot
+        - ejabberd Integration
+        - Tor / Privacy
+        - Notifications / Sound
+        - UI / Appearance
+        - Database / Storage
+        - Connection / Login
+        - Windows-specific
+    validations:
+      required: false
+
+  # ─── Bug Description ──────────────────────────────────────────
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: "Describe the bug. What did you expect to happen vs. what actually happened?"
+      placeholder: |
+        **Expected:** …
+        **Actual:** …
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: "How can we reproduce the issue?"
+      placeholder: |
+        1. Open DinoX
+        2. Go to '...'
+        3. Click on '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: |
+        Please attach relevant log output. See the [DEBUG guide](https://git.dinox.im/dinoxim/dinox/src/branch/master/docs/internal/DEBUG.md) for how to collect logs.
+
+        **Linux (native):** `DINO_LOG_LEVEL=debug ./build/main/dinox 2>&1 | tee dinox.log`
+        **Flatpak:** `flatpak run --env=DINO_LOG_LEVEL=debug im.dinox.dinox 2>&1 | tee dinox.log`
+        **AppImage:** `DINO_LOG_LEVEL=debug ./DinoX-*.AppImage 2>&1 | tee dinox.log`
+        **Windows:** `set DINO_LOG_LEVEL=debug && dinox.exe > dinox.log 2>&1`
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: |
+        Anything else? Screenshots, crash reports, related issues?
+
+        Tip: You can attach images or log files by clicking this area to highlight it and then dragging files in.
+    validations:
+      required: false
+
+  # ─── Checklist ─────────────────────────────────────────────────
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched [existing issues](https://git.dinox.im/dinoxim/dinox/issues) for duplicates
+          required: true
+        - label: I am using the [latest version](https://git.dinox.im/dinoxim/dinox/releases/latest) of DinoX
+          required: true
+        - label: I have read the [DEBUG guide](https://git.dinox.im/dinoxim/dinox/src/branch/master/docs/internal/DEBUG.md)
+          required: false
+        - label: I have attached log output (if applicable)
+          required: false

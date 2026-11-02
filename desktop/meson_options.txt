@@ -1,0 +1,30 @@
+option('plugindir', type: 'string', value: 'dino/plugins', description: 'Dino plugin directory, relative to libdir')
+
+option('set-install-rpath', type: 'boolean', value: false, description: 'Set rpath of installed binaries to the configured libdir')
+
+option('local-libomemo-c-root', type: 'string', value: '', description: 'Pinned libomemo-c/protobuf-c prefix prepared for a normal Linux build-tree run; never use for release packages')
+
+option('google-libwebrtc-artifact-root', type: 'string', value: '', description: 'Development/proof input used to build and stage the Linux runtime, or a legacy prebuilt DinoX runtime input on Windows; never use for Linux release packages')
+option('google-libwebrtc-runtime-root', type: 'string', value: '', description: 'Prepared platform-specific DinoX Google/libwebrtc wrapper and worker runtime; required for release packages')
+option('google-vision-runtime-root', type: 'string', value: '', description: 'Optional offline runtime-staging directory for development SDK builds; release builds consume the mandatory vision bundle from google-libwebrtc-runtime-root')
+option('google-libwebrtc-wrapper', type: 'feature', value: 'disabled', description: 'Enable the DinoX Google/libwebrtc wrapper; built from the artifact on Linux and consumed prebuilt on Windows')
+option('google-libwebrtc-test-oracle', type: 'boolean', value: false, description: 'Allow the in-process libwebrtc test oracle; never enable in release artifacts')
+option('google-libwebrtc-tests', type: 'boolean', value: false, description: 'Build Google/libwebrtc smoke tests; production and package profiles keep this disabled')
+option('plugin-google-webrtc', type: 'feature', value: 'disabled', description: 'Build the production Google/libwebrtc call and media-message engine; requires google-libwebrtc-wrapper')
+
+option('plugin-http-files', type: 'feature', value: 'enabled', description: 'HTTP file upload')
+option('plugin-ice', type: 'feature', value: 'enabled', description: 'Peer-to-peer communication')
+option('plugin-omemo', type: 'feature', value: 'enabled', description: 'End-to-end encryption using OMEMO')
+option('plugin-openpgp', type: 'feature', value: 'enabled', description: 'End-to-end encryption using PGP')
+option('plugin-rtp', type: 'feature', value: 'enabled', description: 'Voice/video calls')
+option('plugin-notification-sound', type: 'feature', value: 'auto', description: 'Sound for chat notifications')
+
+option('plugin-rtp-h264', type: 'feature', value: 'auto', description: 'H264 codec')
+option('plugin-rtp-msdk', type: 'feature', value: 'disabled', description: 'Intel MediaSDK')
+option('plugin-rtp-vaapi', type: 'feature', value: 'auto', description: 'Video Acceleration API')
+option('plugin-rtp-v4l2', type: 'feature', value: 'disabled', description: 'V4L2 API (stateful)')
+option('plugin-rtp-v4l2-sl', type: 'feature', value: 'auto', description: 'V4L2 API (stateless)')
+option('plugin-mqtt', type: 'feature', value: 'auto', description: 'MQTT IoT/Event integration')
+
+option('location-sharing', type: 'feature', value: 'auto', description: 'Location sharing with map preview (XEP-0080, requires GeoClue2)')
+option('dnssec', type: 'feature', value: 'disabled', description: 'Build opt-in per-account XMPP and MQTT DNSSEC/DANE support')

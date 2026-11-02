@@ -1,0 +1,160 @@
+{
+  "leon": {
+    "historical_absent_id": "2fd2a5dbf37029dccd0233a78a225316f9a70c4e9fef1c4dbfbc46241c610fac",
+    "hostname": "3600c5df7fc8",
+    "profile_volume": "dinox-interop-20261015-leon",
+    "profile_created_at": "2026-10-15T16:08:25Z",
+    "profile_mount_source": "/var/lib/docker/volumes/dinox-interop-20261015-leon/_data",
+    "historical_mounts": [
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-driver-capabilities-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-driver-capabilities-20261016/_data",
+        "Destination": "/driver-v2",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-wirefix-22b17ce5-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-wirefix-22b17ce5-20261016/_data",
+        "Destination": "/driver-wirefix",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-muji-auth-486545cc-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-muji-auth-486545cc-20261016/_data",
+        "Destination": "/driver-muji-auth",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-core52-late-5dcc1523-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-core52-late-5dcc1523-20261016/_data",
+        "Destination": "/driver-core52-late",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-session-public-d94d-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-session-public-d94d-20261016/_data",
+        "Destination": "/driver-session-public",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-20261015-payload",
+        "Source": "/var/lib/docker/volumes/dinox-interop-20261015-payload/_data",
+        "Destination": "/opt/interop",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-20261015-leon",
+        "Source": "/var/lib/docker/volumes/dinox-interop-20261015-leon/_data",
+        "Destination": "/interop/monocles-dinox-interop-20261015",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": true,
+        "Propagation": ""
+      }
+    ]
+  },
+  "felix": {
+    "historical_absent_id": "849fcd337a75f6230ea6c326cdabd55965de346286e1146a8f74f4c219f5ad17",
+    "hostname": "16a86126b750",
+    "profile_volume": "dinox-interop-20261015-felix",
+    "profile_created_at": "2026-10-15T16:08:27Z",
+    "profile_mount_source": "/var/lib/docker/volumes/dinox-interop-20261015-felix/_data",
+    "historical_mounts": [
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-20261015-payload",
+        "Source": "/var/lib/docker/volumes/dinox-interop-20261015-payload/_data",
+        "Destination": "/opt/interop",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-20261015-felix",
+        "Source": "/var/lib/docker/volumes/dinox-interop-20261015-felix/_data",
+        "Destination": "/interop/monocles-dinox-interop-20261015",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": true,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-driver-capabilities-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-driver-capabilities-20261016/_data",
+        "Destination": "/driver-v2",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-wirefix-22b17ce5-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-wirefix-22b17ce5-20261016/_data",
+        "Destination": "/driver-wirefix",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-muji-auth-486545cc-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-muji-auth-486545cc-20261016/_data",
+        "Destination": "/driver-muji-auth",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-core52-late-5dcc1523-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-core52-late-5dcc1523-20261016/_data",
+        "Destination": "/driver-core52-late",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "dinox-interop-session-public-d94d-20261016",
+        "Source": "/var/lib/docker/volumes/dinox-interop-session-public-d94d-20261016/_data",
+        "Destination": "/driver-session-public",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+    <object class="GtkShortcutsWindow" id="help_overlay">
+        <property name="modal">True</property>
+        <child>
+            <object class="GtkShortcutsSection">
+                <property name="section-name">shortcuts</property>
+                <property name="title" translatable="yes">General</property>
+                <child>
+                    <object class="GtkShortcutsGroup">
+                        <property name="title" translatable="yes">General</property>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;T</property>
+                                <property name="title" translatable="yes">Start Conversation</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;G</property>
+                                <property name="title" translatable="yes">Join Group</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;comma</property>
+                                <property name="title" translatable="yes">Show preferences</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;&lt;Shift&gt;F</property>
+                                <property name="title" translatable="yes">Open feeds</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;question</property>
+                                <property name="title" translatable="yes">Keyboard shortcuts</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;Q</property>
+                                <property name="title" translatable="yes">Quit</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;&lt;Shift&gt;&lt;Alt&gt;P</property>
+                                <property name="title" translatable="yes">Panic Wipe</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkShortcutsGroup">
+                        <property name="title" translatable="yes">Conversation</property>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;F</property>
+                                <property name="title" translatable="yes">Search messages</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;&lt;Shift&gt;H</property>
+                                <property name="title" translatable="yes">Load messages now</property>
+                                <property name="subtitle" translatable="yes">In the current chat or group</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;U</property>
+                                <property name="title" translatable="yes">Send a file</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;W</property>
+                                <property name="title" translatable="yes">Close conversation</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkShortcutsGroup">
+                        <property name="title" translatable="yes">Navigation</property>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;Tab</property>
+                                <property name="title" translatable="yes">Jump to next conversation</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;&lt;Shift&gt;Tab</property>
+                                <property name="title" translatable="yes">Jump to previous conversation</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;&lt;Shift&gt;L</property>
+                                <property name="title" translatable="yes">Toggle chat list</property>
+                                <property name="subtitle" translatable="yes">Only in wide windows</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;Alt&gt;Left Escape</property>
+                                <property name="direction">ltr</property>
+                                <property name="title" translatable="yes">Go back</property>
+                                <property name="subtitle" translatable="yes">Only in narrow windows</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;Alt&gt;Right Escape</property>
+                                <property name="direction">rtl</property>
+                                <property name="title" translatable="yes">Go back</property>
+                                <property name="subtitle" translatable="yes">Only in narrow windows</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
+        <child>
+            <object class="GtkShortcutsSection">
+                <property name="section-name">messages</property>
+                <property name="title" translatable="yes">Messages</property>
+                <child>
+                    <object class="GtkShortcutsGroup">
+                        <property name="title" translatable="yes">Message input</property>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Return KP_Enter</property>
+                                <property name="title" translatable="yes">Send message</property>
+                                <property name="subtitle" translatable="yes">When sending with Ctrl+Enter is disabled</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;Control&gt;Return &lt;Control&gt;KP_Enter</property>
+                                <property name="title" translatable="yes">Send message</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Return KP_Enter</property>
+                                <property name="title" translatable="yes">Insert a new line</property>
+                                <property name="subtitle" translatable="yes">When sending with Ctrl+Enter is enabled</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;Shift&gt;Return &lt;Shift&gt;KP_Enter</property>
+                                <property name="title" translatable="yes">Insert a new line</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Up</property>
+                                <property name="title" translatable="yes">Edit last message</property>
+                                <property name="subtitle" translatable="yes">When the message input is empty</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Escape</property>
+                                <property name="title" translatable="yes">Cancel message editing</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Return KP_Enter</property>
+                                <property name="title" translatable="yes">Save message changes</property>
+                                <property name="subtitle" translatable="yes">When editing a message</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;B</property>
+                                <property name="title" translatable="yes">Bold selected text</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;I</property>
+                                <property name="title" translatable="yes">Italic selected text</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;S</property>
+                                <property name="title" translatable="yes">Strikethrough selected text</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Tab</property>
+                                <property name="title" translatable="yes">Complete a nickname</property>
+                                <property name="subtitle" translatable="yes">In group chats</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;Shift&gt;Tab</property>
+                                <property name="title" translatable="yes">Previous nickname completion</property>
+                                <property name="subtitle" translatable="yes">In group chats</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
+        <child>
+            <object class="GtkShortcutsSection">
+                <property name="section-name">search-dialogs</property>
+                <property name="title" translatable="yes">Search and dialogs</property>
+                <child>
+                    <object class="GtkShortcutsGroup">
+                        <property name="title" translatable="yes">Search suggestions</property>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Up</property>
+                                <property name="title" translatable="yes">Previous search suggestion</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Down</property>
+                                <property name="title" translatable="yes">Next search suggestion</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Tab Return</property>
+                                <property name="title" translatable="yes">Accept search suggestion</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Escape</property>
+                                <property name="title" translatable="yes">Close search</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkShortcutsGroup">
+                        <property name="title" translatable="yes">Keyboard navigation</property>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Tab</property>
+                                <property name="title" translatable="yes">Focus next control</property>
+                                <property name="subtitle" translatable="yes">In dialogs</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;Shift&gt;Tab</property>
+                                <property name="title" translatable="yes">Focus previous control</property>
+                                <property name="subtitle" translatable="yes">In dialogs</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">space Return</property>
+                                <property name="title" translatable="yes">Activate focused button</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Escape</property>
+                                <property name="title" translatable="yes">Dismiss an open menu or popover</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">&lt;ctrl&gt;F</property>
+                                <property name="title" translatable="yes">Search keyboard shortcuts</property>
+                                <property name="subtitle" translatable="yes">In keyboard shortcuts</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkShortcutsShortcut">
+                                <property name="accelerator">Escape</property>
+                                <property name="title" translatable="yes">Close keyboard shortcuts</property>
+                                <property name="subtitle" translatable="yes">In keyboard shortcuts</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </object>
+</interface>

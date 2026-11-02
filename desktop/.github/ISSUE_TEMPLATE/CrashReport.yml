@@ -1,0 +1,245 @@
+name: Crash Report
+description: DinoX crashes, freezes, or shows a GLib-CRITICAL / segfault
+title: "[Crash]: "
+labels: [bug, crash]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        DinoX crashed or froze? This template helps us collect the right info to fix it.
+
+        **How to get a backtrace** (most useful for us):
+        ```bash
+        # Native / source build
+        DINO_LOG_LEVEL=debug gdb -ex run -ex bt -ex quit --args ./build/main/dinox 2>&1 | tee crash.log
+
+        # Flatpak
+        flatpak run --env=DINO_LOG_LEVEL=debug --command=sh im.dinox.dinox -c \
+          "gdb -ex run -ex bt -ex quit --args dinox 2>&1" | tee crash.log
+
+        # If gdb is not installed: coredumpctl info dinox
+        ```
+
+        See the [DEBUG guide](https://git.dinox.im/dinoxim/dinox/src/branch/master/docs/internal/DEBUG.md) for more details.
+
+  # ─── Environment ───────────────────────────────────────────────
+
+  - type: input
+    id: dinox_version
+    attributes:
+      label: DinoX version
+      description: "Check *About* dialog or run `dinox --version`"
+      placeholder: "2.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation method
+      multiple: false
+      options:
+        - Debian package (.deb)
+        - Flatpak (x86_64)
+        - AppImage (x86_64)
+        - AppImage (aarch64)
+        - Compiled from source
+        - Windows (ZIP from Releases)
+        - AppMan / AM
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      multiple: false
+      options:
+        - Ubuntu 24.04
+        - Ubuntu 26.04
+        - Debian 12 (Bookworm)
+        - Debian 13 (Trixie)
+        - Fedora
+        - Arch Linux
+        - openSUSE Tumbleweed
+        - openSUSE Leap
+        - Linux Mint 22
+        - Linux Mint 23
+        - Manjaro
+        - EndeavourOS
+        - NixOS
+        - Gentoo
+        - Raspberry Pi OS (aarch64)
+        - Windows 10
+        - Windows 11
+        - Other Linux (specify below)
+    validations:
+      required: true
+
+  - type: input
+    id: os_detail
+    attributes:
+      label: OS details (if "Other" or additional info)
+      description: "Kernel version, 32/64-bit, ARM/x86, Wayland/X11, etc."
+      placeholder: "e.g. Alpine 3.20, Wayland, kernel 6.8"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: desktop_environment
+    attributes:
+      label: Desktop environment
+      description: "Linux only — skip for Windows"
+      multiple: false
+      options:
+        - GNOME 48
+        - GNOME 49
+        - KDE Plasma 6
+        - XFCE 4
+        - Cinnamon
+        - MATE
+        - Budgie
+        - Sway / wlroots
+        - Hyprland
+        - i3 / i3-gaps
+        - COSMIC
+        - Windows (N/A)
+    validations:
+      required: false
+
+  - type: dropdown
+    id: display_server
+    attributes:
+      label: Display server
+      multiple: false
+      options:
+        - Wayland
+        - X11 / Xorg
+        - XWayland (mixed)
+        - Windows (N/A)
+        - Don't know
+    validations:
+      required: false
+
+  # ─── Crash Details ─────────────────────────────────────────────
+
+  - type: dropdown
+    id: crash_type
+    attributes:
+      label: Type of crash
+      multiple: false
+      options:
+        - Segfault (SIGSEGV)
+        - Abort (SIGABRT / g_assert)
+        - GLib-CRITICAL / GLib-GObject-CRITICAL warning then crash
+        - Adwaita-CRITICAL then crash
+        - Freeze (UI unresponsive, must kill)
+        - Black window / rendering glitch
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: crash_timing
+    attributes:
+      label: When does the crash happen?
+      multiple: false
+      options:
+        - On startup (before login)
+        - During login / connecting
+        - While chatting (1:1)
+        - While in group chat (MUC)
+        - During voice / video call
+        - During file transfer
+        - When opening settings / dialog
+        - When opening Bot Manager / Botmother
+        - During CloudBot / ejabberd setup
+        - When switching accounts
+        - After sleep / resume
+        - Random / unpredictable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reproducible
+    attributes:
+      label: Is the crash reproducible?
+      multiple: false
+      options:
+        - Always (100%)
+        - Often (>50%)
+        - Sometimes (<50%)
+        - Happened once
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What were you doing when it crashed?
+      description: "Describe step by step what happened right before the crash."
+      placeholder: |
+        1. Opened DinoX
+        2. Clicked on a group chat
+        3. Scrolled up in history
+        4. DinoX froze and had to be killed
+    validations:
+      required: true
+
+  # ─── Backtrace & Logs ─────────────────────────────────────────
+
+  - type: textarea
+    id: backtrace
+    attributes:
+      label: Backtrace (gdb / coredumpctl)
+      description: |
+        Paste the backtrace here. This is the **most important** piece of info for debugging crashes.
+
+        **How to get it:**
+        - `gdb -ex run -ex bt -ex quit --args ./build/main/dinox`
+        - Or: `coredumpctl info dinox`
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: |
+        Paste the last ~50 lines before the crash.
+
+        **Linux (native):** `DINO_LOG_LEVEL=debug ./build/main/dinox 2>&1 | tee dinox.log`
+        **Flatpak:** `flatpak run --env=DINO_LOG_LEVEL=debug im.dinox.dinox 2>&1 | tee dinox.log`
+        **AppImage:** `DINO_LOG_LEVEL=debug ./DinoX-*.AppImage 2>&1 | tee dinox.log`
+        **Windows:** `set DINO_LOG_LEVEL=debug && dinox.exe > dinox.log 2>&1`
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: |
+        Anything else? Screenshots, other apps running, special network setup?
+
+        Tip: You can attach files by clicking this area to highlight it and then dragging files in.
+    validations:
+      required: false
+
+  # ─── Checklist ─────────────────────────────────────────────────
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched [existing issues](https://git.dinox.im/dinoxim/dinox/issues) for duplicates
+          required: true
+        - label: I am using the [latest version](https://git.dinox.im/dinoxim/dinox/releases/latest) of DinoX
+          required: true
+        - label: I have tried to reproduce the crash with `DINO_LOG_LEVEL=debug`
+          required: false
+        - label: I have attached a backtrace (gdb or coredumpctl)
+          required: false

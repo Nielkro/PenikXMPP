@@ -1,0 +1,612 @@
+# Yue Chinese (Cantonese) translations for DinoX.
+# Copyright (C) 2026 DinoX Team
+# This file is distributed under the same license as the DinoX package.
+msgid ""
+msgstr ""
+"Project-Id-Version: DinoX\n"
+"Report-Msgid-Bugs-To: https://git.dinox.im/dinoxim/dinox/issues\n"
+"POT-Creation-Date: 2026-10-31 21:10+0100\n"
+"PO-Revision-Date: 2026-10-31 23:00+0100\n"
+"Last-Translator: DinoX Team\n"
+"Language-Team: Yue Chinese (Cantonese)\n"
+"Language: yue\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: plugins/omemo/data/encryption_preferences_entry.ui:8
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:92
+msgid ""
+"Each device has its own OMEMO key. Messages can only be decrypted by a "
+"device if they are encrypted to its key. Messages are only encrypted to "
+"accepted devices."
+msgstr "每部裝置都有自己嘅 OMEMO 金鑰。訊息必須用嗰部裝置嘅金鑰加密，佢先解密到。訊息只會加密畀已接受嘅裝置。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:17
+#: plugins/omemo/src/ui/contact_details_provider.vala:52
+#: plugins/omemo/src/ui/contact_details_provider.vala:99
+msgid "OMEMO Encryption"
+msgstr "OMEMO 加密"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:18
+msgid ""
+"Older hidden messages have no recorded fingerprint and cannot be safely "
+"assigned to this key."
+msgstr "較早隱藏嘅訊息冇記錄指紋，無法安全噉確認屬於呢把金鑰。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:19
+#: plugins/omemo/src/ui/manage_key_dialog.vala:36
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:36
+msgid "Close"
+msgstr "關閉"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Key changed"
+msgstr "金鑰已更改"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Could not update device"
+msgstr "無法更新裝置"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:34
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:34
+msgid ""
+"The device key has changed. Review the current fingerprint before trying "
+"again."
+msgstr "裝置金鑰改咗。請檢查目前嘅指紋之後再試。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:35
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:35
+msgid "The device settings could not be changed. Please try again."
+msgstr "更改唔到裝置設定。請再試。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:75
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:415
+#: plugins/omemo/src/ui/contact_details_provider.vala:227
+msgid "Manage Key"
+msgstr "管理金鑰"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:76
+msgid ""
+"Compare the fingerprint, character by character, with the one shown on your "
+"contact's device."
+msgstr "請逐個字元比對呢個指紋同聯絡人裝置顯示嘅指紋。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:77
+msgid "Fingerprints differ"
+msgstr "指紋唔一樣"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:78
+msgid "Fingerprints match"
+msgstr "指紋一致"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:86
+#: plugins/omemo/src/ui/manage_key_dialog.vala:148
+#: plugins/omemo/src/ui/manage_key_dialog.vala:154
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:342
+msgid "Cancel"
+msgstr "取消"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:87
+#: plugins/omemo/src/ui/manage_key_dialog.vala:122
+#: plugins/omemo/src/ui/manage_key_dialog.vala:161
+#: plugins/omemo/src/ui/manage_key_dialog.vala:234
+msgid "Confirm"
+msgstr "確認"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:94
+#, c-format
+msgid ""
+"Account: %s\n"
+"Contact: %s\n"
+"Device: %s"
+msgstr ""
+"帳戶：%s\n"
+"聯絡人：%s\n"
+"裝置：%s"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:126
+msgid "Verify key"
+msgstr "驗證金鑰"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:127
+#, c-format
+msgid ""
+"Future messages sent by %s from the device that uses this key will be "
+"highlighted accordingly in the chat window."
+msgstr "%s 之後由使用呢把金鑰嘅裝置傳送嘅訊息，會喺聊天視窗按驗證結果標示。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:138
+msgid "Fingerprints do not match"
+msgstr "指紋唔一致"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:139
+#, c-format
+msgid ""
+"Please verify that you are comparing the correct fingerprint. If "
+"fingerprints do not match, %s's account may be compromised and you should "
+"consider rejecting this key."
+msgstr "請確認你比對緊正確嘅指紋。如果指紋唔一致，%s 嘅帳戶可能被盜用，應該考慮拒絕呢把金鑰。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+#: plugins/omemo/src/ui/manage_key_dialog.vala:259
+#: plugins/omemo/src/ui/manage_key_dialog.vala:261
+msgid "Remove device"
+msgstr "移除裝置"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+msgid "Open"
+msgstr "開啟"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid "Verify key fingerprint"
+msgstr "驗證金鑰指紋"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid ""
+"Compare this key's fingerprint with the fingerprint displayed on the "
+"contact's device."
+msgstr "請將呢把金鑰嘅指紋，同聯絡人裝置顯示嘅指紋比對。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+#: plugins/omemo/src/ui/manage_key_dialog.vala:243
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:610
+#: plugins/omemo/src/ui/contact_details_provider.vala:315
+msgid "Reject key"
+msgstr "拒絕金鑰"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+msgid ""
+"Block encrypted communication with the contact's device that uses this key."
+msgstr "阻止同聯絡人使用呢把金鑰嘅裝置進行加密通訊。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+#: plugins/omemo/src/ui/manage_key_dialog.vala:251
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:605
+#: plugins/omemo/src/ui/contact_details_provider.vala:310
+msgid "Accept key"
+msgstr "接受金鑰"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+msgid ""
+"Allow encrypted communication with the contact's device that uses this key."
+msgstr "允許同聯絡人使用呢把金鑰嘅裝置進行加密通訊。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+#: plugins/omemo/src/ui/manage_key_dialog.vala:268
+msgid "Reset session"
+msgstr "重置工作階段"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+msgid ""
+"Delete the encryption session for this device. A fresh session will be "
+"established on the next message. Use this when messages are not arriving."
+msgstr "刪除呢部裝置嘅加密工作階段。下一條訊息會建立新工作階段。收唔到訊息時可以用呢項操作。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+msgid ""
+"Delete this device's key and session data. Use this for old or inactive "
+"devices."
+msgstr "刪除呢部裝置嘅金鑰同工作階段資料。適用於舊裝置或者唔活躍嘅裝置。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid "This key is currently %s."
+msgstr "呢把金鑰目前%s。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+msgid "accepted"
+msgstr "已接受"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#, c-format
+msgid ""
+"This means it can be used by %s to receive and send encrypted messages."
+msgstr "即係 %s 可以用佢接收同傳送加密訊息。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid "verified"
+msgstr "已驗證"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid ""
+"Additionally it has been verified to match the key on the contact's device."
+msgstr "另外，已經驗證過佢同聯絡人裝置嘅金鑰一致。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+msgid "rejected"
+msgstr "已拒絕"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid ""
+"This means it cannot be used by %s to decipher your messages, and you won't "
+"see messages encrypted with it."
+msgstr "即係 %s 唔可以用佢解密你嘅訊息，而你亦睇唔到用佢加密嘅訊息。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:244
+#, c-format
+msgid ""
+"You won't see encrypted messages from the device of %s that uses this key. "
+"Conversely, that device won't be able to decipher your messages anymore."
+msgstr "你會睇唔到 %s 使用呢把金鑰嘅裝置傳嚟嘅加密訊息。相反，嗰部裝置亦再解密唔到你嘅訊息。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:252
+#, c-format
+msgid ""
+"You will be able to exchange encrypted messages with the device of %s that "
+"uses this key."
+msgstr "你可以同 %s 使用呢把金鑰嘅裝置互傳加密訊息。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+#, c-format
+msgid ""
+"The key and session data for this device of %s will be deleted. If the "
+"device is still active, it will re-appear when a new message is received."
+msgstr "會刪除 %s 呢部裝置嘅金鑰同工作階段資料。如果裝置仲使用緊，收到新訊息時會重新出現。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+msgid "Please click “Remove device” at the top to confirm deletion."
+msgstr "請撳上面嘅「移除裝置」確認刪除。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:269
+#, c-format
+msgid ""
+"The encryption session for this device of %s will be deleted. A fresh "
+"session will be negotiated automatically when the next message is sent. The "
+"key and trust level are preserved."
+msgstr "會刪除 %s 呢部裝置嘅加密工作階段。下次傳送訊息時會自動協商新工作階段。金鑰同信任級別會保留。"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:275
+msgid "Back"
+msgstr "返回"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Review key"
+msgstr "檢查金鑰"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Manage"
+msgstr "管理"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:100
+msgid ""
+"A device for this contact has a new encryption key. DinoX will use it only "
+"after your review."
+msgstr "呢位聯絡人有部裝置換咗新加密金鑰。你檢查過之後，DinoX 先會用佢。"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:101
+msgid "This contact has new devices"
+msgstr "呢位聯絡人有新裝置"
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:36
+msgid "This call is <b>encrypted and verified</b> with OMEMO."
+msgstr "呢次通話已用 OMEMO <b>加密並驗證</b>。"
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:40
+msgid "This call is encrypted with OMEMO."
+msgstr "呢次通話已用 OMEMO 加密。"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:16
+msgid "Reset all sessions"
+msgstr "重置所有工作階段"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:17
+msgid ""
+"Delete all encryption sessions. Fresh sessions will be established on the "
+"next message."
+msgstr "刪除全部加密工作階段。下一條訊息會建立新工作階段。"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:18
+msgid "Reset"
+msgstr "重置"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:30
+msgid "Sessions reset. A fresh key exchange will happen on the next message."
+msgstr "工作階段已重設。下一條訊息會重新交換金鑰。"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:93
+msgid "OMEMO by default"
+msgstr "預設使用 OMEMO"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:94
+msgid "Enable OMEMO encryption for new conversations"
+msgstr "為新對話啟用 OMEMO 加密"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:95
+#: plugins/omemo/src/ui/contact_details_provider.vala:166
+msgid "Encrypt to new devices"
+msgstr "向新裝置加密傳送"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:96
+msgid "Automatically encrypt to new devices from this contact."
+msgstr "自動加密訊息畀呢位聯絡人嘅新裝置。"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:97
+msgid "New keys"
+msgstr "新金鑰"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:169
+msgid ""
+"New encryption keys from your other devices will be accepted automatically."
+msgstr "會自動接受你其他裝置嘅新加密金鑰。"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:291
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:293
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:372
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:374
+msgid "This device"
+msgstr "呢部裝置"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:299
+msgid "Set device name"
+msgstr "設定裝置名稱"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Device Name"
+msgstr "裝置名稱"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Set a name for this device that other contacts can see."
+msgstr "幫呢部裝置改個其他聯絡人睇到嘅名稱。"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:343
+msgid "Save"
+msgstr "儲存"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:461
+msgid "Other device"
+msgstr "其他裝置"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:463
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Device"
+msgstr "裝置"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:468
+msgid "inactive"
+msgstr "不活躍"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:481
+#: plugins/omemo/src/ui/contact_details_provider.vala:212
+msgid "today"
+msgstr "今日"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:483
+#: plugins/omemo/src/ui/contact_details_provider.vala:214
+msgid "yesterday"
+msgstr "尋日"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:485
+#: plugins/omemo/src/ui/contact_details_provider.vala:216
+#, c-format
+msgid "%d days ago"
+msgstr "%d 日前"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:488
+#: plugins/omemo/src/ui/contact_details_provider.vala:219
+#, c-format
+msgid "%d month ago"
+msgid_plural "%d months ago"
+msgstr[0] "%d 個月前"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:491
+#: plugins/omemo/src/ui/contact_details_provider.vala:222
+#, c-format
+msgid "%d year ago"
+msgid_plural "%d years ago"
+msgstr[0] "%d 年前"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:493
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+#: plugins/omemo/src/ui/contact_details_provider.vala:224
+msgid "Last seen"
+msgstr "最後見到"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+msgid "unknown"
+msgstr "未知"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:500
+msgid "Accepted"
+msgstr "已接受"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:503
+msgid "Rejected"
+msgstr "已拒絕"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:506
+#: plugins/omemo/src/ui/contact_details_provider.vala:365
+msgid "Verified"
+msgstr "已驗證"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:528
+msgid "Inactive"
+msgstr "不活躍"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:532
+msgid "Not seen recently"
+msgstr "近期未觀察到活動"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:534
+msgid ""
+"This DinoX has not observed any activity from this device for over 60 days. "
+"The device may still be in use."
+msgstr "呢個 DinoX 已經超過 60 日冇觀察到呢部裝置嘅活動。裝置可能仍然使用緊。"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:586
+#: plugins/omemo/src/ui/contact_details_provider.vala:293
+msgid "Encryption key changed"
+msgstr "加密金鑰已更改"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:590
+#: plugins/omemo/src/ui/contact_details_provider.vala:297
+msgid "New device"
+msgstr "新裝置"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:597
+#: plugins/omemo/src/ui/contact_details_provider.vala:304
+msgid ""
+"This device has a new encryption key, for example after a reinstall. DinoX "
+"will use it only after your review."
+msgstr "呢部裝置有新加密金鑰，例如重新安裝之後。你檢查過之後，DinoX 先會用佢。"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:135
+msgid "Verifying private room members…"
+msgstr "正在驗證私人群組聊天成員…"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:148
+msgid "Can't use encryption in a groupchat private message."
+msgstr "群組嘅私人訊息用唔到加密。"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:156
+msgid "OMEMO is initializing, please wait a moment..."
+msgstr "OMEMO 初始化緊，請等一陣…"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:166
+msgid "OMEMO initialization failed. Please try again."
+msgstr "OMEMO 初始化失敗。請再試。"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:194
+msgid "OMEMO can't be used in public (non-members-only) rooms."
+msgstr "公開聊天室（唔係只限成員）用唔到 OMEMO。"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:197
+msgid "No other room members are available for OMEMO encryption."
+msgstr "冇其他聊天室成員可用於 OMEMO 加密。"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:200
+#, c-format
+msgid "A member does not support OMEMO: %s"
+msgstr "有成員唔支援 OMEMO：%s"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:207
+msgid "The private room member list could not be verified."
+msgstr "驗證唔到私人聊天室嘅成員清單。"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:217
+msgid "This contact does not support OMEMO encryption"
+msgstr "呢位聯絡人唔支援 OMEMO 加密"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:53
+#: plugins/omemo/src/ui/contact_details_provider.vala:100
+msgid "Encryption keys for room members"
+msgstr "聊天室成員嘅加密金鑰"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:105
+msgid "No member JIDs available. This may be an anonymous room."
+msgstr "冇可用嘅成員 JID。呢個可能係匿名聊天室。"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:155
+msgid "Your devices"
+msgstr "你嘅裝置"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#: plugins/omemo/src/ui/contact_details_provider.vala:161
+#, c-format
+msgid "%d device"
+msgid_plural "%d devices"
+msgstr[0] "%d 部裝置"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#, c-format
+msgid " (+%d inactive)"
+msgstr "（另有 %d 部唔活躍）"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:159
+#, c-format
+msgid "%d inactive devices"
+msgstr "%d 部唔活躍嘅裝置"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:168
+msgid "Automatically accept new keys from your other devices."
+msgstr "自動接受你其他裝置嘅新金鑰。"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:169
+msgid "Automatically accept new keys from this contact."
+msgstr "自動接受呢位聯絡人嘅新金鑰。"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Your device"
+msgstr "你嘅裝置"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:367
+msgid "Trusted"
+msgstr "已信任"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:369
+msgid "Untrusted"
+msgstr "不受信任"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:371
+msgid "Unknown"
+msgstr "未知"
+
+#: plugins/omemo/src/ui/own_notifications.vala:30
+msgid "OMEMO trust decision required"
+msgstr "需要 OMEMO 信任決定"
+
+#: plugins/omemo/src/ui/own_notifications.vala:32
+#, c-format
+msgid "Did you add a new device for account %s?"
+msgstr "你有冇為帳戶 %s 加咗新裝置？"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:193
+#, c-format
+msgid ""
+"%s has been using an untrusted device. You won't see messages from devices "
+"that you do not trust."
+msgstr "%s 使用緊未受信任嘅裝置。你會睇唔到來自你未信任裝置嘅訊息。"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:194
+msgid "Manage devices"
+msgstr "管理裝置"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:196
+#, c-format
+msgid ""
+"%s sent messages without a key for this device. Those messages could not be "
+"decrypted."
+msgstr "%s 傳嚟嘅訊息冇提供畀呢部裝置嘅金鑰。呢啲訊息解密唔到。"
+
+#: plugins/omemo/src/logic/manager.vala:746
+#, c-format
+msgid ""
+"No active OMEMO devices were published for %s. Check the recipient's "
+"devices, then retry the encrypted message."
+msgstr "%s 冇公佈任何使用中嘅 OMEMO 裝置。請檢查收件人嘅裝置，再試傳送加密訊息。"
+
+#: plugins/omemo/src/logic/manager.vala:1664
+msgid "Could not retrieve the OMEMO device list. Retry the encrypted message."
+msgstr "取得唔到 OMEMO 裝置清單。請再試傳送加密訊息。"
+
+#: plugins/omemo/src/logic/manager.vala:1677
+msgid ""
+"The server requires a presence subscription to access this account's OMEMO "
+"keys. Check account permissions, then retry the encrypted message."
+msgstr "伺服器要求先訂閱在線狀態，先可以存取呢個帳戶嘅 OMEMO 金鑰。請檢查帳戶權限，再試傳送加密訊息。"
+
+#: plugins/omemo/src/logic/manager.vala:1678
+msgid ""
+"The server denied access to this account's OMEMO keys. Check account "
+"permissions, then retry the encrypted message."
+msgstr "伺服器拒絕存取呢個帳戶嘅 OMEMO 金鑰。請檢查帳戶權限，再試傳送加密訊息。"
+
+#: plugins/omemo/src/logic/manager.vala:1681
+msgid ""
+"OMEMO key access requires a presence subscription. Ask the contact to "
+"approve it, then retry the encrypted message."
+msgstr "存取 OMEMO 金鑰需要訂閱在線狀態。請叫聯絡人批准，再試傳送加密訊息。"
+
+#: plugins/omemo/src/logic/manager.vala:1682
+msgid ""
+"The server denied access to the OMEMO keys. Check contact permissions, then "
+"retry the encrypted message."
+msgstr "伺服器拒絕存取 OMEMO 金鑰。請檢查聯絡人權限，再試傳送加密訊息。"

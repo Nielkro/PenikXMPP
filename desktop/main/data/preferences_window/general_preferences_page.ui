@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <object class="AdwPreferencesPage" id="content_page">
+    <child>
+      <object class="AdwPreferencesGroup" id="behavior_group">
+        <child>
+          <object class="AdwSwitchRow" id="send_on_ctrl_enter_row">
+            <property name="title" translatable="yes">Send Messages with Ctrl+Enter</property>
+            <property name="subtitle" translatable="yes">When enabled, Enter inserts a new line.</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSwitchRow" id="typing_row">
+            <property name="title" translatable="yes">Send _Typing Notifications</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSwitchRow" id="marker_row">
+            <property name="title" translatable="yes">Send _Read Receipts</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSwitchRow" id="sync_displayed_state_row">
+            <property name="title" translatable="yes">Sync Read State Across _Devices</property>
+            <property name="subtitle" translatable="yes">Uses your account server to sync read positions; contacts cannot see them</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSwitchRow" id="location_sharing_row">
+            <property name="title" translatable="yes">Allow Location Sharing</property>
+            <property name="subtitle" translatable="yes">Allow sending your current location in chats</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="notifications_group">
+        <child>
+          <object class="AdwSwitchRow" id="notification_row">
+            <property name="title" translatable="yes">_Notifications</property>
+            <property name="subtitle" translatable="yes">Notify when a new message arrives</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSwitchRow" id="notification_sounds_row">
+            <property name="title" translatable="yes">Message Notification _Sounds</property>
+            <property name="subtitle" translatable="yes">Play a sound when a new message arrives</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSwitchRow" id="keep_background_row">
+            <property name="title" translatable="yes">_Minimize to System Tray on Close</property>
+            <property name="subtitle" translatable="yes">Keep DinoX running in the system tray when the window is closed</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="appearance_group">
+        <property name="title" translatable="yes">Appearance</property>
+        <child>
+          <object class="AdwComboRow" id="window_controls_row">
+            <property name="title" translatable="yes">Window Controls</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="interface_style_row">
+            <property name="title" translatable="yes">_Design</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="color_scheme_row">
+            <property name="title" translatable="yes">_Color Scheme</property>
+            <property name="subtitle" translatable="yes">Choose whether DinoX follows the system appearance</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="accent_color_row">
+            <property name="title" translatable="yes">Accent _Color</property>
+            <property name="subtitle" translatable="yes">Change highlights without changing the base theme</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="chat_font_row">
+            <property name="title" translatable="yes">Chat _Font</property>
+            <property name="enable-search">True</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="chat_font_scale_row">
+            <property name="title" translatable="yes">Chat Text _Size</property>
+            <property name="subtitle" translatable="yes">Change only messages and the message field</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="language_row">
+            <property name="title" translatable="yes">_Language</property>
+            <property name="subtitle" translatable="yes">Override the system language for the DinoX interface</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="emoji_group">
+        <child>
+          <object class="AdwSwitchRow" id="emoji_row">
+            <property name="title" translatable="yes">_Convert Smileys to Emoji</property>
+            <property name="use-underline">True</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="stickers_group">
+        <property name="title" translatable="yes">Stickers</property>
+        <child>
+          <object class="AdwSwitchRow" id="stickers_enabled_row">
+            <property name="title" translatable="yes">Enable Stickers</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSwitchRow" id="sticker_animations_row">
+            <property name="title" translatable="yes">Play Sticker Animations</property>
+            <property name="subtitle" translatable="yes">Play animated stickers in the chat. When disabled, show a still image.</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="botmother_group">
+        <property name="title" translatable="yes">Botmother</property>
+        <child>
+          <object class="AdwSwitchRow" id="bot_features_row">
+            <property name="title" translatable="yes">Enable Botmother</property>
+            <property name="subtitle" translatable="yes">Start the local Botmother API server for managing XMPP bots</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="api_mode_row">
+            <property name="title" translatable="yes">API Server Mode</property>
+            <property name="subtitle" translatable="yes">Local: localhost only. Network: all interfaces with TLS (HTTPS)</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSpinRow" id="api_port_row">
+            <property name="title" translatable="yes">API Port</property>
+            <property name="subtitle" translatable="yes">Port for the HTTP(S) API server</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment">
+                <property name="lower">1024</property>
+                <property name="upper">65535</property>
+                <property name="step-increment">1</property>
+                <property name="value">7842</property>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwEntryRow" id="api_tls_cert_row">
+            <property name="title" translatable="yes">TLS Certificate (PEM)</property>
+            <property name="text"></property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwEntryRow" id="api_tls_key_row">
+            <property name="title" translatable="yes">TLS Private Key (PEM)</property>
+            <property name="text"></property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="api_cert_renew_row">
+            <property name="title" translatable="yes">Renew Self-Signed Certificate</property>
+            <property name="subtitle" translatable="yes">Delete current certificate. A new one will be generated on next start.</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">view-refresh-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="api_cert_delete_row">
+            <property name="title" translatable="yes">Delete Certificate</property>
+            <property name="subtitle" translatable="yes">Remove the self-signed certificate and private key</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">user-trash-symbolic</property>
+                <style>
+                  <class name="error"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="user_data_group">
+        <property name="title" translatable="yes">User Data</property>
+        <property name="description" translatable="yes">Backup and restore include all XMPP accounts in this data directory.</property>
+        <child>
+          <object class="AdwActionRow" id="backup_row">
+            <property name="title" translatable="yes">Backup User Data</property>
+            <property name="subtitle" translatable="yes">Create a backup of your accounts, messages and settings</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">document-save-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="restore_backup_row">
+            <property name="title" translatable="yes">Restore from Backup</property>
+            <property name="subtitle" translatable="yes">Restore accounts, messages and settings from a backup file</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">document-open-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="data_location_row">
+            <property name="title" translatable="yes">Data Storage Location</property>
+            <property name="subtitle" translatable="yes">View where your data is stored</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">folder-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="database_group">
+        <property name="title" translatable="yes">Database Maintenance</property>
+        <property name="description" translatable="yes">These operations apply to all XMPP accounts in this data directory.</property>
+        <child>
+          <object class="AdwActionRow" id="change_db_password_row">
+            <property name="title" translatable="yes">Change Database Password</property>
+            <property name="subtitle" translatable="yes">Change the password used to encrypt your local data</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">dialog-password-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="clear_cache_row">
+            <property name="title" translatable="yes">Clear Cache</property>
+            <property name="subtitle" translatable="yes">Clear cached files, avatars and previews</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">edit-clear-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="reset_database_row">
+            <property name="title" translatable="yes">Reset Database</property>
+            <property name="subtitle" translatable="yes">Delete all messages, files and OMEMO keys. Your accounts will remain.</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">user-trash-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="factory_reset_row">
+            <property name="title" translatable="yes">Factory Reset</property>
+            <property name="subtitle" translatable="yes">Delete ALL data including accounts. This cannot be undone!</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">edit-delete-symbolic</property>
+                <style>
+                  <class name="error"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

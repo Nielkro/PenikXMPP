@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "mode": "Nora-only-current-mixed-three-video-20261018",
+  "roles": [
+    "nora"
+  ],
+  "parent_A_freeze_sha256": "131aa89a08adf3075e7ddcbc62af03b4ac14a682e3df4547099cd6bd6ef7b294",
+  "parent_A18_freeze_sha256": "73c64b7aba80ff49c83e3425cb20b37fcc33d562aa96b7751e4973ea4ff91c04",
+  "product": {
+    "handoff": {
+      "path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/main-artifacts/local-artifact-handoff.json",
+      "sha256": "592877fbf8760b4579f831b6a33096f59631d2634b82722711a2791e18961dca"
+    },
+    "build": {
+      "path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/main-artifacts/main-build-receipt.json",
+      "sha256": "81f1d2f5ec05a1ec06958d32afd3374f8c8b98f52564d0dbde254a1271c92fd8"
+    },
+    "jvm": {
+      "path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/jvm-results/jvm-receipt.json",
+      "sha256": "4f47c0fc108684c2bdf1706d77c72d45ff841acc7b87c34fcd47909beb020229"
+    },
+    "source": {
+      "path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/main-artifacts/source-reviewed-jvm.json",
+      "sha256": "b1ac6b70000caa0b5e512e94da128508ad09bc2a14d0b8b86708404db7cd4491"
+    },
+    "main_path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/main-artifacts/main-device-layout-fixed.apk",
+    "main_sha256": "0a8ce212645b5a4876ee7f88122e5065d8f34a4f2a5c212ac91eec4402d0bebe",
+    "test_path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/test-bridge-api35-fix/signpair/artifacts/test-interop-signed.apk",
+    "test_sha256": "486b06a8f472fc68d89f9ced35b1befbc67805f22aa0d3dbf1c162cf3aab6e65",
+    "commit": "05ea2fb4c144f5373883dbc1124396d12bd4ed4d",
+    "actual_jvm_tests": 616,
+    "signer_certificate_sha256": "89ad5d0085ecee67350b62cb634d5d2ee7255f928c9979e32753f4e4bc519ecf"
+  },
+  "apk_sha256": {
+    "main.apk": "0a8ce212645b5a4876ee7f88122e5065d8f34a4f2a5c212ac91eec4402d0bebe",
+    "android-test.apk": "486b06a8f472fc68d89f9ced35b1befbc67805f22aa0d3dbf1c162cf3aab6e65"
+  },
+  "files_sha256": {
+    "runtime.py": "ffc188c4d2c179ff3b66fd8a06a01b05ee6b62938e46a35f854f73e46526de51",
+    "control.py": "b9ac71d2c1c3d3d216464edd05f8609b486b2638088b55493eef8e58ed80b285",
+    "recorder.py": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+    "scenario.py": "e96f3cb63200f96fa7a79c1b6c9f7f12840a1fc662d4d0b95af23a22aa69f13f",
+    "monitor.py": "25f3cdae2cb4155d2f93ee219e834f9321d033fd258590352f8eb5fe5f1d6370",
+    "process_lifecycle.py": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9"
+  },
+  "external_source_sha256": {
+    "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/mixed-three-video/media_case.py": "4ba30539fb8259fd717d83f3f9a619a8fe167bde884d520760993c9eb8434a54",
+    "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/mixed-three-video/source-manifest.json": "6fcc7e333ede7ed0eca700b1a8af345a44fa580e0c5bb3eb93e60e4ae489dab9",
+    "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/source-manifest.json": "3f9f8fc46e95cd20864e417560366a182e4f94f92e734189b9ad4ae7824584d4",
+    "/media/linux/SSD128/xmppwin/local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/inner_maps.py": "2c7f37aea4f86a14b8bfe2f2d7973259f6b0bba5047220c0418f4bc2fc422dad"
+  },
+  "root_start_authorized": false,
+  "marker_created": false,
+  "runtime_started": false
+}

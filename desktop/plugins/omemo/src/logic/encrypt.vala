@@ -1,0 +1,249 @@
+using Gee;
+using Omemo;
+using Dino.Entities;
+using Xmpp;
+using Xmpp.Xep.Omemo;
+
+namespace Dino.Plugins.Omemo {
+
+    public class OmemoEncryptor : Xep.Omemo.OmemoEncryptor {
+
+        private Account account;
+        private Store store;
+        private TrustManager trust_manager;
+
+        public override uint32 own_device_id { get { return store.local_registration_id; }}
+
+        public OmemoEncryptor(Account account, TrustManager trust_manager, Store store) {
+            this.account = account;
+            this.trust_manager = trust_manager;
+            this.store = store;
+        }
+
+        public override Xep.Omemo.EncryptionData encrypt_plaintext(string plaintext) throws GLib.Error {
+            require_registered_device();
+            const uint KEY_SIZE = 16;
+            const uint IV_SIZE = 12;
+
+            //Create a key and use it to encrypt the message
+            uint8[] key = new uint8[KEY_SIZE];
+            Plugin.get_context().randomize(key);
+            uint8[] iv = new uint8[IV_SIZE];
+            Plugin.get_context().randomize(iv);
+
+            uint8[] aes_encrypt_result = aes_encrypt(Cipher.AES_GCM_NOPADDING, key, iv, plaintext.data);
+            uint8[] ciphertext = aes_encrypt_result[0:aes_encrypt_result.length - 16];
+            uint8[] tag = aes_encrypt_result[aes_encrypt_result.length - 16:aes_encrypt_result.length];
+            uint8[] keytag = new uint8[key.length + tag.length];
+            Memory.copy(keytag, key, key.length);
+            Memory.copy((uint8*)keytag + key.length, tag, tag.length);
+            // Zeroize AES key after copying into keytag (IV is public — sent in cleartext)
+            Memory.set(key, 0, key.length);
+
+            var ret = new Xep.Omemo.EncryptionData(own_device_id);
+            ret.ciphertext = ciphertext;
+            ret.keytag = keytag;
+            ret.iv = iv;
+            return ret;
+        }
+
+        public EncryptState encrypt(MessageStanza message, Jid self_jid, Gee.List<Jid> recipients, XmppStream stream) {
+
+            EncryptState status = new EncryptState();
+            if (!Plugin.ensure_context()) return status;
+            if (message.to == null) return status;
+
+            try {
+                EncryptionData enc_data = encrypt_plaintext(message.body);
+                status = encrypt_key_to_recipients(enc_data, self_jid, recipients, stream);
+                if (enc_data.key_nodes.size == 0) {
+                    // No other device can open this payload (for example a
+                    // self-chat on a single device). Never send a keyless shell.
+                    message.body = "[OMEMO encryption failed]";
+                    return status;
+                }
+
+                message.stanza.put_node(enc_data.get_encrypted_node());
+                Xep.ExplicitEncryption.add_encryption_tag_to_message(message, NS_URI, "OMEMO");
+                message.body = "[This message is OMEMO encrypted]";
+                status.encrypted = true;
+            } catch (Error e) {
+                warning(@"error while encrypting message: $(e.message)\n");
+                message.body = "[OMEMO encryption failed]";
+                status.encrypted = false;
+            }
+            return status;
+        }
+
+        internal EncryptState encrypt_key_to_recipients(EncryptionData enc_data, Jid self_jid, Gee.List<Jid> recipients, XmppStream stream) throws Error {
+            EncryptState status = new EncryptState();
+
+            //Check we have the bundles and device lists needed to send the message
+            if (!trust_manager.is_known_address(account, self_jid)) {
+                warning("OMEMO: own address %s not known — cannot encrypt", self_jid.to_string());
+                return status;
+            }
+            status.own_list = true;
+            status.own_devices = trust_manager.get_trusted_devices_omemo1(account, self_jid).size;
+            status.other_waiting_lists = 0;
+            status.other_devices = 0;
+            foreach (Jid recipient in recipients) {
+                if (!trust_manager.is_known_address(account, recipient)) {
+                    warning("OMEMO: recipient %s not known — waiting for device list", recipient.to_string());
+                    status.other_waiting_lists++;
+                }
+                if (status.other_waiting_lists > 0) return status;
+                status.other_devices += trust_manager.get_trusted_devices_omemo1(account, recipient).size;
+            }
+            // Allow sending with no other devices (e.g. solo MUC — encrypt to self only)
+            if (status.own_devices == 0) {
+                warning("OMEMO: no own trusted devices — cannot encrypt");
+                return status;
+            }
+            if (recipients.size > 0 && status.other_devices == 0) {
+                warning("OMEMO: recipient has 0 trusted devices — message will not be sent");
+                return status;
+            }
+
+
+            //Encrypt the key for each recipient's device individually
+            foreach (Jid recipient in recipients) {
+                EncryptionResult enc_res = encrypt_key_to_recipient(stream, enc_data, recipient);
+                status.add_result(enc_res, false);
+            }
+
+            // Encrypt the key for each own device
+            EncryptionResult enc_res = encrypt_key_to_recipient(stream, enc_data, self_jid);
+            status.add_result(enc_res, true);
+
+            return status;
+        }
+
+        public override EncryptionResult encrypt_key_to_recipient(XmppStream stream, Xep.Omemo.EncryptionData enc_data, Jid recipient) throws GLib.Error {
+            var result = new EncryptionResult();
+            StreamModule module = stream.get_module<StreamModule>(StreamModule.IDENTITY);
+            StreamModule2? module2 = stream.get_module<StreamModule2>(StreamModule2.IDENTITY);
+
+            foreach(int32 device_id in trust_manager.get_trusted_devices_omemo1(account, recipient)) {
+                // The current sender already has the plaintext and has no
+                // receiving session to itself. Other accounts may use the same ID.
+                if (recipient.equals_bare(account.bare_jid) &&
+                        device_id == (int32) own_device_id) continue;
+                /* Check if device is ignored in legacy module — but if it's
+                 * known in v2 module (OMEMO 2 only device like Kaidan), allow it */
+                if (module.is_ignored_device(recipient, device_id)) {
+                    if (module2 == null || module2.is_ignored_device(recipient, device_id)) {
+                        result.lost++;
+                        continue;
+                    }
+                    /* Device is only legacy-ignored but v2-known — allow encryption */
+                }
+                try {
+                    encrypt_key(enc_data, recipient, device_id);
+                    result.success++;
+                } catch (Error e) {
+                    debug("encrypt_key FAILED for %s/%d: code=%d msg=%s", recipient.to_string(), device_id, e.code, e.message);
+                    if (e.code == ErrorCode.NO_SESSION) {
+                        /* Session fehlt — als 'unknown' zählen, damit der
+                         * Retry-Mechanismus Bundle-Fetch + Session-Aufbau
+                         * auslöst. A corrupt/stale record can still make
+                         * contains_session() return true; remove it first so
+                         * the fetched bundle can actually rebuild it. */
+                        Address repair_address = new Address(recipient.bare_jid.to_string(), device_id);
+                        try {
+                            if (store.contains_session(repair_address)) {
+                                store.delete_session(repair_address);
+                                debug("encrypt_key: deleted unusable session for %s/%d before bundle repair",
+                                      recipient.bare_jid.to_string(), device_id);
+                            }
+                        } catch (Error repair_error) {
+                            warning("OMEMO: failed to reset unusable session for %s/%d: %s",
+                                    recipient.bare_jid.to_string(), device_id, repair_error.message);
+                        }
+                        repair_address.device_id = 0;
+                        result.unknown++;
+                    } else if (e.code == ErrorCode.UNKNOWN) {
+                        /* Wenn das Gerät in BEIDEN Modulen (legacy + v2)
+                         * als ignored markiert ist, hat es ein dauerhaft
+                         * kaputtes Bundle.  Als 'lost' statt 'unknown'
+                         * zählen, damit funktionierende Geräte nicht
+                         * blockiert werden. */
+                        bool legacy_ignored = module.is_ignored_device(recipient, device_id);
+                        bool v2_ignored = (module2 == null || module2.is_ignored_device(recipient, device_id));
+                        if (legacy_ignored && v2_ignored) {
+                            debug("encrypt_key: %s/%d treated as lost (broken bundle in both modules)",
+                                  recipient.to_string(), device_id);
+                            result.lost++;
+                        } else {
+                            result.unknown++;
+                        }
+                    } else {
+                        result.failure++;
+                    }
+                }
+            }
+            return result;
+        }
+
+        public override void encrypt_key(Xep.Omemo.EncryptionData encryption_data, Jid jid, int32 device_id) throws GLib.Error {
+            require_registered_device();
+            Address address = new Address(jid.bare_jid.to_string(), device_id);
+            SessionCipher cipher = store.create_session_cipher(address);
+            uint32 sess_ver = cipher.get_session_version();
+            if (sess_ver >= 4) {
+                /* Race condition: v2 bundle arrived before v1 device list,
+                 * creating a v4 session.  The v1 encryptor cannot use v4
+                 * sessions (would produce SG_ERR_LEGACY_MESSAGE on the
+                 * recipient).  Delete the v4 session and throw NO_SESSION
+                 * so the retry mechanism fetches the v1 bundle and builds
+                 * a proper v3 session. */
+                debug("encrypt_key: replacing stale v4 session for %s/%d with v3 (retry will rebuild)", jid.bare_jid.to_string(), device_id);
+                store.delete_session(address);
+                address.device_id = 0;
+                throw new GLib.Error(Quark.from_string("omemo"), ErrorCode.NO_SESSION, "v4 session deleted, need v3 rebuild");
+            }
+            CiphertextMessage device_key = cipher.encrypt(encryption_data.keytag);
+            address.device_id = 0;
+
+            encryption_data.add_device_key(device_id, device_key.serialized, device_key.type == CiphertextType.PREKEY);
+        }
+
+        private void require_registered_device() throws Error {
+            if (store.registration_pending) {
+                throw new GLib.Error(Quark.from_string("omemo-registration"),
+                        ErrorCode.NO_SESSION, "OMEMO device registration is not complete");
+            }
+        }
+    }
+
+    /**
+     * Check whether the result of an OMEMO encrypt attempt is safe to send.
+     *
+     * After OmemoEncryptor.encrypt() or Omemo2Encrypt.encrypt(), the message body
+     * and EncryptState must be validated before transmission:
+     *
+     * - If encrypted==false, the message MUST NOT be sent (CWE-311: plaintext leak)
+     * - If encrypted==true but body still contains original plaintext, something is wrong
+     * - The fallback body must be the standard OMEMO marker, not the error string
+     *
+     * @param encrypted       Whether EncryptState.encrypted is true
+     * @param body            The message body after encrypt() returns
+     * @param original_body   The original plaintext body before encryption
+     * @return true if the message is safe to transmit
+     */
+    internal static bool is_encrypt_result_safe_to_send(bool encrypted, string? body, string? original_body) {
+        /* Rule 1: encryption failed → never send */
+        if (!encrypted) return false;
+
+        /* Rule 2: body is null → unsafe (no OMEMO marker) */
+        if (body == null) return false;
+
+        /* Rule 3: body still contains the original plaintext → catastrophic leak */
+        if (original_body != null && body == original_body) return false;
+
+        /* Rule 4: body is the error string → encryption failed but flag is wrong */
+        if (body == "[OMEMO encryption failed]") return false;
+
+        return true;
+    }
+}

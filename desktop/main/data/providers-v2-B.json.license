@@ -1,0 +1,14 @@
+SPDX-FileCopyrightText: 2021 Melvin Keskin <melvo@olomono.de>
+SPDX-FileCopyrightText: 2021 Echolon One <emlo@mailbox.org>
+SPDX-FileCopyrightText: 2021 Michel Le Bihan <michel@lebihan.pl>
+SPDX-FileCopyrightText: 2021 Adrien Bourmault <neox@os-k.eu>
+SPDX-FileCopyrightText: 2021 Mathieu Pasquet <kdeid.20.mathieui@dfgh.net>
+SPDX-FileCopyrightText: 2021 Yury Gubich <blue@macaw.me>
+SPDX-FileCopyrightText: 2021 Yvo Meeres <yvo.meeres@mailbox.org>
+SPDX-FileCopyrightText: 2021 Amolith Seregion <amolith@nixnet.services>
+
+SPDX-License-Identifier: CC0-1.0
+
+Source: XMPP Providers v2 category-B directory
+Upstream: https://data.xmpp.net/providers/v2/providers-B.json
+DinoX mirror: https://dinox.im/data/providers/v2/providers-B.json

@@ -1,0 +1,1830 @@
+# Latvian translations for DinoX.
+# This file is distributed under the same license as the DinoX package.
+msgid ""
+msgstr ""
+"Project-Id-Version: DinoX\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-26 12:04+0100\n"
+"PO-Revision-Date: 2026-10-26 21:47+0100\n"
+"Last-Translator: DinoX contributors\n"
+"Language-Team: Latvian\n"
+"Language: lv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==0 || (n%100>=11 && n%100<=19) ? 0 : n%10==1 && n%100!=11 ? 1 : 2);\n"
+
+#: plugins/openpgp/src/contact_details_provider.vala:163
+msgid "OpenPGP Legacy (XEP-0027/keyserver)"
+msgstr "Vecais OpenPGP (XEP-0027/atslēgu serveris)"
+
+#: plugins/openpgp/src/contact_details_provider.vala:176
+msgid "Search keyserver"
+msgstr "Meklēt atslēgu serverī"
+
+#: plugins/openpgp/src/contact_details_provider.vala:184
+msgid "OpenPGP XMPP (XEP-0373/0374)"
+msgstr "OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/contact_details_provider.vala:196
+msgid "Copy XMPP-published OpenPGP fingerprint"
+msgstr "Kopēt XMPP publicētās OpenPGP atslēgas nospiedumu"
+
+#: plugins/openpgp/src/contact_details_provider.vala:205
+msgid "Mark XMPP-published key as verified"
+msgstr "Atzīmēt XMPP publicēto atslēgu kā pārbaudītu"
+
+#: plugins/openpgp/src/contact_details_provider.vala:211
+msgid "Reset XMPP-published key verification"
+msgstr "Atiestatīt XMPP publicētās atslēgas pārbaudi"
+
+#: plugins/openpgp/src/contact_details_provider.vala:226
+msgid "Refresh XMPP-published key"
+msgstr "Atsvaidzināt XMPP publicēto atslēgu"
+
+#: plugins/openpgp/src/contact_details_provider.vala:337
+msgid "Checking XMPP-published OpenPGP key..."
+msgstr "Pārbauda XMPP publicēto OpenPGP atslēgu…"
+
+#: plugins/openpgp/src/contact_details_provider.vala:350
+msgid "Checking the XMPP-published OpenPGP key timed out."
+msgstr "XMPP publicētās OpenPGP atslēgas pārbaudes noildze."
+
+#: plugins/openpgp/src/contact_details_provider.vala:389
+msgid "Checking keyring..."
+msgstr "Pārbauda atslēgu krātuvi…"
+
+#: plugins/openpgp/src/contact_details_provider.vala:427
+msgid "Invalid for legacy XEP-0027/keyserver: key has no email user ID."
+msgstr ""
+"Nederīga vecajam XEP-0027/atslēgu serverim: atslēgai nav e-pasta lietotāja "
+"ID."
+
+#: plugins/openpgp/src/contact_details_provider.vala:428
+msgid "Invalid for OpenPGP for XMPP: key has no matching xmpp: user ID."
+msgstr ""
+"Nederīga OpenPGP priekš XMPP: atslēgai nav atbilstoša xmpp: lietotāja ID."
+
+#: plugins/openpgp/src/contact_details_provider.vala:439
+msgid "Key not in keyring"
+msgstr "Atslēga nav atslēgu krātuvē"
+
+#: plugins/openpgp/src/contact_details_provider.vala:446
+msgid ""
+"Active: legacy XEP-0027/keyserver key is currently usable for this contact."
+msgstr ""
+"Aktīva: vecā XEP-0027/atslēgu servera atslēga pašlaik ir izmantojama šim "
+"kontaktam."
+
+#: plugins/openpgp/src/contact_details_provider.vala:449
+msgid ""
+"Stored: legacy XEP-0027/keyserver key is known, but is not currently active "
+"for this contact."
+msgstr ""
+"Saglabāta: vecā XEP-0027/atslēgu servera atslēga ir zināma, bet šim "
+"kontaktam pašlaik nav aktīva."
+
+#: plugins/openpgp/src/contact_details_provider.vala:451
+msgid "Inactive: no legacy XEP-0027/keyserver key is stored."
+msgstr "Neaktīva: nav saglabātas vecās XEP-0027/atslēgu servera atslēgas."
+
+#: plugins/openpgp/src/contact_details_provider.vala:457
+msgid "Verified: XMPP-published OpenPGP key is stored and manually verified."
+msgstr ""
+"Pārbaudīta: XMPP publicētā OpenPGP atslēga ir saglabāta un manuāli "
+"pārbaudīta."
+
+#: plugins/openpgp/src/contact_details_provider.vala:460
+msgid ""
+"Changed: XMPP-published OpenPGP key differs from the previously verified "
+"key. Verify the fingerprint before trusting this identity."
+msgstr ""
+"Mainīta: XMPP publicētā OpenPGP atslēga atšķiras no iepriekš pārbaudītās. "
+"Pirms uzticaties šai identitātei, pārbaudiet nospiedumu."
+
+#: plugins/openpgp/src/contact_details_provider.vala:462
+msgid ""
+"Unverified: XMPP-published OpenPGP key is stored. Compare the fingerprint "
+"before trusting this identity."
+msgstr ""
+"Nepārbaudīta: XMPP publicētā OpenPGP atslēga ir saglabāta. Pirms uzticaties "
+"šai identitātei, salīdziniet nospiedumu."
+
+#: plugins/openpgp/src/contact_details_provider.vala:465
+msgid ""
+"Supported: contact advertises OpenPGP for XMPP, but no retrievable XMPP-"
+"published key is stored."
+msgstr ""
+"Atbalstīts: kontakts izziņo OpenPGP priekš XMPP, bet nav saglabātas "
+"iegūstamas XMPP publicētas atslēgas."
+
+#: plugins/openpgp/src/contact_details_provider.vala:467
+msgid "Inactive: no OpenPGP-for-XMPP support or XMPP-published key is known."
+msgstr ""
+"Neaktīvs: nav zināms OpenPGP priekš XMPP atbalsts vai XMPP publicēta "
+"atslēga."
+
+#: plugins/openpgp/src/contact_details_provider.vala:497
+msgid "Fingerprint copied"
+msgstr "Nospiedums nokopēts"
+
+#: plugins/openpgp/src/contact_details_provider.vala:520
+msgid "Verifying OpenPGP-for-XMPP key..."
+msgstr "Pārbauda OpenPGP priekš XMPP atslēgu…"
+
+#: plugins/openpgp/src/contact_details_provider.vala:554
+msgid ""
+"Cannot verify: key is not in the keyring or has no matching xmpp: user ID."
+msgstr ""
+"Nevar pārbaudīt: atslēga nav krātuvē vai tai nav atbilstoša xmpp: lietotāja "
+"ID."
+
+#: plugins/openpgp/src/contact_details_provider.vala:611
+msgid "Searching keyserver with fingerprint: "
+msgstr "Meklē atslēgu serverī pēc nospieduma: "
+
+#: plugins/openpgp/src/contact_details_provider.vala:626
+msgid ""
+"Key not found or has no verified email on keyserver.\n"
+"Ask the contact to verify their email on keys.openpgp.org\n"
+"or send you their public key file directly."
+msgstr ""
+"Atslēga nav atrasta vai atslēgu serverī tai nav apstiprināta e-pasta.\n"
+"Lūdziet kontaktam apstiprināt e-pastu vietnē keys.openpgp.org\n"
+"vai tieši nosūtīt jums savas publiskās atslēgas failu."
+
+#: plugins/openpgp/src/contact_details_provider.vala:628
+msgid "Failed: "
+msgstr "Neizdevās: "
+
+#: plugins/openpgp/src/contact_details_provider.vala:636
+msgid "Searching keyserver with JID..."
+msgstr "Meklē atslēgu serverī pēc JID…"
+
+#: plugins/openpgp/src/contact_details_provider.vala:657
+msgid "Not found with JID. Enter email address:"
+msgstr "Pēc JID nav atrasts. Ievadiet e-pasta adresi:"
+
+#: plugins/openpgp/src/contact_details_provider.vala:668
+msgid "Enter Email Address"
+msgstr "Ievadiet e-pasta adresi"
+
+#: plugins/openpgp/src/contact_details_provider.vala:669
+msgid ""
+"The key was not found using the JID.\n"
+"\n"
+"Enter the email address that is in the contact's OpenPGP key:"
+msgstr ""
+"Atslēga nav atrasta pēc JID.\n"
+"\n"
+"Ievadiet e-pasta adresi, kas ir kontakta OpenPGP atslēgā:"
+
+#: plugins/openpgp/src/contact_details_provider.vala:671
+#: plugins/openpgp/src/key_management_dialog.vala:1045
+#: plugins/openpgp/src/key_management_dialog.vala:1486
+#: plugins/openpgp/src/key_management_dialog.vala:1654
+#: plugins/openpgp/src/key_management_dialog.vala:1694
+#: plugins/openpgp/src/key_management_dialog.vala:1789
+#: plugins/openpgp/src/key_management_dialog.vala:1924
+#: plugins/openpgp/src/key_management_dialog.vala:2108
+#: plugins/openpgp/src/key_management_dialog.vala:2270
+#: plugins/openpgp/src/key_management_dialog.vala:2866
+#: plugins/openpgp/src/key_management_dialog.vala:3211
+#: plugins/openpgp/src/key_management_dialog.vala:3213
+#: plugins/openpgp/src/plugin.vala:453
+msgid "Cancel"
+msgstr "Atcelt"
+
+#: plugins/openpgp/src/contact_details_provider.vala:672
+msgid "Search"
+msgstr "Meklēt"
+
+#: plugins/openpgp/src/contact_details_provider.vala:709
+msgid "Searching keyserver for: "
+msgstr "Meklē atslēgu serverī: "
+
+#: plugins/openpgp/src/contact_details_provider.vala:719
+msgid "Not found: "
+msgstr "Nav atrasts: "
+
+#: plugins/openpgp/src/encryption_list_entry.vala:66
+msgid "No conversation selected."
+msgstr "Nav izvēlēta saruna."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:75
+msgid ""
+"You didn't configure OpenPGP for this account. You can do that in the "
+"Accounts Dialog."
+msgstr ""
+"Jūs neesat iestatījis OpenPGP šim kontam. To var izdarīt kontu dialogā."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:113
+#: plugins/openpgp/src/encryption_list_entry.vala:240
+msgid "OpenPGP manager not available."
+msgstr "OpenPGP pārvaldnieks nav pieejams."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:121
+msgid "OpenPGP-for-XMPP key manager not available."
+msgstr "OpenPGP priekš XMPP atslēgu pārvaldnieks nav pieejams."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:129
+msgid "Checking OpenPGP key via PubSub..."
+msgstr "Pārbauda OpenPGP atslēgu caur PubSub…"
+
+#: plugins/openpgp/src/encryption_list_entry.vala:138
+msgid ""
+"Checking the OpenPGP-for-XMPP key via PubSub timed out. Try again, or switch"
+" to legacy XEP-0027 if the contact has a keyserver key."
+msgstr ""
+"OpenPGP priekš XMPP atslēgas pārbaudes caur PubSub noildze. Mēģiniet vēlreiz"
+" vai pārslēdzieties uz veco XEP-0027, ja kontaktam ir atslēgu servera "
+"atslēga."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:150
+msgid ""
+"This contact's OpenPGP-for-XMPP key has not been refreshed yet. Try again "
+"after the contact republishes it, or use the refresh button in contact "
+"details."
+msgstr ""
+"Šī kontakta OpenPGP priekš XMPP atslēga vēl nav atsvaidzināta. Mēģiniet "
+"vēlreiz, kad kontakts to publicējis atkārtoti, vai izmantojiet "
+"atsvaidzināšanas pogu kontakta informācijā."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:159
+#: plugins/openpgp/src/encryption_list_entry.vala:215
+msgid ""
+"This contact has no legacy OpenPGP/XEP-0027 key. Switch your OpenPGP key "
+"usage to DinoX / OpenPGP for XMPP."
+msgstr ""
+"Šim kontaktam nav vecās OpenPGP/XEP-0027 atslēgas. Pārslēdziet savu OpenPGP "
+"atslēgas lietojumu uz DinoX / OpenPGP priekš XMPP."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:161
+#: plugins/openpgp/src/encryption_list_entry.vala:211
+msgid ""
+"This contact has no OpenPGP-for-XMPP key. Switch to a legacy XEP-0027 key or"
+" ask the contact to publish an OpenPGP-for-XMPP key."
+msgstr ""
+"Šim kontaktam nav OpenPGP priekš XMPP atslēgas. Pārslēdzieties uz veco "
+"XEP-0027 atslēgu vai lūdziet kontaktam publicēt OpenPGP priekš XMPP atslēgu."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:171
+#: plugins/openpgp/src/manager.vala:1119
+msgid ""
+"This contact's OpenPGP-for-XMPP key changed. Verify the fingerprint in "
+"contact details before sending."
+msgstr ""
+"Šī kontakta OpenPGP priekš XMPP atslēga ir mainījusies. Pirms sūtīšanas "
+"pārbaudiet nospiedumu kontakta informācijā."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:172
+#: plugins/openpgp/src/manager.vala:1120
+msgid ""
+"This contact's OpenPGP-for-XMPP key is not verified. Verify the fingerprint "
+"in contact details before sending."
+msgstr ""
+"Šī kontakta OpenPGP priekš XMPP atslēga nav pārbaudīta. Pirms sūtīšanas "
+"pārbaudiet nospiedumu kontakta informācijā."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:180
+#: plugins/openpgp/src/encryption_list_entry.vala:219
+#: plugins/openpgp/src/manager.vala:429
+msgid ""
+"This contact has a stored legacy OpenPGP/XEP-0027 key, but it is not "
+"currently active."
+msgstr ""
+"Šim kontaktam ir saglabāta vecā OpenPGP/XEP-0027 atslēga, bet tā pašlaik nav"
+" aktīva."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:200
+msgid "This contact's OpenPGP key is not in your keyring."
+msgstr "Šī kontakta OpenPGP atslēga nav jūsu atslēgu krātuvē."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:229
+msgid "Legacy OpenPGP (XEP-0027/keyserver) is active for outgoing messages."
+msgstr ""
+"Izejošajiem ziņojumiem ir aktīvs vecais OpenPGP (XEP-0027/atslēgu serveris)."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:231
+msgid "OpenPGP for XMPP (XEP-0373/0374) is active for outgoing messages."
+msgstr "Izejošajiem ziņojumiem ir aktīvs OpenPGP priekš XMPP (XEP-0373/0374)."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:249
+#, c-format
+msgid "A member's OpenPGP key is not configured: %s"
+msgstr "Biedra OpenPGP atslēga nav iestatīta: %s"
+
+#: plugins/openpgp/src/encryption_list_entry.vala:285
+#, c-format
+msgid "A member's OpenPGP key is not in your keyring: %s"
+msgstr "Biedra OpenPGP atslēga nav jūsu atslēgu krātuvē: %s"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:51
+msgid "Loading keys..."
+msgstr "Ielādē atslēgas…"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:121
+#: plugins/openpgp/src/encryption_preferences_entry.vala:127
+#: plugins/openpgp/src/encryption_preferences_entry.vala:157
+msgid "Outgoing OpenPGP messages"
+msgstr "Izejošie OpenPGP ziņojumi"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:121
+msgid "Error in GnuPG"
+msgstr "Kļūda GnuPG"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:127
+msgid "No keys available. Generate or import one!"
+msgstr "Nav pieejamu atslēgu. Ģenerējiet vai importējiet!"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:159
+msgid ""
+"DinoX currently sends OpenPGP as legacy XEP-0027 using keyserver/contact "
+"keys."
+msgstr ""
+"DinoX pašlaik sūta OpenPGP vecajā XEP-0027 režīmā, izmantojot atslēgu "
+"servera/kontaktu atslēgas."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:162
+msgid "DinoX currently sends OpenPGP for XMPP using XEP-0373/0374."
+msgstr "DinoX pašlaik sūta OpenPGP priekš XMPP, izmantojot XEP-0373/0374."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:165
+msgid "No OpenPGP send key is active for this account."
+msgstr "Šim kontam nav aktīvas OpenPGP sūtīšanas atslēgas."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:229
+msgid "Manage Keys"
+msgstr "Pārvaldīt atslēgas"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:230
+msgid "Generate, import, export, or delete keys"
+msgstr "Ģenerēt, importēt, eksportēt vai dzēst atslēgas"
+
+#: plugins/openpgp/src/key_management_dialog.vala:171
+msgid "OpenPGP Key Management"
+msgstr "OpenPGP atslēgu pārvaldība"
+
+#: plugins/openpgp/src/key_management_dialog.vala:197
+msgid "Actions"
+msgstr "Darbības"
+
+#: plugins/openpgp/src/key_management_dialog.vala:199
+#, c-format
+msgid "Keys and server backups for %s"
+msgstr "Konta %s atslēgas un servera rezerves kopijas"
+
+#: plugins/openpgp/src/key_management_dialog.vala:204
+msgid "Generate New Key"
+msgstr "Ģenerēt jaunu atslēgu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:205
+msgid "Create a new OpenPGP key pair"
+msgstr "Izveidot jaunu OpenPGP atslēgu pāri"
+
+#: plugins/openpgp/src/key_management_dialog.vala:222
+msgid "Import Key"
+msgstr "Importēt atslēgu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:223
+msgid ""
+"Import a private key for this account or a public key from a contact. "
+"Importing does not activate a key."
+msgstr ""
+"Importējiet šī konta privāto atslēgu vai kontakta publisko atslēgu. "
+"Importēšana neaktivizē atslēgu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:240
+#: plugins/openpgp/src/key_management_dialog.vala:1655
+msgid "Delete Server Backup"
+msgstr "Dzēst servera rezerves kopiju"
+
+#: plugins/openpgp/src/key_management_dialog.vala:241
+msgid ""
+"Remove this account's encrypted private-key backup. Local keys and public-"
+"key publications are kept."
+msgstr ""
+"Noņemt šī konta šifrēto privātās atslēgas rezerves kopiju. Vietējās atslēgas"
+" un publisko atslēgu publikācijas tiks saglabātas."
+
+#: plugins/openpgp/src/key_management_dialog.vala:247
+msgid "Fetch Key from Server (Sync)"
+msgstr "Iegūt atslēgu no servera (sinhronizēt)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:248
+msgid "Import your secret key backup from your server"
+msgstr "Importēt slepenās atslēgas rezerves kopiju no sava servera"
+
+#: plugins/openpgp/src/key_management_dialog.vala:290
+msgid "Your Keys"
+msgstr "Jūsu atslēgas"
+
+#: plugins/openpgp/src/key_management_dialog.vala:291
+msgid "Private keys available for signing and decryption"
+msgstr "Privātās atslēgas parakstīšanai un atšifrēšanai"
+
+#: plugins/openpgp/src/key_management_dialog.vala:386
+#: plugins/openpgp/src/key_management_dialog.vala:400
+#: plugins/openpgp/src/key_management_dialog.vala:456
+msgid "GnuPG did not respond."
+msgstr "GnuPG neatbildēja."
+
+#: plugins/openpgp/src/key_management_dialog.vala:412
+msgid "Server Backup Cleanup Pending"
+msgstr "Gaida servera rezerves kopijas tīrīšanu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:413
+msgid ""
+"The key was kept locally. DinoX will retry removing its matching backup when"
+" this account reconnects. Then retry revoking the key."
+msgstr ""
+"Atslēga tika saglabāta lokāli. DinoX vēlreiz mēģinās noņemt tai atbilstošo "
+"rezerves kopiju, kad šis konts atkārtoti savienosies. Pēc tam vēlreiz "
+"mēģiniet atsaukt atslēgu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:455
+msgid "Could not load OpenPGP keys"
+msgstr "Neizdevās ielādēt OpenPGP atslēgas"
+
+#: plugins/openpgp/src/key_management_dialog.vala:470
+msgid "No private keys found"
+msgstr "Privātās atslēgas nav atrastas"
+
+#: plugins/openpgp/src/key_management_dialog.vala:471
+msgid "Generate or import a key to get started"
+msgstr "Ģenerējiet vai importējiet atslēgu, lai sāktu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:646
+msgid "Published to keyserver"
+msgstr "Publicēta atslēgu serverī"
+
+#: plugins/openpgp/src/key_management_dialog.vala:652
+msgid "Active legacy and XMPP account key"
+msgstr "Aktīvā vecā režīma un XMPP konta atslēga"
+
+#: plugins/openpgp/src/key_management_dialog.vala:653
+msgid "Active legacy XEP-0027 account key"
+msgstr "Aktīvā vecā XEP-0027 konta atslēga"
+
+#: plugins/openpgp/src/key_management_dialog.vala:653
+msgid "Active XMPP account key"
+msgstr "Aktīvā XMPP konta atslēga"
+
+#: plugins/openpgp/src/key_management_dialog.vala:659
+msgid "Fingerprint"
+msgstr "Atslēgas nospiedums"
+
+#: plugins/openpgp/src/key_management_dialog.vala:672
+msgid "Remove Assignment to This Account"
+msgstr "Noņemt piesaisti šim kontam"
+
+#: plugins/openpgp/src/key_management_dialog.vala:673
+msgid ""
+"Keep the key in DinoX's keyring and remove only its manual assignment to "
+"this account."
+msgstr ""
+"Paturēt atslēgu DinoX atslēgu krātuvē un noņemt tikai tās manuālo piesaisti "
+"šim kontam."
+
+#: plugins/openpgp/src/key_management_dialog.vala:684
+msgid "OpenPGP for XMPP (XEP-0373/0374)"
+msgstr "OpenPGP priekš XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:686
+msgid ""
+"Active for this account. DinoX publishes this key through XMPP for OpenPGP-"
+"capable clients."
+msgstr ""
+"Aktīva šim kontam. DinoX publicē šo atslēgu caur XMPP klientiem ar OpenPGP "
+"atbalstu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:688
+msgid ""
+"Stored for OpenPGP for XMPP, but not active while legacy XEP-0027/keyserver "
+"mode is selected."
+msgstr ""
+"Saglabāta OpenPGP priekš XMPP, bet nav aktīva, kamēr izvēlēts vecais "
+"XEP-0027/atslēgu servera režīms."
+
+#: plugins/openpgp/src/key_management_dialog.vala:690
+msgid ""
+"Inactive. This key is currently selected for legacy XEP-0027/keyserver use."
+msgstr ""
+"Neaktīva. Šī atslēga pašlaik izvēlēta vecā XEP-0027/atslēgu servera "
+"lietojumam."
+
+#: plugins/openpgp/src/key_management_dialog.vala:692
+msgid ""
+"Not available for this account. OpenPGP for XMPP keys must contain an xmpp: "
+"user ID for this XMPP address."
+msgstr ""
+"Nav pieejama šim kontam. OpenPGP priekš XMPP atslēgām jāsatur šīs XMPP "
+"adreses xmpp: lietotāja ID."
+
+#: plugins/openpgp/src/key_management_dialog.vala:694
+msgid ""
+"Not active for this account. Select it below to publish it through XMPP."
+msgstr "Nav aktīva šim kontam. Izvēlieties to zemāk, lai publicētu caur XMPP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:702
+msgid "Selected for OpenPGP for XMPP"
+msgstr "Izvēlēta OpenPGP priekš XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:703
+msgid "Use for OpenPGP for XMPP"
+msgstr "Izmantot OpenPGP priekš XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:705
+msgid ""
+"DinoX uses this key for XEP-0373/0374 messages and publishes it through "
+"XMPP."
+msgstr ""
+"DinoX izmanto šo atslēgu XEP-0373/0374 ziņojumiem un publicē to caur XMPP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:708
+msgid ""
+"Selects this key for XEP-0373/0374 messages and publishes it through XMPP."
+msgstr "Izvēlas šo atslēgu XEP-0373/0374 ziņojumiem un publicē to caur XMPP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:715
+msgid "OpenPGP for XMPP Key Selected"
+msgstr "OpenPGP priekš XMPP atslēga izvēlēta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:715
+msgid ""
+"DinoX will use this key for OpenPGP for XMPP and publish it through XMPP for"
+" this account."
+msgstr ""
+"DinoX izmantos šo atslēgu OpenPGP priekš XMPP un publicēs to caur XMPP šim "
+"kontam."
+
+#: plugins/openpgp/src/key_management_dialog.vala:723
+#: plugins/openpgp/src/key_management_dialog.vala:2237
+msgid "Backup Secret Key to Server"
+msgstr "Kopēt slepeno atslēgu uz serveri"
+
+#: plugins/openpgp/src/key_management_dialog.vala:724
+msgid ""
+"Securely encrypt this key and store it on the server to sync across your "
+"devices."
+msgstr ""
+"Droši šifrēt šo atslēgu un glabāt to serverī sinhronizēšanai starp jūsu "
+"ierīcēm."
+
+#: plugins/openpgp/src/key_management_dialog.vala:735
+msgid "Disable OpenPGP for XMPP for this account"
+msgstr "Atspējot OpenPGP priekš XMPP šim kontam"
+
+#: plugins/openpgp/src/key_management_dialog.vala:736
+msgid ""
+"Removes the XMPP PubSub publication and keeps the secret key locally. Legacy"
+" XEP-0027/keyserver state is not changed."
+msgstr ""
+"Noņem XMPP PubSub publikāciju un patur slepeno atslēgu lokāli. Vecā "
+"XEP-0027/atslēgu servera stāvoklis netiek mainīts."
+
+#: plugins/openpgp/src/key_management_dialog.vala:747
+msgid "Legacy keyserver publication"
+msgstr "Vecā režīma atslēgu servera publikācija"
+
+#: plugins/openpgp/src/key_management_dialog.vala:749
+msgid ""
+"This key is revoked, expired, or not usable for signing and encryption."
+msgstr ""
+"Šī atslēga ir atsaukta, tās derīgums beidzies vai tā nav izmantojama "
+"parakstīšanai un šifrēšanai."
+
+#: plugins/openpgp/src/key_management_dialog.vala:751
+msgid ""
+"Stored for legacy XEP-0027/keyserver, but this key has no email user ID for "
+"new keyserver publishing."
+msgstr ""
+"Saglabāta vecajam XEP-0027/atslēgu serverim, bet atslēgai nav e-pasta "
+"lietotāja ID jaunai publicēšanai atslēgu serverī."
+
+#: plugins/openpgp/src/key_management_dialog.vala:753
+msgid ""
+"Active for legacy XEP-0027. The email address on the key must still be "
+"verified on the keyserver."
+msgstr ""
+"Aktīva vecajam XEP-0027. Atslēgas e-pasta adrese vēl jāapstiprina atslēgu "
+"serverī."
+
+#: plugins/openpgp/src/key_management_dialog.vala:755
+msgid ""
+"Stored for legacy XEP-0027/keyserver, but not active while OpenPGP for XMPP "
+"mode is selected."
+msgstr ""
+"Saglabāta vecajam XEP-0027/atslēgu serverim, bet nav aktīva, kamēr izvēlēts "
+"OpenPGP priekš XMPP režīms."
+
+#: plugins/openpgp/src/key_management_dialog.vala:757
+msgid ""
+"Uploaded for legacy OpenPGP clients. The email address on the key must still"
+" be verified on the keyserver."
+msgstr ""
+"Augšupielādēta vecajiem OpenPGP klientiem. Atslēgas e-pasta adrese vēl "
+"jāapstiprina atslēgu serverī."
+
+#: plugins/openpgp/src/key_management_dialog.vala:759
+msgid ""
+"Not uploaded. Legacy OpenPGP clients may not find this key unless you "
+"publish it to a keyserver."
+msgstr ""
+"Nav augšupielādēta. Vecie OpenPGP klienti var neatrast šo atslēgu, ja to "
+"nepublicēsiet atslēgu serverī."
+
+#: plugins/openpgp/src/key_management_dialog.vala:768
+msgid "Selected for legacy XEP-0027/keyserver"
+msgstr "Izvēlēta vecajam XEP-0027/atslēgu serverim"
+
+#: plugins/openpgp/src/key_management_dialog.vala:769
+msgid "Use for legacy XEP-0027/keyserver"
+msgstr "Izmantot vecajam XEP-0027/atslēgu serverim"
+
+#: plugins/openpgp/src/key_management_dialog.vala:771
+msgid ""
+"DinoX uses this key for legacy OpenPGP messages and keyserver-based "
+"contacts."
+msgstr ""
+"DinoX izmanto šo atslēgu vecā OpenPGP ziņojumiem un kontaktiem, kuru "
+"atslēgas iegūst no atslēgu servera."
+
+#: plugins/openpgp/src/key_management_dialog.vala:773
+msgid ""
+"Selects this key for legacy OpenPGP messages. The keyserver entry still "
+"needs a verified email address."
+msgstr ""
+"Izvēlas šo atslēgu vecā OpenPGP ziņojumiem. Atslēgu servera ierakstam "
+"joprojām vajadzīga apstiprināta e-pasta adrese."
+
+#: plugins/openpgp/src/key_management_dialog.vala:780
+#: plugins/openpgp/src/key_management_dialog.vala:790
+msgid "Legacy OpenPGP Key Selected"
+msgstr "Vecā OpenPGP atslēga izvēlēta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:780
+msgid "DinoX will use this key for XEP-0027/keyserver OpenPGP."
+msgstr "DinoX izmantos šo atslēgu XEP-0027/atslēgu servera OpenPGP režīmā."
+
+#: plugins/openpgp/src/key_management_dialog.vala:783
+msgid ""
+"Not published to a keyserver. You can select it, but other legacy clients "
+"may not find it automatically."
+msgstr ""
+"Nav publicēta atslēgu serverī. Varat to izvēlēties, bet citi vecie klienti "
+"to var neatrast automātiski."
+
+#: plugins/openpgp/src/key_management_dialog.vala:790
+msgid ""
+"DinoX will use this key for XEP-0027. Publish it to a keyserver if legacy "
+"clients should find it automatically."
+msgstr ""
+"DinoX izmantos šo atslēgu XEP-0027. Publicējiet to atslēgu serverī, ja "
+"vecajiem klientiem tā jāatrod automātiski."
+
+#: plugins/openpgp/src/key_management_dialog.vala:802
+msgid "Stop using for legacy XEP-0027/keyserver"
+msgstr "Pārtraukt izmantot vecajam XEP-0027/atslēgu serverim"
+
+#: plugins/openpgp/src/key_management_dialog.vala:803
+msgid "Remove stored legacy XEP-0027/keyserver selection"
+msgstr "Noņemt saglabāto vecā XEP-0027/atslēgu servera izvēli"
+
+#: plugins/openpgp/src/key_management_dialog.vala:805
+msgid ""
+"Keeps the key locally and on the keyserver. DinoX stops announcing it in "
+"signed presence."
+msgstr ""
+"Patur atslēgu lokāli un atslēgu serverī. DinoX pārtrauc to izziņot "
+"parakstītajos klātbūtnes datos."
+
+#: plugins/openpgp/src/key_management_dialog.vala:806
+msgid ""
+"Keeps the key locally and on the keyserver. DinoX removes this inactive "
+"legacy account selection."
+msgstr ""
+"Patur atslēgu lokāli un atslēgu serverī. DinoX noņem šo neaktīvo konta vecā "
+"režīma izvēli."
+
+#: plugins/openpgp/src/key_management_dialog.vala:813
+msgid "Legacy OpenPGP Disabled"
+msgstr "Vecais OpenPGP atspējots"
+
+#: plugins/openpgp/src/key_management_dialog.vala:813
+msgid ""
+"DinoX will no longer use or announce this key for XEP-0027/keyserver "
+"OpenPGP. The key remains in your keyring and on the keyserver if it was "
+"published."
+msgstr ""
+"DinoX vairs neizmantos un neizziņos šo atslēgu XEP-0027/atslēgu servera "
+"OpenPGP režīmā. Atslēga paliek jūsu atslēgu krātuvē un, ja publicēta, arī "
+"atslēgu serverī."
+
+#: plugins/openpgp/src/key_management_dialog.vala:821
+msgid "Publish public key to keyserver for legacy discovery"
+msgstr "Publicēt publisko atslēgu atslēgu serverī veco klientu atklāšanai"
+
+#: plugins/openpgp/src/key_management_dialog.vala:822
+msgid "Requires a real email address you can verify."
+msgstr "Nepieciešama īsta e-pasta adrese, ko varat apstiprināt."
+
+#: plugins/openpgp/src/key_management_dialog.vala:831
+#: plugins/openpgp/src/key_management_dialog.vala:1333
+msgid "Export Public Key"
+msgstr "Eksportēt publisko atslēgu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:839
+#: plugins/openpgp/src/key_management_dialog.vala:1330
+msgid "Export Secret Key (Backup)"
+msgstr "Eksportēt slepeno atslēgu (rezerves kopija)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:840
+msgid "Required for restoring your key"
+msgstr "Nepieciešama atslēgas atjaunošanai"
+
+#: plugins/openpgp/src/key_management_dialog.vala:849
+msgid "Revoke Key"
+msgstr "Atsaukt atslēgu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:850
+msgid "Invalidate key, keep locally for old messages"
+msgstr "Padarīt atslēgu nederīgu, paturēt lokāli veciem ziņojumiem"
+
+#: plugins/openpgp/src/key_management_dialog.vala:859
+msgid "Revoke &amp; Delete Key"
+msgstr "Atsaukt un dzēst atslēgu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:860
+msgid "Invalidate and remove key completely"
+msgstr "Padarīt atslēgu nederīgu un pilnībā noņemt"
+
+#: plugins/openpgp/src/key_management_dialog.vala:870
+msgid "Delete Key"
+msgstr "Dzēst atslēgu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:871
+msgid ""
+"Remove locally without revocation; active XMPP publication is removed first"
+msgstr ""
+"Noņemt lokāli bez atsaukšanas; aktīvā XMPP publikācija vispirms tiek noņemta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:895
+msgid "Revoked"
+msgstr "Atsaukta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:898
+msgid "Active OpenPGP XMPP (XEP-0373/0374)"
+msgstr "Aktīvs OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:900
+msgid "Stored OpenPGP XMPP (XEP-0373/0374)"
+msgstr "Saglabāts OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:902
+msgid "OpenPGP XMPP key (XEP-0373/0374)"
+msgstr "OpenPGP XMPP atslēga (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:906
+msgid "Active legacy XEP-0027/keyserver"
+msgstr "Aktīvs vecais XEP-0027/atslēgu serveris"
+
+#: plugins/openpgp/src/key_management_dialog.vala:908
+msgid "Stored legacy XEP-0027/keyserver"
+msgstr "Saglabāts vecais XEP-0027/atslēgu serveris"
+
+#: plugins/openpgp/src/key_management_dialog.vala:910
+msgid "Legacy-capable key"
+msgstr "Atslēga ar vecā režīma atbalstu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:914
+msgid "Keyserver uploaded"
+msgstr "Augšupielādēta atslēgu serverī"
+
+#: plugins/openpgp/src/key_management_dialog.vala:935
+msgid "Generate New OpenPGP Key"
+msgstr "Ģenerēt jaunu OpenPGP atslēgu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:936
+msgid "Enter your details to create a new key pair."
+msgstr "Ievadiet informāciju, lai izveidotu jaunu atslēgu pāri."
+
+#: plugins/openpgp/src/key_management_dialog.vala:944
+msgid "Name"
+msgstr "Nosaukums"
+
+#: plugins/openpgp/src/key_management_dialog.vala:949
+msgid "Your Name"
+msgstr "Jūsu vārds"
+
+#: plugins/openpgp/src/key_management_dialog.vala:952
+msgid "Key usage"
+msgstr "Atslēgas lietojums"
+
+#: plugins/openpgp/src/key_management_dialog.vala:960
+msgid "DinoX / OpenPGP for XMPP"
+msgstr "DinoX / OpenPGP priekš XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:963
+msgid ""
+"Uses your XMPP address and publishes the selected account key through XMPP. "
+"No email verification is needed."
+msgstr ""
+"Izmanto jūsu XMPP adresi un publicē izvēlēto konta atslēgu caur XMPP. "
+"E-pasta apstiprināšana nav vajadzīga."
+
+#: plugins/openpgp/src/key_management_dialog.vala:976
+msgid "Legacy keyserver / XEP-0027"
+msgstr "Vecais atslēgu serveris / XEP-0027"
+
+#: plugins/openpgp/src/key_management_dialog.vala:979
+msgid ""
+"Uses a real email address and uploads the key for older OpenPGP clients. The"
+" email address must be verified."
+msgstr ""
+"Izmanto īstu e-pasta adresi un augšupielādē atslēgu vecākiem OpenPGP "
+"klientiem. E-pasta adrese ir jāapstiprina."
+
+#: plugins/openpgp/src/key_management_dialog.vala:989
+#: plugins/openpgp/src/key_management_dialog.vala:1024
+msgid "XMPP address"
+msgstr "XMPP adrese"
+
+#: plugins/openpgp/src/key_management_dialog.vala:995
+#: plugins/openpgp/src/key_management_dialog.vala:1025
+msgid "xmpp@example.com"
+msgstr "xmpp@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1001
+#: plugins/openpgp/src/key_management_dialog.vala:1029
+msgid ""
+"This key will be selected for this DinoX account and published through XMPP "
+"for OpenPGP-for-XMPP capable clients."
+msgstr ""
+"Šī atslēga tiks izvēlēta šim DinoX kontam un publicēta caur XMPP klientiem "
+"ar OpenPGP priekš XMPP atbalstu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1009
+msgid "Passphrase (optional)"
+msgstr "Parole (neobligāti)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1020
+msgid "Email address"
+msgstr "E-pasta adrese"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1021
+msgid "name@example.com"
+msgstr "name@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1022
+msgid ""
+"Use a mailbox you can access. keys.openpgp.org requires email verification "
+"before older XEP-0027 clients can find this key."
+msgstr ""
+"Izmantojiet pastkasti, kurai varat piekļūt. keys.openpgp.org pieprasa "
+"e-pasta apstiprināšanu, pirms vecāki XEP-0027 klienti var atrast šo atslēgu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1038
+msgid "4096-bit RSA key, valid for 2 years."
+msgstr "4096 bitu RSA atslēga, derīga 2 gadus."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1046
+msgid "Generate"
+msgstr "Ģenerēt"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1059
+#: plugins/openpgp/src/key_management_dialog.vala:1064
+#: plugins/openpgp/src/key_management_dialog.vala:1071
+#: plugins/openpgp/src/key_management_dialog.vala:1076
+#: plugins/openpgp/src/key_management_dialog.vala:1080
+#: plugins/openpgp/src/key_management_dialog.vala:1195
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+#: plugins/openpgp/src/key_management_dialog.vala:1318
+#: plugins/openpgp/src/key_management_dialog.vala:1390
+#: plugins/openpgp/src/key_management_dialog.vala:1394
+#: plugins/openpgp/src/key_management_dialog.vala:1398
+#: plugins/openpgp/src/key_management_dialog.vala:1512
+#: plugins/openpgp/src/key_management_dialog.vala:1730
+#: plugins/openpgp/src/key_management_dialog.vala:1737
+#: plugins/openpgp/src/key_management_dialog.vala:1779
+#: plugins/openpgp/src/key_management_dialog.vala:1837
+#: plugins/openpgp/src/key_management_dialog.vala:1844
+#: plugins/openpgp/src/key_management_dialog.vala:1914
+#: plugins/openpgp/src/key_management_dialog.vala:1975
+#: plugins/openpgp/src/key_management_dialog.vala:1982
+#: plugins/openpgp/src/key_management_dialog.vala:2033
+#: plugins/openpgp/src/key_management_dialog.vala:2085
+#: plugins/openpgp/src/key_management_dialog.vala:2139
+msgid "Error"
+msgstr "Kļūda"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1059
+msgid "Name must be at least 2 characters"
+msgstr "Vārdam jābūt vismaz 2 rakstzīmes garam"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1064
+msgid "Please enter a valid email address"
+msgstr "Lūdzu, ievadiet derīgu e-pasta adresi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1071
+msgid "Please enter a bare XMPP address, for example name@example.com"
+msgstr "Lūdzu, ievadiet XMPP adresi bez resursa, piemēram, name@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1076
+msgid "OpenPGP for XMPP keys must use this account's XMPP address."
+msgstr "OpenPGP priekš XMPP atslēgām jāizmanto šī konta XMPP adrese."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1080
+msgid "Please enter a valid XMPP address"
+msgstr "Lūdzu, ievadiet derīgu XMPP adresi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1101
+msgid "Generating Key..."
+msgstr "Ģenerē atslēgu..."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1102
+msgid "Please wait while your key is being generated. This may take a moment."
+msgstr "Lūdzu, uzgaidiet, kamēr tiek ģenerēta atslēga. Tas var aizņemt brīdi."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1161
+#: plugins/openpgp/src/key_management_dialog.vala:1182
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+#: plugins/openpgp/src/key_management_dialog.vala:1386
+#: plugins/openpgp/src/key_management_dialog.vala:1772
+#: plugins/openpgp/src/key_management_dialog.vala:1908
+#: plugins/openpgp/src/key_management_dialog.vala:2079
+#: plugins/openpgp/src/key_management_dialog.vala:2137
+msgid "Success"
+msgstr "Veiksmīgi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1161
+msgid ""
+"Key generated and uploaded to the keyserver. Check your email to verify it "
+"before XEP-0027 clients can reliably find it."
+msgstr ""
+"Atslēga izveidota un augšupielādēta atslēgu serverī. Pārbaudiet e-pastu, lai"
+" to apstiprinātu, pirms XEP-0027 klienti var to uzticami atrast."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1163
+#: plugins/openpgp/src/key_management_dialog.vala:1174
+msgid "Partial Success"
+msgstr "Daļēji veiksmīgi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1163
+msgid ""
+"Key generated locally, but keyserver upload failed. It is not published for "
+"legacy XEP-0027 clients yet. You can retry from Key Management."
+msgstr ""
+"Atslēga izveidota lokāli, bet augšupielāde atslēgu serverī neizdevās. Tā vēl"
+" nav publicēta vecajiem XEP-0027 klientiem. Varat mēģināt vēlreiz atslēgu "
+"pārvaldībā."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1174
+msgid ""
+"Key generated locally, but it was not selected because it does not contain "
+"the required xmpp: user ID for this account."
+msgstr ""
+"Atslēga izveidota lokāli, bet netika izvēlēta, jo tā nesatur šim kontam "
+"nepieciešamo xmpp: lietotāja ID."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1182
+msgid ""
+"Key generated and selected for OpenPGP for XMPP. DinoX will publish it "
+"through XMPP for this account."
+msgstr ""
+"Atslēga izveidota un izvēlēta OpenPGP priekš XMPP. DinoX publicēs to caur "
+"XMPP šim kontam."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1195
+msgid "Failed to generate key."
+msgstr "Neizdevās ģenerēt atslēgu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1219
+msgid "Import OpenPGP Key"
+msgstr "Importēt OpenPGP atslēgu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1224
+msgid "OpenPGP Keys (*.asc, *.gpg)"
+msgstr "OpenPGP atslēgas (*.asc, *.gpg)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1231
+msgid "All Files"
+msgstr "Visi faili"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1259
+msgid "Importing Key..."
+msgstr "Importē atslēgu…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1259
+msgid ""
+"Checking and importing the selected key into DinoX's private keyring..."
+msgstr "Pārbauda un importē izvēlēto atslēgu DinoX privātajā atslēgu krātuvē…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1272
+msgid "The key file is too large. Choose an OpenPGP key file up to 16 MiB."
+msgstr ""
+"Atslēgas fails ir pārāk liels. Izvēlieties OpenPGP atslēgas failu līdz 16 "
+"MiB."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1308
+msgid "Key Imported"
+msgstr "Atslēga importēta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1309
+msgid ""
+"The key is available below. Select it to use it for this account; the "
+"current encryption mode has not changed."
+msgstr ""
+"Atslēga ir pieejama zemāk. Izvēlieties to, lai izmantotu šim kontam; "
+"pašreizējais šifrēšanas režīms nav mainījies."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1310
+msgid ""
+"The public key was imported into DinoX's keyring. Your account's encryption "
+"mode and key selection have not changed."
+msgstr ""
+"Publiskā atslēga importēta DinoX atslēgu krātuvē. Konta šifrēšanas režīms un"
+" atslēgas izvēle nav mainījušies."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+msgid "Import failed: "
+msgstr "Importēšana neizdevās: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+msgid "The file does not contain an importable OpenPGP key."
+msgstr "Fails nesatur importējamu OpenPGP atslēgu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+msgid "Secret key exported to: "
+msgstr "Slepenā atslēga eksportēta uz: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+msgid ""
+"Keep this file safe! Anyone with this file can read your encrypted messages."
+msgstr ""
+"Glabājiet šo failu drošībā! Ikviens, kam ir šis fails, var lasīt jūsu "
+"šifrētos ziņojumus."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1386
+msgid "Key exported to: "
+msgstr "Atslēga eksportēta uz: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1394
+msgid "Export failed."
+msgstr "Eksportēšana neizdevās."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1483
+msgid "Disable OpenPGP for XMPP?"
+msgstr "Atspējot OpenPGP priekš XMPP?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1484
+msgid ""
+"This removes the XMPP PubSub publication and stops using this key for "
+"XEP-0373/0374 on this account. The secret key stays local and legacy "
+"XEP-0027/keyserver state is not changed."
+msgstr ""
+"Tas noņem XMPP PubSub publikāciju un pārtrauc šīs atslēgas izmantošanu "
+"XEP-0373/0374 šajā kontā. Slepenā atslēga paliek lokāli, un vecā "
+"XEP-0027/atslēgu servera stāvoklis nemainās."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1487
+msgid "Disable XMPP Publishing"
+msgstr "Atspējot XMPP publicēšanu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1495
+msgid "Disabling OpenPGP for XMPP..."
+msgstr "Atspējo OpenPGP priekš XMPP…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1495
+msgid "Removing the XMPP PubSub publication..."
+msgstr "Noņem XMPP PubSub publikāciju…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1510
+msgid "OpenPGP for XMPP Disabled"
+msgstr "OpenPGP priekš XMPP atspējots"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1510
+msgid ""
+"DinoX no longer publishes this key through XMPP PubSub for this account. The"
+" secret key stays local and legacy XEP-0027/keyserver state was not changed."
+msgstr ""
+"DinoX vairs nepublicē šo atslēgu šim kontam caur XMPP PubSub. Slepenā "
+"atslēga paliek lokāli, un vecā XEP-0027/atslēgu servera stāvoklis nav "
+"mainīts."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1512
+msgid ""
+"Could not remove the XMPP publication. OpenPGP for XMPP was not disabled."
+msgstr ""
+"Neizdevās noņemt XMPP publikāciju. OpenPGP priekš XMPP netika atspējots."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1609
+msgid "Key Assigned to Another Account"
+msgstr "Atslēga piesaistīta citam kontam"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1610
+msgid ""
+"This key is also assigned to another DinoX account. Revoking or deleting it "
+"would affect that account too. Remove its key selections and manual "
+"assignment there first, or keep the key locally."
+msgstr ""
+"Šī atslēga ir piesaistīta arī citam DinoX kontam. Tās atsaukšana vai dzēšana"
+" ietekmētu arī šo kontu. Vispirms noņemiet tur atslēgas izvēles un manuālo "
+"piesaisti vai paturiet atslēgu lokāli."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1616
+#: plugins/openpgp/src/key_management_dialog.vala:1643
+msgid "Server Backup Not Checked"
+msgstr "Servera rezerves kopija nav pārbaudīta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1617
+#: plugins/openpgp/src/key_management_dialog.vala:1644
+msgid ""
+"The server backup could not be checked. The key was not revoked or deleted. "
+"Connect this account and try again."
+msgstr ""
+"Servera rezerves kopiju neizdevās pārbaudīt. Atslēga netika atsaukta vai "
+"dzēsta. Savienojiet šo kontu un mēģiniet vēlreiz."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1629
+msgid "Server Backup Not Identified"
+msgstr "Servera rezerves kopija nav identificēta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1630
+msgid ""
+"DinoX cannot safely identify the keys in this account's current server "
+"backup. Restore it using its backup code to identify it, or use Delete "
+"Server Backup to remove the whole backup explicitly. The key was not revoked"
+" or deleted."
+msgstr ""
+"DinoX nevar droši noteikt atslēgas šī konta pašreizējā servera rezerves "
+"kopijā. Atjaunojiet to ar rezerves kodu, lai identificētu, vai izmantojiet "
+"Dzēst servera rezerves kopiju, lai apzināti noņemtu visu kopiju. Atslēga "
+"netika atsaukta vai dzēsta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1633
+msgid "Server Backup Contains Other Keys"
+msgstr "Servera rezerves kopija satur citas atslēgas"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1634
+msgid ""
+"This backup also contains other private keys and cannot be removed for just "
+"this key. Save a local copy of all keys you need, then use Delete Server "
+"Backup and create a new backup for the keys you want to keep. The key was "
+"not revoked or deleted."
+msgstr ""
+"Šī rezerves kopija satur arī citas privātās atslēgas, un to nevar noņemt "
+"tikai šai atslēgai. Saglabājiet visu vajadzīgo atslēgu vietējo kopiju, tad "
+"izmantojiet Dzēst servera rezerves kopiju un izveidojiet jaunu kopiju "
+"atslēgām, kuras vēlaties paturēt. Atslēga netika atsaukta vai dzēsta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1638
+#: plugins/openpgp/src/key_management_dialog.vala:1680
+#: plugins/openpgp/src/key_management_dialog.vala:1683
+msgid "Server Backup Cleanup Failed"
+msgstr "Servera rezerves kopijas tīrīšana neizdevās"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1639
+msgid ""
+"The matching server backup could not be removed. The key was not revoked or "
+"deleted. DinoX will retry the cleanup when this account reconnects; then "
+"retry revoking the key."
+msgstr ""
+"Atbilstošo servera rezerves kopiju neizdevās noņemt. Atslēga netika atsaukta"
+" vai dzēsta. DinoX atkārtos tīrīšanu, kad šis konts savienosies no jauna; "
+"pēc tam vēlreiz mēģiniet atsaukt atslēgu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1652
+msgid "Delete This Account's Server Backup?"
+msgstr "Dzēst šī konta servera rezerves kopiju?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1653
+#, c-format
+msgid ""
+"This removes the entire encrypted private-key backup for %s from the server,"
+" including every key it contains. Other devices will no longer be able to "
+"restore it. Local keys and public-key publications are kept."
+msgstr ""
+"No servera tiks noņemta visa konta %s šifrētā privāto atslēgu rezerves "
+"kopija, tostarp visas tajā esošās atslēgas. Citas ierīces to vairs nevarēs "
+"atjaunot. Vietējās atslēgas un publisko atslēgu publikācijas tiks "
+"saglabātas."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1667
+msgid "Deleting Server Backup..."
+msgstr "Dzēš servera rezerves kopiju…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1667
+msgid "Checking and removing this account's server backup..."
+msgstr "Pārbauda un noņem šī konta servera rezerves kopiju…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1678
+msgid "Server Backup Removed"
+msgstr "Servera rezerves kopija noņemta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1678
+msgid ""
+"This account has no server backup now. Local keys and public-key "
+"publications were kept."
+msgstr ""
+"Šim kontam tagad nav servera rezerves kopijas. Vietējās atslēgas un publisko"
+" atslēgu publikācijas tika saglabātas."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1680
+#: plugins/openpgp/src/key_management_dialog.vala:1684
+msgid ""
+"The backup was not removed. The server may be unavailable or another device "
+"may have replaced the backup. Try again."
+msgstr ""
+"Rezerves kopija netika noņemta. Serveris var būt nepieejams vai cita ierīce "
+"var būt aizstājusi kopiju. Mēģiniet vēlreiz."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1691
+msgid "Delete Key?"
+msgstr "Dzēst atslēgu?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1692
+#, c-format
+msgid ""
+"Delete this key?\n"
+"\n"
+"%s\n"
+"\n"
+"Warning: The key will be removed locally without revocation. If it is currently published for OpenPGP for XMPP, DinoX must remove the XMPP publication before deleting it.\n"
+"\n"
+"Consider using 'Revoke and Delete' instead.\n"
+"\n"
+"This cannot be undone!"
+msgstr ""
+"Dzēst šo atslēgu?\n"
+"\n"
+"%s\n"
+"\n"
+"Brīdinājums: atslēga tiks noņemta lokāli bez atsaukšanas. Ja tā pašlaik publicēta OpenPGP priekš XMPP, DinoX pirms dzēšanas jānoņem XMPP publikācija.\n"
+"\n"
+"Apsveriet iespēju izmantot “Atsaukt un dzēst”.\n"
+"\n"
+"Šo darbību nevar atsaukt!"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1695
+msgid "Delete"
+msgstr "Dzēst"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1713
+msgid "Deleting..."
+msgstr "Dzēš…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1713
+msgid "Deleting key from the local OpenPGP keyring..."
+msgstr "Dzēš atslēgu no vietējās OpenPGP atslēgu krātuves…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1730
+#: plugins/openpgp/src/key_management_dialog.vala:1737
+msgid "Could not remove the XMPP publication. The key was not deleted."
+msgstr "Neizdevās noņemt XMPP publikāciju. Atslēga netika dzēsta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1772
+msgid "Key deleted."
+msgstr "Atslēga dzēsta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1775
+msgid "Delete failed: "
+msgstr "Dzēšana neizdevās: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1775
+#: plugins/openpgp/src/key_management_dialog.vala:1910
+#: plugins/openpgp/src/key_management_dialog.vala:2081
+msgid "Unknown error"
+msgstr "Nezināma kļūda"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1777
+#: plugins/openpgp/src/key_management_dialog.vala:1912
+#: plugins/openpgp/src/key_management_dialog.vala:2083
+msgid "The XMPP publication was already removed; the key was kept locally."
+msgstr "XMPP publikācija jau noņemta; atslēga paturēta lokāli."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1786
+msgid "Revoke Key?"
+msgstr "Atsaukt atslēgu?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1787
+#, c-format
+msgid ""
+"Revoke this key?\n"
+"\n"
+"%s\n"
+"\n"
+"The key will be permanently marked as invalid. This cannot be undone!\n"
+"\n"
+"DinoX will update only the publications that apply to this key: XMPP publication for OpenPGP-for-XMPP keys, and keyserver revocation upload for legacy keys that were uploaded to a keyserver."
+msgstr ""
+"Atsaukt šo atslēgu?\n"
+"\n"
+"%s\n"
+"\n"
+"Atslēga tiks neatgriezeniski atzīmēta kā nederīga. Šo darbību nevar atsaukt!\n"
+"\n"
+"DinoX atjauninās tikai šai atslēgai atbilstošās publikācijas: XMPP publikāciju OpenPGP priekš XMPP atslēgām un atsaukuma augšupielādi atslēgu serverī vecajām atslēgām, kas tur bija augšupielādētas."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1790
+msgid "Revoke"
+msgstr "Atsaukt"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1809
+msgid "Revoking..."
+msgstr "Atsauc…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1809
+msgid "Revoking key and updating applicable publications..."
+msgstr "Atsauc atslēgu un atjaunina atbilstošās publikācijas…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1837
+#: plugins/openpgp/src/key_management_dialog.vala:1844
+msgid "Could not remove the XMPP publication. The key was not revoked."
+msgstr "Neizdevās noņemt XMPP publikāciju. Atslēga netika atsaukta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1901
+msgid "Key revoked successfully."
+msgstr "Atslēga veiksmīgi atsaukta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1903
+msgid "Revocation published to keyserver."
+msgstr "Atsaukums publicēts atslēgu serverī."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1906
+msgid "Key removed from XMPP server."
+msgstr "Atslēga noņemta no XMPP servera."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1910
+#: plugins/openpgp/src/key_management_dialog.vala:2081
+msgid "Revocation failed: "
+msgstr "Atsaukšana neizdevās: "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1921
+msgid "Revoke and Delete Key?"
+msgstr "Atsaukt un dzēst atslēgu?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1922
+#, c-format
+msgid ""
+"Revoke and delete this key?\n"
+"\n"
+"%s\n"
+"\n"
+"The key will be permanently invalidated and then removed. DinoX will update only the publications that apply to this key: XMPP publication for OpenPGP-for-XMPP keys, and keyserver revocation upload for legacy keys that were uploaded to a keyserver.\n"
+"\n"
+"You will no longer be able to decrypt old messages encrypted with this key.\n"
+"\n"
+"This cannot be undone!"
+msgstr ""
+"Atsaukt un dzēst šo atslēgu?\n"
+"\n"
+"%s\n"
+"\n"
+"Atslēga tiks neatgriezeniski padarīta nederīga un pēc tam noņemta. DinoX atjauninās tikai šai atslēgai atbilstošās publikācijas: XMPP publikāciju OpenPGP priekš XMPP atslēgām un atsaukuma augšupielādi atslēgu serverī vecajām atslēgām, kas tur bija augšupielādētas.\n"
+"\n"
+"Jūs vairs nevarēsiet atšifrēt ar šo atslēgu šifrētos vecos ziņojumus.\n"
+"\n"
+"Šo darbību nevar atsaukt!"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1925
+msgid "Revoke and Delete"
+msgstr "Atsaukt un dzēst"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1944
+msgid "Revoking & Deleting..."
+msgstr "Atsauc un dzēš…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1944
+msgid "Revoking key, updating applicable publications, and deleting..."
+msgstr "Atsauc atslēgu, atjaunina atbilstošās publikācijas un dzēš…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1975
+#: plugins/openpgp/src/key_management_dialog.vala:1982
+msgid ""
+"Could not remove the XMPP publication. The key was not revoked or deleted."
+msgstr ""
+"Neizdevās noņemt XMPP publikāciju. Atslēga netika atsaukta vai dzēsta."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2033
+msgid ""
+"The key was revoked locally, but the revocation could not be uploaded to the"
+" keyserver. The key was kept locally so you can retry publishing the "
+"revocation."
+msgstr ""
+"Atslēga atsaukta lokāli, bet atsaukumu neizdevās augšupielādēt atslēgu "
+"serverī. Atslēga paturēta lokāli, lai varētu atkārtoti mēģināt publicēt "
+"atsaukumu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2068
+msgid "Key revoked"
+msgstr "Atslēga atsaukta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2070
+msgid "keyserver notified"
+msgstr "atslēgu serverim paziņots"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2073
+msgid "XMPP server updated"
+msgstr "XMPP serveris atjaunināts"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2076
+msgid "key deleted"
+msgstr "atslēga dzēsta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2091
+#: plugins/openpgp/src/key_management_dialog.vala:2592
+#: plugins/openpgp/src/key_management_dialog.vala:2959
+#: plugins/openpgp/src/key_management_dialog.vala:2981
+#: plugins/openpgp/src/key_management_dialog.vala:3384
+msgid "OK"
+msgstr "Labi"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2099
+msgid "Not Available"
+msgstr "Nav pieejams"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2099
+msgid ""
+"This key has no email user ID for legacy keyserver publishing. Create a "
+"legacy key with a real email address for XEP-0027/keyserver use."
+msgstr ""
+"Šai atslēgai nav e-pasta lietotāja ID vecā režīma publicēšanai atslēgu "
+"serverī. Izveidojiet vecā režīma atslēgu ar īstu e-pasta adresi "
+"XEP-0027/atslēgu servera lietošanai."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2105
+msgid "Publish Key?"
+msgstr "Publicēt atslēgu?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2106
+msgid ""
+"This uploads your public key to keys.openpgp.org. You must verify the email "
+"address on the key before XEP-0027 clients can reliably find it."
+msgstr ""
+"Tas augšupielādē jūsu publisko atslēgu uz keys.openpgp.org. Atslēgas e-pasta"
+" adrese jāapstiprina, pirms XEP-0027 klienti var to uzticami atrast."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2109
+msgid "Publish"
+msgstr "Publicēt"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2117
+msgid "Publishing..."
+msgstr "Publicē…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2117
+msgid "Uploading key to keyserver..."
+msgstr "Augšupielādē atslēgu atslēgu serverī…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2137
+msgid ""
+"Key uploaded to the OpenPGP keyserver. Check your email to verify it before "
+"XEP-0027 clients can reliably find it. The active OpenPGP mode for this "
+"account was not changed."
+msgstr ""
+"Atslēga augšupielādēta OpenPGP atslēgu serverī. Pārbaudiet e-pastu, lai to "
+"apstiprinātu, pirms XEP-0027 klienti var to uzticami atrast. Šī konta "
+"aktīvais OpenPGP režīms nav mainīts."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2139
+msgid "Failed to publish key. Check your internet connection."
+msgstr "Neizdevās publicēt atslēgu. Pārbaudiet interneta savienojumu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2232
+#: plugins/openpgp/src/key_management_dialog.vala:2362
+#: plugins/openpgp/src/key_management_dialog.vala:2414
+#: plugins/openpgp/src/key_management_dialog.vala:2434
+#: plugins/openpgp/src/key_management_dialog.vala:2460
+msgid "Backup Failed"
+msgstr "Rezerves kopēšana neizdevās"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2232
+msgid "Failed to generate a secure backup code."
+msgstr "Neizdevās izveidot drošu rezerves kodu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2238
+msgid ""
+"Save this backup code before uploading the key. You will need exactly this "
+"code to restore the key on another device."
+msgstr ""
+"Saglabājiet šo rezerves kodu pirms atslēgas augšupielādes. Lai atjaunotu "
+"atslēgu citā ierīcē, vajadzēs tieši šo kodu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2247
+#: plugins/openpgp/src/key_management_dialog.vala:3199
+msgid "Backup Code"
+msgstr "Rezerves kods"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2259
+msgid "Copy Backup Code"
+msgstr "Kopēt rezerves kodu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2263
+msgid "Backup Code Copied"
+msgstr "Rezerves kods nokopēts"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2271
+msgid "Backup to Server"
+msgstr "Veidot rezerves kopiju serverī"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2330
+msgid "Backing up..."
+msgstr "Veido rezerves kopiju…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2330
+msgid "Encrypting and uploading key..."
+msgstr "Šifrē un augšupielādē atslēgu…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2362
+msgid "GnuPG or the server did not respond while backing up the secret key."
+msgstr ""
+"GnuPG vai serveris neatbildēja slepenās atslēgas rezerves kopēšanas laikā."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2406
+msgid "Encryption Error"
+msgstr "Šifrēšanas kļūda"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2414
+msgid "Failed to prepare the encrypted secret key backup."
+msgstr "Neizdevās sagatavot šifrēto slepenās atslēgas rezerves kopiju."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2434
+#: plugins/openpgp/src/key_management_dialog.vala:2460
+msgid "Failed to publish the backup to the server."
+msgstr "Neizdevās publicēt rezerves kopiju serverī."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2458
+msgid "Backup Successful"
+msgstr "Rezerves kopēšana veiksmīga"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2458
+msgid "Your encrypted secret key has been securely stored on the server."
+msgstr "Jūsu šifrētā slepenā atslēga ir droši saglabāta serverī."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2858
+msgid "Checking Server..."
+msgstr "Pārbauda serveri…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2858
+msgid "Looking for a secret key backup..."
+msgstr "Meklē slepenās atslēgas rezerves kopiju…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2898
+#: plugins/openpgp/src/key_management_dialog.vala:2957
+#: plugins/openpgp/src/key_management_dialog.vala:3003
+#: plugins/openpgp/src/key_management_dialog.vala:3322
+#: plugins/openpgp/src/key_management_dialog.vala:3354
+#: plugins/openpgp/src/key_management_dialog.vala:3360
+msgid "Import Failed"
+msgstr "Importēšana neizdevās"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2898
+msgid "The server did not respond while fetching the secret key backup."
+msgstr ""
+"Serveris neatbildēja slepenās atslēgas rezerves kopijas iegūšanas laikā."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2958
+msgid ""
+"Could not retrieve this account's server backup. Check the account "
+"connection and try again."
+msgstr ""
+"Neizdevās iegūt šī konta servera rezerves kopiju. Pārbaudiet konta "
+"savienojumu un mēģiniet vēlreiz."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2979
+#: plugins/openpgp/src/key_management_dialog.vala:3048
+msgid "No Backup Found"
+msgstr "Rezerves kopija nav atrasta"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2980
+#: plugins/openpgp/src/key_management_dialog.vala:3049
+msgid "There is no secret key backup stored on the server for this account."
+msgstr "Šim kontam serverī nav saglabāta slepenās atslēgas rezerves kopija."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3003
+msgid "GnuPG did not respond while checking the server key data."
+msgstr "GnuPG neatbildēja servera atslēgas datu pārbaudes laikā."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3087
+#: plugins/openpgp/src/key_management_dialog.vala:3092
+#: plugins/openpgp/src/key_management_dialog.vala:3116
+msgid "No Secret Key Backup"
+msgstr "Nav slepenās atslēgas rezerves kopijas"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3088
+msgid ""
+"The public XMPP key is published on the server and the matching private key "
+"is already available locally, but no secret key backup was found on the "
+"server."
+msgstr ""
+"Publiskā XMPP atslēga ir publicēta serverī, un atbilstošā privātā atslēga "
+"jau ir pieejama lokāli, taču serverī nav atrasta slepenās atslēgas rezerves "
+"kopija."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3093
+msgid ""
+"The public XMPP key is published on the server, but no private key backup "
+"was found for this account."
+msgstr ""
+"Publiskā XMPP atslēga ir publicēta serverī, taču šim kontam nav atrasta "
+"privātās atslēgas rezerves kopija."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3111
+#: plugins/openpgp/src/key_management_dialog.vala:3134
+#: plugins/openpgp/src/key_management_dialog.vala:3356
+msgid "Key Already Present"
+msgstr "Atslēga jau ir pieejama"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3112
+msgid ""
+"The key from the server is already available for this account. No import was"
+" needed."
+msgstr ""
+"Servera atslēga šim kontam jau ir pieejama. Importēšana nebija vajadzīga."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3117
+msgid ""
+"The server contains public OpenPGP key data, but no private key backup for "
+"this account."
+msgstr ""
+"Serverī ir publiski OpenPGP atslēgas dati, bet nav šī konta privātās "
+"atslēgas rezerves kopijas."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3135
+#: plugins/openpgp/src/key_management_dialog.vala:3356
+msgid ""
+"The secret key from the server is already available for this account. No "
+"import was needed."
+msgstr ""
+"Servera slepenā atslēga šim kontam jau ir pieejama. Importēšana nebija "
+"vajadzīga."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3150
+msgid "Unsupported Backup Format"
+msgstr "Neatbalstīts rezerves kopijas formāts"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3151
+msgid ""
+"The server contains unencrypted secret key data. DinoX now expects an "
+"encrypted XEP-0373 secret key backup. Create a new server backup to replace "
+"it."
+msgstr ""
+"Serverī ir nešifrēti slepenās atslēgas dati. DinoX tagad sagaida šifrētu "
+"XEP-0373 slepenās atslēgas rezerves kopiju. Izveidojiet jaunu servera "
+"rezerves kopiju, lai to aizstātu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3194
+msgid "Import Secret Key"
+msgstr "Importēt slepeno atslēgu"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3195
+msgid ""
+"A secret key backup was found on the server. Enter your backup code to "
+"decrypt and import it."
+msgstr ""
+"Serverī atrasta slepenās atslēgas rezerves kopija. Ievadiet rezerves kodu, "
+"lai to atšifrētu un importētu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3216
+#: plugins/openpgp/src/key_management_dialog.vala:3218
+msgid "Import"
+msgstr "Importēt"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3322
+msgid "GnuPG did not respond while importing the secret key backup."
+msgstr ""
+"GnuPG neatbildēja slepenās atslēgas rezerves kopijas importēšanas laikā."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3358
+msgid "Import Successful"
+msgstr "Importēšana veiksmīga"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3358
+msgid "The secret key was successfully imported from the server."
+msgstr "Slepenā atslēga veiksmīgi importēta no servera."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3360
+msgid ""
+"The backup code was incorrect or the secret key backup could not be "
+"imported."
+msgstr ""
+"Rezerves kods bija nepareizs vai slepenās atslēgas rezerves kopiju neizdevās"
+" importēt."
+
+#: plugins/openpgp/src/manager.vala:377
+msgid ""
+"The selected OpenPGP-for-XMPP account key does not contain the required "
+"xmpp: user ID for this account."
+msgstr ""
+"Izvēlētā konta OpenPGP priekš XMPP atslēga nesatur šim kontam nepieciešamo "
+"xmpp: lietotāja ID."
+
+#: plugins/openpgp/src/manager.vala:381
+msgid ""
+"The selected legacy OpenPGP/XEP-0027 account key has no email user ID for "
+"keyserver use."
+msgstr ""
+"Izvēlētajai konta vecā OpenPGP/XEP-0027 atslēgai nav e-pasta lietotāja ID "
+"atslēgu servera izmantošanai."
+
+#: plugins/openpgp/src/manager.vala:385
+#, c-format
+msgid "OpenPGP account key validation failed: %s"
+msgstr "Konta OpenPGP atslēgas pārbaude neizdevās: %s"
+
+#: plugins/openpgp/src/manager.vala:398
+msgid "No legacy OpenPGP/XEP-0027 account key is active."
+msgstr "Nav aktīvas konta vecā OpenPGP/XEP-0027 atslēgas."
+
+#: plugins/openpgp/src/manager.vala:399
+msgid "No OpenPGP-for-XMPP account key is active."
+msgstr "Nav aktīvas konta OpenPGP priekš XMPP atslēgas."
+
+#: plugins/openpgp/src/manager.vala:410
+msgid "This contact has no OpenPGP-for-XMPP key."
+msgstr "Šim kontaktam nav OpenPGP priekš XMPP atslēgas."
+
+#: plugins/openpgp/src/manager.vala:420
+msgid "The contact's OpenPGP-for-XMPP key has not been refreshed yet."
+msgstr "Kontakta OpenPGP priekš XMPP atslēga vēl nav atsvaidzināta."
+
+#: plugins/openpgp/src/manager.vala:425
+msgid "This contact has no legacy OpenPGP/XEP-0027 key."
+msgstr "Šim kontaktam nav vecā OpenPGP/XEP-0027 atslēgas."
+
+#: plugins/openpgp/src/manager.vala:438
+#, c-format
+msgid "OpenPGP key lookup failed: %s"
+msgstr "OpenPGP atslēgas meklēšana neizdevās: %s"
+
+#: plugins/openpgp/src/manager.vala:442
+msgid "No OpenPGP keys are available for the group members."
+msgstr "Grupas biedriem nav pieejamas OpenPGP atslēgas."
+
+#: plugins/openpgp/src/plugin.vala:432
+msgid "OpenPGP Passphrase Required"
+msgstr "Nepieciešama OpenPGP parole"
+
+#: plugins/openpgp/src/plugin.vala:433
+msgid "Enter the passphrase for your OpenPGP key to continue."
+msgstr "Ievadiet savas OpenPGP atslēgas paroli, lai turpinātu."
+
+#: plugins/openpgp/src/plugin.vala:449
+msgid "Passphrase"
+msgstr "Parole"
+
+#: plugins/openpgp/src/plugin.vala:454
+msgid "Unlock"
+msgstr "Atbloķēt"
+
+#~ msgid "Key not in keychain"
+#~ msgstr "Atslēga nav atslēgu saišķī"
+
+#~ msgid "Announce key"
+#~ msgstr "Paziņot atslēgu"
+
+#~ msgid "Disabled"
+#~ msgstr "Atspējots"
+
+#~ msgid "Select OpenPGP Key"
+#~ msgstr "Izvēlēties OpenPGP atslēgu"
+
+#~ msgid "Choose a key to announce to your contacts."
+#~ msgstr "Izvēlieties atslēgu, ko paziņot kontaktiem."
+
+#~ msgid "Enter GPG passphrase to confirm:"
+#~ msgstr "Ievadiet GPG paroli, lai apstiprinātu:"
+
+#~ msgid "Wrong passphrase"
+#~ msgstr "Nepareiza parole"
+
+#~ msgid "Import a key from file (.asc, .gpg)"
+#~ msgstr "Importēt atslēgu no faila (.asc, .gpg)"
+
+#~ msgid "Email"
+#~ msgstr "E-pasts"
+
+#~ msgid "you@example.com"
+#~ msgstr "jus@piemers.com"
+
+#~ msgid "Key generated successfully!"
+#~ msgstr "Atslēga veiksmīgi ģenerēta!"
+
+#~ msgid "Key imported! Re-open Key Management to see it."
+#~ msgstr ""
+#~ "Atslēga importēta! Atveriet atslēgu pārvaldību no jauna, lai to redzētu."
+
+#, c-format
+#~ msgid ""
+#~ "Delete this key?\n"
+#~ "\n"
+#~ "%s\n"
+#~ "\n"
+#~ "This cannot be undone!"
+#~ msgstr ""
+#~ "Dzēst šo atslēgu?\n"
+#~ "\n"
+#~ "%s\n"
+#~ "\n"
+#~ "To nevar atsaukt!"

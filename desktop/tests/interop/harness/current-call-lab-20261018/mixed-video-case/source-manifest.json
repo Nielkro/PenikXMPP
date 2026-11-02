@@ -1,0 +1,22 @@
+{
+  "status": "SOURCE_ONLY_NOT_LIVE_INTEGRATED",
+  "origin": "local/monocles-dinox-interop-20261015/harness/resume-completion-plan-20261016T190157Z/ui-owner-resume/auth-media-only/auth_media.py",
+  "origin_sha256": "f3b319d70d77c9a67c8be6693fa574f433237bd09c42f0c77c234237368360a3",
+  "files": {
+    "README.md": {
+      "sha256": "8244bd35dfe2d408b20f7998ffe5405fea8536ff1432e468d36dc719706c0164",
+      "bytes": 2462
+    },
+    "check_media_proof.py": {
+      "sha256": "ffe14588ce65440f3a2c317eb0fe1d4314815b0027dec8e92191e78363b43b1f",
+      "bytes": 5242
+    },
+    "media_case.py": {
+      "sha256": "4ba30539fb8259fd717d83f3f9a619a8fe167bde884d520760993c9eb8434a54",
+      "bytes": 10335
+    }
+  },
+  "no_standalone_runtime": true,
+  "auth_observer_unchanged": true,
+  "DinoX_PQ_enabled": false
+}

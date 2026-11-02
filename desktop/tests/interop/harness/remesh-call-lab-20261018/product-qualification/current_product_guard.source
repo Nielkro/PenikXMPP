@@ -1,0 +1,36 @@
+def _current_product():
+    for name in ('handoff','build','jvm','focus','source'):
+        ref=PRODUCT[name];assert sha(Path(ref['path']))==ref['sha256']
+    h,b,j,f,s=(read(PRODUCT[k]['path']) for k in ('handoff','build','jvm','focus','source'))
+    assert h['result']==b['result']==j['result']==f['result']=='PASS'
+    assert h['apk_sha256']==b['apk_sha256']==APKS['main.apk']==PRODUCT['main_sha256']
+    assert h['test_apk_sha256']==b['existing_signed_test_apk_sha256']==APKS['android-test.apk']==PRODUCT['test_sha256']
+    assert h['source_manifest_sha256']==b['source_manifest_sha256']==j['source_manifest_sha256']==f['source_manifest_sha256']==PRODUCT['source']['sha256']
+    assert b['jvm_receipt_sha256']==PRODUCT['jvm']['sha256'] and b['focus_jvm_receipt_sha256']==PRODUCT['focus']['sha256']
+    assert h['actual_jvm_tests']==b['actual_jvm_tests']==j['tests']==j['unique_cases']==PRODUCT['actual_jvm_tests']
+    assert h['actual_focus_tests']==b['actual_focus_tests']==f['tests']==f['unique_cases']==PRODUCT['actual_focus_tests']==17
+    assert type(PRODUCT['actual_jvm_tests']) is int and PRODUCT['actual_jvm_tests']>616
+    assert j['whole_application_suite_without_test_filter'] is True
+    assert j['failures']==j['errors']==j['skipped']==f['failures']==f['errors']==f['skipped']==0
+    full_cases={tuple(v) for v in j['cases']};focus_cases={tuple(v) for v in f['cases']}
+    assert len(j['cases'])==len(full_cases)==PRODUCT['actual_jvm_tests']
+    assert len(f['cases'])==len(focus_cases)==17 and focus_cases<=full_cases
+    assert {v[0] for v in focus_cases}=={'eu.siacs.conversations.xmpp.jingle.MujiLegWatchdogTest'}
+    assert j['historical_parent_test_count']==616
+    assert b['product_delta_manifest_sha256']==j['product_delta_manifest_sha256']==s['product_delta_manifest_sha256']=='ffd723b693499c3b5a0eec194ded034b16519bbe0e2e4a0a9ddd6b106ab48b7f'
+    for name,digest in {
+        'src/main/java/eu/siacs/conversations/xmpp/jingle/MujiConferenceManager.java':'035fd5f32085b4fb807abb840a63d06642f09bf7b2eaaca23e26b12c488640cb',
+        'src/test/java/eu/siacs/conversations/xmpp/jingle/MujiLegWatchdogTest.java':'dd9d6e1ddcc58cc6a40d3af12d5b8036abd8cd498301d1af79af40c052f880c1',
+        'src/test/java/eu/siacs/conversations/xmpp/jingle/MujiInvitationSecurityTest.java':'c97b82909f83e99cac5a9497e590ebc12ff6ce6460425ec9d5f7541f6770cc4b',
+    }.items(): assert s['files'][name]['sha256']==digest
+    assert b['product_delta_review_sha256']==s['product_delta_review_sha256']
+    assert s['accepted_parent_source_sha256']=='b1ac6b70000caa0b5e512e94da128508ad09bc2a14d0b8b86708404db7cd4491'
+    assert b['normal_main_basis_sha256']=='0a8ce212645b5a4876ee7f88122e5065d8f34a4f2a5c212ac91eec4402d0bebe'
+    assert b['only_MujiConferenceManager_class_family_changed'] is True
+    assert b['all_non_dex_payload_entries_unchanged'] is True and b['all_36_native_entries_unchanged'] is True
+    assert b['native_or_sdk_build_requested'] is False and b['test_apk_rebuilt'] is False
+    assert b['native_unchanged']==j['native_unchanged'] and len(b['native_unchanged'])==5
+    assert h['signer_certificate_sha256']==b['signer_certificate_sha256']==PRODUCT['signer_certificate_sha256']=='89ad5d0085ecee67350b62cb634d5d2ee7255f928c9979e32753f4e4bc519ecf'
+    assert PRODUCT['test_sha256']=='486b06a8f472fc68d89f9ced35b1befbc67805f22aa0d3dbf1c162cf3aab6e65'
+    assert h['reviewed_source_commit']==PRODUCT['commit']
+    return dict(JOIN_PRODUCT_PROOF)

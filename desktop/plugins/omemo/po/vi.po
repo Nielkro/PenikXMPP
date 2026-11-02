@@ -1,0 +1,674 @@
+# Vietnamese translations for DinoX.
+# Copyright (C) 2026 DinoX Team
+# This file is distributed under the same license as the DinoX package.
+# Earlier translations are preserved in the project history.
+msgid ""
+msgstr ""
+"Project-Id-Version: DinoX\n"
+"Report-Msgid-Bugs-To: https://git.dinox.im/dinoxim/dinox/issues\n"
+"POT-Creation-Date: 2026-10-31 20:45+0100\n"
+"PO-Revision-Date: 2026-10-31 23:00+0100\n"
+"Last-Translator: DinoX Team\n"
+"Language-Team: Vietnamese\n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: plugins/omemo/data/encryption_preferences_entry.ui:8
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:92
+msgid ""
+"Each device has its own OMEMO key. Messages can only be decrypted by a "
+"device if they are encrypted to its key. Messages are only encrypted to "
+"accepted devices."
+msgstr ""
+"Mỗi thiết bị có khóa OMEMO riêng. Thiết bị chỉ giải mã được tin nhắn nếu tin"
+" nhắn được mã hóa cho khóa của nó. Tin nhắn chỉ được mã hóa cho các thiết bị"
+" được chấp nhận."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:17
+#: plugins/omemo/src/ui/contact_details_provider.vala:52
+#: plugins/omemo/src/ui/contact_details_provider.vala:99
+msgid "OMEMO Encryption"
+msgstr "Mã hóa OMEMO"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:18
+msgid ""
+"Older hidden messages have no recorded fingerprint and cannot be safely "
+"assigned to this key."
+msgstr ""
+"Các tin nhắn ẩn cũ không có dấu vân tay được ghi lại nên không thể được gán "
+"an toàn cho khóa này."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:19
+#: plugins/omemo/src/ui/manage_key_dialog.vala:36
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:36
+msgid "Close"
+msgstr "Đóng"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Key changed"
+msgstr "Khóa đã thay đổi"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Could not update device"
+msgstr "Không cập nhật được thiết bị"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:34
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:34
+msgid ""
+"The device key has changed. Review the current fingerprint before trying "
+"again."
+msgstr ""
+"Khóa thiết bị đã thay đổi. Hãy kiểm tra dấu vân tay hiện tại trước khi thử "
+"lại."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:35
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:35
+msgid "The device settings could not be changed. Please try again."
+msgstr "Không thay đổi được cài đặt thiết bị. Vui lòng thử lại."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:75
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:415
+#: plugins/omemo/src/ui/contact_details_provider.vala:227
+msgid "Manage Key"
+msgstr "Quản lý khóa"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:76
+msgid ""
+"Compare the fingerprint, character by character, with the one shown on your "
+"contact's device."
+msgstr ""
+"So sánh từng ký tự của dấu vân tay với dấu vân tay hiển thị trên thiết bị "
+"của liên hệ."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:77
+msgid "Fingerprints differ"
+msgstr "Dấu vân tay khác nhau"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:78
+msgid "Fingerprints match"
+msgstr "Dấu vân tay trùng khớp"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:86
+#: plugins/omemo/src/ui/manage_key_dialog.vala:148
+#: plugins/omemo/src/ui/manage_key_dialog.vala:154
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:342
+msgid "Cancel"
+msgstr "Hủy"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:87
+#: plugins/omemo/src/ui/manage_key_dialog.vala:122
+#: plugins/omemo/src/ui/manage_key_dialog.vala:161
+#: plugins/omemo/src/ui/manage_key_dialog.vala:234
+msgid "Confirm"
+msgstr "Xác nhận"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:94
+#, c-format
+msgid ""
+"Account: %s\n"
+"Contact: %s\n"
+"Device: %s"
+msgstr ""
+"Tài khoản: %s\n"
+"Liên hệ: %s\n"
+"Thiết bị: %s"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:126
+msgid "Verify key"
+msgstr "Xác minh khóa"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:127
+#, c-format
+msgid ""
+"Future messages sent by %s from the device that uses this key will be "
+"highlighted accordingly in the chat window."
+msgstr ""
+"Các tin nhắn %s gửi trong tương lai từ thiết bị dùng khóa này sẽ được đánh "
+"dấu tương ứng trong cửa sổ trò chuyện."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:138
+msgid "Fingerprints do not match"
+msgstr "Dấu vân tay không khớp"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:139
+#, c-format
+msgid ""
+"Please verify that you are comparing the correct fingerprint. If "
+"fingerprints do not match, %s's account may be compromised and you should "
+"consider rejecting this key."
+msgstr ""
+"Vui lòng kiểm tra bạn đang so sánh đúng dấu vân tay. Nếu dấu vân tay không "
+"khớp, tài khoản của %s có thể đã bị xâm phạm và bạn nên cân nhắc từ chối "
+"khóa này."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+#: plugins/omemo/src/ui/manage_key_dialog.vala:259
+#: plugins/omemo/src/ui/manage_key_dialog.vala:261
+msgid "Remove device"
+msgstr "Gỡ thiết bị"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+msgid "Open"
+msgstr "Mở"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid "Verify key fingerprint"
+msgstr "Xác minh dấu vân tay khóa"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid ""
+"Compare this key's fingerprint with the fingerprint displayed on the "
+"contact's device."
+msgstr ""
+"So sánh dấu vân tay của khóa này với dấu vân tay hiển thị trên thiết bị của "
+"liên hệ."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+#: plugins/omemo/src/ui/manage_key_dialog.vala:243
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:610
+#: plugins/omemo/src/ui/contact_details_provider.vala:315
+msgid "Reject key"
+msgstr "Từ chối khóa"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+msgid ""
+"Block encrypted communication with the contact's device that uses this key."
+msgstr "Chặn liên lạc được mã hóa với thiết bị của liên hệ sử dụng khóa này."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+#: plugins/omemo/src/ui/manage_key_dialog.vala:251
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:605
+#: plugins/omemo/src/ui/contact_details_provider.vala:310
+msgid "Accept key"
+msgstr "Chấp nhận khóa"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+msgid ""
+"Allow encrypted communication with the contact's device that uses this key."
+msgstr "Cho phép giao tiếp mã hóa với thiết bị của liên hệ sử dụng khóa này."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+#: plugins/omemo/src/ui/manage_key_dialog.vala:268
+msgid "Reset session"
+msgstr "Đặt lại phiên"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+msgid ""
+"Delete the encryption session for this device. A fresh session will be "
+"established on the next message. Use this when messages are not arriving."
+msgstr ""
+"Xóa phiên mã hóa cho thiết bị này. Phiên mới sẽ được thiết lập ở tin nhắn "
+"tiếp theo. Dùng khi tin nhắn không đến."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+msgid ""
+"Delete this device's key and session data. Use this for old or inactive "
+"devices."
+msgstr ""
+"Xóa khóa và dữ liệu phiên của thiết bị này. Dùng cho thiết bị cũ hoặc không "
+"hoạt động."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid "This key is currently %s."
+msgstr "Khóa này hiện %s."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+msgid "accepted"
+msgstr "đã chấp nhận"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#, c-format
+msgid ""
+"This means it can be used by %s to receive and send encrypted messages."
+msgstr ""
+"Điều này có nghĩa là nó có thể được sử dụng bởi %s để nhận và gửi tin nhắn "
+"được mã hóa."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid "verified"
+msgstr "đã xác minh"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid ""
+"Additionally it has been verified to match the key on the contact's device."
+msgstr ""
+"Ngoài ra, khóa đã được xác minh là khớp với khóa trên thiết bị của liên hệ."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+msgid "rejected"
+msgstr "đã bị từ chối"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid ""
+"This means it cannot be used by %s to decipher your messages, and you won't "
+"see messages encrypted with it."
+msgstr ""
+"Điều này có nghĩa là %s không thể sử dụng nó để giải mã tin nhắn của bạn và "
+"bạn sẽ không thấy tin nhắn được mã hóa bằng nó."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:244
+#, c-format
+msgid ""
+"You won't see encrypted messages from the device of %s that uses this key. "
+"Conversely, that device won't be able to decipher your messages anymore."
+msgstr ""
+"Bạn sẽ không thấy tin nhắn được mã hóa từ thiết bị của %s sử dụng khóa này. "
+"Ngược lại, thiết bị đó cũng sẽ không thể giải mã tin nhắn của bạn nữa."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:252
+#, c-format
+msgid ""
+"You will be able to exchange encrypted messages with the device of %s that "
+"uses this key."
+msgstr ""
+"Bạn sẽ có thể trao đổi tin nhắn được mã hóa với thiết bị của %s sử dụng khóa"
+" này."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+#, c-format
+msgid ""
+"The key and session data for this device of %s will be deleted. If the "
+"device is still active, it will re-appear when a new message is received."
+msgstr ""
+"Khóa và dữ liệu phiên cho thiết bị này của %s sẽ bị xóa. Nếu thiết bị vẫn "
+"hoạt động, nó sẽ xuất hiện lại khi nhận tin nhắn mới."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+msgid "Please click “Remove device” at the top to confirm deletion."
+msgstr "Vui lòng nhấp “Gỡ thiết bị” ở trên để xác nhận xóa."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:269
+#, c-format
+msgid ""
+"The encryption session for this device of %s will be deleted. A fresh "
+"session will be negotiated automatically when the next message is sent. The "
+"key and trust level are preserved."
+msgstr ""
+"Phiên mã hóa cho thiết bị này của %s sẽ bị xóa. Phiên mới sẽ tự được thương "
+"lượng khi gửi tin nhắn tiếp theo. Khóa và mức tin cậy được giữ nguyên."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:275
+msgid "Back"
+msgstr "Quay lại"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Review key"
+msgstr "Kiểm tra khóa"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Manage"
+msgstr "Quản lý"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:100
+msgid ""
+"A device for this contact has a new encryption key. DinoX will use it only "
+"after your review."
+msgstr ""
+"Một thiết bị của liên hệ này có khóa mã hóa mới. DinoX chỉ sử dụng sau khi "
+"bạn kiểm tra."
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:101
+msgid "This contact has new devices"
+msgstr "Liên hệ này có thiết bị mới"
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:36
+msgid "This call is <b>encrypted and verified</b> with OMEMO."
+msgstr "Cuộc gọi này được <b>mã hóa và xác minh</b> bằng OMEMO."
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:40
+msgid "This call is encrypted with OMEMO."
+msgstr "Cuộc gọi này được mã hóa bằng OMEMO."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:16
+msgid "Reset all sessions"
+msgstr "Đặt lại tất cả phiên"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:17
+msgid ""
+"Delete all encryption sessions. Fresh sessions will be established on the "
+"next message."
+msgstr ""
+"Xóa tất cả phiên mã hóa. Phiên mới sẽ được thiết lập ở tin nhắn tiếp theo."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:18
+msgid "Reset"
+msgstr "Đặt lại"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:30
+msgid "Sessions reset. A fresh key exchange will happen on the next message."
+msgstr ""
+"Đã đặt lại các phiên. Trao đổi khóa mới sẽ diễn ra ở tin nhắn tiếp theo."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:93
+msgid "OMEMO by default"
+msgstr "Dùng OMEMO theo mặc định"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:94
+msgid "Enable OMEMO encryption for new conversations"
+msgstr "Bật mã hóa OMEMO cho cuộc trò chuyện mới"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:95
+#: plugins/omemo/src/ui/contact_details_provider.vala:166
+msgid "Encrypt to new devices"
+msgstr "Mã hóa cho thiết bị mới"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:96
+msgid "Automatically encrypt to new devices from this contact."
+msgstr "Tự động mã hóa cho các thiết bị mới của liên hệ này."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:97
+msgid "New keys"
+msgstr "Khóa mới"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:169
+msgid ""
+"New encryption keys from your other devices will be accepted automatically."
+msgstr ""
+"Khóa mã hóa mới từ các thiết bị khác của bạn sẽ được chấp nhận tự động."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:291
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:293
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:372
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:374
+msgid "This device"
+msgstr "Thiết bị này"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:299
+msgid "Set device name"
+msgstr "Đặt tên thiết bị"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Device Name"
+msgstr "Tên thiết bị"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Set a name for this device that other contacts can see."
+msgstr "Đặt tên cho thiết bị này để các liên hệ khác có thể thấy."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:343
+msgid "Save"
+msgstr "Lưu"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:461
+msgid "Other device"
+msgstr "Thiết bị khác"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:463
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Device"
+msgstr "Thiết bị"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:468
+msgid "inactive"
+msgstr "không hoạt động"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:481
+#: plugins/omemo/src/ui/contact_details_provider.vala:212
+msgid "today"
+msgstr "hôm nay"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:483
+#: plugins/omemo/src/ui/contact_details_provider.vala:214
+msgid "yesterday"
+msgstr "hôm qua"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:485
+#: plugins/omemo/src/ui/contact_details_provider.vala:216
+#, c-format
+msgid "%d days ago"
+msgstr "%d ngày trước"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:488
+#: plugins/omemo/src/ui/contact_details_provider.vala:219
+#, c-format
+msgid "%d month ago"
+msgid_plural "%d months ago"
+msgstr[0] "%d tháng trước"
+msgstr[1] "%d tháng trước"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:491
+#: plugins/omemo/src/ui/contact_details_provider.vala:222
+#, c-format
+msgid "%d year ago"
+msgid_plural "%d years ago"
+msgstr[0] "%d năm trước"
+msgstr[1] "%d năm trước"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:493
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+#: plugins/omemo/src/ui/contact_details_provider.vala:224
+msgid "Last seen"
+msgstr "Lần cuối nhìn thấy"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+msgid "unknown"
+msgstr "không rõ"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:500
+msgid "Accepted"
+msgstr "Đã chấp nhận"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:503
+msgid "Rejected"
+msgstr "Đã từ chối"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:506
+#: plugins/omemo/src/ui/contact_details_provider.vala:365
+msgid "Verified"
+msgstr "Đã xác minh"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:528
+msgid "Inactive"
+msgstr "Không hoạt động"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:532
+msgid "Not seen recently"
+msgstr "Gần đây không thấy"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:534
+msgid ""
+"This DinoX has not observed any activity from this device for over 60 days. "
+"The device may still be in use."
+msgstr ""
+"DinoX này chưa ghi nhận hoạt động nào từ thiết bị này trong hơn 60 ngày. "
+"Thiết bị có thể vẫn đang được sử dụng."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:586
+#: plugins/omemo/src/ui/contact_details_provider.vala:293
+msgid "Encryption key changed"
+msgstr "Khóa mã hóa đã thay đổi"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:590
+#: plugins/omemo/src/ui/contact_details_provider.vala:297
+msgid "New device"
+msgstr "Thiết bị mới"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:597
+#: plugins/omemo/src/ui/contact_details_provider.vala:304
+msgid ""
+"This device has a new encryption key, for example after a reinstall. DinoX "
+"will use it only after your review."
+msgstr ""
+"Thiết bị này có khóa mã hóa mới, chẳng hạn sau khi cài lại. DinoX chỉ sử "
+"dụng sau khi bạn kiểm tra."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:135
+msgid "Verifying private room members…"
+msgstr "Đang xác minh thành viên phòng riêng tư…"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:148
+msgid "Can't use encryption in a groupchat private message."
+msgstr "Không thể dùng mã hóa trong tin nhắn riêng của trò chuyện nhóm."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:156
+msgid "OMEMO is initializing, please wait a moment..."
+msgstr "OMEMO đang khởi tạo, vui lòng chờ một lát…"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:166
+msgid "OMEMO initialization failed. Please try again."
+msgstr "Khởi tạo OMEMO thất bại. Vui lòng thử lại."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:194
+msgid "OMEMO can't be used in public (non-members-only) rooms."
+msgstr ""
+"Không thể dùng OMEMO trong phòng công khai (không giới hạn thành viên)."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:197
+msgid "No other room members are available for OMEMO encryption."
+msgstr "Không có thành viên phòng nào khác sẵn sàng cho mã hóa OMEMO."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:200
+#, c-format
+msgid "A member does not support OMEMO: %s"
+msgstr "Một thành viên không hỗ trợ OMEMO: %s"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:207
+msgid "The private room member list could not be verified."
+msgstr "Không xác minh được danh sách thành viên phòng riêng tư."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:217
+msgid "This contact does not support OMEMO encryption"
+msgstr "Liên hệ này không hỗ trợ mã hóa OMEMO"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:53
+#: plugins/omemo/src/ui/contact_details_provider.vala:100
+msgid "Encryption keys for room members"
+msgstr "Khóa mã hóa cho thành viên phòng"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:105
+msgid "No member JIDs available. This may be an anonymous room."
+msgstr "Không có JID thành viên nào. Đây có thể là phòng ẩn danh."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:155
+msgid "Your devices"
+msgstr "Thiết bị của bạn"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#: plugins/omemo/src/ui/contact_details_provider.vala:161
+#, c-format
+msgid "%d device"
+msgid_plural "%d devices"
+msgstr[0] "%d thiết bị"
+msgstr[1] "%d thiết bị"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#, c-format
+msgid " (+%d inactive)"
+msgstr " (+%d không hoạt động)"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:159
+#, c-format
+msgid "%d inactive devices"
+msgstr "%d thiết bị không hoạt động"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:168
+msgid "Automatically accept new keys from your other devices."
+msgstr "Tự động chấp nhận khóa mới từ các thiết bị khác của bạn."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:169
+msgid "Automatically accept new keys from this contact."
+msgstr "Tự động chấp nhận khóa mới từ liên hệ này."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Your device"
+msgstr "Thiết bị của bạn"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:367
+msgid "Trusted"
+msgstr "Được tin cậy"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:369
+msgid "Untrusted"
+msgstr "Không tin cậy"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:371
+msgid "Unknown"
+msgstr "Không rõ"
+
+#: plugins/omemo/src/ui/own_notifications.vala:30
+msgid "OMEMO trust decision required"
+msgstr "Cần quyết định tin cậy OMEMO"
+
+#: plugins/omemo/src/ui/own_notifications.vala:32
+#, c-format
+msgid "Did you add a new device for account %s?"
+msgstr "Bạn đã thêm một thiết bị mới cho tài khoản %s à?"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:193
+#, c-format
+msgid ""
+"%s has been using an untrusted device. You won't see messages from devices "
+"that you do not trust."
+msgstr ""
+"%s đã sử dụng thiết bị không được tin cậy. Bạn sẽ không thấy tin nhắn từ "
+"thiết bị mà bạn không tin cậy."
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:194
+msgid "Manage devices"
+msgstr "Quản lý thiết bị"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:196
+#, c-format
+msgid ""
+"%s sent messages without a key for this device. Those messages could not be "
+"decrypted."
+msgstr ""
+"%s đã gửi tin nhắn không có khóa cho thiết bị này. Không giải mã được những "
+"tin nhắn đó."
+
+#: plugins/omemo/src/logic/manager.vala:746
+#, c-format
+msgid ""
+"No active OMEMO devices were published for %s. Check the recipient's "
+"devices, then retry the encrypted message."
+msgstr ""
+"Không có thiết bị OMEMO đang hoạt động nào được công bố cho %s. Hãy kiểm tra"
+" thiết bị của người nhận, rồi thử gửi lại tin nhắn mã hóa."
+
+#: plugins/omemo/src/logic/manager.vala:1664
+msgid "Could not retrieve the OMEMO device list. Retry the encrypted message."
+msgstr "Không lấy được danh sách thiết bị OMEMO. Thử gửi lại tin nhắn mã hóa."
+
+#: plugins/omemo/src/logic/manager.vala:1677
+msgid ""
+"The server requires a presence subscription to access this account's OMEMO "
+"keys. Check account permissions, then retry the encrypted message."
+msgstr ""
+"Máy chủ yêu cầu đăng ký theo dõi trạng thái hiện diện để truy cập khóa OMEMO"
+" của tài khoản này. Kiểm tra quyền của tài khoản, rồi thử gửi lại tin nhắn "
+"mã hóa."
+
+#: plugins/omemo/src/logic/manager.vala:1678
+msgid ""
+"The server denied access to this account's OMEMO keys. Check account "
+"permissions, then retry the encrypted message."
+msgstr ""
+"Máy chủ từ chối truy cập khóa OMEMO của tài khoản này. Kiểm tra quyền của "
+"tài khoản, rồi thử gửi lại tin nhắn mã hóa."
+
+#: plugins/omemo/src/logic/manager.vala:1681
+msgid ""
+"OMEMO key access requires a presence subscription. Ask the contact to "
+"approve it, then retry the encrypted message."
+msgstr ""
+"Truy cập khóa OMEMO yêu cầu đăng ký theo dõi trạng thái hiện diện. Hãy nhờ "
+"liên hệ chấp thuận, rồi thử gửi lại tin nhắn mã hóa."
+
+#: plugins/omemo/src/logic/manager.vala:1682
+msgid ""
+"The server denied access to the OMEMO keys. Check contact permissions, then "
+"retry the encrypted message."
+msgstr ""
+"Máy chủ từ chối truy cập khóa OMEMO. Kiểm tra quyền của liên hệ, rồi thử gửi"
+" lại tin nhắn mã hóa."

@@ -1,0 +1,3575 @@
+# Changelog
+
+All notable changes to DinoX will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Fixed
+- **System-language independence:** encrypted-file cipher identifiers, raster sticker types, bot provider selection, MQTT playlist tokens and call codec names use stable ASCII case rules. XMPP capability hashes use the required byte ordering instead of system-language sorting.
+- **Language regression coverage:** catalog loading, settings templates, selected chat/plugin boundaries and Linux tray tests now cover every offered language. Package descriptions use the established Chinese and Brazilian Portuguese language tags.
+
+- Group-history loading now applies moderated retraction records from the room archive, including records of edited messages. Removed content stays hidden when older revisions arrive later or DinoX restarts; other accounts, rooms and senders remain separate.
+- Messages containing custom emoji markup retain their readable text. Unsupported emoji elements no longer become italic text, and their image resources are not downloaded as ordinary attachments. Other attachments and existing stickers retain their normal handling. Sending and rendering custom image emojis are not implemented.
+
+## [2.3.6] - 2026-11-01
+
+### Added
+- **Yue Chinese (Cantonese):** the app, settings, dialogs, OMEMO, OpenPGP and package descriptions are available in traditional Cantonese, listed as 粵語. Regional `yue_HK` and `yue-Hant-HK` settings use the same translation; the existing simplified and traditional Mandarin translations remain separate.
+- **Vietnamese:** the app, settings, dialogs, OMEMO, OpenPGP and package descriptions are available in Vietnamese. Previously incorrect translations have been corrected, including connection errors, location actions and MQTT controls. Regional `vi_VN` settings use the same translation.
+- **Egyptian Arabic:** the app, settings, dialogs, OMEMO, OpenPGP and package descriptions are available in Egyptian Arabic, separately from Modern Standard Arabic. The interface uses right-to-left layout. `arz_EG` uses this translation; `ar_EG` continues to use Modern Standard Arabic.
+- **Nigerian Pidgin:** the app, settings, dialogs, OMEMO, OpenPGP and package descriptions are available in Naija Pidgin. Regional `pcm_NG` settings use the same translation.
+
+### Fixed
+- **Tray menus and notifications:** Linux menus preserve underscores in status text and follow the selected language's reading direction. DinoX also registers with desktops that expose only the alternate status-notifier watcher and handles watcher restarts and late replies during shutdown. Windows notifications no longer cut an emoji in half at a text limit, and tray logging works with Unicode folder names.
+- **Language-independent processing:** link previews preserve Unicode text when reading HTML metadata; uppercase update hosts, audio protocol parameters and bot commands are handled consistently across system languages. Windows GnuPG paths keep ASCII drive letters without changing Unicode folder names.
+- **MQTT alerts:** JSON numbers retain their precision when compared with thresholds. Decimal-comma system settings no longer prevent matching alerts, and uppercase priority names retain their meaning under Turkish system settings.
+- **File types in Turkish system locales:** uppercase MIME types and extensions such as `VIDEO/MP4`, `.GIF` and `.AVI` are recognized using language-independent case rules. This keeps media previews and encrypted-file detection consistent across system languages.
+- **Video messages:** reopening a chat uses an available preview immediately. Delayed first display now starts preview generation reliably, leaving a chat stops playback and restores its preview, and video dimensions no longer change the message height when the preview or player appears.
+- **HTTP downloads:** timeout and connection errors retain their technical error codes. Automatic retries no longer depend on whether the error message is in English, German or another language.
+- **AppImage modules:** GIO, GTK, GStreamer, image decoders and sound backends use matching libraries from the package. Missing NSS cryptographic modules, OpenSSL modules, proxy settings and fallback sounds are also included. This fixes the reproduced module-loading errors and reduces dependencies on the desktop's installed components. The cause of the reported remote HEAD timeout remains unconfirmed.
+- **AppImage secure connections:** DinoX now loads the system certificate bundle selected by its launcher through GIO's TLS API. This fixes certificate rejection reproduced on openSUSE, where the bundle is stored at a different path from Ubuntu. Certificate and hostname checks remain enabled.
+
+### Development
+- The `systray` Meson suite checks translated Linux menus, packaged icons and desktop registration through the Flatpak D-Bus policy. Windows tests exercise the native menu, accessibility names, notification queue, Explorer restart and Unicode text limits without registering a real tray icon.
+- The OpenPGP test target now declares its dependency on the HTTP-files header, so a clean selective Windows test build creates the header before compiling.
+- The `locale-boundaries` Meson suite exercises real HTML, MIME, update URL, XMPP, bot, MQTT and GnuPG paths under verified German and Turkish system locales. Missing locale data is reported as a skip. These checks complement translated-interface and Unicode media-path tests; they do not assert that every feature has been tested in every language.
+- The Hats dialog test now waits for completed loading and actual command responses instead of assuming fixed delays are sufficient. Media regression tests also cover Unicode file paths and the separation between interface language and numeric protocol values.
+- Windows Qlite builds use the same generated-Vala-code warning settings as the other Vala libraries, excluding unused compiler-generated helpers and labels. Native C warning settings remain unchanged.
+
+## [2.3.5] - 2026-10-31
+
+### Fixed
+- **OMEMO after re-enabling an account:** fixed a session error that could occur after disabling and re-enabling an account. Old background operations can no longer overwrite the current encryption session. Existing keys and saved sessions are preserved, and other accounts remain unaffected.
+- **Sending images:** reading image dimensions and preparing thumbnails now runs in the background. This step could previously block the interface even after the chat-preview fixes. Invalid or oversized optional previews are skipped without changing the original file or the server's upload size limit.
+- **Messages from removed contacts:** a new message now reopens the chat. Previously, DinoX could show a desktop notification while leaving the conversation hidden. The sender stays outside the contact list, and previously deleted messages remain deleted locally.
+- **Switching chats:** conversation and notification menus are reused instead of being recreated on every switch. The call button updates immediately, so a public group no longer briefly shows the previous chat's phone button. Open menus close when their target changes.
+- **OMEMO device activity:** the hint now explains that this DinoX has not seen the device recently and that the device may still be in use. It no longer labels the device "Stale" or suggests removing it solely because of locally observed inactivity.
+
+### Builds and tests
+- **Windows compiler warnings:** unused callback and cleanup warnings in the affected tests and Tor code were corrected in the source. Two OMEMO initialization and backup warnings were also corrected. Further warnings about unused helpers and labels generated by Vala are filtered only for generated OMEMO C code; the handwritten cryptographic helper keeps its existing warning checks. This does not claim that every warning from a full Windows build has been removed.
+- **Regression coverage:** tests now exercise two accounts while one is disabled and re-enabled, reject callbacks holding obsolete OMEMO state, and check menu and call-button updates when switching chats. OpenPGP upload-cancellation tests allow for slow encryption startup and stop cleanly if setup fails.
+
+The image change fixes a demonstrated interface-blocking path. The particular file reported to crash DinoX on Windows was not available for reproduction, so that report is not considered fully resolved by this release.
+
+## [2.3.4] - 2026-10-31
+
+### Added
+- **Five more languages**: Bengali, Indonesian, Hebrew, Urdu and Japanese now cover the app, settings, dialogs, OMEMO, OpenPGP and package descriptions. Hebrew and Urdu use a right-to-left layout. DinoX now offers English and 33 complete translations.
+- **Ctrl+Enter to send** is an optional setting under Preferences → General. When enabled, Enter inserts a new line. The default remains Enter to send and Shift+Enter for a new line. The setting applies immediately to all chats and is saved across restarts.
+- **Window buttons** can follow the system preference or be placed on the left or right. The choice also applies to password prompts and call windows. Windows no longer forces the buttons to the left.
+- **Attachment menus** offer “Copy Link” for files, images, videos and audio messages, including before a download or after a failed download. Hovering over an attachment shows its filename, type and size. This hint stays hidden while the menu is open.
+
+### Fixed
+- **Image previews** are decoded in the background and scaled during decoding, including animated GIF frames. Limits on the downloaded data and image dimensions prevent oversized previews from exhausting resources. Damaged images cannot bypass an already detected size limit. Download controls remain available while a preview loads, and hidden download spinners stop their timers.
+- **Copied encrypted file links** now appear as attachments in the sender's chat too. Pasting and sending an `aesgcm://` link to a video, image or audio file uses the normal download and preview controls instead of leaving a long address in the chat.
+- **Chat scrolling** no longer continues an old message-jump animation after switching conversations. Late link previews keep the message being read in place, whether they appear above or below it. Position adjustments finish before the next frame is drawn.
+- **Link previews** load their images in the background with download size limits. Recently viewed previews stay in the cache. Relative image addresses now retain the original site's port.
+- **Native GTK and GIO bindings** now use the correct pointer types for string lists, clipboard and drag-and-drop reads, and file streams. This removes all 31 incompatible-pointer warnings from the Windows build without changing encryption or file-transfer algorithms.
+
+### Builds and documentation
+- **Windows warning reports** now count the entire build, including failed builds, and save a separate `compile-*.warnings.txt` file. A zero count from a later incremental build no longer suggests that earlier compilation was warning-free. The checked full build has 200 remaining warnings, all for unused functions or labels generated by Vala; they have not been hidden.
+- **Build and regression checks** now cover the corrected stream bindings, localized cancellation errors and the full warning report. Strict builds also detect C++, header and compiler-driver warnings.
+- **Windows build instructions** now provide separate, ordered paths for a first build, a rebuild of master, a package from an existing release tag and a new release. The overview links directly to each step and explains where the complete logs are saved.
+- **The website** also offers the five new languages on the home page, downloads, provider directory, legal pages and its own community-chat instructions. Guide and chapter contents remain German and English; Converse's own menus use English when Urdu is selected.
+
+## [2.3.3] - 2026-10-29
+
+### Highlights
+- **New optional appearance**: DinoX Design gives the app a green theme, including settings, confirmation and error dialogs, password prompts and call windows. The classic appearance remains available. The mint-green DinoX icon now appears throughout the app and in the system tray.
+- **28 complete translations plus English**: The translations now cover settings, dialogs and the OMEMO and OpenPGP plugins. Previously missing texts and a fault that loaded outdated translations have been corrected. DinoX uses English when a language is not supported.
+- **Chat history fixes**: “Load messages now” can retrieve available messages again after the local history has been deleted, including in private groups. Previously read and locally deleted OMEMO messages cannot be recovered from the server archive alone; DinoX now explains this once per reload.
+- **Editable group badges**: Group badges, called “Hats” in DinoX, can now be renamed and recolored with a color picker. Existing assignments are preserved, and saving or closing the editor returns to the badge overview.
+- **AppImage and Windows builds**: The AppImage includes a missing component needed for secure connections. Windows builds now save the complete console output to a log file, prevent builds with Administrator rights and have a complete release guide in German and English.
+
+### Appearance and group management
+- **DinoX Design** is available under Preferences → General → Appearance. Classic and DinoX Design both work with the System, Light and Dark choices and custom accent colors. Existing profiles keep the classic appearance. High-contrast mode retains the system's accessibility colors.
+- **The application icon** now uses the same mint-green DinoX symbol as the website, including Linux desktop packages, the Windows executable and tray icons. All icon sizes come from the same vector image.
+- **Conversation menus** now have separators between related actions, both in the chat list and in the menu at the top of a conversation.
+- **Group badges (Hats)** can be edited from the list of available badges or from an existing assignment. The color picker shows a live preview. Renaming a badge preserves its custom color, and changing its name or color preserves its assignments. DinoX confirms changes after the server accepts them and updates the overview without closing it. Badge colors support 360 hues with readable text, and the new controls are translated.
+- **Destroying a room** now clears its local joined state, bookmark and record of previously loaded server history after server confirmation. This also works through server administration for rooms the account has not joined, and with servers that omit a normally expected presence marker. Saved messages remain on the device, and a delayed reply cannot undo a newer join. Both confirmation dialogs now explain that destroying a room does not erase messages on participants' devices; removal of the server archive depends on the server's settings.
+- **Removing a contact and its history** now waits for the server to confirm the contact's removal. A rejected request or an outdated reply no longer deletes local messages. The action affects only the selected account and conversation, even when a group, direct chat or private group message uses the same address.
+
+### Message history
+- **Reloading after local deletion** works again in direct chats and groups, including after leaving and rejoining a group. DinoX requests the chosen history period from the server. For groups, only the selected room's record of previously loaded history is reset. Automatic synchronization still respects local deletion. Deleting history while a reload is running, message expiry and emergency deletion still prevent those messages from being saved again. The wording now distinguishes local deletion from a request to retract your own messages.
+- **Private group archives** are now assigned to the correct group conversation, even if an old direct-chat entry exists for the same room address. The requested history period and the final reload result therefore belong to the group. If the server reports that no archive is available, DinoX now shows that result, including when the reply arrives late.
+- **Old OMEMO messages** that this device already decrypted cannot be restored from the server archive alone after local deletion. During a manual reload, DinoX reports these unavailable messages in one summary instead of filling the chat with a separate error for each one. Unencrypted messages can be restored while the server still holds them. The completion message now describes the result without promising that every message was recovered.
+- **New messages and offline delivery** continue to use the existing receive and decryption paths for OMEMO, legacy OpenPGP (XEP-0027), modern OpenPGP (XEP-0373/0374) and unencrypted messages. Errors for newly received messages remain visible individually, including after a later manual reload. Existing key checks, duplicate-message protection, account separation and cancellation handling remain in place.
+- **Optional archive diagnostics** record query metadata, local deletion limits and processing steps when explicitly enabled. They are off by default and exclude message contents, credentials and cryptographic session records. Enabling them does not change which messages are recovered or saved.
+
+### Languages
+- **The interface is available in English and 28 complete translations**: Arabic (Modern Standard), Bulgarian, Catalan, Chinese (Simplified and Traditional), Czech, Danish, Dutch, Estonian, Finnish, French, German, Hindi, Hungarian, Italian, Latvian, Lithuanian, Norwegian Bokmål, Polish, Portuguese (Portugal and Brazil), Romanian, Russian, Slovak, Spanish, Swedish, Turkish and Ukrainian.
+- **The translations cover the main application and both encryption plugins**, including accounts, DNSSEC/DANE and certificate warnings, account deletion, password prompts, archive recovery, calls, feeds, group badges, server administration, Botmother, MQTT and Tor. Desktop descriptions, software-center descriptions, screenshot captions and release summaries have also been completed. Regional Portuguese terminology and Traditional Chinese terminology were reviewed separately.
+- **Earlier translation errors have been corrected**, including duplicated paragraphs, untranslated warnings, text left in another language and misleading terms for sign-in, contacts, commands, model names, delivery and read status, group roles and permissions, encryption, device trust and key fingerprints. Corrections also cover typing notices, location actions, stickers and backup warnings. German MQTT menu texts were reviewed, and existing German wording was retained as a reference.
+- **Missing settings and dialog texts are now included**. The translation tools previously missed 30 messages, including account setup, proxy fields, search, password entry and plural counts. DinoX now also uses the existing translations for the account password prompt, the automatic language choice and MQTT alert priorities and operators. Stored MQTT rule values are unchanged.
+- **Bundled translations now load correctly** even without a separate English translation file. Local builds previously could fall back silently to older installed translations. Main and plugin translations are now found in the build, portable package or explicitly selected translation directory.
+- **Language selection offers complete translations only**. An unsupported saved or system language falls back to English. Incomplete translation files remain in the source tree for future work. The package checks compare shipped translations with the current source text, including every plural form and formatting placeholder. Hindi plural rules are consistent across all three translation files; Arabic uses its six plural forms.
+- **Arabic layout now follows the selected app language**, even when the system has no Arabic GTK translation installed. Text fields with an explicitly assigned direction retain it. The website also has an Arabic version with right-to-left navigation and page layout.
+- **Translation and package checks have been extended**. Latvian now has the previously missing OMEMO translation, and Slovak and Bulgarian have complete translations and their own language choices. The Flatpak checks include these additions across all three translation domains. Extraction now covers the missing UI and Tor texts, plural messages and UTF-8 plugin strings. Tests check the UI text markers and translation lookup; audio/video tests use translated labels, and the tab-scrolling test no longer depends on the length of a translated title.
+
+### Packages and builds
+- **AppImage secure connections** no longer depend on the host having a compatible GIO TLS component. The package now contains the GnuTLS module, its required libraries and its module cache, and the launcher points to them. This fixes the error “TLS support is not available” reported in issue #34. Package checks verify that these files and settings are present.
+- **Windows build logs** now contain the complete normal and error output, including cleanup and test failures. Each build writes a separate log outside the source folder and still returns a failing exit status if the build fails. The script refuses to run with Administrator rights before it starts cleaning, preventing files that a later normal-user build cannot remove. The German and English instructions explain how to recover from earlier Administrator builds.
+- **The Windows release guide** now describes the whole sequence in one place: preparing the version, building the chosen source commit, reviewing logs and manual tests, creating and verifying the ZIP and checksum, tagging the tested source and uploading the package. Package output stays outside the source folder and is separated by version and source commit.
+- **Temporary Forgejo build artifacts** for DEB, AppImage and Flatpak are retained for seven days. This limit does not apply to published release downloads.
+
+## [2.3.2] - 2026-10-23
+
+Changes since 2.3.1. Release preparation and package acceptance are tracked in
+[Release readiness](https://git.dinox.im/dinoxim/dinox/src/tag/v2.3.2/docs/internal/RELEASE_READINESS.md).
+
+### Highlights
+- **Feeds and account security**: Read and share web feeds, publish personal XMPP posts, choose DNSSEC/DANE per connection, and see whether additional login protection is available and active.
+- **More video effects, processed locally**: Camera controls now include additional filters and image adjustments, background blur and replacement, automatic framing, and face accessories. The optional person and face detection runs offline and starts only when the selected effect needs it.
+- **Turn a one-to-one call into a conference**: Invite another participant during an ongoing 1:1 audio or video call. DinoX checks group-call support, prepares a private temporary call room and preserves the existing microphone/camera choices. This requires group-capable participants.
+- **Clearer group-call controls**: Start a call in an existing private chat room, join a running call, return to its room, or invite another participant from a one-to-one call. Compact controls keep the video-effects button accessible.
+- **Easier voice messages and stickers**: Recording stays in a popover with a live waveform and explicit Send/Discard actions. Chat audio players are compact, with seeking, playback speed and clearer time labels; sticker imports show progress and animation settings apply to chat previews.
+- **Account-specific privacy and key management**: Profile operations and server administration retain their selected account. OpenPGP key assignment, publication and server-backup cleanup distinguish the selected key from keys used by other accounts.
+- **Better recovery from stale OMEMO keys**: Refreshes the device's published keys after one-time keys are consumed and can repair eligible failed sessions with trusted contacts. The account's device identity and trust decisions are preserved; old messages that require missing private keys remain unreadable.
+- **Clearer chats and easier history access**: Compact message headers, persistent mention markers and improved narrow-window layouts make conversations easier to follow. One-to-one chats and groups can request archived messages directly, with an optional history period for each group.
+- **Compact chat list and controlled Tor recovery**: Collapse the wide-window chat list to small avatars with visible unread and group badges. If Tor or a proxy is unavailable after restart, DinoX stays usable so the route can be changed explicitly; it does not silently connect directly.
+
+### Added
+- **Visible account login protection**: A green check confirms usable SCRAM-PLUS protection for the selected account; a red cross identifies unavailable protection. Policy choices remain disabled until availability is confirmed. Changing the selection automatically reconnects that account and reports the result. Connection failures remain distinct from missing support, and existing requirements are never relaxed automatically.
+- **Feeds in chats and XMPP social posts**: Preview and share RSS 1.0, RSS 2.0 and Atom articles through the selected chat's normal encryption. Optional subscriptions post new articles while DinoX is running, preserve their account and destination, skip existing articles and pause if chat encryption changes. A separate XMPP feed view reads and subscribes to PubSub nodes and publishes text posts and replies under XEP-0472; these posts are not end-to-end encrypted.
+- **Optional DNSSEC and DANE**: Each XMPP account and MQTT broker can independently leave verification off, check supporting domains, or require it. Validated DNS records bind the actual TLS connection before authentication. Proxy connections use an explicitly configured HTTPS resolver through the same proxy; DNS failures do not silently disable verification or select a direct route. Existing account and broker settings remain off.
+- **Camera filters and adjustments**: Adds Cold tone, Sepia, Light leak, Dreamy, Prism light, Fisheye, Vintage TV, Frosted glass, Duo tone and Underwater alongside the existing Grayscale and Warm tone. Brightness, contrast, saturation and sharpness have separate controls, with optional gentle touch-up and low-light enhancement.
+- **Backgrounds and face accessories**: Adds background blur, solid colours, built-in scenes and selection of a still PNG/JPEG image, plus automatic framing. Glasses, hats and beards offer several styles; puppy and karaoke accessories and fireworks, confetti, stars and football animations are also available. Face tracking is limited to one face.
+- **Join and participant actions**: The group-call menu distinguishes starting a new call, joining a live call and rejoining the remembered call room. Adding a participant to an ongoing one-to-one audio or video call prepares a private temporary room and verifies group-call support before moving the existing call.
+- **Separate device tests**: Preferences distinguish call microphone, speaker and camera tests from voice/video-message capture tests. Each test uses its selected configuration, reports its result and releases its recording or preview resources when closed.
+- **Account server-backup management**: Key Management can explicitly delete the selected account's complete server backup while keeping local keys and public-key publications. Pending key-related cleanup is shown separately with a checked reconnect retry.
+- **Group history period**: Personal group settings can retrieve 1–365 days of archived messages, separately for each group and account. With the custom period off, DinoX keeps its automatic rules. “Load now” requests older messages without leaving the room; the server's available history remains the limit.
+- **History shortcut**: One-to-one chats and groups offer “Load messages now” in their chat menu and through Ctrl+Shift+H, documented in the keyboard-shortcut overview. One-to-one requests filter the selected account's archive for that contact; group requests use their saved period.
+- **Collapsible chat list**: The wide-window conversation list can collapse to small contact pictures with orange unread and mention markers. Group rooms show a people badge and private rooms a lock, independently of contact presence. A centred arrow or Ctrl+Shift+L switches views; shrinking the window still uses the automatic narrow-window navigation. The keyboard-shortcut overview now includes message editing, search and dialog controls.
+- **Feed keyboard shortcut**: Open Feeds with Ctrl+Shift+F. Web subscriptions offer a 5-minute to 24-hour interval, defaulting to 30 minutes; automated chat delivery runs only while DinoX and the selected account are online.
+
+### Changed
+- **Offline effect runtimes**: Package pins now include matching Google/libwebrtc M152 ABI 40 / IPC 10 libraries, the isolated vision worker, pinned models, licenses and provenance. Ordinary colour filters do not require model inference; effects stay off until selected for the call.
+- **Call controls and room use**: Participant invitations use a compact button, and video effects also apply to MUJI video calls. Calls started in an existing private chat room use that room. Temporary rooms used for one-to-one call conversion have a checked nonpersistent configuration.
+- **Server administration**: Commands are grouped by the selected account's server, target and interface. ejabberd API commands remain distinct from node and standard ad-hoc commands; Prosody commands use their advertised identifiers. The catalog covers ejabberd 26.09, including invitation and password-reset commands when the server exposes them. Forms, action buttons and result text use clearer labels.
+- **Server-directory search**: The contact dialog explains that this searches a server-provided user directory, rather than the local contact list. Known form labels and search instructions are translated without changing the field names or values sent to the server.
+- **OpenPGP key management**: Shows the owning account, assigns explicitly imported private keys without activating them, displays import progress and refreshes the key list directly. Legacy keys can be assigned even when their email identity differs from the account's XMPP address. XEP-0373/0374 keeps its matching `xmpp:` identity requirement.
+- **Tray menus**: Adds coloured status/action icons on Linux and Windows. The Windows menu includes Show DinoX, follows the application's light/dark theme, scales with monitor DPI and exposes readable names to accessibility tools; high-contrast mode uses native menu items.
+- **Linux input compatibility**: A private compatible IBus client handles the affected input-method versions without replacing the system library or requiring a PPA. Its C17 build settings also avoid the emoji-helper declaration failure with newer compilers.
+- **Message headers and mention styling**: Keeps the sender, date, encryption and delivery indicators together. Mentions use a small indicator beside the header and a subtle side marker in light and dark themes, replacing the full coloured message background. Conversation details adapt their controls and navigation to narrow windows.
+- **Group hats and member labels**: Member lists show readable coloured hat badges instead of plain labels. Hat management separates available labels from assignments, explains that hats do not grant permissions, and shows the selected room and account. Creation, assignment and removal use clearer actions and the choices allowed by the server.
+- **OMEMO device management**: Key dialogs identify the account, contact and device and explain verification, rejection, session reset and device removal. The key list refreshes after changes; a changed fingerprint requires another review instead of applying an action to a replacement key.
+- **German translations**: Completes account-creation headings, sign-in actions and form labels, and adds the new history, hat-management, font and encryption-status text to the German translation and translation templates.
+- **Linux package-build parallelism**: Package jobs can use four compiler jobs and four CPUs, while keeping the existing pinned build dependencies.
+- **libsoup 3.4 baseline**: Source builds and Debian packages now require libsoup 3.4 or newer, so package installation rejects an older incompatible runtime.
+
+### Fixed
+- **Choosing a Linux package**: Release downloads, the README and the DEB description now identify the Ubuntu 24.04/Mint 22 binary explicitly. Installation help explains runtime dependencies, APT installation and the AppImage/Flatpak alternatives for Debian Trixie derivatives; development packages are not a workaround for incompatible system libraries.
+- **Reconnect while avatar or read-state requests are pending**: Cancelling a request while changing login protection no longer crashes on an empty asynchronous PubSub result. Avatar reads, uploads and removal retain their cancellation and uncertain-write outcomes; cancelled read-state synchronization and OMEMO bundle publication cannot be mistaken for confirmed success. Applies to the shared Linux and Windows code.
+- **Repeated login-protection checks**: Locally cancelled blocklist, message-carbon and OMEMO device-list requests no longer produce misleading failure warnings during a reconnect. An interrupted device-list request does not report an empty list or fail pending encrypted messages. The replacement connection fetches its state again; real server and transport errors remain visible.
+- **Feed setup and subscriptions**: Separates reading other people's XMPP feeds from publishing a personal feed and explains who hosts posts and how updates arrive. Web-feed intervals are visible before setup and editable for each saved subscription without resetting delivery history or encryption. Missing XMPP feeds show a translated explanation; other server errors remain visible.
+- **Unicode in feed previews and sharing**: Shortened text keeps combining accents, composite emoji and flags intact. Feed decoding recognizes UTF-16/32 byte order with or without a BOM and validates the converted UTF-8. Invalid outgoing text is rejected before queuing or publishing. The implementation is shared by Linux and Windows.
+- **OMEMO send retries**: Pending messages retain their original direct-chat or group-chat type. Missing device lists no longer cause repeated queries for already known recipients. An authoritative empty list stops the send with a translated explanation and an explicit retry, instead of repeatedly attempting encryption. Group sends never treat a room address as a recipient when room state is unavailable.
+- **Windows TLS with Unicode profile paths**: The portable package includes a pinned GIO/GnuTLS module that loads CA certificates from paths containing Cyrillic characters and spaces. Certificate validation remains enabled.
+- **MUJI readiness confirmation**: New outgoing group-call connections wait for the room to reflect the current READY presence, with the Monocles profile's five-second fallback. Incoming connections remain available during the wait, and an existing direct call continues when another participant is invited. Cancellation, stream changes and replaced call owners cannot release stale outgoing attempts.
+- **MUJI connection ownership**: Initial and later participants use the same nickname-based initiator rule as the Monocles MUJI profile proposal, including identical Unicode ordering. Removes the join-order dependency and the mutual-preparation timeout exception while retaining room, device and trust checks. Existing direct-call sessions remain intact when inviting another participant; DinoX continues to use legacy OMEMO for these calls.
+- **Linux VP8 decoder selection**: Checks real key/delta decoding, usable image output and hardware/software latency before selecting VA-API, instead of relying only on a reported decoding profile. Unsuitable hardware uses libvpx; encoder selection remains independent. The short worker-local check does not certify all resolutions or network conditions.
+- **Accurate call diagnostics**: Signaling logs report the actual first SDP payload instead of incorrectly labeling the preferred codec as selected. SDP preference order does not prove which codec is being sent; native codec negotiation remains unchanged.
+- **Inviting a group-call participant again**: Uses a fresh reference for each direct invitation to an existing conference, so a participant who left can be invited again without triggering duplicate-invite protection. Old replies and timeouts are matched to their original invitation; replay checks and room-invitation references remain intact.
+- **OMEMO sending from fresh profiles**: Excludes the current sending device from its own key recipients, so a new profile does not wait indefinitely for a session to itself. Other own devices still receive encrypted copies and missing sessions still block incomplete delivery. Empty recipient payloads fail closed; device identities, trust decisions and published lists are preserved.
+- **First messages to new encrypted group participants**: Prepares pending recipient sessions before sending, even when another group member is already ready. A new participant no longer has to send first to receive subsequent messages. Denied access to a needed key reports a failed send in the current private room instead of silently omitting the participant.
+- **OMEMO authentication of call fingerprints**: Direct and private-group Google/libwebrtc calls wait for the selected device's encryption session before sending a protected DTLS fingerprint. Failed key preparation no longer silently sends an ordinary fingerprint. Once protection is negotiated, later fingerprints must retain the same accepted device identity. Ending a call cancels only its own pending requests; adding a participant preserves the existing direct connection. Rejected incoming setup removes the waiting participant instead of leaving a stalled group call. Peers that do not negotiate the optional extension continue to use ordinary DTLS-SRTP.
+- **First group-call invitations**: An eligible contact's group-call invitation can create its incoming call entry without requiring an existing direct chat. Joining the room and starting media still require accepting the invitation. Incoming invites retain their actual connection and bound recipient, use the existing contact/block policy, and preserve the separate identity checks for live private rooms.
+- **Long addresses in contact and participant choosers**: Directory-search labels can shrink to the dialog width, with their complete text retained for tooltips and accessibility, avoiding GTK sizing warnings while entering long addresses.
+- **Group-call media and participants**: Releases closed peer video attachments, preserves active MUJI presence during room/status updates, shows initial participants and keeps an established conference open when a peer leaves. Video pipelines close asynchronously, and controls recover after the last video peer leaves.
+- **Call conversion and cancellation**: Cancelling the participant chooser restores the invite control. Unsupported contacts and failed room preparation no longer leave conversion controls disabled or partially moved media state. Stale events from a closed call window are ignored.
+- **Call audio after restart/rejoin**: Reapplies selected audio devices and volume when the WebRTC worker is reactivated, instead of retaining an inactive device state.
+- **Incoming one-to-one calls**: Validates JMI initiation and the peer identity before allocating a media session, so invalid initiation cannot leave subsequent transport messages attached to a session that never started.
+- **Voice-message sending and playback**: Keeps a finished recording path until the chat receives it. Playback waits for decoder readiness and completed seeks, preserves positions across cancellation/speed changes, and supports replay after the previous output session has ended.
+- **Audio-player layout**: Bounds the player's width and reduces its play-button size so it does not collide with message actions, including in narrow chat windows.
+- **Device selection and tests**: Prefers exact/stable device identifiers before display-name fallbacks, excludes empty GUID matches and explicitly restores the system-default output. Tests use separate contexts from message playback; interrupted device refreshes restart, and test callbacks are disconnected on completion or cancellation.
+- **Sticker previews and imports**: Identical images update all waiting thumbnail widgets. Folder and XMPP-link imports show a spinner while working, and the animation switch controls sticker playback in the chat. Stopped or superseded previews release their callbacks and files.
+- **Responsive chat navigation and dialogs**: Keeps the selected chat visible when narrowing the window, preserves settings scroll position after device tests, and corrects group-dialog minimum/natural sizing when returning from details.
+- **Contact and encryption diagnostics**: Contact-permission notices can be dismissed. Expected missing OpenPGP publication data is quieter; OMEMO diagnostics distinguish a missing recipient key for this device from local key-store or session failures.
+- **Edited-message reloads**: Resolves correction rows through persisted message identity and preserves the original sender when reloading an edited message.
+- **Directory requests and administration forms**: Discovers the actual search service, handles unavailable or timed-out forms, and cancels obsolete searches. Administration requests and form results retain their account/target context, and malformed or missing display values no longer reach unsafe string formatting.
+- **Network overview**: Includes connected standalone MQTT in the overall status, removes stale provider rows after account changes, and bounds long account labels and the scrolling account list.
+- **Password changes and account deletion**: An offline or failed password change reports an error without overwriting the stored password. Account deletion can offer managed CloudBot cleanup when only cloud management tokens are present.
+- **Botmother API and backups**: Correcting API settings retries a failed server start without requiring an off/on toggle. Profile backups also snapshot an existing bot database when its plugin is disabled and uninitialized, including committed WAL data.
+- **OpenPGP backup/restore and key switches**: Uses the uppercase XEP-0373 backup code, while accepting older DinoX backups; requests the private key's original passphrase before export. Restoring a multi-key backup skips only keys already present. Offline A-to-B-to-A selection no longer retracts the reactivated key, and deactivating XMPP OpenPGP resynchronizes a restored Legacy presence key.
+- **Windows tray notifications and visibility**: Each queued balloon keeps its own action and account/conversation target. Retracting one notification leaves unrelated calls/invites intact; Explorer restart and shutdown release pending actions. Reopening a hidden window through a notification no longer confuses the next tray click, and the status-message action opens a visible dialog.
+- **Cross-platform bindings and packaging checks**: Corrects Windows pointer/format types, preserves required Android JNI exports, and checks the matched video-effect runtimes and Linux SNI sandbox permission without bringing back external libdbusmenu.
+- **Release and Windows ZIP helpers**: Preparing an existing version promotes its changelog and XML entries while preserving the notes and avoiding duplicate releases. Publication rejects development/unreleased metadata until it is promoted to one approved date. The Windows ZIP helper rejects an output directory inside `dist/`, keeping the generated archive outside its own source tree.
+- **Avatar context menus**: Close the chat-avatar menu when clicking elsewhere, pressing Escape, switching applications, hiding the message or minimizing the chat window. Wait until the initiating mouse button is released before opening, avoiding GTK active-state warnings on repeated clicks. Closed menus release their callbacks and room data while keeping subsequent actions and the fast cached member list intact.
+- **Windows interface text**: Restores a readable 11-point minimum while retaining the Windows font family, larger system fonts and later system-font changes. Applies the intended font hinting and aligns letters to the pixel grid on current GTK versions. Uses the display's text resolution instead of forcing 96 DPI; chat-font preferences remain separate.
+- **Tor bridge checks**: Avoids HTTP/2 session-cleanup warnings when requesting bridges and checking WebTunnel endpoints on Linux and Windows. These short-lived helper requests use HTTP/1.1 while retaining HTTPS certificate validation, timeouts and existing status handling.
+- **AppImage builds during repository outages**: Retries temporary Ubuntu snapshot download failures and rejects incomplete source indexes. Persistent outages now report the failed snapshot fetch clearly, while retaining the exact dependency versions and source checks.
+- **Windows native type compatibility**: Corrects string-array types used by OMEMO trust updates and group hats, along with image and popover bindings in the GTK tests. Layout tests also check whether position measurements succeeded. The changes retain support for the existing Linux GTK baseline.
+- **OMEMO key publication after receiving messages**: Updates the published device bundle only after consumption of a one-time key is safely saved. Concurrent receives, failed publications and reconnects retain pending work and retry delays instead of leaving the published bundle out of sync with the local keys.
+- **Trusted OMEMO session recovery**: Eligible live legacy-OMEMO failures can send a fresh encrypted handshake to the same trusted device in direct chats and eligible private groups whose participants can be identified. A repair deferred by a temporary room or connection change can be sent later without repeatedly replacing the session. This does not recover the contents of an already failed message.
+- **Encrypted group history and device readiness**: Corrects historical private-group sender checks and recipient-readiness updates. Temporary device-bundle failures can be retried, while stale replies and changes in account, room membership or trust cannot complete an obsolete operation.
+- **Trust changes in existing conversations**: Accepting or rejecting a key updates the visibility of messages tied to that exact account and fingerprint. Historical trust indicators use the recorded key identity. Older hidden messages without a recorded fingerprint stay hidden with an explanation; changing trust does not create new-message notifications or bring back cleared history.
+- **Encrypted group recipients**: Private-group messages wait for an actual participant's encryption session instead of being considered sendable with only the user's own devices. If no trusted participant device is available, the chat explains what needs attention.
+- **Readable encryption errors**: Undecryptable messages and their chat-list previews use translated diagnostics. Failed sends explain missing room membership, trusted devices or incompatible encryption settings. Ordinary received text is not mistaken for a local error.
+- **Missing group history after rejoining**: Resets the room's live archive cursor for a new visit and only resumes tracking new messages after catch-up succeeds. A complete response to a limited archive query no longer hides older available messages. Existing archive coverage metadata is rebuilt without deleting local messages or keys.
+- **Mentions after restart and history loading**: Saves mention classification with the message and keeps it scoped to the receiving account and room. Chat markers, unread lists and notifications use the same result across restarts, archived messages, edits and nickname changes, without needing a chat switch to refresh. Full Unicode nicknames and explicit mention references are recognized, while quoted reply text does not create a false mention.
+- **Pinned chats in the compact sidebar**: Pinned conversations retain a visible pin badge when the chat list is collapsed to contact pictures, alongside unread, mute and group indicators.
+- **Multiline message input and restored controls**: Keeps attachment, recording, emoji and send controls aligned when a draft spans several lines. Controls in the initially restored chat refresh as its connection and permissions become available. Switching chats preserves draft formatting, cursor and selection; nickname completion replaces only the word at the cursor. Native text context menus open without stale popover state.
+- **Reactions, previews and narrow chat content**: Reaction buttons stay beside one another and wrap when needed. Website preview images retain their full aspect ratio. Images, files, call rows and previews respect the available chat width instead of forcing the window wider or clipping their controls.
+- **Member-list refresh and search**: An initially empty participant list updates when members arrive. Search handles Unicode names consistently, and reopening a populated list keeps the fast cached path without requiring a new network fetch.
+- **Chat font settings**: A saved font that is no longer installed remains visibly identified and can be reset to System default. Updating the font list or reopening settings no longer silently rewrites the selection. Long font names are shown as plain text; Windows follows its native interface font when available, with Segoe UI as a fallback.
+- **Provider selection and registration fallback**: Offers the provider's registration website when a server refuses in-app registration. Updating the bundled provider snapshot validates a candidate before replacing the last usable list, so an incompatible download cannot erase it.
+- **Windows Tor build and test setup**: Declares the Windows SDK level needed for owned-process cleanup and includes the required crypto library in the noninstalled Tor-startup test's library search path.
+- **IBus package validation**: Recognizes compatible library aliases without falsely rejecting a usable Linux package runtime.
+- **Tor startup and recovery**: Account login waits for the local Tor listener, successful bootstrap and the current proxy port. Restarting or stopping Tor cancels stale starts and callbacks. The Tor switch remains usable during bridge changes so users can stop a failed connection attempt.
+- **Shutdown of bundled Tor transports**: DinoX waits for its own Tor and Lyrebird process tree to stop. Linux process groups and Windows Job Objects preserve unrelated services, including other Tor instances; tray exit timers allow plugin cleanup to finish.
+- **Flatpak tray fallback**: The existing alternative StatusNotifierWatcher has its required targeted permission. Package checks also reject launchers that disable the GTK accessibility backend.
+- **OpenPGP history after switching encryption**: Older XEP-0374 messages from the account's own archive can be read after switching the direct chat to OMEMO. They retain their original encryption label and use the account's stored sender key, with signature, identity and recipient checks; loading history does not switch the current chat mode or start key discovery.
+- **Tor helpers in local Linux builds**: Keeps the pinned Tor, Lyrebird and GeoIP files outside the disposable Meson build directory, so release preparation does not remove WebTunnel support. The preparation command reuses a complete verified runtime; normal application builds do not download helper programs.
+- **Windows sticker folder imports**: Recognizes Windows image file types when importing a sticker folder instead of reporting a folder containing usable images as empty.
+- **Windows binding corrections**: Uses correctly typed backup-fingerprint and webhook-retry lists, native audio-player popover bindings and binary HTTP test responses, avoiding invalid pointer and value conversions during Windows compilation.
+- **Narrow-window chat transitions**: Coordinates initial message rendering with the GTK frame clock and waits for a usable viewport before loading more history. Reaction emoji menus are created on demand; call subtitles avoid repeated layout searches. The compact sidebar no longer forces a blocking rebuild at the start of the chat transition.
+- **Conversation details**: Avoids constructing hidden detail pages while opening a contact or room from either the sidebar or chat menu, reducing the opening delay and stale menu state.
+- **Encryption controls and device actions**: Context-menu shortcuts open the selected conversation's encryption page directly. Composer controls show the current encryption and trust state; trusted and verified remain distinct. Device-key actions have visible buttons, inactive-device removal is clearly marked, and destructive confirmation explains the next action.
+- **Contact/group dialogs and translations**: Equal-sized action buttons, narrower group selection, completed German labels and activity plurals, and Unicode-aware search improve contacts and rooms, including Cyrillic names.
+- **Delayed ICE acknowledgements**: A written transport-info IQ without a timely response no longer tears down an otherwise connected native call. Native ICE determines connectivity; the missing acknowledgement is a debug diagnostic, while actual send failures remain errors.
+- **Linux packaging**: Pins the qualified VP8 decoder runtime across package formats, includes libunbound and its runtime checks, uses the GNOME SDK's Expat when building Flatpak Unbound, and preserves the Vision worker bytes required by its size/hash manifest checks.
+- **Repeatable interop and Windows checks**: Retains bounded native/mixed-client call fixtures, source/identity tracking and cleanup checks. Android-only Monocles fixtures live in the Monocles fork. Windows builds explicitly run DNSSEC/DANE, SASL/TLS, reconnect and account-isolation checks. Login-protection UI checks run in an interactive desktop; test programs and fixture keys are excluded from portable packages. The Windows compiler fixes also cover the DNS-over-HTTPS ALPN binding and completion of asynchronous MQTT reconnects.
+
+### Security
+- **Account login downgrade protection**: Validates SCRAM mechanism/binding hashes (XEP-0474) and negotiated TLS versions (XEP-0515). Confirmed SCRAM use is saved per account and prevents later PLAIN fallback. PLAIN-only servers require explicit permission in account settings, including for existing accounts after upgrade; TLS remains mandatory. Invalid proofs and security failures have distinct German and English messages on Linux and Windows.
+- **Tor reconnect privacy**: Disabling an account's SOCKS5 override while global Tor is enabled but not ready retains the override and reports the wait state, instead of reconnecting directly.
+- **Private profile fields**: Fields excluded from public access are not additionally published through unrestricted legacy vCard-temp. Asynchronous profile loads and saves use an account snapshot and reject responses after switching accounts.
+- **OpenPGP keyring isolation**: A missing or unavailable DinoX GnuPG directory produces an error instead of falling back to the operating system's default keyring. Linux and Windows continue to use DinoX's own user-data keyring.
+- **Scoped key and backup cleanup**: Key revocation/deletion is blocked while another account uses that local key. Key-related server-backup cleanup verifies that the backup belongs to the selected key, keeps unrelated/multi-key backups, and preserves a checked retry when cleanup fails rather than claiming success and discarding the local key.
+- **Botmother disabled state**: Removes the incoming-message listener and stops delayed bot starts, Telegram polling and webhook retries when disabled. Re-enabling creates a fresh runtime without duplicate listeners or background work from the previous activation.
+- **Provider refresh through Tor**: Manual provider-directory downloads use the enabled integrated Tor route. They wait or fail when it is unavailable and are cancelled when the route changes, without silently falling back to a direct connection.
+- **OMEMO key and trust boundaries**: One-time key numbers remain reserved after use and across restarts, preventing their reuse for different keys. Recovery and key-management actions recheck the exact account, device identity and trust state; private-group sender checks recheck the room's participant identity information. Stable builds continue to use legacy OMEMO; the OMEMO 2 path remains disabled.
+- **Asynchronous send targets**: File choices, recordings, stickers and location dialogs retain their original account and conversation and recheck current send permissions. Direct transfers in private messages to room participants also retain the original participant identity across retries, preventing a chat switch or nickname reuse from redirecting a send.
+- **History deletion boundaries**: Archive retrieval continues to respect panic wipes, cleared history and message expiry. Excluded archived messages are rejected before decryption, including if the policy changes while an earlier message-processing step is waiting.
+- **Unavailable Tor stays selected**: Tor startup failures, exhausted retries and bootstrap timeouts keep Tor enabled and its XMPP accounts offline. A direct connection requires the user to turn Tor off; an explicit SOCKS5 override remains independent.
+- **Archived group identities and privacy**: Historical group senders are resolved from authenticated archive or encryption evidence instead of whoever currently uses the same nickname. Real-address links are stored only while the room's current disclosure rules allow them.
+- **OMEMO 2 preparation, still disabled**: The inactive OMEMO 2 path also checks the account and encrypted sender/recipient context and discards unauthenticated outer text in key exchanges. Its own-key publication and retry handling have additional safeguards; these changes do not enable OMEMO 2 in stable builds.
+
+### Known issues
+- **Windows sizing diagnostic**: An intermittent GTK minimum/natural-height warning remains reported on Windows. Its exact trigger has not been confirmed; the reported case did not restrict normal use.
+- **Repeated file drops with GTK/X11**: Repeated dragging from some GTK3 sources can trigger GTK's `gdk_drop_set_actions` assertion and prevent later drops. This was reproduced without DinoX; the existing root-window controller workaround does not resolve this separate backend failure. Use the attachment button if dragging stops working.
+
+## [2.3.1] - 2026-10-05
+
+### Highlights
+- **Updated desktop call engine**: Google/libwebrtc M152 brings refreshed Linux and Windows runtimes, hardware-assisted video where available, independent software fallbacks, and fixes to direct-call and private-room MUJI negotiation.
+- **Safer profile maintenance**: Backups, restores, password changes, history resets, and profile deletion now coordinate database snapshots, exclusive profile ownership, and recoverable maintenance transactions.
+- **Clearer contact permissions**: Contact dialogs and conversation details show the actual presence subscription state, offer explicit request and grant actions, and report failures without inventing mutual permissions.
+
+### Added
+- **Desktop hardware video codecs**: H.264 can use VA-API/NVENC encoding and VA-API/NVDEC decoding on supported Linux systems, and Media Foundation on supported Windows systems. Encoding and decoding choose hardware independently and fall back to software when initialization or processing fails. Linux VP8 reception can use VA-API when the driver exposes the required decoding profile; VP8 encoding remains on the CPU. VP8 stays the initial preference, with VP9 and H.264 selected from shared peer capabilities.
+- **Visible OMEMO key-access failures**: Direct messages waiting for a contact's encryption keys now report denied server access. Subscription requests, grants, and contact actions stay bound to the selected account, with live permission state and retryable failures. The affected controls and error messages include updated German translations.
+
+### Changed
+- **Private-room group calls**: MUJI preparation follows reflected room presence, correlates preparation generations, and freezes conference content names, payload IDs, packetization times, codec dependencies, and feedback before READY presence and native media commitment. Explicit BUNDLE mapping is negotiated with peers that support it. New locally created conference capabilities omit optional RRTR; existing READY maps and adopted calls retain their negotiated parameters.
+- **Direct-call negotiation**: Jingle answers and ICE candidates retain the original offer's content order and identities. Description-level and payload-level RTCP feedback, wildcard feedback, and reporting intervals survive SDP conversion, while an answer can omit optional feedback. Direct 1:1 RRTR remains optional.
+- **Consistent encrypted backups**: Backup snapshots wait for admitted message processing to finish and include the related plugin databases. Archive progress follows the messages actually admitted to that snapshot, reducing mismatches between stored messages and restored history state.
+- **Recoverable offline profile operations**: Restore, password changes, history reset, and profile deletion are applied before normal databases and plugins start, under an exclusive profile lock. Interrupted operations retain owned staging and rollback state; maintenance preserves the attachment encryption key and is serialized with account removal and shutdown.
+- **Release packaging**: Linux and Windows packages use pinned M152 runtimes and optimized release defaults. Runtime checks cover codec dependencies, worker lookup, provenance, and package contents. Debian packaging avoids a second application compilation, Flatpak source copies exclude local build outputs, and AppImage verification has a budget for the complete package checks.
+- **Regression coverage**: Expanded tests cover multi-account OMEMO state, profile locking and crash recovery, SQLCipher backup and password changes, MUJI preparation and native mappings, scoped RTCP feedback, contact permissions, Unicode rendering and backups, and Windows fixture cleanup and binding types.
+
+### Fixed
+- **Failed profile password checks on Windows**: Offline maintenance closes the database handle when opening or validating an encrypted database fails, allowing Windows to release the file for cleanup and retry.
+- **Legacy OMEMO startup and recovery**: New device registration checks the account's published device list and bundle identity before publication. Bundle discovery no longer creates encryption sessions prematurely; sessions are prepared when sending messages or encrypted Jingle transfers. A bounded trusted-device key transport can recover a missing prekey, while archived receive state and session persistence remain transactional.
+- **Incoming and queued OMEMO messages**: Direct chats can display authenticated decrypted messages even when the outgoing mode is plaintext. Device-list changes revalidate queued sends through normal encryption, and failed direct-message key queries produce a retryable local error. Account isolation, trust choices, and the selected encryption mode are preserved; OMEMO 2 remains disabled in production.
+- **Groupchat archive collisions and replies**: Messages with conflicting personal-archive IDs no longer suppress distinct room messages. Groupchat references and replies use the room-authorized stanza identity, and ambiguous targets are rejected.
+- **Call setup and teardown**: Early remote ICE candidates are buffered until the session can accept them. Closed native sessions are destroyed outside callback locks, failed MUJI peer sessions are retired, and removed participant widgets are cleared. Native MUJI answers reject RTX payloads whose primary codec is absent.
+- **Unicode text and optional previews**: Link parsing, formatting, quotes, and highlighting operate on the original UTF-8 text instead of offsets from a lowercased copy. Optional data-URI thumbnails preserve their metadata, and unsupported previews retain normal file and download controls.
+- **Windows backup paths and runtime caches**: A bundled native archive helper handles backup and restore filenames containing spaces or non-ASCII characters. Certificate bundles and GStreamer registries use the runtime cache directory, keeping startup cache work away from the profile before its lock and restore checks.
+- **Tor bridge startup**: Bundled Lyrebird and obfs4 transports launch correctly from directories containing spaces or Unicode characters. Tor receives a supported executable argument and the corresponding working directory on Linux and Windows.
+- **GTK focus and XMPP stream ownership**: Text-widget focus is cleared at the appropriate lifecycle boundary, and stream modules track attachment ownership so a reused module cannot leave handlers bound to the wrong stream.
+- **XMPP error handling**: Diagnostic text no longer masks the actual stanza error condition, regardless of XML child order. Native OMEMO failures retain their underlying Signal error details for diagnosis.
+
+### Security
+- **Packaged Tor update**: Update Tor from 0.4.9.8 to 0.4.9.12. Linux and Flatpak source pins, Windows package verification, and runtime inventories use the verified artifacts; the Windows package and its upstream signature are mirrored in Forgejo `vendor-deps`.
+- **Encrypted profile protection**: An existing OMEMO database with a missing key fails explicitly rather than receiving a replacement key. Account-related message state stays on its actual pipeline object, and payload-less legacy key transports cannot expose an unauthenticated outer message body.
+- **Data-preserving cache cleanup**: Cache clearing keeps durable account data and active media intact. Profile deletion retains its pending request across shutdown, and restore and maintenance reject unsafe ownership and filesystem paths.
+- **Automatic API certificates**: Certificate renewal and removal recheck the current API mode and custom certificate settings when activated, preventing stale controls from changing manually configured certificates.
+- **Private-room call invitations**: Direct MUJI invitations for an already joined room require a current participant with the matching disclosed full JID and an active private-room lifecycle. Reconnects and occupant changes invalidate stale acceptance work.
+
+## [2.3.0] - 2026-08-26
+
+### Highlights
+- **Reliable calls across devices and reconnects**: One-to-one Google/libwebrtc calls now implement the current XEP-0353 signalling lifecycle, including ringing, final call state, simultaneous-call tie-breaking, active-device migration and passive reconstruction from Carbons and MAM. Archived signalling never starts media or rings again, and private-room MUJI calls remain on their separate lifecycle.
+- **Room avatars before joining**: Bookmarked rooms can obtain and verify their XEP-0486 avatar before the first join without delaying room lists or starting unbounded network work.
+
+### Added
+- **Room avatars before joining**: Bookmarked rooms can obtain their XEP-0486 avatar from `muc#roominfo_avatarhash` and the room vCard before the first join. Image bytes are accepted only when their SHA-1 hash was advertised by the room. Status code 104 refreshes changed or removed avatars after joining.
+- **Complete XEP-0353 0.8.0 signalling**: One-to-one Google/libwebrtc calls support `ringing` and `finish` alongside the existing proposal actions, including final reasons, migration metadata and the required message-storage hints. Malformed or conflicting events are rejected while known legacy wire variants remain accepted for interoperability.
+
+### Changed
+- **Bounded room-avatar discovery**: Pre-join discovery runs one room at a time after a short low-priority delay, deduplicates account/room work, caps server-provided representations, and fences disconnects and superseded results. Bounded batches refill from the authoritative bookmark set instead of dropping rooms above the active queue limit, and reconnects discard freshness state from the previous stream. Image decoding, hashing and encrypted cache I/O stay off the UI thread; conference and member lists continue to read only from the local avatar cache.
+- **Room-avatar interoperability**: Live ejabberd and Gajim tests cover discovery before joining, joined-room refreshes, publication and removal. The smoke test showed no visible UI stalls; it was not a large-room timing benchmark.
+- **Persistent multi-device call state**: Call ownership is scoped by account, peer and session ID, survives restarts, and expires bounded recovered proposals. MAM and Carbon replay is ordered, deduplicated and passive; another own device accepting or ending a call settles the local state without allocating a media worker. The production call engine remains Google/libwebrtc, with RTP disabled.
+
+### Fixed
+- **Attachment actions after transfer completion**: File, image and video rows retain their exact backing message across restart and archive replay. Reply, reaction and delete actions update as soon as the message identifiers become available instead of remaining unavailable or targeting transport metadata.
+- **Visible attachment controls on Windows**: Disabled symbolic message-action icons remain visible in compact attachment toolbars, while their unavailable state is still clearly dimmed.
+- **Inline MP4 playback startup**: Preview generation and playback use separate generation ownership, bounded startup timeouts and deterministic temporary-file cleanup. Starting playback while a thumbnail is still being prepared no longer leaves a stale pipeline, and Windows packages now verify the complete MP4/H.264/AAC playback runtime.
+- **Contact conversation selection**: Opening the contact chooser no longer treats the first visible contact as an implicit selection. The start button becomes available only after an explicit selection, avoiding a disabled button for a row that merely appeared selected.
+- **Legacy GTK file drops on X11**: DinoX removes only GTK's conflicting private root-window drop controller on affected native X11 versions. The application COPY target, portal drops, Wayland and Windows behavior remain unchanged.
+
+### Known issues
+- **Repeated file drops on X11**: The open [GTK issue #3755](https://gitlab.gnome.org/GNOME/gtk/-/work_items/3755) can log a `gdk_drop_set_actions` critical from the second file drop onwards. File sending continues normally and DinoX release launchers do not make GLib criticals fatal. Wayland and Windows are not affected by this X11-specific GTK bug; developer runs that explicitly enable fatal criticals can terminate on the assertion.
+
+## [2.2.9] - 2026-08-24
+
+### Added
+- **Read-state synchronisation between devices**: An optional XEP-0490 setting synchronises the latest displayed position through the account server for one-to-one chats, group chats, and private MUC messages. This remains separate from contact-visible read receipts, uses server assistance only when advertised, and otherwise falls back to regular private PEP storage.
+- **Private-room read receipts**: Read receipts can now be configured per private room. Sent messages show how many verified room participants have read them without folding different readers into one room-wide state.
+
+### Changed
+- **Stable displayed-marker references**: XEP-0333 markers use sender stanza IDs for one-to-one chats and MUC private messages, and room-assigned XEP-0359 IDs for group-chat messages. Read pointers move forward only. Early one-to-one and MUC-private markers are applied after the matching live or archived message appears, while unknown group-chat targets are rejected.
+- **Bounded avatar loading**: Avatar cache reads run outside the GTK main thread, duplicate requests share one load, and memory use is bounded. Large rooms fetch participant avatars on demand with bounded prefetching instead of starting an unbounded burst.
+
+### Fixed
+- **Account avatar publication**: The independent XEP-0084 and vCard/XEP-0153 publication paths are coordinated across initial connection and reconnect, including directed room presence. Transient vCard fetch failures no longer overwrite the stored avatar, and interrupted or superseded publication attempts cannot restore stale state.
+- **Avatar state isolation**: Avatar assignments, source priorities, waiters, observers, and room occupants remain scoped to the exact account and JID, while validated image bytes are deduplicated by content hash. Live room updates cannot be replaced by an older membership snapshot. Explicit removals clear the mapped avatar, while invalid metadata is ignored without changing verified state.
+- **Delivery and read indicators**: Receipts continue to match when a server rewrites an outer stanza ID, when a receipt arrives before its message, or when a MUC echo supplies the authoritative room ID.
+- **Private-room encryption startup**: Incoming encrypted messages now wait for an already-running room-information query before applying the conversation encryption policy, instead of being discarded while a newly opened private room still temporarily reports no encryption.
+- **Read-receipt privacy and lifecycle**: Delivery and displayed responses are limited to eligible, unblocked contacts or current room occupants. Malformed, ambiguous, cross-account, and wrong-room references are rejected; reconnects fence stale operations, and remote read-state updates no longer clear unrelated notifications.
+- **Persistent read pointers**: Message and content-item read positions are stored together and reconciled when an attachment item arrives after its message, avoiding read-state regressions after restart or history catch-up.
+
+## [2.2.8] - 2026-08-23
+
+### Added
+- **Private-room audio and video group calls**: Joined private rooms can start and receive standards-based MUJI calls, add eligible participants from an active call, and keep one shared call alive as individual peers join or leave.
+- **Manual provider-directory refresh**: Account creation still opens immediately with the bundled offline provider snapshot. A refresh action can explicitly download, validate, cache, and display the newest directory without making dialog startup depend on the network; failures leave the usable bundled or cached list intact.
+- **Manual version check**: The application menu can check for a newer DinoX release on demand. It understands complete semantic versions across future major releases, reports when no update exists, and offers a release link only when a newer version is available; no automatic check or redirect occurs.
+
+### Changed
+- **Shared Google/libwebrtc call worker**: Existing one-to-one and private-room calls reuse one lazily created external media worker. Each MUJI participant adds only a peer connection, while group video uses one worker-owned capture and optional effect pipeline for all peer sessions, with exact full-JID ownership and bounded publisher handover instead of opening one worker or camera path per participant.
+- **Google/libwebrtc ABI 38 / IPC 8 / video ring 6**: Linux and Windows packages now use immutable, content-addressed ABI 38 runtimes carrying local-source frame diagnostics, five independent bounded frame slots, and the shared-pipeline fan-out capability required by group video. Older ABI 37 assets remain available for reproducible builds of previous source tags.
+- **Strict package validation**: Production package builds no longer include WebRTC smoke-only sources, while dedicated strict test builds still compile and run the complete Linux and Windows smoke suites. This removes false unused-method release failures without weakening warning gates.
+
+### Fixed
+- **Interoperable group-call signaling**: XEP-0272 ready presences use the standard MUJI content namespace and required content creator, preserve the room's selected conference content names on every associated Jingle leg, and keep those wire identities separate from libwebrtc's internal SDP MIDs; XEP-0482 groupchat actions use only the room-assigned XEP-0359 stanza ID, wait for the authoritative MUC echo when necessary, reject ambiguous duplicate IDs, and scope accept, reject, retract, and left actions to the exact account, room, target, and resource.
+- **Group-call lifecycle races**: Bounded preparing waits, private-room ownership checks, transactional Direct-to-MUJI rollback, exact peer teardown, cached-membership fencing, and standard MUJI facet removal prevent duplicate calls, stale joins, accidental room destruction, and terminal actions leaking to unrelated invitees.
+- **Private-room call controls**: The title-bar audio/video control now recognizes the Google/libwebrtc plugin's separate direct-call and MUJI engine facets, so eligible joined private rooms expose their call actions instead of incorrectly reporting that no group-call engine is available.
+- **One-to-one call isolation**: Private-room orchestration keeps direct JMI/Jingle content names, payload mapping, media controls, worker ownership and teardown behavior isolated, with dedicated regression coverage for concurrent direct and group calls.
+- **File-send target ownership**: File-selection callbacks and completed voice or video recordings remain bound to the conversation in which they started, preventing a later conversation switch or overlapping asynchronous action from sending to the wrong contact or dereferencing stale UI state.
+- **Malformed HTTP upload servers**: XEP-0363 slot URLs and received HTTP URLs are validated as usable HTTP(S) network addresses before libsoup message construction. Invalid or incomplete server responses now fail as a transfer error instead of reaching a crash-prone path, while concurrent HTTP and Jingle transfers keep independent cancellation state.
+- **Room-wide history deletion**: Normal and private group-chat clear-history dialogs now offer separate local and global actions. Global deletion retracts each eligible own message with XEP-0424 while received or non-retractable items are removed only locally; the confirmation text no longer repeats the same irreversible-action warning.
+- **Linux accessibility-bus diagnostics**: Debian and AppImage launchers now test whether the advertised AT-SPI bus actually responds instead of trusting a stale socket, preserve a healthy accessibility bridge, and constrain optional per-user repair to the exact accessibility processes.
+- **Reproducible AppImage source staging**: Corresponding sources are fetched directly from the configured pinned Ubuntu snapshot, avoiding obsolete archive-pool URLs while retaining exact source-version and checksum validation.
+
+## [2.2.7] - 2026-08-20
+
+### Added
+- **Warm-tone video-call effect**: One-to-one video calls now offer an optional Warm tone camera effect alongside Grayscale. Effects remain off by default, are selected per call, and share the existing bounded worker-isolated processing path.
+- **Per-room member status messages**: Routine MUC role and affiliation messages are now hidden by default and can be enabled separately for each room. Kicks, bans, membership removals, room destruction, and their reasons remain visible regardless of this setting.
+- **Reply-aware deletion**: The delete dialog can optionally include all currently known direct replies in full. DinoX validates the complete selection before deletion and reports complete, partial, or failed results explicitly.
+
+### Changed
+- **Verified OMEMO recipients in private rooms**: DinoX now derives encrypted-room recipients only from a complete, current server-backed member, administrator, and owner snapshot. Every other member's OMEMO device readiness is verified before message input or queued encrypted messages are released. The check is restarted after joins, room reconfiguration, or membership changes, and a previously unsupported member is rechecked when devices become available.
+- **Cross-platform attachment input**: Copied files, clipboard images, Unicode Windows filenames, and drag-and-drop attachments now use one conversation-scoped send flow. Flatpak prefers FileTransfer portal grants, while native Linux and Windows use the stable GTK file-drop path; plain text still goes to the message composer.
+- **Pinned and measured video-effect runtimes**: Packaged Linux and Windows builds now use the immutable Google/libwebrtc ABI 37 / IPC 7 runtime required by Warm tone. Deterministic Direct, Off, Grayscale, and Warm tone baselines cover frame delivery, CPU, memory, watchdog, and bounded-buffer behavior.
+
+### Fixed
+- **Authoritative private-room membership state**: Concurrent member, administrator, and owner queries are coalesced, stale or partial results cannot replace current state, and explicit refreshes supersede older join work. This prevents duplicate retries, stale recipient lists, and premature resend of encrypted MUC messages.
+- **Moderated-room input permissions**: Asynchronous encryption checks no longer override visitor or muted-member restrictions or reopen the composer before both room permissions and encryption readiness are current.
+- **MUC avatars without an existing vCard**: Room owners can set, replace, or remove an avatar even when the server reports that no room vCard exists yet.
+- **MUC stable message identifiers**: DinoX recognizes the standardized stable-stanza-ID feature in room discovery and retains authoritative room IDs from live echoes, improving cross-client reply and retraction targeting.
+- **Reply identity across senders and corrections**: Sender-scoped reply resolution prevents colliding stanza IDs from linking to another participant's message. Corrected replies keep their explicit parent, and group-chat replies retain the correct room-assigned target ID.
+- **Complete deletion of edited own messages**: Deleting for everyone now retracts every known physical revision of an edited message in one-to-one chats and MUCs. Incomplete or ambiguous correction chains fail closed instead of leaving older revisions visible.
+- **Unambiguous message actions**: Hovering an embedded quote no longer exposes actions for the surrounding reply row. The action toolbar and destructive confirmation identify the actual sender and message preview, preventing accidental deletion of a reply instead of the intended message.
+- **Message editing and widget focus**: Focus is cleared before corrected or deleted message widgets are replaced, preventing the `gtk_widget_is_ancestor` critical and the associated crash.
+- **Clipboard-image sending and cleanup**: Pasted images use an explicit private plaintext lease instead of being mistaken for encrypted DinoX-managed storage, fixing the checksum failure reported in [issue #33](https://git.dinox.im/dinoxim/dinox/issues/33) and ensuring temporary data is removed after cancellation or sending.
+- **File-send dialog behavior**: Available direct-transfer and server-upload choices appear progressively without resetting the user's selection, unreadable Flatpak drops offer an explicit reselection path, and image previews remain within the dialog's breakpoint dimensions.
+- **Dismissible non-anonymous-room warning**: The real-JID visibility warning can be closed for the current join and is shown again after leaving and rejoining or when the room's visibility state changes.
+- **Portable Windows icons**: OMEMO and OpenPGP trust states, group-call status, sticker actions, join-room branding, and other symbolic actions now use icons included in the Windows distribution instead of missing-image placeholders.
+
+## [2.2.6] - 2026-08-10
+
+### Fixed
+- **Unicode-safe local bot integrations**: Botmother API responses, bot message and update JSON, AI-provider requests, Telegram payloads, ejabberd requests, and related error text now preserve Cyrillic, umlauts, CJK, and emoji. Invalid UTF-8 is sanitized, and text limits no longer split multibyte characters.
+- **Bot API JSON input hardening**: Requests containing raw or decoded NUL characters are rejected before persistence, while a literal `\\u0000` string remains valid.
+- **OpenPGP VKS Unicode requests**: keys.openpgp.org upload and verification JSON now preserves non-ASCII key text, verification data, and internationalized addresses while retaining RFC 8259 escaping.
+
+## [2.2.5] - 2026-08-10
+
+### Fixed
+- **Windows Unicode paths**: Portable builds now run reliably from profiles and install paths containing Cyrillic and other non-ASCII characters. The mandatory distribution checker covers translations, TLS certificates, encrypted backup and restore, Tor, OpenSSL, and deferred reset/wipe operations under Unicode paths.
+
+## [2.2.4] - 2026-08-09
+
+### Highlights
+- **First opt-in video-call effect and an extensible effects foundation**: One-to-one video calls now offer an optional grayscale effect backed by a capability-driven, worker-isolated effects pipeline. Effects remain off by default. This release establishes the UI, lifecycle, native ABI and IPC foundation for more effects; background blur, replacement and face accessories are not part of 2.2.4 yet.
+- **More efficient and responsive video calls**: Bounded latest-frame-wins delivery, coalesced worker wakeups, a one-frame effect mailbox, reusable frame buffers and bounded teardown prevent stale video work from accumulating, reduce avoidable CPU and memory pressure, and keep calls responsive while effects are switched.
+- **Durable legacy OMEMO sessions across restarts**: Ratchet sessions, pre-keys and device identities now use checked, fail-closed persistence and transactional recovery. Tested clean restarts and abrupt process termination no longer require sending a message first before new encrypted messages can be decrypted.
+
+### Added
+- **Video-effect controls and diagnostics**: The call window exposes supported outgoing-camera effects and keeps the local preview aligned with the processed frame sent to the peer. Revision-bound state and bounded diagnostics make later effect implementations possible without moving frame processing into GTK or the main DinoX process.
+- **OMEMO device-key review**: When a known device presents a changed identity key, DinoX keeps it blocked and offers a direct, factual review action instead of silently accepting the replacement.
+
+### Changed
+- **Isolated video-effect processing**: Effect work runs inside the external Google/libwebrtc worker on a dedicated bounded executor. The normal effects-off path does not start an effect thread or allocate effect-owned frame buffers.
+- **Pinned media runtimes**: Linux and Windows package paths now require the immutable Google/libwebrtc ABI 36 / IPC 6 runtime used by the effects pipeline, and the Windows builder accepts the canonical vendor archive layout.
+- **Pinned legacy OMEMO dependency**: Normal Linux source builds, Flatpak and Windows builds use the verified libomemo-c 0.5.1 baseline while OMEMO 2 remains disabled in stable builds.
+
+### Fixed
+- **Audio after a previous video call**: Reinitializing the shared Google/libwebrtc audio device now installs the new VoiceEngine transport correctly, so a later call no longer starts with zero captured or decoded audio after an earlier video session was closed.
+- **Video-frame backlog and post-toggle stutter**: Preview and received-video shared-memory delivery now replaces unread real-time frames and reuses an already pending wakeup instead of accumulating stale frame events.
+- **Video-effect lifecycle cleanup**: Rapid effect changes, call teardown, worker failure and slow optional processing now have bounded cancellation, generation fencing and resource cleanup without blocking the GTK main thread.
+- **OMEMO database consistency**: Session, pre-key and signed-pre-key callbacks now propagate database failures to libomemo; authenticated identity and session transitions roll back to the previous valid state on failure, and acknowledged ratchet updates use full SQLite durability.
+- **OMEMO reconnect and archive safety**: Account connections and MAM catch-up wait for a ready encrypted store, abort safely if readiness is lost, and no longer advance archive state through an unavailable OMEMO store.
+- **OMEMO identity-change safety**: Malformed or unauthenticated pre-key messages and invalid bundles can no longer replace a working session or identity before cryptographic validation; account removal also clears persisted and in-memory OMEMO state consistently.
+- **Windows libwebrtc rebuilds**: Corrected runtime rebuild gates and archive normalization so the documented clean Windows distribution build consumes the same effects-capable runtime layout as Linux packaging.
+
+## [2.2.3] - 2026-08-01
+
+### Highlights
+- **Proxy-first SOCKS5 and I2P account setup**: Custom XMPP endpoints and per-account SOCKS5 proxies, including an I2P router's SOCKS5 endpoint, can now be configured before the first connection, removing the previous bootstrap workaround for services reachable only through a proxy.
+- **Configurable chat typography**: Users can select an installed chat font and scale message, quote, and composer text from 100% to 200% on Linux and Windows without enlarging the complete application interface.
+
+### Added
+- **Call duration display**: Active audio and video calls now show their elapsed duration directly in the call window, including calls longer than one hour.
+
+### Changed
+- **Proxy-aware initial connections**: The sign-in flow validates and stores the complete proxy configuration per account, including optional proxy credentials, before attempting the XMPP connection.
+
+### Fixed
+- **New group-chat creation**: MUC joins now publish the complete available own affiliation, role, identity, and occupant state before completing, preventing newly created rooms from racing room configuration and appearing only temporarily.
+- **HTTP upload cancellation**: Cancelling a transfer while DinoX waits for an XEP-0363 upload slot now ends the pending request immediately; stream disconnects also stop the request instead of leaving an endless spinner.
+
+## [2.2.2] - 2026-07-30
+
+### Highlights
+- **Google/libwebrtc media engine**: DinoX now uses an isolated Google/libwebrtc M150 worker for Jingle/JMI audio and video calls on Linux and Windows. Native device handling, mute and camera controls, VP8 video, ICE/STUN/TURN, and call teardown no longer depend on the former GStreamer RTP/WebRTC call backend.
+- **Voice and video messages on the new capture stack**: Microphone and camera capture now run through the same isolated libwebrtc engine. Linux uses FFmpeg and Windows uses Media Foundation for encoding and muxing, while GStreamer remains responsible for media-file demuxing, decoding, playback, previews, and metadata.
+- **Major MUC administration and member-state overhaul**: Room configuration, affiliations, roles, moderation, kicks, bans, Hats, JID visibility, mediated invitations, moderated-room voice requests, avatars, and live member grouping now share one lifecycle-aware server-backed state path.
+- **Production-ready release packaging**: Debian, AppImage, Flatpak, and the canonical portable Windows build now validate the complete plugin, Google/libwebrtc, helper-program, translation, runtime, and license closure before an artifact is accepted.
+
+### Added
+- **Google/libwebrtc device controls and diagnostics**: Audio/video settings can enumerate and test libwebrtc microphones, cameras, and speakers and expose separate call and media-message device choices.
+- **Moderated-room voice-request chat flow**: Visitors can request permission to speak directly from the chat input, while moderators receive a persistent in-chat approval or rejection action instead of relying on a short-lived desktop notification.
+- **MUC occupant reducer and worker**: Immutable, account- and room-scoped occupant snapshots now reconcile presence, affiliations, roles, Hats, real-JID visibility, and avatar state before the member list is updated.
+- **Canonical Windows build, validation, and ZIP tools**: The documented Windows flow now creates a fresh portable `dist/`, verifies every packaged plugin and runtime dependency, inventories bundled licenses, and produces a checked ZIP plus SHA-256 file.
+
+### Changed
+- **Large-room and roster responsiveness**: Virtualized contact and roster models, batched occupant commits, bounded member presentation, prioritized visible-room autojoin, and background cache-only avatar loading keep large rooms and contact lists responsive.
+- **MUC close, leave, and bookmark semantics**: Closing a room, leaving it temporarily, and leaving permanently now update the conversation, live room state, and bookmark consistently without stale rejoin continuations.
+- **Reconnect and MUC recovery**: Reconnect, MAM catch-up, server-administration discovery, presence snapshots, room configuration, and member-list activation are fenced to the current stream and recover without requiring a DinoX restart.
+- **Portable Windows runtime**: Windows packages now support non-ASCII checkout and runtime paths, use a frozen validated dependency baseline, and include all required GnuPG, Tor, Lyrebird, Google/libwebrtc, GStreamer, font, icon, schema, and translation data.
+- **Linux package production profile**: Deb, AppImage, and Flatpak builds use the pinned Google/libwebrtc runtime, keep the legacy RTP call plugin disabled, separate small binary artifacts from source-compliance sidecars, and fail closed on incomplete media or license inventories.
+
+### Fixed
+- **OMEMO sessions during archive replay**: Old undecryptable MAM pre-key messages no longer replace current device identities or destroy working OMEMO sessions, preventing later live messages from requiring an outgoing message before decryption resumes.
+- **MQTT topic bridges**: Bridge subscriptions are reconciled immediately after rule changes, MQTT wildcards follow protocol semantics, and retained-message deduplication no longer suppresses explicit bridge delivery.
+- **Concurrent file transfers**: HTTP, Jingle, sticker, and account-scoped transfer traffic no longer share cancellable request state that could let one transfer close or cancel another.
+- **Conversation-switch memory growth**: Repeated switching between large chats no longer retains obsolete media rows, message widgets, signal owners, and deferred UI work indefinitely.
+- **MUC role and visitor grouping**: Muted occupants move into the visitor section immediately and return to their assigned role after voice is restored; live role, affiliation, Hat, and visibility changes now refresh the correct member-list section.
+- **MUC invitations**: Room invitation controls now follow the server's mediated-invitation and `occupants_may_invite` policy instead of presenting a misleading client-only restriction.
+- **Packaged media lifecycle**: Audio/video calls and media-message recording shut down their libwebrtc worker sessions cleanly in Deb, AppImage, Flatpak, and Windows package layouts.
+- **Windows OpenPGP key lookup**: The portable package includes `dirmngr.exe`, starts and reaches it through an isolated GnuPG home, requests helper shutdown through `gpgconf`, and fails the distribution build if GnuPG helpers or dependencies are incomplete.
+- **UI lifecycle warnings and stale callbacks**: Contact dialogs, MUC member popovers, conversation details, message rows, media widgets, and preference pages now disconnect account- and widget-scoped callbacks before their owners disappear.
+- **Provider-directory refresh**: Provider data refreshes in the background without delaying the add-account dialog.
+
+## [2.2.1] - 2026-07-06
+
+### Fixed
+- **Add-account provider dialog lifecycle**: The account-creation dialog now reuses a single active instance, opens without duplicate dialogs or stale close callbacks, and keeps the provider list layout responsive while the directory refresh runs asynchronously.
+- **OMEMO PubSub requests for domains**: DinoX no longer requests legacy OMEMO device lists from server or MUC room domains, preventing repeated `service-unavailable` PubSub warnings when joining, leaving, or syncing group chats.
+
+## [2.2.0] - 2026-07-06
+
+### Added
+- **XMPP provider directory for account creation**: Account creation now uses the validated XMPP Providers category-B directory through the DinoX mirror at `https://dinox.im/data/providers/v2/providers-B.json`, keeps a bundled offline snapshot, refreshes a local cache asynchronously, and routes providers either to in-app XEP-0077 registration or to their HTTPS registration website while preserving manual server entry.
+
+### Changed
+- **Provider selection UX**: External provider rows now keep provider website links visible as normal links below the provider details while the row activation remains dedicated to direct account registration.
+
+### Fixed
+- **OMEMO after local history deletion**: Clearing a local chat history no longer deletes OMEMO Signal sessions, device knowledge, or trust state, so incoming encrypted messages after restart can keep using the existing encrypted session.
+- **External registration window handling**: Opening provider registration or website links no longer depends on focus timing that could trigger GTK/GDK surface warnings.
+- **Provider directory build warnings**: Cleaned provider-cache loading and localized URL selection so the Windows MSYS2 build no longer emits the provider/add-account warnings seen during the release follow-up.
+- **OMEMO PubSub regression stability**: OMEMO test PubSub mocks now answer owner-configuration probes so delayed `0060_pubsub` IQ timeouts cannot spill into later file-transfer checks.
+
+## [2.1.9] - 2026-07-05
+
+### Added
+- **Capability-driven server administration**: Administrator accounts now discover the XEP-0050 commands advertised by their XMPP server and expose supported account, roster, and MUC operations in a dedicated administration dialog with dynamic and multi-step data forms.
+
+### Fixed
+- **Ad-hoc command discovery**: Corrected service-discovery node handling so command lists are requested from the XEP-0050 node and advertised server commands are detected and executed reliably.
+- **MUC participant avatar refresh**: Cache-only participant rows now update when background avatar loading completes, including deferred refreshes after reopening a suspended participant popover.
+- **Local account removal lifecycle**: Removing a disabled or server-deleted account no longer leaves stale settings callbacks that can crash DinoX when another account is selected or added. Local deletion remains scoped to the selected account, and the reusable removal button is restored after every attempt.
+
+## [2.1.8] - 2026-07-04
+
+### Fixed
+- **OMEMO v1 multi-device delivery**: Direct encrypted messages now refresh legacy device lists, wait for every active recipient and same-account device, retry newly advertised or temporarily unavailable bundles, and rebuild stale Signal sessions before sending. Identity-key changes reset the old session and application trust in the correct order, while private MUCs retain their separate partial-delivery policy and OMEMO 2 remains disabled for stable builds.
+- **New-account sign-in flow**: New JIDs can now enter JID and password together, the sign-in action follows valid credential and busy state, and TLS certificate failures preserve the entered credentials for a clean retry.
+- **Fresh-account PubSub state**: Missing bookmark, OMEMO device-list, bundle, and obsolete bundle-item nodes are handled as expected empty state during initial synchronization instead of producing misleading warnings or blocking setup.
+- **Fail-closed server account deletion**: Server deletion must succeed before related data and the local account are removed. Failures keep the account configured locally with a clear error, while managed Botmother bot deletion remains an explicit server-neutral option.
+
+## [2.1.7] - 2026-07-01
+
+### Fixed
+- **Own remote file offers**: Sent files that only retain a server-hosted SFS or HTTP source can now be downloaded and retried from another device on the sender's own account instead of being treated as unavailable local uploads.
+- **Legacy encrypted file URL routing**: Bot Features now recognizes standalone legacy `aesgcm://` file URLs and keeps them out of AI message routing while preserving normal file-transfer handling.
+- **MUC join dialog text safety**: Sanitized account names, room discovery metadata, JIDs, filters, status messages, and descriptions before showing them in GTK, preventing malformed UTF-8 service data from breaking group-chat discovery and join dialogs.
+- **OMEMO device-list refresh stability**: Guarded device-list ownership checks when a stream has no completed bind state yet, preventing a crash while learning a device from an incoming pre-key message.
+
+## [2.1.6] - 2026-06-29
+
+### Fixed
+- **Message delivery completion**: Hardened XEP-0198 stream-management send-queue completion so 1:1 messages can leave the pending state once the server acknowledges them.
+- **OMEMO same-account devices**: When OMEMO 2 runtime support is disabled, stale OMEMO2-only state is cleaned up and DinoX waits for unknown same-JID OMEMO v1 devices before sending, so other logged-in clients are less likely to miss encrypted messages.
+- **Received video and media files**: Empty received media payloads are rejected before playback or storage and now show a clear chat error asking the sender to send the file again.
+
+## [2.1.5] - 2026-06-29
+
+### Changed
+- **Startup and add-conversation responsiveness**: Deferred heavy roster, account, group, and preference-list setup so startup and add-conversation dialogs open with less main-loop pressure after large roster or MUC activity.
+- **MUC member and occupant state handling**: Hardened cached member-list, occupant popover, call-entry, presence, and notification state so large rooms keep more stable UI state while switching, closing, or reopening chats.
+- **Encryption details lifecycle**: Tightened OMEMO and OpenPGP contact-detail and preference-row callbacks so stale widgets no longer receive key-state updates after their account, chat, or page lifecycle has ended.
+
+### Fixed
+- **OMEMO v1 device and bundle repair**: Hardened legacy OMEMO reset, bundle fetch, device-list retry, and self-publish handling so older or temporarily inconsistent peer devices can recover without corrupting the active send path.
+- **OMEMO MAM replay visibility**: Account-level archive catch-up now runs reliably after reconnect, MAM replay messages keep their stable server IDs for deduplication, and undecryptable live or replayed OMEMO payloads remain visible as explicit encrypted-message failures instead of disappearing silently.
+- **MUC join and bookmark removal flow**: Fixed direct group join selection, bookmark removal state, manual removal protection, stale leave/rejoin state, and join-dialog completion so removed or rejoined rooms do not get reopened by old local state.
+- **Roster and account lifecycle handling**: Hardened account-scoped roster, contact browser, contact settings, and account combo-box state so preference pages and add-contact dialogs no longer mix stale account data after account or roster changes.
+- **MUC startup lifecycle regressions**: Fixed stale join continuations, incomplete room metadata handling, and duplicate room-entry state that could leave group-chat dialogs or room details stuck after startup.
+- **OpenPGP private MUC readiness**: Hardened OpenPGP file-send readiness checks for private MUC contexts so encrypted file preparation fails closed when sender/contact key state is not ready.
+- **Chat encryption status callbacks**: Guarded chat-input encryption indicators and conversation controllers against stale callback delivery after the active conversation changes.
+
+## [2.1.4] - 2026-06-20
+
+### Added
+- **OpenPGP secret key synchronization**: Added XEP-0373 secret key backup publishing and fetch/restore support for OpenPGP-for-XMPP accounts, using the XEP-0373 backup-code encryption format for interoperable restore on other clients.
+- **OpenPGP contact verification**: Added manual trust state for XEP-0373/XEP-0374 contact keys so contact encryption details can show whether a published OpenPGP key is unverified, manually verified, or changed.
+
+### Changed
+- **OpenPGP key management modes**: Separated XMPP OpenPGP publishing and selection from legacy XEP-0027/keyserver publishing, with clearer account-scoped actions for XEP-0373/XEP-0374 keys versus legacy keys.
+- **OpenPGP account scope**: Tightened per-account key visibility and selection so account keys, legacy keyserver state, and XMPP-published keys no longer bleed into each other.
+
+### Fixed
+- **OpenPGP server backup restore UI**: Fixed double dialogs, click-through activation, cancel handling, wrong-backup-code handling, and duplicate import handling in the secret key sync flow.
+- **OpenPGP already-present restore cases**: Secret backups that match an already available local key now stop cleanly and tell the user that no import is needed.
+- **OpenPGP unencrypted server keys**: Fetching an unencrypted published XMPP OpenPGP key now handles the no-secret-backup case without an endless spinner.
+- **OpenPGP contact signal cleanup**: Guarded contact signal cleanup so stale UI callbacks no longer run after the contact details view is gone.
+- **MUC join lifecycle**: Hardened group chat join state so repeated joins, slow large rooms, and stale join continuations do not leave the join UI stuck.
+- **Direct Jingle file transfers**: Fixed stale direct Jingle transfer state after cancelled or outdated live transfer offers.
+- **URL preview safety**: Guarded URL preview message creation so invalid or incomplete preview state does not create broken messages.
+- **AppImage runtime**: Bundled `libgeoclue-2` for AppImage builds to avoid missing runtime library failures.
+
+## [2.1.3] - 2026-06-14
+
+### Fixed
+- **OpenPGP for XMPP interoperability**: Improved XEP-0373/XEP-0374 interoperability with clients that publish lowercase OpenPGP key-data nodes or use a `jabber:client` payload namespace inside encrypted signcrypt envelopes.
+- **OpenPGP contact status wording**: Clarified the XEP-0373/XEP-0374 contact-details state so advertised support is not confused with a retrievable XMPP-published key.
+- **MUC bookmark sync timeouts**: Reduced repeated PubSub timeout noise while keeping clear room-specific warnings when bookmark autojoin sync fails.
+- **MQTT settings and reconnects**: Hardened MQTT enable/disable and reconnect handling to avoid stale UI state, duplicate connections, and account/standalone mode races.
+- **Cached avatars in add-conversation dialogs**: Restored cached contact and group avatars in the contact and group chat selection dialogs after restart without triggering network-heavy UI row loading.
+- **Windows MUC occupant warnings**: Cleaned up Windows-specific MUC occupant warning paths from the recent large-room work.
+
+## [2.1.2] - 2026-06-13
+
+### Added
+- **MUC invitations**: Added an explicit inbound and outbound group invitation flow with in-app accept/decline handling, notification routing, and outbound invite actions from group chat surfaces.
+- **Permanent MUC leave**: Added a permanent leave action for group chats so users can leave a room and remove the bookmark instead of only closing or temporarily leaving it.
+- **Conversation notification controls**: Added per-conversation notification controls for finer chat notification handling.
+
+### Changed
+- **Large MUC member list performance**: Reworked large group member lists with virtualized, budgeted, and cache-friendly loading so opening, closing, and switching chats stays responsive in large rooms.
+- **MUC member list cleanup**: Moved expensive member list cleanup away from the chat switch path and detached hidden list models before deferred cleanup to reduce UI stalls.
+- **MUC avatar handling**: Reduced avatar pressure in large member lists with cached-avatar warming, debug statistics, and static/cache-only avatar behavior in add-conversation lists instead of triggering network avatar bursts from UI row construction.
+- **Add conversation dialogs**: Deferred roster and group list work, tightened list lifecycle handling, and improved group dialog responsiveness after startup or large MUC activity.
+- **MUC startup responsiveness**: Prioritized active/manual room work and reduced startup pressure from large MUCs, including smaller MAM batches and coalesced sidebar sorting.
+
+### Fixed
+- **MUC join duplicate rows**: Deduplicated group join candidates and handled already joined MUC entries consistently in the group join dialog.
+- **MUC close/leave semantics**: Separated closing a group chat from leaving it, so close is local UI state while leave and permanent leave perform the correct room/bookmark operations.
+- **MUC invite side effects**: Prevented incoming group invitations from implicitly creating/opening/joining rooms before the user explicitly accepts.
+- **MUC join races**: Hardened MUC join coalescing, timeout, and metadata handling to avoid duplicate join windows, stale join continuations, and avatar-fetch pressure during large room joins.
+- **Member list presentation**: Avoided duplicate progress labels, reduced occupant timing overhead, and budgeted presentation rebuilds and commits to prevent long main-loop stalls.
+- **File transfer recovery**: Hardened file-transfer recovery and made transfer actions more robust after interrupted or cancelled transfers.
+- **Windows build warnings**: Reduced Windows build warnings in preparation for the next Windows package build.
+
+## [2.1.1] - 2026-06-09
+
+### Fixed
+- **File transfer cancel handling (Jingle send path)**: Sending side transfers now register a transfer identifier/token and keep a send-side session map, so cancel requests from UI or local state always terminate the active Jingle session with `CANCEL` instead of only aborting local progress state.
+- **File transfer cancel handling (Jingle receive path)**: Receive-side cancel actions now route through `JingleFileProvider.cancel_receive_transfer` and keep transport teardown in the session lifecycle, avoiding lingering half-close races that could destabilize Windows transfers.
+- **File transfer cancellation status consistency**: HTTP/SFS download abort now propagates `IOError.CANCELLED` instead of collapsing to generic `IOError.FAILED`, so UI and retry logic show a true cancelled outcome.
+- **Offer flow safety**: Jingle sender offers now support a bounded offer wait timeout (default 15s) and avoid indefinite hang states when no ACCEPT or terminate event arrives.
+
+### Changed
+- **Documentation landing page**: Repo docs landing page link now points to the in-repository wiki as the current documentation home.
+
+## [2.1.0] - 2026-06-06
+
+### Changed
+- **OMEMO interoperability default**: Legacy OMEMO remains the stable default, while OMEMO 2 stays behind the explicit `DINOX_ENABLE_OMEMO2=1` opt-in gate for now.
+
+### Fixed
+- **OMEMO own PEP publishing**: Own OMEMO PEP publishes no longer address the account bare JID explicitly and retry legacy and OMEMO 2 device-list publication without `pubsub#max_items` when older servers reject that publish option.
+
+### Known Compatibility Notes
+- **talk.de / ejabberd 21.01**: `wait/resource-constraint` can still be reported for legacy OMEMO device-list publishing on this server stack; ejabberd 26 remains the current reference server for the 2.1.0 package release check.
+
+## [2.0.9] - 2026-06-05
+
+### Changed
+- **OMEMO 2 runtime policy**: OMEMO 2 remains available as an explicit opt-in path through `DINOX_ENABLE_OMEMO2=1`, but stable builds now keep legacy OMEMO as the default interop mode.
+
+### Fixed
+- **OMEMO PubSub load**: DinoX no longer publishes or queries legacy OMEMO and OMEMO 2 state in parallel by default, avoiding repeated `wait/resource-constraint` responses on servers that throttle PEP/PubSub work.
+- **Legacy OMEMO fallback**: Existing OMEMO 2-only database rows no longer make a contact look like a usable legacy OMEMO address when OMEMO 2 is disabled, so legacy device discovery can recover correctly.
+- **OMEMO 2 repair side effects**: Incoming OMEMO 2 repair paths no longer trigger v2 bundle/device-list PubSub requests unless OMEMO 2 was explicitly enabled.
+- **Forgejo release test gate**: Release-candidate and local release full-test runs now execute Meson tests serially, CI checkouts use shallow fetches, Linux package compile jobs are capped so Deb, AppImage, and Flatpak builds do not flood the Forgejo host with uncontrolled parallel compiler processes, and package jobs no longer reject an otherwise compatible builder image solely because `ci-build-deps.sh` changed build-control logic.
+
+## [2.0.8] - 2026-06-05
+
+### Fixed
+- **Chat input UTF-8 safety**: Pasted or restored chat-input text is sanitized before it reaches GTK/Pango or the send path, including length-aware paste handling, edit-mode sends, drafts, plugin text commands, and emoji-preserving regression coverage.
+- **MUC rejoin stability**: Group chats recover more reliably after self-ping failures by stabilizing the rejoin path instead of leaving the room state stuck after a stalled stream.
+- **Mixed OMEMO device state**: OMEMO publishing and session handling are hardened for contacts that expose mixed legacy and OMEMO 2 device state from the same JID.
+
+## [2.0.7] - 2026-06-05
+
+### Fixed
+- **Forgejo Flatpak preflight compatibility**: The package runtime matrix now avoids a `jq 1.6` reserved-word conflict in Flatpak module option checks, so the Linux package-builder image and local development machines agree on OpenH264 manifest validation.
+
+## [2.0.6] - 2026-06-05
+
+### Fixed
+- **Forgejo release fail-fast**: Tag release package jobs now wait for a full static release preflight and a successful Core/Deb package gate before AppImage and Flatpak jobs start, preventing failed release gates from wasting long package build time or producing partial release uploads.
+
+## [2.0.5] - 2026-06-05
+
+### Changed
+- **Flatpak release baseline**: Forgejo Flatpak package builds keep the GNOME Platform 50 builder image and tightened manifest permissions while the separate Flathub submission remains a later maintainer-controlled step.
+- **Flathub planning**: Added an internal submission plan that documents the product boundaries, Runtime 50 checks, source-manifest requirements, and manual review steps before opening a Flathub pull request.
+
+### Fixed
+- **Account registration and login**: Registration and sign-in checks now report connection and no-response failures instead of treating missing streams or missing registration replies as success.
+- **SCRAM/SASL compatibility**: DinoX no longer guesses channel binding types when servers do not advertise XEP-0440, falls back to the correct bare SCRAM GS2 header, and escapes SCRAM usernames according to the protocol.
+- **Group chat joins**: MUC joins now finish outstanding join futures on timeout or stream detach, reactivate already joined rooms correctly, and configure newly created rooms only after the join actually completes.
+- **UI text validation**: User-facing labels, URL preview text, file names, SFS metadata, sticker names, and media-device labels are sanitized before they reach GTK/Pango, preventing invalid UTF-8 runtime warnings.
+- **Preferences layout**: Removed a conflicting fixed-size request from the preferences dialog that could make libadwaita report impossible minimum and natural sizes.
+- **Forgejo package gating**: The Core/Deb package job no longer fails on a Flatpak-specific manifest check; that check remains active in the dedicated Flatpak package job and in normal local static release checks.
+
+## [2.0.4] - 2026-06-05
+
+### Fixed
+- **Superseded package release**: The `v2.0.4` tag did not produce a complete package set because the Core/Deb CI gate still ran a Flatpak-specific manifest check. The release content is carried forward in `2.0.5`.
+
+## [2.0.3] - 2026-06-05
+
+### Fixed
+- **Secure memory startup**: Libgcrypt initialization now disables the in-process secure memory pool before marking initialization complete, preventing repeated `Oops, secure memory pool already initialized` diagnostics in packaged builds.
+- **External service discovery**: XEP-0215 refreshes now use the account-level throttled warning path for request timeouts, avoiding repeated timeout warnings when STUN/TURN service discovery stalls.
+- **Package accessibility startup**: Debian and AppImage wrappers keep the GTK accessibility bridge enabled by default and only run the hard AT-SPI repair path when explicitly requested.
+
+## [2.0.2] - 2026-06-04
+
+### Changed
+- **Flatpak runtime**: Forgejo Flatpak release builds now target GNOME Platform 50 and use the `flatpak-builder-dinox:gnome-50` builder image, matching the Flathub submission baseline.
+
+### Fixed
+- **Flatpak CI guard**: The package runtime matrix now fails if the Flatpak manifest is moved away from GNOME Runtime 50.
+
+## [2.0.1] - 2026-06-04
+
+### Fixed
+- **XMPP reconnects**: Stalled XMPP streams are now reconnected when server pings fail, while stale ping callbacks are ignored after intentional disconnects, newer stream activity, or replaced streams.
+- **IQ error handling**: IQ write failures now complete the waiting request immediately instead of being reported later as generic response timeouts.
+
+### Changed
+- **Flathub metadata**: AppStream screenshots now use stable tag URLs instead of the moving `master` branch.
+
+## [2.0.0] - 2026-06-04
+
+Milestone: [DinoX 2.0.0 Relaunch](https://git.dinox.im/dinoxim/dinox/milestone/1)
+
+### Added
+- **Botmother automation**: Added the Botmother management UI, local REST API, token/scopes model, webhook controls, Telegram/AI bridge controls, dedicated bot MUC behavior modes, and validation coverage for the API boundary.
+- **Encrypted file transfer pipeline**: Added hardened encrypted HTTP and Jingle file-transfer paths with verified plaintext release, sender selection, progress phases, cancellation guards, retry coverage, and private MUC transfer gates.
+- **OMEMO and Jingle coverage**: Added OMEMO2/JET encrypted transport handling, receive-store coverage, private MUC fanout smokes, and packaged Windows/Linux runtime gates for encrypted Jingle S5B transfers.
+- **OpenPGP workflow**: Added stronger XEP-0027, XEP-0373, and XEP-0374 key handling, OpenPGP file-transfer verification, private MUC recipient modeling, and live GPG helper test coverage.
+- **Forgejo packaging**: Added Forgejo release publishing, checksummed release assets, manual package build toggles, Linux and Flatpak package-builder images, AppImage runtime mirroring, and static package-runtime matrix checks.
+- **Windows runtime**: Added packaged Windows protocol-handler support, improved OpenPGP subprocess handling, font and pixbuf loader packaging fixes, and Windows runtime smoke gates for file transfer and OMEMO paths.
+
+### Changed
+- **Linux System Tray**: Replaced the external `libdbusmenu` dependency with DinoX's own minimal DBusMenu exporter for the StatusNotifierItem menu. The tray status menu and quit action remain available on SNI-compatible desktops.
+- **Packaging defaults**: Deb, AppImage, and Flatpak builds now use the Forgejo package-builder baseline with bundled runtime dependencies and checksum validation.
+- **MUC UI**: Improved MUC details, member and affiliation display, member search, hats support, room settings, and chat-switch responsiveness.
+
+### Security
+- **File release hardening**: Plaintext file access is now gated on verified completion so incomplete, cancelled, tampered, or failed transfers do not expose partially written plaintext.
+- **Proxy isolation**: Jingle S5B direct and proxy candidates now respect account proxy/Tor policy gates, including no-direct transfer scenarios.
+- **Botmother API hardening**: Tightened Botmother API field validation, token handling, scope enforcement, webhook URL sanitization, encrypted secret storage, and loopback/network-mode handling.
+
+### Fixed
+- **MUC Presence**: Rejoining a MUC now preserves the globally selected presence state instead of always appearing as online until the status is changed again.
+- **MUC Rejoin**: Leaving and closing a MUC no longer leaves stale state that prevents joining the room again.
+- **Contacts**: Subscription requests are now routed through the correct accept/request paths instead of delaying the contact acceptance prompt until later messages.
+- **File sharing**: Stateless file-sharing sources that arrive before the referenced message are cached and replayed instead of being ignored as unknown.
+- **Package builds**: Fixed builder-image verification, dependency cache compatibility, WebRTC audio-processing packaging, AppImage diagnostics, Flatpak cache reuse, and Debian/AppImage bundled media runtime checks.
+- **AppImage OpenPGP**: Isolated external GnuPG/GPGConf subprocesses from AppImage libraries to avoid host-library conflicts and repeated secure-memory initialization noise.
+- **Botmother startup**: Loading Botmother manager/create UI state no longer restarts the local Botmother API when global or account-level Botmother is disabled.
+- **XMPP noise**: Reduced misleading ping and PubSub warnings for cancelled or detached streams.
+- **Downloads**: Transient automatic media download failures no longer block a later manual retry.
+- **Windows UI/runtime**: Fixed packaged font startup, pixbuf loader scanning, OpenPGP shutdown packaging, and several Windows-specific UI/build warnings.
+
+## [1.1.8.1] - 2026-04-04
+
+### Fixed
+- **Call Termination**: Fixed a crash that occurred when terminating a call.
+- **Video Compatibility**: Improved video encoding compatibility for calls.
+- **UI Improvements**: Fixed various UI bugs including conversation list selection issues and edge cases.
+
+
+
+## [1.1.8.0] - 2026-03-26
+
+### Fixed — Windows Database Reset
+- **Race condition in database reset**: On Windows, two separate batch files (delete DBs + restart dinox.exe) ran in parallel with the same ~2s delay — dinox.exe often restarted *before* files were deleted, making the reset appear to do nothing (all old OMEMO keys and messages still present)
+- **Fix**: Delete + restart combined into a single sequential batch file: wait for process exit → delete all DB files → then restart dinox.exe
+- **Factory reset fixed too**: Same race condition pattern fixed for factory reset on Windows
+
+### Fixed — Build & CI
+- **AppImage build fix**: Removed `--no-net` flag from appimagetool — the "continuous" release (commit 5735cc5, 2023-03-08) does not support this option, causing both x86_64 and aarch64 CI builds to fail with `Option parsing failed: Unknown option --no-net`
+
+### Stats
+- 2 commits, 2 files changed
+- Critical Windows bug fix: database/factory reset now works reliably
+- CI fix: AppImage builds restored
+
+## [1.1.7.9] - 2026-03-26
+
+### Added — Windows Sound Notifications
+- **Cross-platform sound notifications**: Windows now uses GStreamer playbin with bundled WAV files (GResource); Linux libcanberra path completely unchanged
+- **4 notification sounds**: message.wav, incoming-call.wav, outgoing-ringback.wav, alert.wav — embedded as GResource, played via `resource://` URIs
+- **3 independent playbin channels**: Message, ringtone, and ringback can play concurrently without interrupting each other
+- **MQTT CRITICAL alert sound**: Alert playbin in MQTT plugin plays alert.wav on CRITICAL priority messages
+- **Toast audio silenced**: Windows Toast notifications now use `silent="true"` — sound comes from GStreamer plugin instead of broken `ms-winsoundevent`
+
+### Performance — Windows Video Message Recording
+- **GStreamer MF warm-up thread**: Background thread at startup pre-loads Media Foundation DLLs (mfvideosrc, mfh264enc, wasapi2src, avenc_aac, mp4mux) — first video recording starts in ~2s instead of ~8s
+- **Faster video message thumbnails**: Improved thumbnail display speed
+
+### Fixed — Windows Distribution
+- **Missing GStreamer `gio` plugin**: Added to `update_dist.sh` — required for `resource://` URI playback of bundled sounds
+- **Video bitrate optimized**: 1500→800 kbps for mobile-friendly video messages, receive REMB 256→800
+
+### Fixed — Build & CI
+- **AppImage build**: Added `--no-net` to appimagetool — decouples AppImage build from website availability
+- **README images**: Restored appdata screenshots in docs/
+
+### Cleanup
+- **Debug warnings removed**: All TIMING warnings from video_recorder.vala (18 warnings) and voice_processor_native.cpp `g_warning`→`g_debug`
+- **Diagnostic warnings→debug()**: All remaining diagnostic `warning()` calls converted to `debug()` across RTP and video recording
+
+### Stats
+- 7 commits, ~15 files changed
+- Major new feature: Windows sound notifications via GStreamer
+- Major performance improvement: MF DLL pre-warming (~6s faster first video recording)
+- Windows distribution fix: gio plugin for resource:// URI support
+
+## [1.1.7.8] - 2026-03-25
+
+### Added — Audio/Video Device Settings
+- **Preferences page for audio/video devices**: New "Audio & Video" tab in Preferences with persistent device selection for microphone, speaker, and camera — survives app restarts
+- **Device deduplication**: Filters duplicate audio/video devices on Windows where WASAPI2 and legacy APIs expose the same hardware under different names
+- **DINOX_LOG_FILE environment variable**: Set this on Windows to redirect all debug logging to a file without modifying shell environment
+
+### Fixed — Audio/Video Calls (Windows)
+- **Audio send broken**: Decoupling queue added in `create()` prevents audio pipeline stall; device element leak in `destroy()` fixed
+- **WASAPI2 S16LE capsfilter**: Audio capsfilter must specify `format=S16LE` explicitly for WASAPI2 compatibility on Windows
+- **audioresample in all playback paths**: Added `audioresample` to voice message and call playback pipelines — fixes sample rate mismatch with WASAPI2
+- **VoiceProcessor skipped on Windows**: WASAPI2 already handles AEC/NS/AGC — running DinoX VoiceProcessor on top caused double-processing artifacts
+- **Audio crackling reduced**: rtpbin latency 100→150ms, Opus bitrate 24→48kbps, FEC status logging
+- **Video send bitrate**: Initial 256→1500 kbps, floor 128→256 kbps — fixes REMB chicken-and-egg problem where receiver never sends REMB until it gets video
+- **mfh264enc NV12 format**: Windows Media Foundation H.264 encoder now receives correct pixel format
+- **CRT invalid-parameter-handler crash**: Suppressed MSVC CRT dialog at startup via IAT-patch of GLib's `MessageBoxW`
+- **Explicit WASAPI2/MF sources**: Voice/video messages use `wasapi2src`/`mfh264enc` directly on Windows instead of auto-detection
+
+### Fixed — Audio/Video Calls (Linux)
+- **TOCTOU race in deep_copy_buffer_probe**: DMA-BUF memory pinned during copy to prevent PipeWire SIGSEGV from recycled shared memory
+- **pipewiresrc EINVAL (-22)**: Source-side capsfilter with device-negotiated caps fixes PipeWire rejection of range-based caps
+- **Video buffer deep copy**: C pad probe replaces invalid `copy-buffers` queue property — prevents SIGSEGV from recycled PipeWire shared memory
+- **Video recorder fixed caps**: Uses 640×480@30fps instead of ranges to prevent backwards caps propagation to pipewiresrc
+
+### Fixed — Audio/Video Calls (Both Platforms)
+- **Video call stability**: Multiple SIGSEGV fixes in call state sync, Jingle correctness, senders negotiation, teardown race
+- **Video message stop recording**: EOS via blocking pad probes — `stop_recording` now ~70ms instead of 3–20s timeout
+- **H.264 encoder caching**: Probe timeout reduced from 2s→500ms, encoder element cached for reuse
+- **Video message quality**: Reduced to 640×480@24fps with `add-borders` to prevent stretching
+- **Voice message click eliminated**: Smooth ramp-up for recording start
+- **Comprehensive null-dereference guards**: RTP pipeline guards for device changes during active calls
+- **Diagnostic timers removed**: Timer callbacks causing SIGSEGV on pipeline teardown eliminated
+
+### Performance — GStreamer Pipeline Linking
+- **TEMPLATE_CAPS**: Skip expensive CAPS queries during pipeline linking
+- **NO_RECONFIGURE link flags**: Prevent post-link caps cascade
+- **PadLinkCheck.NOTHING**: Explicit pad names bypass all caps queries — Windows pipeline setup significantly faster
+
+### Fixed — SOCKS5 Proxy / Tor
+- **SOCKS5 proxy overhaul**: Tor/SOCKS5 coexistence fixed, HTTP proxy bypass corrected
+
+### Fixed — OMEMO
+- **Partial MUC delivery**: Allow OMEMO message delivery when some MUC participants are unreachable instead of failing the entire send
+
+### Fixed — Windows Stability
+- **Panic wipe / DB reset**: Batch launch broken on Windows portable — fixed
+- **GStreamer plugin list**: Clean plugin dir before copy, remove deprecated directsound, add missing plugins (videotestsrc, audiotestsrc, audiomixer, videoflip, audiorate, level, wavenc)
+- **Shell pipe/redirect preserved**: Console attach no longer breaks pipe and redirect operators
+- **devices_changed null guard**: Prevent crash when monitor reports null media device
+
+### Changed — Windows CI
+- **gst-plugins-ugly**: Added to CI packages (x264, voaac codecs)
+- **cantarell-fonts**: Added to CI packages (Adwaita font fallback)
+
+### Stats
+- 62 commits, 43 files changed across RTP/calls, GStreamer, Windows platform, OMEMO, proxy
+- Major new feature: Audio/Video device preferences with persistent selection
+- Major performance improvement: GStreamer pipeline linking (TEMPLATE_CAPS, NO_RECONFIGURE)
+- 20+ crash fixes (SIGSEGV, null dereference, race conditions)
+
+## [1.1.7.7] - 2026-03-18
+
+### Fixed — Audio/Video Calls (Linux + Windows)
+- **CRITICAL: Echo probe null dereference** (`voice_processor.vala`): `echo_probe.delay` called when `echo_probe == null` in `start()` → SIGSEGV. Now uses safe conditional: `int initial_delay = echo_probe != null ? echo_probe.delay : 200;`
+- **CRITICAL: SRTP crypto_session destroy race** (`stream.vala`): `crypto_session = null` was set BEFORE `recv_rtp.end_of_stream()`, causing incoming packets to hit null SRTP decryptor. Moved nulling AFTER EOS.
+- **CRITICAL: on_send_rtp_eos/on_send_rtcp_eos null crash** (`stream.vala`): EOS callbacks could fire after `send_rtp`/`send_rtcp` was already nulled. Added null guards.
+- **HIGH: Video caps.get_size() crash** (`video_widget.vala`): `input_caps_changed()` called `caps.get_size()` without checking for 0 → out-of-bounds access. Added size check.
+- **HIGH: EOS timeout too short** (`audio_recorder.vala`): 500ms EOS timeout was insufficient for MP4 faststart file rewrite on slow storage → truncated voice messages. Increased to 3000ms.
+- **Windows: Missing H.264 encoder** (`video_recorder.vala`): Windows Media Foundation `mfh264enc` added as first H.264 encoder in fallback chain (before VAAPI/VA/x264/avenc/openh264).
+- **GStreamer pipeline stability** (`plugin.vala`, `codec_util.vala`): `pause()` kept as safe no-op; pad probe added in `update_rescale_caps()` to prevent capsfilter race.
+
+### Fixed — SOCKS5 Proxy / Tor (Linux + Windows)
+- **CRITICAL: Tor DNS anonymity leak** (`stream_connect.vala`): SRV DNS lookups were performed locally BEFORE connecting through Tor proxy — ISP DNS sees which XMPP server user contacts. Fix: skip SRV lookups when `proxy_type == "tor"`, connect directly to `domain:5222`/`domain:443` through the Tor circuit.
+- **CRITICAL: is_transitioning permanent deadlock** (`tor_manager.vala`): If `start_tor()`/`stop_tor()` threw an exception, `is_transitioning` flag was never reset → Tor could never be toggled again. Fixed with try-finally in `set_enabled()`, `set_bridges()`, `update_use_bridges()`, `update_firewall_ports()`.
+- **HIGH: lyrebird.exe zombie processes** (`tor_controller.vala`): Windows only — `lyrebird.exe` (pluggable transport bridge) was not killed on Tor restart, accumulating zombie processes holding ports. Added `taskkill /F /IM lyrebird.exe` to the zombie killer in `start()`.
+
+### Changed — Logging
+- **Quieter startup**: Demoted 39× `message()` calls to `debug()` in `main.vala`, `application.vala`, `muc_manager.vala` — reduces noise in normal operation while keeping full diagnostics at debug level.
+
+### Fixed — URL Display
+- **Body-only URLs**: Incoming messages containing only a URL in the body were displayed as broken file transfer offers instead of clickable text links.
+
+### Changed — Documentation
+- README updates: startup instructions, SmartScreen removal, geolocation limitation, PipeWire migration plan
+
+### Stats
+- 11 files changed across 4 subsystems (RTP/calls, Tor/proxy, XMPP core, UI)
+- 6 AV bugs fixed (3 CRITICAL, 2 HIGH, 1 Windows-specific)
+- 3 proxy bugs fixed (2 CRITICAL, 1 HIGH)
+- Major security fix: Tor DNS leak prevention
+
+## [1.1.7.6] - 2026-03-17
+
+### Fixed — Windows: Font Rendering
+- **gtk-font-name**: Was never set → GTK4 default `"Sans 10"` → fontconfig without alias rules resolved to random fonts (Microsoft Sans Serif). Now explicitly set to `"Segoe UI 10"` in `Gtk.Settings` and `settings.ini`.
+- **gtk-hint-font-metrics**: Enabled (was false by default) → forces pixel-aligned glyph positioning for sharper text rendering.
+- **fontconfig fonts.conf**: Generated in `update_dist.sh` with proper alias mappings: Sans→Segoe UI, monospace→Consolas, serif→Times New Roman, system-ui→Segoe UI. Plus font rendering defaults (antialias, hinting, hintslight, rgb, lcddefault).
+- **Avatar letters**: Used generic `"Sans"` font family which resolved badly on Windows. Now uses `"Segoe UI"` on Windows via `#if WINDOWS` conditional.
+
+### Fixed — Windows: GDK Surface Assertions
+- **`gdk_surface_get_device_position: assertion 'GDK_IS_SURFACE (surface)' failed`**: Added `get_realized()` guards at 6 critical code paths where motion events fired on widgets whose GDK surface was already destroyed (conversation switch, window close):
+  - `conversation_view.vala`: `update_highlight()` → `pick()` (primary crash source), `on_leave_notify_event()`
+  - `chat_text_view.vala`: `queue_resize_if_needed()` timeout
+  - `chat_input/view.vala`: `highlight_state_description()` timeout
+  - `file_image_widget.vala`: motion leave handler
+  - `video_player_widget.vala`: motion leave handler
+
+### Fixed — Windows: Systray Context Menu
+- **Owner-drawn GDI painting removed**: The right-click menu used `MF_OWNERDRAW` with raw Win32 GDI calls (`Ellipse()`, `DEFAULT_GUI_FONT`, `GetSysColor()`) — looked like Windows 98.
+- **Native MF_STRING rendering**: Now uses plain `MF_STRING` menu items that Windows 10/11 renders natively with Segoe UI, ClearType, DPI scaling, and theme-aware colors (light/dark mode support).
+- **Colored emoji indicators**: Status circles provided by Unicode emoji (🟢🟠🔴⚪) already embedded in labels by `systray_windows.vala` — no more custom GDI circle painting.
+
+### Fixed — Windows: Portable ZIP / CI Build
+- **GDK-Pixbuf loaders**: Copied to wrong path (`dist/lib/` instead of `dist/lib/gdk-pixbuf-2.0/`) — image loading broken in portable builds.
+- **loaders.cache**: Had MSYS2 absolute paths (`/mingw64/lib/...`) — regenerated with `gdk-pixbuf-query-loaders` for portable relative paths.
+- **Missing CI packages**: `glib-networking` (GIO TLS backend!), `hicolor-icon-theme`, `adwaita-icon-theme` were only transitively installed — now explicitly listed in `windows-build.yml`.
+- **MQTT plugin**: Added `-Dplugin-mqtt=enabled` to CI meson setup and all build documentation.
+
+### Fixed — Windows: Window Buttons + Prior Font Pass
+- **CSD window buttons**: Positioned on the left side (Windows convention) via `headerbar-close-button-position` setting.
+- **Xft font settings**: Initial hinting/antialiasing settings in `settings.ini` (later superseded by the comprehensive font fix above).
+
+### Fixed — Windows: Icon Discovery
+- **hicolor index.theme**: System `hicolor-icon-theme` `index.theme` was being overwritten by our sparse icon directory listing. Now preserves the system file so GTK4 icon discovery works correctly.
+
+### Fixed — MUC Reactions After Restart
+- **Broken reactions in group chats**: After app restart or reconnect, reactions (XEP-0444) on MUC messages were silently dropped because the occupant→JID mapping was lost. Fixed the stanza-id lookup path.
+
+### Fixed — Encryption/Mark Icons After Avatar Refactor
+- **Missing icons**: Encryption lock and delivery mark icons disappeared after the avatar defer refactor. Fixed icon loading path.
+
+### Fixed — Build Warnings
+- **abseil-cpp >= 20250814**: New `absl::Nullable`/`absl::Nonnull` annotations broke webrtc-audio-processing v2.1 build. CI now patches them out.
+- **Various**: Unused variable, const annotations, critical build warnings resolved across platforms.
+
+### Changed — Documentation
+- **WINDOWS_BUILD.md / WINDOWS_BUILD_EN.md**: Added `-Dplugin-mqtt=enabled` to all meson setup commands, mandatory clean rebuild instructions.
+- **Obsolete files**: Removed `windowsbuild.txt` (superseded by comprehensive docs).
+
+### Stats
+- 80+ commits, 50+ files changed
+- Major areas: font rendering (8 files), systray modernization (1 file, -136 lines), CI hardening (2 files), GDK stability (5 files), icon fixes (3 files), MUC reactions (2 files)
+
+## [1.1.7.5] - 2026-03-15
+
+### Fixed — Windows: App Still Exits After Unlock (GitHub #18 — continued)
+- **hold()/release() safety net**: v1.1.7.4 reordered activate-before-close but the app STILL exits silently on Windows. Added `this.hold()` at the start and `this.release()` at the end of the entire `finish_post_unlock()` transition — this guarantees GApplication use_count never reaches 0, regardless of Win32 message pump re-entry or window lifecycle timing.
+- **Strategic debug messages**: Added `message()` calls throughout `finish_post_unlock()` and the `activate` handler so Windows users can provide exact diagnostic output showing where execution stops.
+
+## [1.1.7.4] - 2026-03-14
+
+### Fixed — Windows: App Exits After Unlock (GitHub #18)
+- **GApplication lifecycle race**: The v1.1.7.2 fix (`hold()`/`release()` around close→activate) was insufficient — on GDK-Win32, `unlock_parent.close()` synchronously destroys the window and re-enters the Win32 message pump, terminating the main loop before `activate()` can create the MainWindow. Fix: call `activate()` FIRST (creates MainWindow while unlock_parent is still alive), THEN `unlock_parent.close()`. Removed `hold()`/`release()` entirely — GApplication always has ≥1 window, no use_count=0 gap.
+- **libevent DLL naming**: MSYS2 renamed `libevent-2-1-7.dll` → `libevent-7.dll` in newer versions. `update_dist.sh` now lists both naming variants (`libevent-7.dll`, `libevent_core-7.dll`, `libevent_extra-7.dll`).
+
+### Fixed — Build (All Distros with GCC 13+)
+- **webrtc-audio-processing v2.1**: `trace_event.h` uses `uint8_t`/`uintptr_t` without `#include <cstdint>` — fails on GCC 13+ (openSUSE Tumbleweed, Fedora 39+, Ubuntu 24.04+, Arch). `ci-build-deps.sh` now auto-patches the header before building.
+
+### Fixed — Documentation (openSUSE)
+- **BUILD.md**: Added `libomemo-c-devel` to `zypper install` list
+- **BUILD.md**: Updated note — `ci-build-deps.sh` overrides with the DinoX libomemo-c fork
+- **BUILD.md**: Added `libcanberra-devel` install example + build-from-source alternative
+
+## [1.1.7.3] - 2026-03-14
+
+### Fixed — Locale Warning in AppImage (openSUSE)
+- **LC_ALL propagation**: `Gtk.init()` internally calls `setlocale(LC_ALL, "")` which re-reads environment variables — the fallback locale set by `setlocale()` alone was lost. Now sets `LC_ALL` env var to the working locale so GTK picks it up.
+- **LOCPATH removed from AppRun**: Setting `LOCPATH` forced glibc to skip `locale-archive` and look for individual locale directories that don't exist on openSUSE/Fedora. Removed entirely — host glibc finds its own `locale-archive` without help.
+
+### Fixed — Documentation
+- **BUILD.md**: Corrected 3 openSUSE package names (`libicu-devel`, `gstreamer-plugin-pipewire`, `libsrtp2-devel`)
+- **BUILD.md**: Added `ci-build-deps.sh` MUST-run warning for openSUSE (libomemo-c etc. not packaged)
+- **BUILD.md**: Added optional `libcanberra-devel` note for notification sounds on openSUSE
+
+## [1.1.7.2] - 2026-03-14
+
+### Fixed — Windows Startup Crash (GitHub #18)
+- **GApplication race condition**: `unlock_parent.close()` dropped `use_count` to 0 before `activate()` created the MainWindow. On Windows, the Win32 message pump re-enters and terminates the main loop during this gap. Fix: `this.hold()` before close, `this.release()` after activate.
+- **DBUS_SESSION_BUS_ADDRESS**: Changed from `"nul"` to `""` — `"nul"` could be misinterpreted as a valid bus address on some GLib builds.
+- **libevent DLL**: Added monolithic `libevent-2-1-7.dll` to `update_dist.sh` (some Windows builds ship one monolithic DLL instead of split core/extra libs).
+
+### Fixed — SCRAM Channel Binding Error Message
+- **Wrong "Wrong password"**: When MITM protection (channel binding) was enabled but the server didn't support SCRAM-*-PLUS mechanisms, DinoX showed "Wrong password" instead of explaining the real problem.
+- **New signal**: `channel_binding_failed` in SASL module (distinct from `received_auth_failure`).
+- **New error identifier**: `"channel-binding-required"` propagated through `ConnectionManager`.
+- **UI**: Preferences, freedesktop notifications, and GNotifications now show "*server* does not support SCRAM channel binding (MITM protection)" with the actual domain name.
+- **"Enter password" button hidden**: No longer shown for channel-binding errors (password is not the problem).
+
+### Fixed — Linux Locale & IM Module Warnings
+- **Locale fallback**: Graceful fallback chain before `Gtk.init()` — tries base language `.UTF-8`, falls back to `C.UTF-8`. Suppresses "Locale not supported by C library" warning on openSUSE/custom locales.
+- **GTK_IM_MODULE handling**: Only unsets `GTK_IM_MODULE` for known GTK3-only modules (`cedilla`, `xim`). Leaves `ibus`, `fcitx5`, etc. alone — GTK4 supports them natively.
+
+### Fixed — AppImage on openSUSE/Fedora
+- **LOCPATH**: AppRun now exports `LOCPATH` pointing to system locale data, fixing locale warnings inside AppImage.
+- **IM module fix**: AppRun uses same conservative approach — only clears GTK3-only modules via `case` statement.
+
+### Changed — Documentation
+- **BUILD.md**: Added openSUSE Tumbleweed/Leap section with `zypper install` package list and CA cert note.
+
+## [1.1.7.1] - 2026-03-14
+
+### Fixed — Native Linux SSL/TLS
+- **CRITICAL**: System CA certificate probe was accidentally inside `#if WINDOWS` preprocessor block — never ran on native Linux. Moved probe outside the block so it runs on ALL platforms. AppImage (AppRun) and MQTT client were not affected.
+- **Documentation**: Added CA certificate sections to BUILD.md and DEBUG.md
+
+## [1.1.7.0] - 2026-03-14
+
+### Added — In-App Language Selector
+- **Language selector**: Settings → General → Appearance — 48 languages selectable via AdwComboRow
+- **Early startup override**: Reads `~/.local/share/dinox/language` before gettext initialization, sets `LANGUAGE` + `LANG` env vars
+- **Dual persistence**: Language choice stored in DB (Settings entity) + plain-text file for pre-DB startup
+- **Restart hint**: Subtitle shows "Restart DinoX to apply" when language changed during runtime
+- **Signal safety**: `language_updating` guard prevents ping-pong between model↔UI language handlers
+
+### Added — Translations (DE/FR/ES 100%)
+- **German**: 31 new translations — full coverage across main, OMEMO, OpenPGP
+- **French**: 58 new translations (56 single-line + 2 multiline MQTT/ejabberd strings)
+- **Spanish**: 51 new translations (49 single-line + 2 multiline)
+- **Language selector strings**: 3 new entries per language (_Language, override subtitle, restart hint)
+
+### Fixed — Translation File Integrity
+- **7 fatal msgfmt errors fixed**: zh_CN format specifier order (`%s`/`%d` swapped → positional `%1$d`/`%2$s`), omemo de/es/fr duplicate msgstr lines, omemo en/hi missing Plural-Forms header, omemo th missing `%d` in plural translation
+- **46 silent duplicate msgstr entries removed**: Batch translation scripts appended second translation variants as continuation lines — syntactically valid but semantically wrong. Affected 14 .po files across main (de: 18, es: 3, fr: 13), omemo (et, hu), openpgp (de, eo, es, fr, gl, ia, lb, oc, vi)
+- **Validated**: 133/133 .po files pass `msgfmt -c` with zero errors
+
+### Fixed — AppImage SSL on openSUSE/Fedora/Alpine
+- **Multi-distro CA cert probing**: GnuTLS compiled on Ubuntu defaults to `/etc/ssl/certs/ca-certificates.crt` which doesn't exist on openSUSE (`/etc/ssl/ca-bundle.pem`), Fedora (`/etc/pki/tls/certs/ca-bundle.crt`), or Alpine (`/etc/ssl/cert.pem`)
+- **3 layers of defense**: AppRun shell script probes 6 paths before launch, `main.vala` probes at startup setting `GTLS_SYSTEM_CA_FILE`, MQTT client probes independently for Mosquitto TLS
+- **Paths probed**: Debian/Ubuntu/Arch, Fedora/RHEL, openSUSE, openSUSE alternative, Fedora p11-kit, Alpine/macOS
+
+## [1.1.6.9] - 2026-03-14
+
+### Fixed — Build
+- **Windows systray LoadIconW**: Use `MAKEINTRESOURCEW(32512)` instead of `IDI_APPLICATION` for fallback icon — MSYS2 MINGW64 UNICODE build resolved `IDI_APPLICATION` as `CHAR *` causing `-Wincompatible-pointer-types` error
+
+## [1.1.6.8] - 2026-03-14
+
+### Fixed — Build
+- **Windows CI build**: Define `cc = meson.get_compiler('c')` in `main/meson.build` before Windows-specific `cc.find_library()` calls — fresh CI builds failed with `Unknown variable "cc"` because cached local builds masked the missing definition
+
+## [1.1.6.7] - 2026-03-14
+
+### Fixed — Audio/Video Call Hardening
+- **Video SIGSEGV (exit code 139)**: Reordered `detach()` teardown — `set_state(NULL)` now runs BEFORE `remove_output`/`unlink`, preventing race condition where videoconvert memcpy runs on freed buffer
+- **Video pipeline queue**: Added `queue max-size-buffers=2 leaky=downstream` before videoconvert in both `display_stream` and `display_device` paths
+- **Video error path leaks**: `display_stream`/`display_device` now properly call `pipe.remove(sink)` + `plugin.unpause()` on parse failure
+- **Video unlink target**: Fixed `connected_device_element.unlink(sink)` → `unlink(prepare)` — was unlinking wrong element
+- **7 null-pointer guards**: `has_key()` checks before HashMap access in `call_window_controller.vala` (4) and `call_window.vala` (4)
+- **call_state NULL CRITICAL**: 5 null guards in signal handlers (`microphone_selected`, `speaker_selected`, `microphone_volume_changed`, `speaker_volume_changed`, `update_current_audio_device`)
+- **Handler ID corruption**: `invite_handler_ids[id] += connect()` → `= connect()` — `+=` was adding to previous handler ID
+- **Audio settings popover hidden**: Removed `size==1` early-return that hid volume sliders and WebRTC gain controls when only one audio device present
+- **Dead code removal**: Empty `row_selected` handler in `audio_settings_popover.vala`
+
+### Fixed — Audio Pipeline (Anti-Crackling)
+- **audiomixer latency**: Set to 20ms (was 0 default) — gives mixer time to collect samples before output
+- **output_queue**: Time-based buffering `max-size-time=50ms` with `max-size-buffers=0` and `max-size-bytes=0`
+- **drop-on-latency**: Changed from `false` to `true` on rtpbin — drops late packets instead of accumulating
+- **audiorate tolerance**: Set to 40ms (`uint64` cast for GstClockTime) + `skip-to-first=true` — prevents silence insertion on small timestamp gaps
+
+### Fixed — WebRTC Audio Processing (AGC Tuning)
+- **AGC mode consistency**: Both init and `set_compression_gain_db` now use `kFixedDigital` — previously `set_compression_gain_db` switched to `kAdaptiveDigital` which caused word chopping/pumping
+- **Compression gain**: 6dB → 9dB (compromise between too quiet and too aggressive)
+- **Target level**: -3dBFS → -6dBFS (more headroom)
+- **Noise suppression**: `kModerate` → `kLow` (less aggressive, preserves speech)
+- **EchoProbe default delay**: 150ms → 200ms (accounts for audiomixer 20ms + output_queue 50ms + acoustic path)
+- **EchoProbe minimum threshold**: 150ms → 80ms (allows lower-latency setups)
+
+### Fixed — Dialpad Performance
+- **Pipeline pre-warm**: GStreamer pipeline created via `Idle.add` on popover show instead of lazily on first tone
+- **Pipeline persistence**: Pipeline no longer destroyed on popover close — reused across opens
+- **Debounce**: 300ms → 80ms for more responsive DTMF input
+
+### Added — Windows
+- **Systray (Shell_NotifyIcon)**: Full Win32 tray icon replacing stub — left-click toggle, right-click menu with status (Online/Away/Busy/N/A) + Quit. C helper + VAPI bridge. Closes #18
+- **Missing DLLs**: libnpth-0, libprotobuf-c-1, libcjson-1, libevent_core/extra added to `update_dist.sh`
+
+### Changed — CI/Build
+- **Node.js 24**: `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` in all 5 GitHub Actions workflows (Node.js 20 deprecation June 2026)
+- **GitHub Pages**: New `pages.yml` workflow replacing auto-generated `pages-build-deployment`
+
+### Stats
+- 4 commits, 22 files changed, 588 insertions, 73 deletions
+- Major areas: call hardening (10 files), Windows systray (6 files), CI (6 files)
+
+## [1.1.6.6] - 2026-03-14
+
+### Fixed — Message Retraction (XEP-0424)
+- **Notification retraction**: Desktop notification now retracted when message is deleted (deferred `Idle.add()` connection to avoid startup crash from module ordering)
+- **Empty retraction ID**: Reject empty/whitespace-only retraction IDs in receive path — previously caused silent failures
+- **Dead null-check**: Removed unreachable null-check in stanza parser (was after prior guard)
+- **Code consolidation**: 6 inline `is_own_message` copies replaced with `ContentItem.is_own()` static helper
+
+### Fixed — Chat Window
+- **O(1) highlight update**: `update_highlight()` replaced O(n) child iteration with `main.pick()` + parent chain walk
+- **Mutex deadlock risk**: Explicit `reloading_mutex.unlock()` on both branches of `load_earlier_messages`/`load_later_messages`
+- **Tile cache LRU**: Map tile cache now bounded at 100 entries with proper LRU eviction (including cache-hit touch)
+- **Truncation text**: Corrected "100,000" → "50,000" to match actual limit
+- **Reactions i18n**: Tooltip separator strings (comma, "and", "reacted with") wrapped in `_()`
+- **Video decrypt helper**: Extracted `decrypt_to_temp()` method — eliminates duplicated decryption logic
+- **Typo fix**: `SubscriptionNotitication` → `SubscriptionNotification`
+
+### Fixed — Audio Player Widget
+- **Playback position reset**: `saved_position = 0` on `stop()` — prevents stale position on replay
+- **Download timeout race**: `timeout_fired` bool pattern prevents use-after-free on slow downloads
+- **Disposed guard**: `_disposed` flag with guards in `bus_callback()` and `update_progress()` — prevents crash on rapid widget destruction
+- **Null duration guard**: `query_duration()` returns early if pipeline is null
+
+### Fixed — Video Player Widget
+- **Preview timeout race**: `timeout_fired` bool pattern for `generate_preview()` timeout
+- **Paintable flicker**: Removed `set_paintable(null)` before setting new texture
+- **Temp file leak**: Track `temp_open_file` and delete in `dispose()`
+- **Seek throttle**: Cancel pending `seek_timeout_id` before creating new one
+
+### Fixed — CI / Build
+- **Lyrebird download retry** (windows-build.yml): 3-attempt loop with `curl -fSL --retry 3`, gzip validation via `file` command, 10s backoff between attempts
+- **Lyrebird download retry** (ci-build-deps.sh): Same retry+validation pattern for Linux builds (build.yml, build-appimage.yml)
+
+### Changed — i18n / Translations
+- **Chinese (Simplified)**: Weblate translation update
+- **Kabyle**: Weblate translation update
+
+### Changed
+- **README**: Revised project description for clarity and features
+- **Version**: 1.1.6.5 → 1.1.6.6
+
+### Stats
+- 15 files changed, 293 insertions, 257 deletions
+- Major areas: retraction (4 fixes), chat window (7 fixes), audio widget (4 fixes), video widget (4 fixes), CI (2 fixes), i18n (2 translations)
+
+---
+
+## [1.1.6.5] - 2026-03-13
+
+### Added — Location Sharing (XEP-0080)
+- **GeoClue2 location sending**: Real-time location via GeoClue2 D-Bus (WiFi/GPS/IP), with `AccuracyLevel.EXACT`, 15s timeout, automatic `call_stop()` for battery saving
+- **Manual coordinate fallback**: If GeoClue2 fails, a dialog allows entering lat/lon or pasting a `geo:` link
+- **Map preview in chat**: 256×256 OpenStreetMap tile at zoom 15 with red marker overlay, shared `Soup.Session` + LRU tile cache
+- **Google Maps route planner**: Clicking the map opens Google Maps Directions (`https://www.google.com/maps/dir/?api=1&destination=lat,lon`)
+- **Accuracy warning dialog**: When GeoClue2 accuracy >1 km, shows warning with 3 options: "Send anyway", "Enter manually", "Cancel"
+- **Meson build option**: New `location-sharing` feature option (auto), meson summary line under Plugins
+- **Location button default**: Enabled by default in settings
+
+### Added — Tor / WebTunnel
+- **WebTunnel/lyrebird support**: Pluggable transport for censorship circumvention via `lyrebird` (Go binary)
+- **Windows lyrebird build**: Cross-compiled lyrebird bundled in Windows MSYS2 builds
+- **Audit fixes**: Tor robustness improvements
+
+### Added — MQTT
+- **Clickable menu structure**: Bot commands organized in navigable menu with footer links
+- **Navigation footer**: All command responses include back/home navigation
+
+### Added — UI / UX
+- **Panic Wipe shortcut**: Added to keyboard shortcuts dialog
+- **Copyright update**: 2025-2026
+
+### Fixed — MQTT
+- **60% CPU lag**: Fixed MQTT menu rendering performance
+- **Double nav links**: Unknown commands no longer show duplicate navigation
+- **Menu i18n**: German text, duplicate code eliminated
+- **Retained message flood**: Retained messages no longer flood chat on reconnect; added `/mqtt clear` command
+- **Retained dedup**: Deduplication moved before DB recording
+- **7 HA Discovery bugs**: Stale online state, missing cleanup, duplicate code
+- **Plugin interference**: MQTT no longer interferes with video calls and file transfers
+- **Robustness**: 4 fixes (connection handling, error recovery)
+- **Audit fixes**: i18n hardcoded strings, rmbridge index mismatch
+
+### Fixed — Performance & Memory
+- **Heap fragmentation**: `mallopt()` + deferred `malloc_trim()` reduces RSS
+- **Video frame textures**: Released immediately on call end (no GPU leak)
+- **PresenceManager signal**: Guard disconnect in `ConversationSelectorRow`
+
+### Fixed — OMEMO / Encryption
+- **SG_ERR_NO_SESSION**: Suppressed harmless warning during video calls
+
+### Fixed — i18n / Translations
+- **25 hardcoded strings**: Wrapped in `_()`, de.po now 100%
+- **8 Tor settings strings**: Missing translations after settings_page refactor
+- **OMEMO strings**: Wrapped in `_()`, description set via `_()` in construct block
+- **Channel → Group**: Renamed Channel/Kanal → Group/Gruppe throughout UI
+- **Location strings**: "Navigate to location", accuracy warning — DE/EN/ES/FR
+
+### Fixed — Build & CI
+- **GitHub Actions Node.js 24**: Updated all workflows, fixed Vala nightly warning
+- **Windows build**: Guard `send_signal` with `#if WINDOWS`
+- **Flatpak lyrebird**: Fixed build — removed cd into stripped archive dir
+- **GitHub Releases**: Don't overwrite release body/name; always mark as Latest
+
+### Changed — Documentation
+- **BUILD.md**: Added Location Sharing section with install table (Debian/Fedora/Arch/Flatpak/AppImage), GeoClue2 D-Bus architecture, meson option docs
+- **Dependency lists**: `libgeoclue-2-dev` added to BUILD.md, README.md, debian/control, CI workflows
+- **golang-go**: Added to build deps, CI availability check
+
+### Changed
+- **Version**: 1.1.6.4 → 1.1.6.5
+
+### Stats
+- 37 commits, 6 files changed in this release commit
+- Major areas: Location sharing (10 commits), MQTT fixes (10 commits), i18n (5 commits), performance (3 commits), Tor/WebTunnel (3 commits), CI/build (4 commits), docs (2 commits)
+
+---
+
+## [1.1.6.4] - 2026-03-12
+
+
+### Added
+- **MQTT Binary Transfer**: Binary payload detection via magic bytes for 17 file formats (PNG, JPEG, GIF, WebP, BMP, PDF, ZIP, MP3, OGG, FLAC, WAV, MP4, MKV, AVI)
+- **MQTT Stream Detection**: M3U/PLS playlist parsing and stream URL extraction with Uri.parse validation
+- **MQTT Bridge Binary Forwarding**: Binary MQTT payloads saved to temp file and forwarded via HTTP Upload to XMPP contacts
+- **MQTT Bot Display**: Emoji indicators for binary (clip), stream (radio), HTML (globe) payloads in bot conversation
+- **Node-RED Flow 3**: Bridge response documentation with binary/audio/stream examples
+
+### Fixed — Security Hardening
+- **extract_local_path file exfiltration**: Whitelisted only `/tmp/dinox-mqtt-*` paths — arbitrary file read via MQTT topic no longer possible
+- **Temp file disk leak**: Binary temp files now cleaned up after HTTP Upload completes or when no bridge rule matches
+- **Binary payload size limit**: 10 MB cap before saving to temp file
+- **BMP false positive**: Validate BMP reserved bytes (must be zero) and file-size field (must match data length) — "BMS voltage: 12.6V" no longer triggers BMP detection
+- **MP3 false positive**: Tightened MPEG sync word — validate version (not reserved 01) and layer (not reserved 00) bits
+- **UTF-8 truncation corruption**: DB 8KB truncation now uses `char_count()` + `index_of_nth_char()` to avoid splitting multi-byte characters
+- **HTML false positive**: `is_html_payload()` matches `<head>` or `<head ` instead of bare `<head` — prevents `<header>` triggering HTML detection
+- **Stream URL heuristic**: Removed overly broad `/stream`/`/live` path matching — only file extensions (.m3u/.m3u8/.pls/.xspf) trigger stream detection
+- **M3U/PLS DoS**: Playlist line iteration capped at 100 lines
+- **U+FFFD in stream URLs**: Strip Unicode replacement characters from extracted stream URLs (caused by Node-RED binary-to-string conversion)
+- **Redundant detect_binary_type()**: Hoisted before bridge block — single call per message instead of two
+
+### Changed
+- **.gitignore**: Added `.venv/` and `__pycache__/`
+- **Version**: 1.1.6.3 -> 1.1.6.4
+
+---
+
+## [1.1.6.3] - 2026-03-12
+
+### Added
+- **MQTT Bridge: Enable/Disable switch**: Each bridge rule now has a toggle switch in the UI — disable rules without deleting them
+- **MQTT Bridge: Freetext echo filter**: Self-published freetext messages (e.g. bot commands) are no longer echoed back through bridge rules
+- **Plugin i18n infrastructure**: Added GETTEXT_PACKAGE to tor-manager, wrapped strings in _(), added 18 plugin source files to POTFILES (515→1277 translatable strings)
+- **Translations**: DE/FR/ES for all new plugin strings (780+ strings each)
+- **Translation helper scripts**: translate_plugins.py, translations_fr.py, translations_es.py
+
+### Fixed
+- **MQTT Bridge: OMEMO encryption**: Removed forced `conv.encryption = Encryption.NONE` — bridge messages now respect per-conversation OMEMO encryption setting
+- **MQTT Bridge: Rate limiting**: Reduced from 2s to 200ms (millisecond granularity) — fast request/response chains (e.g. Node-RED) no longer dropped
+- **MQTT Bridge: Bot visibility**: Bridged messages now also appear in the bot conversation (previously hidden when forwarded)
+- **MQTT Translation fix**: Fixed misleading "Thema/Themenmuster" → "Topic" in DE, "sujet" → "topic" in FR, "tema" → "topic" in ES for MQTT context (MUC room subject translations preserved)
+
+### Changed
+- **Code audit: Duplicate elimination**: Extracted `escape_json()` to BotUtils, `finish_post_unlock()` in application.vala, `decrypt_to_temp()` in audio_player_widget.vala, removed duplicate `looks_like_svg_file` from stickers.vala, consolidated MQTT DB helpers into Plugin class
+- **Weblate merge**: 5 German translation strings from Weblate
+- **Version**: 1.1.6.2 → 1.1.6.3
+
+---
+
+## [1.1.6.2] - 2026-03-11
+
+### Fixed
+- **CRITICAL: Avatar popup SIGSEGV crash**: All popover button handlers (header click, private conversation, invite) executed UI actions synchronously while the popover was still parented — changing conversations or presenting dialogs destroyed the parent widget mid-gesture causing SIGSEGV. Now deferred with `Idle.add_full(GLib.Priority.LOW)` so actions run after popover cleanup
+- **Self-chat prevention**: Clicking own avatar in chat no longer opens the occupant menu (MUC: checks `own_jid`, 1:1 chat: checks `account.bare_jid`)
+- **Self-actions in MUC**: "Start private conversation" button no longer shown for own avatar
+- **GDK surface assertion**: `hide_deferred()` now checks `get_parent()` and `get_native()` before calling `hide()` — prevents `gdk_surface_get_device_position: GDK_IS_SURFACE` failures
+- **Popover unparent guard**: `closed` handler checks `get_parent() != null` before `unparent()`
+
+### Changed
+- **Version**: 1.1.6.1 → 1.1.6.2
+
+---
+
+## [1.1.6.1] - 2026-03-11
+
+### Fixed
+- **CRITICAL: File transfer SIGSEGV crash**: `file_provider` stored message ID in `file_transfer.info` — when message body was empty (OOB-only stanzas), `Soup.Message("HEAD", "")` crashed in libsoup. Now stores `url:` + URL directly
+- **File transfer URL validation**: Added `Uri.parse()` validation before passing URLs to libsoup — prevents SIGSEGV on malformed URIs
+- **Unencrypted file detection**: Plain `https://` URLs in message body (without OOB element) now recognized as file transfers — fixes images showing as raw text in unencrypted MUCs
+- **MUC occupant list freeze + crash**: Batch row creation with `Timeout.add` (10 per frame), pre-sort occupants, cached affiliation per ListRow, initializing flag blocks presence events during batch loading
+- **MUC occupant list debounce**: 150ms debounce on `invalidate_filter()` — reduces O(n²) sort operations when joining rooms with many participants
+- **Room creation defaults**: Default to public; set `muc#roomconfig_publicroom=false` for private rooms so they don't appear in server directory
+- **Popover SIGSEGV crash**: Use `unparent()` only instead of `popdown()` + `unparent()` — avoids GDK surface lifecycle race condition
+- **Deleted contact reactivation**: Guard against reactivating conversations for contacts with `history_cleared_at` set and removed from roster
+- **Base64/binary UI freeze**: Smart truncation — no-whitespace data truncated to 200 chars, normal text to 50K chars (previously 100K)
+
+### Changed
+- **RAM: Signal handler leak fixes**: ConversationView stores 5 handler IDs + disconnects in `dispose()`; ConversationSelectorRow tracks 10 handler IDs + disconnects in destructor
+- **RAM: AvatarManager**: `failed_decrypt_hashes` capped at 500 entries (clear-on-overflow)
+- **RAM: MessageCorrection**: `unmatched_corrections` limited to 50 per conversation (FIFO eviction)
+- **RAM: Conversation close**: `clear_conversation_cache()` removes per-conversation stanza/server-ID lookup maps on close
+- **RAM: Periodic malloc_trim(0)**: Every 60s via `Timeout.add_seconds` to return freed glibc arena pages to OS
+- **RAM: message_storage**: `clear_conversation_cache()` no longer calls `message_refs.clear()` (was clearing ALL cached messages globally)
+- **GTK warnings**: Suppress known harmless AdwBreakpointBin, PopoverMenu accounting, GtkText blinking warnings
+- **Version**: 1.1.6.0 → 1.1.6.1
+
+---
+
+## [1.1.6.0] - 2026-03-09
+
+### Fixed
+- **CRITICAL: NULL conversation race condition in ConversationView**: Fixed cascade of `dino-CRITICAL` assertion failures (`conversation != NULL`, `self != NULL`) and `Gtk-CRITICAL` (`gtk_widget_insert_after`, `gtk_widget_unparent`) triggered when populators fired after conversation was set to NULL
+- **Root Cause**: `initialize_for_conversation(null)` set `this.conversation = null` but never called `populator.close()` — the null path returned early before reaching `initialize_for_conversation_()`. Active populators (ChatState, DateSeparator, UnreadIndicator, Status, OMEMO BadMessages) could still call `insert_item()` → `insert_new()` with NULL conversation
+- **Fix: Close populators on null path**: All `ConversationAdditionPopulator` and `NotificationPopulator` instances are now properly closed (signal handlers disconnected) before setting `this.conversation = null`
+- **Fix: Null guards in insert path**: `insert_item()` returns early if `conversation == null`; `insert_new()` returns `Widget?` (nullable) with null guard; `do_insert_item()` and `initialize_around_message()` check return value before adding to data structures
+
+### Changed
+- **Version**: 1.1.5.9 → 1.1.6.0
+
+---
+
+## [1.1.5.9] - 2026-03-07
+
+### Fixed
+- **Memory: Call memory leaks — Jingle/RTP/ICE reference chain cleanup**: Aggressive teardown of the entire Jingle object hierarchy after call termination. Each call previously leaked ~10–50 MB due to surviving reference chains between Session, Content, Parameters, ICE TransportParameters, Nice.Agent, and GStreamer pipeline objects
+- **Session.terminate()**: Clear `contents` and `contents_map` after terminating all contents — previously the Session held strong references to all Content objects indefinitely
+- **Content.terminate()**: Null `content_params`, `transport_params`, `security_params`; clear `component_connections` and `encryptions` — previously kept entire ICE/DTLS/transport buffer tree alive
+- **Parameters.terminate()**: Clear `payload_types`, `header_extensions`, `remote_cryptos`; null crypto refs — previously kept codec negotiation state in memory
+- **JingleRtp.Stream.content**: Made nullable with null-checks on all property getters. `release_refs()` nulls both `content` and `plugin` references in `destroy()` — breaks the critical Stream→Content→Session retention chain
+- **content_parameters.vala use-after-free**: Fixed `weak_ref` callback crash — anonymous lambda `() => this.stream = null` could fire on already-freed Parameters object. Replaced with named `unset_stream()` method + `weak_unref()` before `close_stream()` to prevent `g_object_notify_by_pspec` CRITICAL on dead object
+- **CallWindowController signal handler tracking**: All 13+ signal handler IDs tracked and disconnected in `cleanup()`; `detach_all_video()` for immediate GStreamer release on call terminated
+- **CallState.end()**: Explicit `peer_bindings` unbind, peer signal handler disconnect, `peers.clear()`, `cim_jids_to_inform.clear()`
+- **PeerState**: `cleanup_signal_handlers()` disconnects 9+ handlers; `release_objects()` nulls session, content_parameter, content, encryption fields
+- **Plugin**: `malloc_trim(0)` after GStreamer pipeline destruction to return buffer pool pages to OS
+- **Stream**: REMB timer tracked via `remb_timeout_id` and cancelled with `Source.remove()` in `destroy()`
+
+### Changed
+- **Version**: 1.1.5.8 → 1.1.5.9
+
+---
+
+## [1.1.5.8] - 2026-03-07
+
+### Fixed
+- **Memory: GObject reference cycles via `this.notify[].connect()`**: Fixed 26 instances across 8 widget classes (ConversationItemSkeleton, VideoPlayerWidget, FileWidget, FileDefaultWidgetController, FileImageWidget, CallWidget, FileTransmissionProgress, AvatarPicture) where closures capturing `this` prevented GObject finalisation — store handler IDs, disconnect in `dispose()`
+- **Memory: Leaked `bind_property()` bindings**: Fixed in MessageItem (marked), FileItem (encryption/marked/state), CallItem (encryption), CallWidget (state), MessageMetaItem (marked) — return values were discarded, keeping objects pinned via long-lived service entities. Stored bindings and unbind in `dispose()`
+- **Memory: Avatar tile model destructor deadlock**: `ConversationParticipantAvatarPictureTileModel` connected to 3 service signals (RosterManager, AvatarManager×2) in constructor; destructor never fired because signal closures kept refcount ≥ 3. Moved disconnect logic to explicit `cleanup()` method called from `reset()`, `Tile.dispose()`, and `ConversationItemSkeleton.dispose()`
+- **Memory: Avatar tile cleanup `is_connected()` guards**: Added `SignalHandler.is_connected()` checks before each `disconnect()` in `cleanup()` to prevent "instance has no handler with id" CRITICALs on double-disconnect
+- **Memory: `Tile.dispose()` dead code**: Fixed cast from `CompatAvatarPictureModel` (always null for a Tile) to `ConversationParticipantAvatarPictureTileModel` so tile signal cycles are actually broken on individual tile disposal
+- **Memory: Scroll-pruned items never disposed**: `ConversationView.remove_item()` now calls `item.dispose()` after skeleton disposal — previously items pruned during scrolling leaked
+- **Memory: ContentMetaItem disposes content_item**: Explicitly calls `content_item.dispose()` to trigger unbinding of bind_property bindings
+- **Memory: GLib.Value leak in video preview**: Fixed `dup_boxed` without `unset` in `generate_preview()` — replaced with direct `get()`
+- **CRITICAL: `gtk_list_box_row_get_index` assertion failure**: `select_fallback_conversation()` accessed `rows[conversation]` without checking key existence — when conversation not in map, `null == null` entered the branch. Added `rows.has_key()` guard
+- **UI: Last chat close leaves chat view open**: Explicitly deselect (`list_box.select_row(null)`) when the last conversation is removed so the UI switches to the "no active conversations" placeholder
+- **Null-safety**: `AudioPlayerWidget` null check for `file_transfer` after async yield; `FileWidget` null-safe `get_file().get_uri()` error logging
+
+### Changed
+- **Version**: 1.1.5.7 → 1.1.5.8
+
+---
+
+## [1.1.5.7] - 2026-03-06
+
+### Fixed
+- **Memory: Unbounded widget accumulation in ConversationView**: Added `MAX_CONTENT_ITEMS=200` limit. `prune_newest_items()` called after loading earlier messages, `prune_oldest_items()` after loading later messages. Previously, all loaded message widgets accumulated without bound during scrolling
+- **Memory: Widgets not freed on conversation close**: `unset_conversation()` now calls `initialize_for_conversation(null)` which triggers `clear()` to free all widgets immediately. Previously, closing a conversation without opening another left all widgets in memory
+- **Memory: Unbounded URL preview cache**: Added `MAX_CACHE_SIZE=200` with LRU eviction to `UrlPreviewCache`. Previously, every URL preview (including image textures at 100KB–1MB each) was cached forever in the singleton
+
+### Changed
+- **Version**: 1.1.5.6 → 1.1.5.7
+
+---
+
+## [1.1.5.6] - 2026-03-06
+
+### Fixed
+- **Crash: Bookmark close re-entry guard**: Added `removing_conversations` HashSet in `ConversationSelector` to prevent `add_conversation()` from re-creating rows during async removal animation (`yield colapse()`). Incoming messages during the slide-up animation could trigger `start_conversation()` → widget tree corruption → SEGV/system freeze
+- **Video player use-after-free hardening**: Added `_disposed` and `get_mapped()` checks in `update_video_frame()` and post-yield `_disposed` check in `generate_preview()` to prevent accessing disposed widgets in timer callbacks
+- **Bookmarks reappearing on reconnect (Tor switch)**: `sync_autojoin_active()` now detects inactive (user-closed) conversations and calls `unset_autojoin()` instead of re-joining. Previously, if the connection dropped before the async `unset_autojoin()` completed, the server still had `autojoin=true`, causing old rooms to reappear on reconnect
+
+### Changed
+- **Version**: 1.1.5.5 → 1.1.5.6
+
+---
+
+## [1.1.5.5] - 2026-03-05
+
+### Fixed
+- **Video playback for uploaded files (WebM/VFR)**: Replaced manual `uridecodebin` pipeline with `playbin` — fixes WebM files with PTS=0 (variable framerate, e.g. screen recordings) that showed only a frozen first frame. MP4 video messages continue to work
+- **Pause/Stop properly stops decoding**: `pause_playback()` now stops both GStreamer pipeline (PAUSED) AND the 33ms frame-polling timer. Previously the timer kept running during pause, wasting CPU. `cleanup_playback()` (Stop) destroys the entire pipeline
+- **Seek slider re-enabled**: Uses safe `KEY_UNIT` seeking (nearest keyframe) instead of `ACCURATE` which crashed on VFR streams. 200ms debounce prevents seek flooding
+- **AdwBreakpointBin warning in file send dialog**: Set `content-height=400` on `FileSendOverlay` dialog template — prevents GTK warning where natural height < min height during async image loading
+
+### Added
+- **`pause_playback()` / `resume_playback()` helpers**: Centralized play/pause logic used by all 3 interaction points (play button, controls bar, click-on-video)
+- **Internal documentation**: `docs/internal/VIDEO_PLAYER_IMPLEMENTATION.md` — pipeline architecture, debugging guide, known limitations
+
+### Changed
+- **Video pipeline architecture**: `playbin` with custom video-sink bin (videoconvert → capsfilter(RGBA) → fakesink) replaces manual uridecodebin pipeline
+- **Version**: 1.1.5.4 → 1.1.5.5
+
+---
+
+## [1.1.5.4] - 2026-03-05
+
+### Fixed
+- **Tor switch lag in Preferences**: All 3 Tor switches (Enable, Bridges, Firewall) now defer their async work and sensitivity updates to `Idle.add()`, matching the MQTT switch fix from v1.1.4.9. Synchronous DB writes and property notifications in `state_set` were blocking the Switch animation frame
+- **MQTT status timer leak with dialog caching**: The 3-second status poll timer now pauses on `unmap` and resumes on `map`. Previously, with dialog caching, the timer ran indefinitely even while the Preferences dialog was closed
+
+### Changed
+- **Preferences dialog cached**: Dialog is now created once and reused on subsequent opens. First open unchanged (~400ms), every re-open is instant (0ms instead of ~200ms). Eliminates redundant widget tree construction, plugin page creation, and DB queries
+- **Version**: 1.1.5.3 → 1.1.5.4
+
+---
+
+## [1.1.5.3] - 2026-03-05
+
+### Fixed
+- **PopoverMenu GTK warning + AppImage WebM playback**: Fixed GTK PopoverMenu deprecation warning; bundled VP8/WebM GStreamer decoder for AppImage so video/audio plays out of the box
+- **Bundle missing GStreamer plugins for AppImage**: Added GStreamer `good`, `bad`, `libav` plugins to AppImage for full audio/video codec coverage (MP4, WebM, OGG, FLAC, AAC)
+- **Disable "Show Bot in Chat" when MQTT is off**: Button is now grayed out (insensitive) when MQTT is disabled — in standalone settings page, per-account dialog, and standalone bot manager dialog
+
+### Changed
+- **MQTT logging refactored to debug()**: ~80 verbose `message()` calls converted to `debug()` across 10 MQTT plugin files. Only 9 essential lifecycle messages (startup, shutdown, connected, disconnected, migration) remain as `message()`. Use `G_MESSAGES_DEBUG=mqtt` to enable verbose output
+- **DEBUG.md MQTT section rewritten**: Two-tier logging table, 7 subsystem categories, mqtt.db reference with sqlcipher examples, expanded grep filter
+- **Version**: 1.1.5.2 → 1.1.5.3
+
+---
+
+## [1.1.5.2] - 2026-03-04
+
+### Security
+- **AES-256-GCM encryption for sensitive settings** (Hinweis 1): All secrets (Telegram bot tokens, AI API keys, ejabberd admin password) are now encrypted at rest in the SQLite settings table. Key derivation via HMAC-SHA256 from `server_hmac_key`. Existing plaintext values auto-migrate on first read. New API: `set_secret_setting()` / `get_secret_setting()` in `bot_registry.vala`
+- **BUG-02: Remove token_raw cleartext storage**: `BotInfo.token_raw` property and `update_bot_token_raw()` removed entirely. Tokens shown once at creation, never stored
+- **BUG-06: Redact Telegram bot token from logs**: `redact_token_url()` helper masks tokens in debug/warning log output. API response bodies no longer logged
+
+### Fixed
+- **BUG-04: Race condition in `create_bot()`**: `SELECT max(id)` replaced with `last_insert_rowid()` return value from `InsertBuilder.perform()` (PR #17)
+- **BUG-17: OMEMO session persistence**: Per-key storage (`omemo_session:<bot_id>:<jid>:<device_id>`) instead of full JSON blob rewrite. Auto-migration from old format
+- **BUG-18: `gnutls_global_init()` called per certificate**: Added `dinox_cert_init()` / `dinox_cert_deinit()` — GnuTLS initialized once at plugin startup
+- **BUG-22: `delete_dedicated_bot()` fire-and-forget**: Bot deletion now uses the local management API/current routing path. The legacy personal Botmother self-chat handler was removed.
+
+### Changed
+- **BUG-09 downgraded**: Moved from HOCH to Hinweis — ejabberd API limitation, not a code bug
+- **BUG_AUDIT.md**: Comprehensive update — 18 bugs fixed, 2 open (API-design + C-binding), 1 false positive
+- **Version**: 1.1.5.1 → 1.1.5.2
+
+---
+
+## [1.1.5.1] - 2026-03-04
+
+### Fixed
+- **HA Discovery live start/stop for per-account MQTT**: Toggling HA Discovery on/off in the per-account bot dialog now creates/removes the DiscoveryManager on-the-fly for already-connected clients — no reconnect required. Previously, `apply_account_config_change()` only synced topics but never started/stopped discovery
+- **Log message showed wrong field**: "Saved config" log displayed `enabled=` instead of `discovery_enabled=` — now shows both fields for proper debugging
+
+### Changed
+- **HA Discovery ORIGIN_SW → Dino.VERSION**: Hardcoded `ORIGIN_SW = "1.1.4.2"` replaced with `Dino.VERSION` from the build system — version in HA device info now updates automatically with each release
+- **release.sh automation**: `release.sh` now auto-updates VERSION, docs/index.html (softwareVersion + datePublished), and dino.doap release block
+- **NODERED_FLOWS.md**: Rewritten from German to English, added 3 local broker setup options (Mosquitto no-TLS, Mosquitto with auth, ejabberd mod_mqtt TLS)
+- **Version**: 1.1.5.0 → 1.1.5.1
+
+---
+
+## [1.1.5.0] - 2026-03-04
+
+### Fixed
+- **MQTT per-account bot JID collision (BUG-CRITICAL)**: All per-account MQTT bots shared `mqtt-bot@mqtt.local` — ConversationManager strips resources for CHAT-type conversations, collapsing all per-account bots into the same conversation. New scheme: each account gets a unique bare JID `mqtt-<escaped_bare_jid>@mqtt.local` (e.g. `mqtt-user_at_example.org@mqtt.local`)
+- **MQTT standalone/per-account cross-wiring (BUG-CRITICAL)**: Standalone MQTT toggled per-account connection because both shared the same bare JID. Standalone now uses dedicated `mqtt-standalone@mqtt.local`
+- **`purge_caches()` crash on Clear Cache**: `DELETE FROM undecrypted` failed because the table is owned by the OMEMO plugin and never instantiated in the main Database. Wrapped in try/catch
+- **Avatar storage after Clear Cache**: `store_image()` failed because `~/.cache/dinox/avatars/` was deleted by cache clear. Now checks and re-creates the directory before writing
+- **CI vala-nightly build**: `git clone --depth 1` + `git fetch --tags --depth=1` prevented `git describe` from finding version tags. Changed to `git fetch --deepen=200 --tags`
+
+### Changed
+- **Version**: 1.1.4.9 → 1.1.5.0
+
+---
+
+## [1.1.4.9] - 2026-03-03
+
+### Fixed
+- **MQTT Enable Switch lag (per-account)**: `update_connection_sensitivity()` in `mqtt_bot_manager_dialog.vala` ran synchronously in `notify["active"]`, setting `.sensitive` on 5 widget groups → CSS restyling blocked Switch animation. Deferred to `Idle.add()` matching settings_page pattern
+- **Untracked `Idle.add()` sources (§9)**: Both `mqtt_bot_manager_dialog.vala` and `settings_page.vala` used bare `Idle.add()` without storing the source ID. Rapid toggle → queued duplicate callbacks; dialog destroy before callback → crash on dead widget. Now tracked via `sensitivity_idle_id`, cancelled before re-queue, cleaned up in destructor
+- **GTK "Broken accounting of active state" warnings**: 5 `grab_focus()` calls on containers (nav_view, this, save_button) replaced with `Gtk.Root.set_focus(null)` across `settings_page.vala`, `mqtt_bot_manager_dialog.vala`, `topic_manager_dialog.vala`
+- **6 compiler warnings → 0**: Removed unused variables in `audit_carbons_forwarding.vala` (1) and `audit_pubsub.vala` (3), removed dead method `emit_new_icon()` in `systray.vala`, removed unreachable `try/catch` in `bot_registry.vala`
+- **Shell script `set -e` + pipeline crash**: `build.sh` and `run_debug.sh` crashed before error reporting due to `set -euo pipefail` + non-zero pipeline exit. Added `set +e` around pipelines, used `PIPESTATUS[0]` for correct exit code
+
+### Added
+- **`scripts/build.sh`**: Build wrapper with `--clean`, `--strict`, `--run` flags. Captures output to `build_log.txt`, extracts warnings to `build_warnings.txt`, color-coded summary
+- **`scripts/run_debug.sh`**: Runtime debug launcher with `G_MESSAGES_DEBUG=all`, `--fatal` (crash on GTK warning), `--filter STR`, `--valgrind`. Logs to `logs/runtime_warnings.log`
+- **`scripts/pre-commit`**: Git hook that auto-builds and rejects commits with compiler warnings. Filters `certificate_warning` false positive
+
+### Changed
+- **REVIEW_CHECKLIST.md 5.10**: Updated from `grab_focus()` recommendation to `Gtk.Root.set_focus(null)` — the old advice was the root cause of GTK warnings
+- **CONTRIBUTING.md**: New build workflow using `scripts/build.sh`, runtime debug step, helper scripts table, MQTT plugin in architecture table
+- **Version**: 1.1.4.8 → 1.1.4.9
+
+---
+
+## [1.1.4.8] - 2026-03-03
+
+### Fixed
+- **MQTT Enable Switch bypass**: `update_status()` used UI widget state (`enable_switch.active`) instead of saved config — status changed before Save & Apply. Now reads `plugin.get_standalone_config().enabled`
+- **MQTT Enable Switch lag**: 6 widgets' `.sensitive` changes in `notify["active"]` caused CSS restyling that blocked Switch animation. Deferred `update_sensitivity()` to next frame via `Idle.add()`
+- **MQTT Discovery command**: `/mqtt discovery on` called `reload_config()` (read-only) instead of `apply_settings()` — LWT was never set. Changed to `apply_settings()`
+- **MQTT QoS scope**: `/mqtt qos` subscribed on all connections — now scoped to conversation's connection via `connection_key`
+- **MQTT freetext_qos unclamped**: Could pass invalid values (outside 0–2) to `mosquitto_publish`. Added `.clamp(0, 2)` setter
+- **MQTT port not clamped in mqtt_connect()**: Raw port parameter passed to `connect_async()`. Now pre-clamped with `port.clamp(1, 65535)`
+- **MQTT server_detector post-yield**: Stream could be torn down during async disco requests. Added stream re-validation + null check after each yield point
+- **MQTT discovery_prefix unsafe**: Could contain MQTT wildcards (#, +, null, space). Added sanitizing setter
+- **GTK focus-out warning**: Entry rows didn't receive focus-out when page/dialog closed. Added `unmap`/`closed` signal handlers in settings_page, bot_manager_dialog, topic_manager_dialog
+- **MQTT database migration v4**: Added justifying comment for `exec()` call (Qlite ORM can't express column-to-column copy)
+
+### Added
+- **Node-RED Examples**: Two example flows for DinoX MQTT bot integration — DinoX Bot flow (help, time, ping, joke, echo) and Tankerkoenig fuel price monitoring flow with auto-alerts
+- **NODERED_FLOWS.md**: Documentation with embedded flow JSON, ejabberd mod_mqtt config, screenshots, import instructions
+
+### Changed
+- **Version**: 1.1.4.7 → 1.1.4.8
+
+---
+
+## [1.1.4.7] - 2026-03-02
+
+### Fixed
+- **MQTT Plugin Self-Audit (11 findings, M1–M11)**: Comprehensive code review of ~15 MQTT source files against CODING_GUIDELINES.md, SECURITY_GUIDELINES.md, and REVIEW_CHECKLIST.md. Fixed 4 CRITICAL (SQL injection, reconnect race, payload truncation, null deref), 2 HIGH (port validation, reload_config vs apply_settings), 3 MEDIUM (empty catch blocks, unbounded queries, truncate_string crash), 2 LOW (dropdown mismatch, dead code). All fixed in `030cc9d9`
+- **MQTT Tests**: 23 new audit-driven regression tests (78 → 101 total, 12 suites). New suites: LocalHost, ConnectionConfig, PortValidation, TruncateEdge, AliasMap. Added in `bdb2e272`
+
+### Improved
+- **Security Audit Documentation**: SECURITY_AUDIT.md updated with MQTT audit section (M1–M11), consolidated header (55 findings total), removed upstream Dino references
+- **Test Documentation**: TESTING.md updated — MQTT section expanded (52→101 tests, 7→12 suites), total 689 Meson + 136 standalone = 825 tests
+- **GitHub Templates**: All 4 issue/PR templates overhauled with clickable dropdowns (version, OS, desktop, architecture). New CrashReport.yml template added
+- **Project Guidelines**: 10 new rules added to CODING_GUIDELINES.md, REVIEW_CHECKLIST.md, and SECURITY_GUIDELINES.md based on MQTT audit findings
+
+### Changed
+- **Version**: 1.1.4.6 → 1.1.4.7
+
+## [1.1.4.6] - 2026-03-02
+
+### Fixed
+- **ICE/DTLS Handshake Timeout**: Fixed outgoing call DTLS timeout — handshake was started before ICE connectivity, wasting the 20s timeout. Now deferred to `on_component_state_changed` (same as incoming calls). Also fixed stale stop-flag race in `setup_dtls_connection_thread`, increased timeout to 30s, and improved error messages with mode info
+- **MQTT Bridge Duplicate Messages**: Bridge messages no longer appear in both bot chat AND target MUC — `evaluate()` returns bool, bot injection skipped when bridged
+- **GLib-CRITICAL in history_sync.vala**: NULL DateTime guard on `mam_times[account][latest_mam_id].to_unix()` at lines 238 and 350
+- **GLib-CRITICAL g_date_time_to_unix**: Additional NULL guards for all remaining DateTime calls in MQTT plugin files
+- **Adwaita-CRITICAL stale widgets**: Guard `populate_*_list()` against orphaned widgets after back-navigation
+- **MQTT Bridge auto-subscribe**: 3-bug fix — auto-subscribe on add, remove dead JSON fields, XMPP-offline queue
+
+### Added
+- **MQTT Bridge `send_account` field**: Mandatory account selector (DropDown) on bridge rules — explicitly choose which XMPP account sends bridged messages. Fixes "Only occupants are allowed to send messages" when standalone bridge targets a MUC. DB v3→v4 migration with auto-backfill for legacy rules
+- **MQTT Bridge alias in messages**: Formatted bridge messages now show alias instead of raw topic path
+- **MQTT Bridge client scoping**: Rules scoped to their MQTT client label — prevents cross-broker duplicate delivery
+- **MQTT Bridge MUC delivery**: Bridge detects MUC targets via `MucManager.is_groupchat()` and uses proper MUC send path
+- **MQTT Bridge edit support**: Inline edit for bridge rules (topic, JID, alias, format, account)
+- **Topic subscription inline edit**: Edit button fills topic/QoS/alias form fields, "Subscribe" becomes "Save" — consistent with bridge UI pattern
+- **Topic subscription edit dialog**: Full edit dialog for existing subscriptions (topic + alias + QoS)
+
+### Improved
+- **MQTT Bot Manager dialog**: No longer auto-closes after Save & Apply
+- **MQTT topic deletion**: Fixed 3 bugs where deletion wasn't applied until on/off toggle
+- **MUC creation privacy**: Always set explicit room config (non-public, members-only) — prevents accidental public room creation
+- **MUC creation context menu**: Fixed context menu creation, details dialog, autojoin + GTK warning
+- **MQTT Topic Aliases**: UI completion with reconnect, pause, per-topic QoS/Priority
+- **MQTT Bot UI/UX overhaul**: DB orphan cleanup + self-review fixes
+- **Documentation**: MQTT_PLUGIN.md and MQTT_UI_GUIDE.md updated to v1.6.0
+- **Static analysis**: Clone removal + dead code cleanup
+- **Security audit tables**: Cleaned up Fix columns for readability
+
+### Changed
+- **Version**: 1.1.4.5 → 1.1.4.6
+
+## [1.1.4.5] - 2026-03-01
+
+### Fixed
+- **Tor Proxy Timing**: Fixed "Verbindungsaufbau abgelehnt" when enabling Tor — `start_tor()` now waits for bootstrap completion (up to 60s) before applying SOCKS5 proxy settings
+- **Signal Disconnect Guards**: Fixed `GLib-GObject-CRITICAL` warnings about handler ID not found — added `SignalHandler.is_connected()` checks before every `disconnect()` in avatar_picture.vala and conversation_selector_row.vala
+- **Popover SIGSEGV Crash (#134)**: Fixed segfault from null popover access in conversation view
+- **libsoup Session Lifecycle (#135)**: Fixed HTTP session not properly shut down on account disconnect
+- **Tooltip Rebuild Spam (#136)**: Eliminated unnecessary repeated tooltip widget rebuilds
+- **Soup.Sessions Shutdown**: Abort active HTTP sessions on application exit
+- **libdino** (48 bugs): Service layer null checks, entity lifecycle fixes, XEP compliance (XEP-0030, XEP-0045, XEP-0060, XEP-0115, etc.), plugin/dbus error handling
+- **xmpp-vala** (16 bugs): Presence stanza handling, IQ error responses, message archive fixes, roster versioning edge cases
+- **UI** (49 bugs): Conversation content view layout, main window state management, chat input handling, file transfer display, notification deduplication
+- **qlite** (3 bugs): SQL query builder null safety, transaction isolation
+- **crypto-vala** (4 bugs): SRTP counter overflow, cipher padding, key comparison safety
+- **OMEMO** (3 bugs): Decryptor session lookup, encryptor key distribution, device list sync
+- **Systray** (5 bugs): Icon rendering, tooltip updates, menu action handling
+- **Infrastructure** (9 bugs): Meson build configuration, test runner scripts, CI pipeline fixes
+- **4 additional bugs found by expanded test suite** (#137–#140)
+
+### Improved
+- **Performance** (13 optimizations): Memory allocation reduction, startup time improvement, hot-path optimizations across libdino, UI, and xmpp-vala
+- **Test Suite**: +299 test cases (835 total), covering 52 of 69 XEPs (75.4%) — SCE, Jingle FT, Registration, Ad-Hoc, MAM v2, JMI, Moderation
+
+### Added
+- **Systray IconPixmap**: Support for Qt-based tray hosts (KDE Plasma, LXQt)
+- **CI `--clean` mode**: New `--clean` option for `ci-build-deps.sh` to rebuild dependencies from scratch
+- **webrtc/abseil Build Fix**: Replaced fragile perl regex with proper `.patch` file for webrtc-audio-processing abseil-cpp compatibility
+- **Coding Guidelines**: Security guidelines, review checklist, and coding standards documentation
+
+### Changed
+- **Version**: 1.1.4.4 → 1.1.4.5
+
+## [1.1.4.4] - 2026-02-28
+
+### Fixed
+- **Plugin Security Audit (10 plugins, 26 bugs fixed)**:
+  - **bot-features** (16 bugs): Full security audit — 1 CRITICAL (SQL injection in rule deletion), 3 HIGH (command injection, XSS in bot reply, unbounded topic history), 5 MEDIUM (missing auth checks, race conditions, memory leaks), 7 LOW (input validation, error handling)
+  - **http-files** (2 LOW): Content-Length int overflow on files >2GB, null-check on HTTP response before accessing status_code
+  - **omemo** (2 LOW): `delete_all_sessions` iterator invalidation (ConcurrentModificationException), `own_notifications` overwritten on multi-account login
+  - **openpgp** (1 MEDIUM + 1 LOW): Copy-paste null-check bug (checked `signed_data` instead of `encrypted_data` in decrypt path), stdin piping to GPG subprocess
+  - **rtp** (1 MEDIUM + 2 LOW): REMB `remb_adjust()` reset wrong variable (`octets_received` instead of `new_octets`), bitrate formula multiplied by time instead of dividing, missing `rtp_buffer.unmap()` after WRITE map for video orientation extension
+  - **tor-manager** (1 MEDIUM): Infinite Tor restart loop — `retry_count` reset on port-open instead of bootstrap completion, preventing emergency disable from ever triggering
+  - **ice**: 0 bugs found
+  - **notification-sound**: 0 bugs found
+- **OMEMO v1/v4 Session Race Condition**: Fixed timing bug where v2 device list + bundle arriving before v1 device list created orphaned v4 sessions. Three-pronged fix: v2 bundle fetch guard for known v1 JIDs, proactive v4→v3 session replacement on v1 bundle arrival, proper `NO_SESSION` error code for retry semantics
+- **MUC Status Code Spam**: Replaced `printerr()` with `debug()` for MUC status codes in `on_received_unavailable` — eliminated repeated "110" output on stderr and reduced I/O overhead
+
+### Changed
+- **Version**: 1.1.4.3 → 1.1.4.4
+
+## [1.1.4.3] - 2026-02-28
+
+### Fixed
+- **MQTT Bug Audit (20 fixes)**: Comprehensive audit of the MQTT plugin found and fixed 20 bugs:
+  - **CRITICAL**: `cmd_publish` now routes to the correct MQTT client per conversation; `save_rules()` wraps DELETE+INSERT in a DB transaction with ROLLBACK on error
+  - **HIGH**: Null check on mosquitto handle after async yield (crash fix); timer leak in settings page destructor; topic manager uses rule IDs instead of stale indices; removed duplicate `connection_changed` signal emissions
+  - **MEDIUM**: Payload cast uses `.make_valid()` for safe UTF-8; null guards on `get_module<>()` in bot conversation; subscribe uses configured QoS instead of hardcoded 0; alert evaluation uses targeted UPDATE instead of full save; topic UI rebuild tracks rows in ArrayList; `find_account()` returns null instead of disconnected fallback
+  - **LOW**: Unsubscribe command topics on discovery disable; env port parsing validates range 1-65535; clear ENTITY_ALERTS_PAUSE state topic; remove dead null check; discovery group linked to sensitivity; publish checks connectivity before success report
+- **Standalone Settings Lag**: Enable switch no longer blocks the GTK main thread — heavy work (20+ DB reads, disconnect/reconnect) deferred to `Idle.add()`
+
+### Added
+- **Per-Account Mode Selector**: ComboRow in Bot Manager to choose "XMPP Server" vs "Custom Broker" connection mode
+- **Show Bot in Chat**: Button in Bot Manager to reopen a closed bot conversation
+- **HA Discovery Guard**: Home Assistant Discovery automatically disabled in XMPP mode (no retain/LWT support)
+- **BUILD.md Plugin Table**: Complete build options table for all 13 plugins with meson options, defaults, and dependencies
+- **Alert Manager**: `toggle_rule_by_id()` method for safe rule toggling without index staleness
+
+### Changed
+- Standalone Bot Manager no longer shows duplicate connection settings (managed by Settings page)
+- MQTT_PLUGIN.md and MQTT_UI_GUIDE.md updated with HA Discovery compatibility notes
+- **Version**: 1.1.4.2 → 1.1.4.3
+
+## [1.1.4.2] - 2026-02-26
+
+### Added
+- **MQTT Plugin — Full Implementation**: Complete MQTT IoT/Smart Home integration plugin with 4 development phases:
+  - **Phase 1**: Real libmosquitto connect/subscribe/publish, per-account and standalone mode, server type detection (ejabberd/Prosody), Settings UI with broker host/port/TLS
+  - **Phase 2**: Bot conversation paradigm with chat commands (`/mqtt subscribe`, `/mqtt publish`, `/mqtt status`, etc.)
+  - **Phase 3**: Alert system with priority rules (info/warning/critical), notification sound integration, topic history
+  - **Phase 4**: Advanced features — XMPP↔MQTT bridge, ASCII sparklines for numeric topics, QoS levels, MQTT 5.0 properties, topic manager
+- **MQTT Tests**: 52 unit tests covering mqtt_utils, alert rules, topic parsing, bridge formatting
+- **MQTT CI Integration**: Added `libmosquitto-dev` to all CI workflows (AppImage, build, Windows MSYS2). Flatpak manifest already included mosquitto 2.1.2
+- **MQTT Documentation**: Added MQTT debugging section to DEBUG.md (log domain `mqtt`, env var overrides), MQTT build instructions to BUILD.md (all distros + MSYS2), dedicated MQTT_PLUGIN.md
+
+### Fixed
+- **MUC Close — Titlebar Menu / Ctrl+W**: "Close Conversation" in the titlebar ⋮ menu and Ctrl+W now properly leaves the MUC room (calls `MucManager.part()` instead of `hide_conversation()`). Previously, bookmark was removed but chat stayed open.
+- **MUC Close — Sidebar Race Condition**: Removed `Idle.add()` wrapper in `conversation_deactivated` handler that caused a race where incoming messages could re-activate the conversation before `part()` fired. Added `mucs_joined` guard. Removed confusing "Close" menu option for MUCs (only "Leave and Close" remains).
+- **BotManager API Warnings**: BotManager dialog no longer spams "Verbindungsaufbau abgelehnt" warnings when the Botmother API is not running. Added `check_api_reachable()` pre-flight check.
+- **OMEMO Chat-Clear**: Preserve device knowledge and trust state when clearing chat history — only delete sessions, not device identity.
+- **Flatpak Build**: Updated protobuf-c 1.5.0 → 1.5.2 in Flatpak manifest (fixes protobuf ≥26.0 compatibility with GNOME 48 SDK)
+- **CI Dependency Security**: Build protobuf-c 1.5.2 and mosquitto 2.1.2 from source in CI/AppImage instead of using outdated Ubuntu apt packages (protobuf-c 1.4.1 had memory corruption bug in `protobuf_c_message_unpack()`, mosquitto 2.0.18 outdated)
+
+### Changed
+- MUC titlebar menu now shows "Leave Conversation" instead of "Close Conversation" for group chats
+- **Version**: 1.1.4.1 → 1.1.4.2
+
+## [1.1.4.1] - 2026-02-25
+
+### Fixed
+- **MUJI MUC Cleanup (F10)**: Ephemeral MUJI MUC rooms are now destroyed (`destroy_room`) after call ends instead of just leaving. Conversation removed from sidebar (`close_conversation`). MUJI Flag cleanup.
+- **MUJI Camera Leak (F11)**: Fixed camera/PipeWire staying on after MUJI video call. Root cause: async `call_resource()` race condition creating zombie Jingle sessions. Added zombie-guard after async yield, new `dispose_pipeline()` safety net, correct teardown order (peers first, then MUC).
+- **Entity Caps Hash (F12)**: Downgraded entity caps hash mismatch warning to `debug()` — server-side ejabberd bug, documented in DEBUG.md.
+- **1:1 PipeWire Leak**: Fixed PipeWire connection staying open after 1:1 call. Disconnected `devices_changed` handler, nulled `Gst.Device` refs in `on_pipe_destroyed()`, nulled `selected_*_device` in `on_call_terminated()`.
+- **1:1 Pipe Recycling**: Removed unnecessary destroy/recreate cycle in `init_call_pipe()`.
+- **DTMF Pipeline**: Lazy init + immediate `shutdown()` on call end instead of relying on GC.
+- **GDK_IS_SURFACE Assertion**: Fixed 3-second `hide_control_handler` timeout firing after GDK surface destroyed. Cancelled on `close_request`, `get_realized()` guard.
+- **Signal Handler Leaks**: `disconnect_session_info_handlers()` in PeerState prevents memory leaks via closures capturing `this`.
+- **Stream Cleanup**: Null `session`/`crypto_session` in `destroy()`, explicit `send_rtp`/`send_rtcp` cleanup.
+- **VideoWidget**: Null-safe `detach()`/`dispose()`, proper `active_widgets` decrement.
+
+### Added
+- **`dispose_pipeline()`**: New method in `VideoCallPlugin` interface — force-closes all remaining streams and destroys the GStreamer pipeline.
+
+### Changed
+- **Version**: 1.1.4 → 1.1.4.1
+
+## [1.1.4] - 2026-02-25
+
+### Fixed
+- **MUJI Signal Leak**: Fixed signal leak in `detach()` — handlers were not disconnected from MUC module on call end (`0272_muji.vala`).
+- **MUJI Invite-Retract**: Activated invite retraction with 60s timeout; MUC is left on retract (`call_state.vala`, `calls.vala`).
+- **MUJI Nick Collision**: Added 3-attempt retry with `_2`/`_3` suffix on nick conflict (`0272_muji.vala`).
+- **MUJI Codecs Changed**: `codecs_changed` signal now consumed; warns on empty codec intersection (`call_state.vala`).
+- **MUJI Dead Code**: Removed unused `parent_muc` variable (`call_state.vala`).
+- **MUJI Timeout Separation**: 1:1 calls 30s, MUJI initiator 90s, MUJI receiver 30s, invite 60s (`call_state.vala`, `calls.vala`).
+- **OMEMO DTLS-SRTP**: 8 bug fixes — null safety, key comparison, error handling, fingerprint verification (`dtls_srtp_verification_draft.vala`).
+- **OMEMO MUC Key Fetch**: Proactive key fetch for MUC participants, MAM real_jid resolution, empty occupant guard (`manager.vala`, `muc_manager.vala`).
+- **Audio Clipping**: Multi-peer receive gain reduced to `1/sqrt(N)` to prevent clipping (`device.vala`).
+- **Network Recovery**: Active calls are ended with "Connection lost" when XMPP connection drops (`calls.vala`).
+
+### Added
+- **Peer Limit UI**: `MAX_MUJI_PEERS=4` constant with "Anruf voll" / "Call is full" feedback in call window (`call_state.vala`, `call_window.vala`, `de.po`).
+- **Bandwidth Coordination**: Per-peer video bitrate cap (`MAX_VIDEO_UPLOAD_KBPS/N`), rebalanced on peer join/leave (`device.vala`).
+
+### Changed
+- **Version**: 1.1.3.1 → 1.1.4
+
+## [1.1.3.1] - 2026-02-24
+
+### Fixed
+- **MUC Close vs. Leave Race Conditions**: Separated `hide_conversation()` from `close_conversation()` with new `conversation_hidden` signal. Closing a chat now only hides it instead of triggering a full MUC leave, preventing race conditions and unintended MUC departures.
+- **Avatar Debug Prints & Portrait Resize**: Removed leftover debug `print()` calls from avatar handling. Fixed portrait-mode avatar resize calculation. Preserved MUC vCard avatars correctly.
+- **Avatar Redundant DB Reads**: Removed unnecessary database reads on avatar display. Added MUC avatar remove button.
+- **MUC Message Retraction**: Fixed wrong moderation ID used for retraction, missing local feedback after retraction, and feature cache race condition.
+- **GTK Warning: AdwBreakpointBin min > natural height**: Set `vhomogeneous=false` on main stack and left_stack to prevent libadwaita from computing inflated minimum heights.
+- **GTK Warning: Sidebar Placeholder Text Wrapping**: Removed description from sidebar placeholder `AdwStatusPage` that caused text wrapping warnings.
+- **Old Chats Reappearing After Panic Wipe**: Added `sync_not_before` timestamp and panic marker file to prevent MAM resync from restoring wiped conversations and messages.
+- **GLib-GObject-CRITICAL: realize_id Not Reset**: Fixed handler disconnect in `message_widget.vala` where `realize_id` was not reset after `disconnect()`, causing critical GObject warnings on widget reuse.
+- **URL Preview Hidden by Reactions**: Priority conflict — both URL preview and Reactions used priority 3 in `set_widget()`. Reactions moved to priority 4 so URL previews remain visible.
+- **AdwBreakpointBin min > natural Height (Persistent)**: Override `measure()` in `MainWindow` and `NaturalSizeIncrease` to enforce `natural >= minimum`, fixing persistent libadwaita warnings that vhomogeneous alone didn't resolve.
+
+### Added
+- **Website og-image.png**: Added missing Open Graph preview image for social media link sharing.
+
+### Changed
+- **CI**: Made aarch64 builds optional (allow-failure) in release and AppImage workflows.
+- **Version**: 1.1.3.0 → 1.1.3.1
+
+## [1.1.3.0] - 2026-02-24
+
+### Fixed
+- **GTK4 Segfault in Call Window Close**: Recursive `gtk_window_close` caused by `conn_details_window.close()` inside `close_request` handler + `this.dispose()` destroying controller mid-signal-emission. Added `closing` guard, removed unsafe calls. Crash occurred after hanging up VoIP calls.
+- **SRTP `force_reset_encrypt_stream` Bug**: `force_reset()` reset the encrypt stream but not the decrypt stream counter, causing SRTP authentication failures after re-keying. Found by RFC 3711 audit tests.
+- **Tor Toggle UI Lag**: SOCKS5 proxy toggle in settings caused main-thread blocking. Fixed with deferred application.
+- **GCM Tag Always-Append**: HTTP file encryption always appended the GCM authentication tag even when already present, causing double-tag corruption on re-encryption. Fixed in http-files plugin.
+- **SFS Encryption Propagation**: Stateless File Sharing encryption metadata was not propagated correctly through the message pipeline, causing decryption failures for received encrypted files.
+- **Legacy Decrypt Tag Bug**: Legacy decryption path used wrong tag size, causing silent failures on old-format files.
+- **UI Widget Fixes**: Various minor widget state issues in conversation content view.
+- **Pango Invalid UTF-8**: Added `make_valid()` in XMPP parser to prevent Pango crashes on malformed UTF-8 stanzas. Added charset detection for URL preview content.
+- **`run_all_tests.sh` Missing OpenPGP Suite**: The master test runner never called `openpgp-test` -- 48 tests were silently skipped. All test counts in the script were stale.
+
+### Added
+- **SRTP/RFC 3711 Audit Tests**: 10 new tests covering RTP/RTCP encrypt/decrypt, wrong-key rejection, null-input handling, and counter management.
+- **SOCKS5/XEP-0260 Audit Tests**: 14 new tests covering SOCKS5 Bytestreams protocol logic, SHA-1 hash computation, candidate generation, and error handling.
+- **HTTP-Files Plugin Tests**: 25 tests (originally 28, consolidated to 25) for URL regex, filename extraction, and log sanitization.
+- **TESTING.md**: Complete test source file reference (51 source files mapped to suites and specs). OMEMO coverage updated to 11 suites/102 tests. All stale test counts fixed. German text replaced with English.
+
+### Removed
+- **Legacy/Dead Code Cleanup**: Removed ESFS registry, legacy encryption fallback paths, avatar re-encryption code, and `esfs_mode` flag. ~400 lines of unused code eliminated.
+
+### Changed
+- **Test Coverage**: 556 Meson tests (7 suites) + 136 standalone = 692 total, 0 failures
+- **Version**: 1.1.2.9 → 1.1.3.0
+
+## [1.1.2.9] - 2026-02-23
+
+### Fixed
+- **Bookmark Close Action Race**: GTK4 schließt das PopoverMenu *bevor* die ausgewählte Menü-Aktion ausgelöst wird. Der `popover.closed`-Handler rief `popover.unparent()` direkt auf, was den Widget-Baum und damit die Action-Group entfernte — die Aktion (z.B. MUC verlassen, Lesezeichen schließen) wurde stillschweigend ignoriert. Fix: `unparent()` in `Idle.add()` gewrappt, damit die Aktion zuerst ausgeführt wird.
+- **MUC Role.NONE Compiler-Warnung**: Fehlender `case Xep.Muc.Role.NONE` im Switch-Statement in `status_populator.vala` verursachte eine Compiler-Warnung. Jetzt behandelt mit passender Nachricht.
+- **"Unterhaltung starten" Dialog Lag**: Synchrones Laden der Roster-Liste beim Öffnen des Dialogs blockierte den Main-Thread. Fix: Verzögertes Batch-Laden (Batch-Größe 2, 150ms initiale Verzögerung, 10ms zwischen Batches, `invalidate_sort/filter` nur einmal am Ende).
+- **Konversationen bei Konto-Deaktivierung nicht geschlossen**: Beim Deaktivieren eines Kontos blieben alle Konversationen sichtbar, weil `account_removed` bewusst nicht gefeuert wird (OMEMO-Schlüsselschutz seit v1.1.2.1). Fix: Alle aktiven Konversationen des deaktivierten Kontos werden jetzt explizit per `close_conversation()` geschlossen.
+- **MUC-Browser Such-Schalter Lag**: Der Schalter "Öffentliche MUCs durchsuchen" blockierte den Main-Thread während der Switch-Animation mit synchronem `clear_list()` + `populate_list()`. Fix: Verarbeitung in `Idle.add()` gewrappt, damit die Animation zuerst abläuft.
+
+### Changed
+- **Version**: 1.1.2.8 → 1.1.2.9
+
+## [1.1.2.8] - 2026-02-23
+
+### Fixed
+- **Legacy Encryption Format Fallback**: After the security audit changed encryption parameters (T-5/T-6/T-7: SALT 8→16, IV 16→12, TAG 8→16), old avatar files encrypted with the pre-v1.1.2.7 format failed to decrypt with "Prüfsummenfehler" on every UI redraw, freezing the application. `decrypt_data()` now tries the current format first, then automatically falls back to the legacy format. Avatars are silently re-encrypted to the current format on first successful legacy decrypt.
+- **Avatar Decrypt Retry Spam**: Failed avatar decryption triggered expensive PBKDF2 key derivation (~100ms each) on every UI redraw for every contact with an old-format avatar, making DinoX unusable. Added `failed_decrypt_hashes` set to prevent repeated decryption attempts for truly corrupt files. `store_image()` now pre-populates the bytes cache for instant access after re-fetch.
+
+### Changed
+- **Version**: 1.1.2.7 → 1.1.2.8
+
+### Important — Upgrade Notice
+> **Empfehlung / Recommendation**: For the cleanest upgrade experience after the security audit encryption changes, use **Panic Wipe** (`Ctrl+Shift+Alt+P`) and set up your accounts fresh. This re-encrypts all local data (avatars, files, database) with the new, stronger encryption parameters (128-bit salt, 96-bit IV, 128-bit GCM tag) from scratch.
+>
+> If you prefer to keep your data, v1.1.2.8 handles legacy-format files automatically — old avatars are decrypted with the old parameters and silently re-encrypted with the new ones on first access. No manual action required.
+>
+> **Manual alternative** (without Panic Wipe):
+> 1. Close DinoX
+> 2. Delete `~/.cache/dinox/` (avatar + file cache)
+> 3. Restart DinoX — avatars will be re-fetched and encrypted with current parameters
+
+## [1.1.2.7] - 2026-02-23
+
+### Fixed
+- **Flatpak: H.264 Video Encoder Not Found**: Flatpak had `ffmpeg-full` extension declared but never exposed its plugin directory to GStreamer (`GST_PLUGIN_PATH` missing). On systems where VAAPI fails (old Radeon GPUs), no working H.264 encoder was found, preventing video message recording. Fix: add `--env=GST_PLUGIN_PATH=/app/lib/ffmpeg` to `finish-args` and `"autodownload": true` to the extension config.
+- **AppImage VAAPI Segfault on Old Radeon**: Bundled `libgstvaapi.so` caused segfault on old Radeon GPUs (radeon driver, not amdgpu) due to Mesa failing to allocate virtual address for buffer. Fix: removed `libgstvaapi.so` from AppImage GStreamer plugin bundle. Users with modern hardware still use their host system's VAAPI plugin via `GST_PLUGIN_PATH` prepending.
+- **AppImage Missing Icons on KDE (GitHub #14)**: AppImage showed missing/broken icons on KDE Plasma because Adwaita icon theme is not installed. Fix: bundle Adwaita scalable + symbolic icons + `index.theme` into AppImage, rebuild icon cache.
+- **File Manager "Don't have download data" Log Spam**: `file_manager.vala` emitted `warning()` on a normal timing race (download data not yet available). Fix: downgraded to `debug()` to reduce log noise.
+
+### Added
+- **Security Audit Test Suite**: 506 Meson tests across 6 suites (main, xmpp-vala, openpgp, omemo, bot-features, libdino) + 136 standalone tests = 642 total. Spec-based naming (NIST, RFC, XEP prefixes). Found and fixed 21 bugs (T-1 through T-21).
+- **SECURITY_AUDIT.md**: Updated with all 21 test-suite bugs in new "Automated Test Suite" section.
+- **TESTING.md**: Complete test inventory, Developer Quick Reference section with scripts/binaries/workflows.
+- **README.md**: Added Testing link in navigation bar.
+
+### Changed
+- **Version**: 1.1.2.6 → 1.1.2.7
+
+## [1.1.2.6] - 2026-02-23
+
+### Fixed
+- **AppImage TLS Connection Failure (GitHub #13)**: AppImage did not bundle `glib-networking` (`libgiognutls.so`), causing GLib to fall back to `GDummyTlsBackend`. All XMPP/TLS connections failed with "TLS support is not available" on systems without system-wide glib-networking (e.g. Arch Linux). Fix: bundle GIO TLS modules into AppDir, set `GIO_EXTRA_MODULES` in AppRun, add `glib-networking` to CI dependencies.
+- **File Upload Crash (CRITICAL assertion)**: `prepare_send_file()` could return null when the XMPP stream disconnects during upload preparation, triggering `assertion 'file_send_data != NULL' failed`. Fix: added null check, throws clean `FileSendError.UPLOAD_FAILED` instead of crashing.
+- **DTMF Double-Send on Fast Click**: GTK button `clicked` signal could fire twice on fast clicks, sending duplicate DTMF digits. Fix: 300ms per-digit debounce in `call_dialpad.vala`.
+
+### Changed
+- **Version**: 1.1.2.5 → 1.1.2.6
+
+## [1.1.2.5] - 2026-02-22
+
+### Fixed
+- **DTMF Thread-Safety (SIGSEGV/Stream Error Fix)**: DTMF digit queue (`Gee.LinkedList`) was accessed from both the main thread (`send_dtmf`) and the GStreamer streaming thread (`build_dtmf_rtp_packet`) without synchronization, causing race conditions that resulted in SIGSEGV crashes, "Internal data stream error", "Link count below zero" errors, and one-directional audio after pressing DTMF keys. Fix: replaced with `GLib.Mutex`-protected `Gee.LinkedList<int>` queue. `send_dtmf()` now only enqueues encoded digits; all DTMF state mutations happen exclusively on the streaming thread via `start_dtmf_digit_internal()`.
+- **DTMF Local Tone Playback (Audio + Video Calls)**: DTMF dial tones were not audible during video calls. Multiple approaches failed (pipeline state switching, valve elements). Final solution: persistent `audiotestsrc wave=silence` keepalive branch keeps the GStreamer mixer alive, two sine-wave branches with `volume` elements gate sound on/off (0.0 ↔ 0.3) for 150ms tone bursts.
+- **Incoming Audio Crackling at Call Start**: PipeWire initial transients caused crackling. Fix: added `recv_volume` element on the receive audio path with a 200ms fade-in (0.0 → 1.0 in 10 steps × 20ms).
+- **Words Cut at Sentence Start**: WebRTC APM transient suppression was interpreting initial phonemes as clicks and suppressing them. Fix: disabled `transient_suppression`.
+- **Outgoing Audio Quality Degraded**: WebRTC AudioProcessing Module was configured too aggressively. Fix: noise suppression `kHigh` → `kModerate`, AEC `mobile_mode` → desktop mode, AGC `kAdaptiveDigital` 9dB → `kFixedDigital` 6dB.
+
+### Added
+- **Outgoing Ringback Tone**: `phone-outgoing-calling` (freedesktop sound theme) now plays immediately when initiating a call and repeats every 3 seconds until the call is answered, rejected, or hung up. Uses separate Canberra cancel-ID (2) so it doesn't interfere with the incoming ringtone.
+- **Opus Forward Error Correction**: Added `packet-loss-percentage=10` to `opusenc` when FEC is enabled, improving audio resilience on lossy networks.
+- **DTMF Dialpad CSS**: Added visual styling for the DTMF dial pad buttons.
+
+### Changed
+- **Version**: 1.1.2.4 → 1.1.2.5
+
+## [1.1.2.4] - 2026-02-22
+
+### Fixed
+- **GtkPopoverMenu Active State Warning**: Right-click context menu on conversation rows created a `PopoverMenu` with `set_parent()` but never unparented it on close, causing GTK "Broken accounting of active state" warnings. Fix: unparent popover in `closed` signal handler.
+- **Flatpak: No H.264 Encoder Found**: Flatpak relied on the optional `org.freedesktop.Platform.ffmpeg-full` extension for video encoding. Without it, all 5 H.264 encoders failed. Fix: build OpenH264 v2.4.1 as a Flatpak module so `openh264enc` works out of the box.
+- **MUC Message Corrections Rejected**: `is_correction_acceptable()` required XEP-0421 occupant IDs for MUC corrections. MUCs without occupant ID support (e.g. ejabberd) have `occupant_db_id == -1`, causing ALL corrections to be rejected with "Got unacceptable correction". Fix: fall back to full JID (nick) matching when occupant IDs are unavailable.
+- **OMEMO ESFS GCM Auth Tag**: ESFS file decryption always skipped GCM auth tag verification (`taglen=0`), logging a `warning()` for every received file. Fix: try authenticated decryption first (last 16 bytes as GCM tag); only fall back to tag-less mode for Kaidan/QXmpp interop. Warning downgraded to `debug()` on fallback path.
+
+### Changed
+- **Version**: 1.1.2.3 → 1.1.2.4
+
+## [1.1.2.3] - 2026-02-22
+
+### Security
+- **S1: bot_registry.db Encrypted**: Bot registry database now encrypted with app.db_key (same SQLCipher standard as dino.db). Plaintext databases are auto-migrated on first start.
+- **S4: Database File Permissions**: All database files (including WAL/SHM journals) now set to chmod 600 after open.
+- **S5: Secure Delete for bot_registry.db**: `PRAGMA secure_delete = ON` prevents deleted bot tokens from persisting on disk.
+
+### Fixed
+- **Preferences Dialog Lag**: Opening preferences from the burger menu caused visible lag. Contacts page now defers roster population until visible (map signal), Encryption page defers OMEMO key queries. Both pages track dirty state and refresh on next map. Reuses existing AccountDetails in ViewModel instead of duplicating.
+- **B1: Duplicate Conversations**: Added UNIQUE constraint on `(account_id, jid_id, type_)` in conversations table. Migration deduplicates existing rows (keeps lowest id, re-points messages).
+- **B2+B3: Orphan Data Cleanup**: Migration removes orphaned messages (referencing deleted conversations) and orphaned real_jid entries.
+- **B5: Foreign Keys Enforced**: `PRAGMA foreign_keys = ON` now set per connection to enforce referential integrity.
+
+### Changed
+- **O1: Auto-Vacuum**: Databases now use `auto_vacuum = INCREMENTAL` with one-time VACUUM conversion to reclaim space automatically.
+- **O2: File Transfer Index**: New index on `(account_id, counterpart_id)` for faster file transfer lookups.
+- **O3: FTS4 → FTS5 Upgrade**: Full-text search upgraded from FTS4 to FTS5 with runtime detection. Falls back to FTS4 if SQLCipher was built without FTS5 support.
+  - Runtime detection via in-memory test table at startup
+  - Conditional FTS5/FTS4 table creation and trigger syntax
+  - MatchQueryBuilder uses `rowid` (FTS5) or `docid` (FTS4)
+  - Migration v39: conditional FTS4→FTS5 upgrade with content rebuild
+- **SQLCipher from Source**: AppImage CI and Flatpak now build SQLCipher 4.6.1 from source with `--enable-fts5` for guaranteed FTS5 support.
+- **DB VERSION**: 37 → 39
+- **Version**: 1.1.2.2 → 1.1.2.3
+
+## [1.1.2.2] - 2026-02-22
+
+### Fixed
+- **UI Lag When Closing Bookmarks/MUCs**: Closing a MUC from the conversation list caused visible stutter because `part()` (synchronous socket write for unavailable presence + bookmark update) ran before UI handlers. Fix: schedule `part()` via `Idle.add()` so the collapse animation starts immediately.
+- **Systray Quit Felt Sluggish**: Window stayed visible during disconnect and cleanup. Fix: hide window instantly on quit, remove duplicate `cleanup_temp_files()` call (shutdown already handles it), remove unused 3s safety timer.
+- **Avatar Loading Slow (6s on Restart)**: `cleanup_temp_files()` deleted the encrypted avatar cache (`~/.cache/dinox/avatars/`) on every shutdown, forcing expensive network re-fetching (vCard IQ / PubSub) for every contact on restart. Fix: stop deleting the AES-256-GCM encrypted avatar files — they are safe to persist.
+- **Avatar Loading Lag During Login**: Each avatar access did synchronous file I/O + AES-256-GCM decryption on the main thread with no caching. MUC avatar tiles were fully rebuilt on every `received_avatar` signal during login. Fix: add in-memory LRU cache (max 200 entries) for decrypted avatar bytes, debounce MUC tile rebuilds (150ms), skip full rebuild for occupant avatar changes (individual tiles update themselves).
+
+### Changed
+- **Conversation Row Animation**: Slide-up animation reduced from 200ms to 120ms for snappier feel.
+- **Version**: Bumped from 1.1.2.1 to 1.1.2.2
+
+## [1.1.2.1] - 2026-02-21
+
+### Fixed
+- **CRITICAL: OMEMO Identity STILL Destroyed on Quit (Systray Path)**: The v1.1.1.8 fix only patched `application.shutdown()`, but the systray quit handler ran FIRST and called `stream_interactor.disconnect_account()` per account — firing `account_removed` and deleting ALL OMEMO identity data before `shutdown()` was reached. Fix: systray now uses `connection_manager.disconnect_all()` (no `account_removed` signal).
+- **OMEMO Identity Destroyed on Reconnect**: `preferences_dialog.reconnect_account()` called `stream_interactor.disconnect_account()` which fires `account_removed` → OMEMO keys deleted. Fix: use `connection_manager.disconnect_account()` directly.
+- **OMEMO Identity Destroyed on Account Disable**: `preferences_dialog.enable_disable_account()` called `stream_interactor.disconnect_account()` when disabling → OMEMO keys deleted. Fix: use `connection_manager.disconnect_account()` directly.
+
+### Changed
+- **Version**: Bumped from 1.1.2.0 to 1.1.2.1
+
+## [1.1.2.0] - 2026-02-21
+
+### Fixed
+- **Video Codec Not Supported on Monocles/Android**: All H.264 encoders (vaapih264enc, x264enc, openh264enc, avenc_h264) now produce **Constrained Baseline** profile instead of High profile. High profile is not supported by many Android media players. Added a `capsfilter` with `video/x-h264,profile=constrained-baseline` between encoder and h264parse to force the profile via GStreamer caps negotiation.
+- **No Audio When Playing Video in DinoX**: The video player pipeline was missing `audioresample` between `audioconvert` and `autoaudiosink`. Without resampling, decoded AAC audio at 48kHz could not negotiate with the audio sink, causing silent playback.
+
+### Changed
+- **Version**: Bumped from 1.1.1.9 to 1.1.2.0
+
+## [1.1.1.9] - 2026-02-21
+
+### Fixed
+- **Video Messages Incompatible with Monocles/Android**: Removed VP8/WebM fallback encoder — mobile XMPP clients (Monocles, Conversations) cannot play WebM video messages. H.264/MP4 is now the only output format. If no H.264 encoder is available, a clear error lists required packages instead of silently producing unplayable files.
+- **All Recorded MP4 Files Corrupted (moov atom missing)**: `stop_recording()` waited only 1 second for EOS, which was insufficient for `mp4mux` to write the moov atom. Every recorded video was unplayable. Increased EOS timeout to 5 seconds with proper logging for timeout/error/success.
+- **VAAPI Encoder Test False-Negative**: `test_video_encoder()` sent raw I420 directly to hardware encoders (VAAPI, VA) which require native surfaces, causing them to always fail the test. Added `videoconvert` to the test pipeline so hardware encoders negotiate their preferred input format. Increased test timeout from 3s to 5s.
+
+### Added
+- **MP4 faststart**: Enabled `faststart=true` on mp4mux — moves moov atom to the beginning of the file for progressive playback before full download.
+
+### Removed
+- **VP8/WebM Fallback**: Removed `vp8enc` fallback, `use_webm` flag, WebM container (webmmux), Vorbis/Opus audio paths, and `.webm` extension switching. Encoder chain is now: vaapih264enc → vah264enc → x264enc → avenc_h264 → openh264enc.
+
+### Changed
+- **Version**: Bumped from 1.1.1.8 to 1.1.1.9
+
+## [1.1.1.8] - 2026-02-21
+
+### Fixed
+- **CRITICAL: Shutdown Destroyed OMEMO Identity Keys**: `shutdown()` called `stream_interactor.disconnect_account()` which fires the `account_removed` signal. The OMEMO manager's `on_account_removed()` handler deletes ALL identity data (private keypair, device_id, sessions, pre-keys, trust). This caused new OMEMO identities to be generated on every restart — contacts saw a "new device" each time. Fix: Use `connection_manager.disconnect_all()` during shutdown to close XMPP sockets without triggering `account_removed`. Affects both OMEMO v1 and v2.
+
+### Added
+- **ConnectionManager.disconnect_all()**: New method to close all XMPP connections without firing `account_removed` signals. Used during application shutdown to preserve OMEMO cryptographic material.
+
+### Changed
+- **Version**: Bumped from 1.1.1.7 to 1.1.1.8
+
+## [1.1.1.7] - 2026-02-21
+
+### Fixed
+- **OMEMO v2 Device List Phantom Accumulation**: Fixed v2 (OMEMO 2) device list causing phantom device entries to endlessly re-appear. Root cause: `insert_device_list_additive()` re-activated phantom devices, v2 PubSub node had `max_items="max"` (unlimited items), republish used `null` item_id (created new items instead of replacing), and cleanup only ran after v1 list processing.
+  * Run `cleanup_stale_own_devices` after v2 device list processing (not just v1)
+  * Delete stale v2 devicelist PubSub node before republishing
+  * Use `max_items="1"` for device list nodes (was `"max"` = unlimited)
+  * Use fixed item_id `"current"` for republish (replace existing, not create new)
+  * Only fetch bundles for active devices (skip inactive phantoms)
+  * `get_unknown_devices`: filter by `now_active=true`
+- **OMEMO Phantom Device Safety**: `cleanup_stale_own_devices` now only removes devices without identity keys. Devices with valid identity keys (e.g. Monal on same JID) are preserved.
+- **VideoRecorder Freeze on Encoder Failure**: Pipeline errors now auto-cancel recording and emit `recording_error` signal instead of leaving a broken pipeline running (which froze the entire app on older hardware).
+- **VideoRecorder Encoder Runtime Validation**: Each video encoder is now tested with a 1-frame test pipeline before use. `ElementFactory.make()` can succeed even when the underlying library is broken (e.g. `openh264enc` factory exists but Cisco OpenH264 binary fails to initialize).
+- **Graceful Shutdown**: System tray quit now disconnects all XMPP accounts with a 3-second safety timeout before exiting, preventing unclean session termination.
+
+### Added
+- **VP8/WebM Fallback Encoder**: ~~Added `vp8enc` as ultimate fallback~~ (removed in v1.1.1.9 — mobile clients can't play WebM).
+- **Video Recording Error Dialog**: `Adw.AlertDialog` shown to user when video encoder fails, with details about the error and install instructions.
+
+### Changed
+- **Version**: Bumped from 1.1.1.6 to 1.1.1.7
+
+## [1.1.1.6] - 2026-02-21
+
+### Fixed
+- **PipeWire Pipeline Leaks**: Eliminated GStreamer pipeline creation at widget construction time. Pipelines are now created only when the user clicks play, and fully destroyed on stop/dispose. Prevents resource leaks from videos that are never played.
+- **Video Thumbnail Preview**: Fixed `is_in_viewport()` using wrong reference widget (`content` child instead of `ScrolledWindow`), causing `compute_bounds()` coordinates to never match the visible viewport. Added deferred preview init with 200ms + 800ms retry for widgets not yet mapped at construction time.
+- **Video Player Controls**: Re-enabled seek bar, time display, play/pause toggle, and stop button for inline video messages. Full playback controls with position tracking.
+- **Audio Pipeline Cleanup**: Removed `audiodynamic` noise gate and compressor from both audio recorder and video recorder. The hard-knee expander (ratio=0.0) caused harsh scratching/crackling artifacts. Returned to clean pass-through pipeline with volume=1.0 (no boost).
+- **Video Recording Flatpak (openh264enc)**: Added `openh264enc` (from gst-plugins-bad, included in GNOME Platform runtime) as 5th H.264 encoder fallback. Encoder fallback chain: vaapih264enc → vah264enc → x264enc → avenc_h264 → openh264enc.
+- **Audio Recording Quality (voaacenc bitrate)**: Increased `voaacenc` bitrate from 64kbps to 128kbps. `avenc_aac` bitrate increased from 64kbps to 96kbps for improved clarity.
+
+### Changed
+- **AppImage Dependencies**: Removed unused `libgstgtk4.so`, added `libgstgdkpixbuf.so` (video thumbnails) and `libgstx264.so` (H.264 encoding).
+- **Version**: Bumped from 1.1.1.5 to 1.1.1.6
+
+## [1.1.1.5] - 2026-02-20
+
+### Fixed
+- **GtkBox min/nat Height Warning**: Removed incorrect `width_request = 400` on URL preview `card_box` (sets minimum width, not maximum). This caused GTK warning "reported min height 207 and natural height 108" when container was narrower than 400px, because wrapping labels produced inverted min/natural height values.
+- **NaturalDirectionBoxLayout Baseline Bug**: Fixed typo `minimum = alt_minimum_baseline` → `minimum_baseline = alt_minimum_baseline` in preferences page layout manager. Was corrupting minimum height value with a baseline value.
+- **Video Recording H.264 Encoder (Flatpak)**: Added `avenc_h264` (from gst-libav/ffmpeg) as 4th fallback H.264 encoder after vaapih264enc, vah264enc, x264enc. Flatpak builds include the `ffmpeg-full` extension but not `gst-plugins-ugly` (x264enc), so video recording failed completely.
+- **Video Recording h264parse Optional**: Made `h264parse` (from gst-plugins-bad) optional. When unavailable, encoder links directly to mp4mux. This removes the hard dependency on gst-plugins-bad for video recording.
+- **Video Recording Error Message**: Replaced misleading "Need: gstreamer-gtk4" with detailed per-element diagnostics showing exactly which GStreamer element is missing and which package provides it.
+
+### Changed
+- **Version**: Bumped from 1.1.1.4 to 1.1.1.5
+
+## [1.1.1.4] - 2026-02-20
+
+### Fixed
+- **Plugin Load Order (Flatpak)**: Fixed `bot-features.so` failing to load because `omemo.so` was not yet loaded. Plugin loader now sorts dependencies first and retries failed plugins in a second pass.
+- **Flatpak login1 D-Bus Permission**: Added `--system-talk-name=org.freedesktop.login1` to Flatpak finish-args, fixing `login1.vala: No such file or directory` warning on suspend/resume detection.
+
+### Changed
+- **Version**: Bumped from 1.1.1.3 to 1.1.1.4
+
+## [1.1.1.3] - 2026-02-20
+
+### Fixed
+- **Pango Cursor Position Assertion Failure**: Fixed `pango_layout_get_cursor_pos: assertion 'index >= 0 && index <= layout->length' failed` crash. Reset `label.selectable` before updating markup text to invalidate stale cursor index when message labels are dynamically updated (delivery status, corrections, deletions).
+- **AttrList Byte Index Mismatch**: Moved `unbreak_space_around_non_spacing_mark()` call before AttrList byte index computation. NBSP (U+00A0, 2 bytes UTF-8) replacing regular space (1 byte) shifted all subsequent byte offsets, causing Pango attribute misalignment.
+- **`/me` Message Bold/Italic Indices**: Recompute `/me` prefix bold/italic attribute byte indices after NBSP expansion to prevent index overflow.
+- **Unescaped Markup in Conversation Selector**: `status_text` in resource tooltip now escaped with `Markup.escape_text()` to prevent Pango parse errors from special characters.
+- **Unescaped Markup in Reactions Widget**: Reaction emoji now escaped with `Markup.escape_text()` to prevent potential Pango markup injection.
+
+### Changed
+- **Version**: Bumped from 1.1.1.2 to 1.1.1.3
+
+## [1.1.1.2] - 2026-02-20
+
+### Fixed
+- **Video Message Preview Dark Screen**: Fixed video recorder preview staying black during recording. The `gdkpixbufsink` element (from `gst-plugins-good`) was unavailable, causing fallback to `fakesink` which has no `last-pixbuf` property. Replaced `fakesink` fallback with `appsink` that pulls RGBA frames and creates `Gdk.MemoryTexture` for the preview. Recording itself was unaffected (only the preview display).
+- **Missing Runtime Dependency**: Added `gstreamer1.0-plugins-good` to all dependency lists (README, BUILD.md, CI workflows, release notes). This package provides `gdkpixbufsink` (video preview) and `mp4mux` (video container) at runtime.
+
+### Changed
+- **Version**: Bumped from 1.1.1.1 to 1.1.1.2
+- **Build System**: Added `gstreamer-app-1.0` as core dependency for main binary (needed for appsink fallback in video preview).
+
+## [1.1.1.1] - 2026-02-19
+
+### Fixed
+- **AudioRecorder MP4 Corruption**: Replaced pad probe buffer dropping with volume mute approach (0 to 1.8 after 200ms). Pad probes caused MP4 timestamp discontinuities resulting in corrupted audio files ("Diese Datei ist beschaedigt"). Silent buffers now flow continuously, avoiding timestamp gaps while PipeWire transient crackling is suppressed.
+
+### Changed
+- **Version**: Bumped from 1.1.1.0 to 1.1.1.1
+- **Installation Docs**: Added GNOME Platform//48 runtime requirement to Flatpak instructions (README, website, release notes).
+
+## [1.1.1.0] - 2026-02-19
+
+### Added
+- **Video Messages**: Record and send video messages with camera and microphone. New VideoRecorder module with GStreamer pipeline (pipewiresrc/v4l2src for video, autoaudiosrc for audio). H.264+AAC in MP4 container with hardware encoder fallback (vaapi/va/x264). Live camera preview in popover via gdkpixbufsink (20fps polling). Camera button next to microphone in chat input. Max 720p/30fps, max 120 seconds recording.
+- **G.711 Fallback Codecs**: Added PCMU/PCMA (G.711) fallback codecs for SIP gateway compatibility in audio/video calls.
+- **Monal Session-Terminate Analysis**: Documented Monal issue #1576 (session-terminate bug).
+
+### Fixed
+- **MUC Role/Affiliation Signals**: Role and affiliation change signals now only fire on actual changes, preventing redundant status messages and UI updates.
+- **MUC Moderator Menu**: Fixed occupant menu role/affiliation display per XEP-0045. Moderator fallback for role status messages.
+- **Botmother UI Fixes**: ejabberd test-before-save, vCard debounce, stream cleanup improvements.
+- **Video Player Size**: Video player in chat capped at 400x225px using Gtk.Frame to prevent oversized display.
+- **Video Recording Preview Freeze**: Popover destroyed after each recording to ensure fresh preview poll on subsequent recordings.
+- **Video Recording Signal Leak**: Signal handlers (duration_changed, max_duration_reached) properly disconnected in popover dispose to prevent callbacks on destroyed widgets.
+- **Audio Crackling**: First 200ms muted to suppress PipeWire connection transient crackling in video recordings.
+- **AudioRecorder Source**: Changed from pipewiresrc (defaults to video) to autoaudiosrc for reliable audio capture.
+- **AudioRecorder Double-Callback**: Added EOS-handled guard to prevent double yield-resume in stop_recording_async.
+- **AudioRecorder Timer Leak**: cancel_recording now properly removes the duration update timer.
+- **GStreamer Element Leak**: All GStreamer elements released after recording via cleanup_elements.
+- **PubSub Log Level**: Downgraded PubSub IQ response log from warning to debug.
+
+### Changed
+- **Version**: Bumped from 1.1.0.9 to 1.1.1.0
+
+## [1.1.0.9] - 2026-02-18
+
+### Added
+- **OMEMO Session Reset**: New "Reset session" and "Reset all sessions" actions in key management UI. Allows resetting broken Signal sessions without removing devices or trust levels. Available in ManageKeyDialog (per device), 1:1 encryption settings, and MUC member key views.
+
+### Fixed
+- **OMEMO IV Zeroing Bug**: Fixed critical encryption bug where the AES-GCM initialization vector was zeroed before being written to the outgoing stanza. Recipients received an all-zeros IV that did not match the IV used for encryption, causing decryption failures on all clients (Monal: GCM error, Monocles: silent failure). Introduced in commit 83fa504.
+- **OMEMO Session Auto-Recovery**: Missing Signal sessions (SG_ERR_NO_SESSION) are now classified as recoverable instead of permanent failures. The retry mechanism automatically fetches bundles, establishes fresh sessions, and resends the message. Previously, messages to devices with missing sessions were silently dropped (marked WONTSEND).
+- **OMEMO v4 Session Guard**: Detect and remove v4 (OMEMO 2) sessions in the v1 encryptor before they produce broken messages. Forces session re-establishment with correct v3 protocol.
+
+### Changed
+- **Version**: Bumped from 1.1.0.8 to 1.1.0.9
+
+## [1.1.0.8] - 2026-02-18
+
+### Fixed
+- **Sticker Button Visibility**: Sticker button now correctly hides when stickers are disabled in settings. Added reactive binding to `stickers_enabled` setting.
+- **Sticker Animation Toggle**: Toggling sticker animations on/off in settings now takes effect immediately. Stickers always loaded as animations; playback controlled by setting with reactive listener.
+- **Tor Settings Label Truncation**: Shortened "Tor Network" tab title to "Tor" to prevent text truncation in narrow preferences window.
+- **Tor Switches Visually Stuck**: Firewall and bridges toggle switches now update immediately. Fixed `state_set` handlers to set `.state` property before async operations.
+- **Tor Controller Blocking UI**: Replaced synchronous `wait(null)` subprocess calls in Tor controller with async `wait_async()` to prevent blocking the GTK main loop.
+- **Connection Manager Null Guard**: Added null check after async stream establishment to prevent critical assertion failure when account is removed during connection.
+- **Minimum Window Width**: Increased `set_size_request` from 400 to 500 pixels to prevent Adwaita GtkStack width overflow warning.
+
+### Changed
+- **Version**: Bumped from 1.1.0.7 to 1.1.0.8
+
+## [1.1.0.7] - 2026-02-18
+
+### Added
+- **Public XMPP Room Search**: Search all public XMPP servers via search.jabber.network API. Toggle between local server rooms and global public search in Browse Rooms dialog.
+- **Subscription Status in Contact Details**: Show roster subscription state (Mutual, To, From, None) and pending requests in the About section of 1:1 contact details.
+- **SASL Debug Logging**: Extended debug logging for all SASL mechanisms and authentication flow. New DEBUG.md documentation.
+- **Scripts Documentation**: Documented all scripts in BUILD.md and CONTRIBUTING.md. Extended scan-dinox-latest-log.sh with SASL, OMEMO, OpenPGP, Botmother, Tor, and certificate pinning sections.
+
+### Fixed
+- **Duplicate X+Cancel Buttons**: Removed redundant close button from 10 dialogs total (bot create, contact browser, user search, select contact, join MUC, sticker import, and 4 previously fixed dialogs). Uses `decoration-layout=":"` on AdwHeaderBar.
+- **Attachment Button Pop-in Lag**: File attachment button no longer flickers/appears late when switching conversations. Optimistic UI keeps button visible while stream is connecting.
+- **GTK4 CSS Warning**: Replaced unsupported `max-width` CSS property with widget constraint.
+- **Adwaita PreferencesDialog Warning**: Set minimum size on PreferencesDialog to suppress libadwaita warning.
+- **All Compiler Warnings Eliminated**: Fixed unreachable catch clauses, unused variables/fields, implicit `.begin()` deprecated calls, `uint8[]` GObject property warnings, and Windows-conditional code warnings. Clean build: 626/626 targets, zero warnings.
+
+### Changed
+- **Version**: Bumped from 1.1.0.6 to 1.1.0.7
+- **Security Audit Docs**: Updated documentation references.
+
+## [1.1.0.6] - 2026-02-17
+
+### Added
+- **SCRAM-SHA-256**: Implemented SCRAM-SHA-256 SASL mechanism alongside existing SCRAM-SHA-1. Preferred over SHA-1 when server offers both.
+- **SCRAM-SHA-512**: Implemented SCRAM-SHA-512 SASL mechanism. DinoX is the only XMPP client supporting this. Preference order: SHA-512 > SHA-256 > SHA-1.
+- **SCRAM Channel Binding (-PLUS variants)**: All 6 SCRAM mechanisms now support TLS channel binding (SCRAM-SHA-1-PLUS, SCRAM-SHA-256-PLUS, SCRAM-SHA-512-PLUS). Uses `tls-exporter` (RFC 9266, GLib 2.74+) with automatic fallback to `tls-server-end-point` (RFC 5929, GLib 2.66+). Custom VAPI binding (`glib_fixes.vapi`) to fix upstream Vala NULL dereference bug in `g_tls_connection_get_channel_binding_data()`.
+- **Channel Binding Downgrade Protection**: Per-account "MITM Protection" toggle in Account Preferences > Advanced Settings. When enabled, refuses login if server only offers non-PLUS SCRAM mechanisms, which may indicate a MITM stripping channel binding advertisements. Similar to Conversations/Monocles "MITM Protection" toggle.
+
+### Security
+- **SCRAM Nonce CSPRNG**: Replaced `GLib.Random` (Mersenne Twister) in SASL nonce generation with `/dev/urandom` (24 bytes, Base64-encoded). Mersenne Twister is not a CSPRNG and its state can be reconstructed from 624 observed outputs. Fallback to GLib.Random on systems without `/dev/urandom`.
+- **Downgrade Attack Detection**: When `require_channel_binding` is enabled and the server advertises channel binding capability but only offers non-PLUS mechanisms, the SASL module logs a warning and refuses authentication to prevent MITM downgrade attacks.
+
+### Changed
+- **Version**: Bumped from 1.1.0.5 to 1.1.0.6
+- **DB Version**: 36 -> 37 (new `require_channel_binding` column in account table)
+
+## [1.1.0.5] - 2026-02-17
+
+### Security
+- **Comprehensive Crypto Security Audit**: Full audit of 39 crypto-related files and 15 OpenPGP files across the entire codebase. 23 findings identified and fixed (6 critical, 11 medium, 3 low in OMEMO/Signal layer + 3 in OpenPGP layer). Covers OMEMO v1/v2, Signal Protocol, X3DH key exchange, Double Ratchet, session management, and OpenPGP encryption.
+- **Critical: AES-GCM Tag Verification** (Finding #1): `helper.c` `gcm_decrypt` was ignoring the GCM authentication tag entirely. AES-GCM without tag verification is equivalent to AES-CTR -- no integrity or authenticity protection. Fixed to always verify the 128-bit tag via `gcry_cipher_checktag()`.
+- **Critical: XML Injection in OMEMO Key Exchange** (Finding #2): `simple_iks.vala` `StanzaNode.put_node()` inserted child XML nodes using unescaped string concatenation. Malicious JIDs or content could inject arbitrary XML into XMPP stanzas, potentially hijacking OMEMO key exchanges. Fixed to use proper DOM-based child insertion.
+- **Critical: SASL SCRAM Nonce Truncation** (Finding #3): `sasl.vala` `get_nonce()` generated a 32-byte random array but Base64-encoded only the first 16 bytes. This halved the nonce entropy from 256 to 128 bits. Fixed to encode the full 32-byte array.
+- **Critical: Double Ratchet Key Reuse** (Finding #4): `simple_iks.vala` `get_node()`/`get_subnode()` returned the first matching XML child without verifying uniqueness. An attacker could inject duplicate `<key>` elements in OMEMO messages, causing the receiver to process the wrong key material. Fixed to validate no duplicate children exist.
+- **Critical: PKCS#5 Padding Oracle** (Finding #5): `simple_iks.vala` lacked timing-safe padding validation. The PKCS#5 unpadding returned distinguishable error types depending on padding content, enabling classic padding oracle attacks. Fixed to use constant-time comparison.
+- **Critical: Pre-Key Exhaustion** (Finding #6): `pre_key_store.vala` had no lower bound check on remaining pre-keys. An attacker could exhaust all pre-keys by initiating many sessions, degrading to unsigned key exchange. Fixed to auto-replenish when count drops below threshold.
+- **Medium: HKDF Salt Handling** (Finding #7): HKDF used an empty byte array instead of a proper zero-filled salt of hash length, weakening key derivation. Fixed across `hkdf.vala` to use 32-byte zero salt per RFC 5869.
+- **Medium: Trust Store Race Conditions** (Finding #8): Identity key trust decisions were not atomic. Concurrent access could lead to inconsistent trust state. Fixed with proper synchronization.
+- **Medium: Session Store Unbounded Growth** (Finding #9): Session store had no limit on stored sessions per recipient. A misbehaving peer could cause memory exhaustion. Fixed with maximum session count and LRU eviction.
+- **Medium: Bundle Fetch Without Verification** (Finding #10): Fetched OMEMO bundles were used without verifying the identity key matched the expected fingerprint. Fixed to validate identity key consistency.
+- **Medium: Missing Replay Protection Logging** (Finding #11): Duplicate pre-key messages were silently accepted without logging. Added audit logging for potential replay attempts.
+- **Medium: Cleartext Key Material in Logs** (Finding #12): Debug logging could leak key material in plaintext. Replaced with redacted output in all crypto-related log statements.
+- **Medium: Signal Session Serialization** (Finding #13): Session serialization used Vala's default serializer without integrity protection. Added HMAC verification for serialized session data.
+- **Medium: Missing Certificate Chain Validation** (Finding #14): TLS certificate chain validation was incomplete for OMEMO-related HTTP uploads. Fixed to perform full chain verification.
+- **Medium: Stale Device ID in Published List** (Finding #15): Own device IDs were published without checking if the corresponding bundle still existed. Fixed to verify bundle availability before publishing.
+- **Medium: Race in Multi-Device Decryption** (Finding #16): Concurrent decryption from multiple devices could corrupt shared state. Fixed with per-device decryption locks.
+- **Medium: X3DH Without SPK Signature Verification** (Finding #17): X3DH initial key exchange accepted signed pre-keys without verifying the Ed25519 signature against the identity key. Fixed to always verify SPK signatures.
+- **Low: PRG Seed Entropy** (Finding #18): The pseudo-random generator was seeded with system time instead of `/dev/urandom`. Fixed to use OS-provided entropy source.
+- **Low: IV/Nonce Counter Overflow** (Finding #19): AES-GCM nonce counter had no overflow check. After 2^32 messages in a single session, the nonce would wrap. Added overflow detection with automatic session renegotiation.
+- **Low: Hardcoded Key Lengths** (Finding #20): Key lengths were hardcoded as magic numbers. Replaced with named constants for maintainability and auditability.
+- **Medium: OpenPGP Temp File Plaintext Exposure** (Finding #21): Temporary files containing plaintext in `gpg_cli_helper.vala` were deleted with `FileUtils.remove()` (simple `unlink()`). Plaintext remained recoverable on disk. Fixed with `secure_delete_file()` that zero-overwrites before unlinking.
+- **Medium: OpenPGP Temp File Permissions** (Finding #22): Temporary files were created with default umask (typically 0644), readable by other users. Fixed with `secure_write_file()` and `secure_write_data()` using `FileCreateFlags.PRIVATE` (0600 permissions).
+- **Low: OpenPGP XEP-0374 rpad Uses Weak PRNG** (Finding #23): `generate_random_padding()` in `0374_openpgp_content.vala` used `GLib.Random` (Mersenne Twister) for random padding. While padding is not secret, predictable padding could leak message length information. Replaced with `/dev/urandom` CSPRNG.
+
+### Added
+- **Security Audit Documentation** (`SECURITY_AUDIT.md`): Comprehensive security audit report covering scope, methodology, 23 findings with severity classifications, fix descriptions, and verification status. Includes OMEMO v2 implementation story, SCRAM comparison table, and known limitations.
+- **Security Audit Web Page** (`docs/security-audit.html`): Full HTML version of the security audit was added to the DinoX website.
+- **Website Navigation**: Added "Security Audit" link to main website navigation bar.
+- **README Navigation**: Added "Security Audit" link after "Contributing" in README.md.
+- **OMEMO v2 Implementation Story**: Documented the full OMEMO v2 implementation journey including challenges, architectural decisions, and lessons learned.
+
+### Changed
+- **Version**: Bumped from 1.1.0.4 to 1.1.0.5
+
+## [1.1.0.4] - 2026-02-17
+
+### Added
+- **URL Link Preview**: Telegram-style preview cards for URLs in chat messages. Fetches OpenGraph metadata (title, description, image, site name) with fallback to `<title>` and `<meta name="description">`. Preview cards show optional thumbnail (80x80), site name, bold title, and description with accent-color left border. Clickable to open URL in browser. In-memory cache to avoid redundant fetches. Skips `aesgcm://` URLs (OMEMO file transfers).
+- **Voice Message Waveform (Recorder)**: Real waveform display using peak dB from GStreamer `level` element with non-linear `sqrt` curve instead of random bars. 300x48px waveform (60 bars, red) with pulsing record indicator, age-based opacity gradient, and auto-send on max duration (5 minutes with countdown in last 30s).
+- **Voice Message Waveform (Player)**: Replace slider with 50-bar waveform visualization (blue=played, grey=unplayed). Faster-than-realtime waveform scan via `playbin`+`level`+`fakesink`. Click/drag seek support. Download-wait logic with loading icon and error state handling.
+- **Voice Message Audio Quality**: 48kHz mono S16LE capsfilter to match PipeWire native rate. Volume 1.8x (+5 dB) with 230ms pre-roll mute to suppress PipeWire transient crackling at recording start. `audiodynamic` soft-knee compressor to prevent clipping.
+
+### Fixed
+- **File Provider URL Bug**: Receiver saw "unknown file to download" instead of URL messages. `file_provider.vala` used `oob_url ?? message.body` fallback — when no OOB element was present, a plain URL in the message body was treated as a file transfer. Now only uses OOB when present, or message body only for `aesgcm://` (OMEMO encrypted file transfers).
+- **Video Call DMABuf Caps (GitHub Issue #11)**: Older V4L2 drivers (e.g. Haswell ThinkPad T440) advertise `video/x-raw(memory:DMABuf)` caps via PipeWire that they cannot actually deliver, causing 0 kbps outgoing video. `get_best_caps()` now filters out DMABuf and DMA_DRM format caps in Round 1, falling back to SystemMemory caps.
+- **OMEMO File Decryption**: Fixed double-decryption bug in `file_encryption.vala` `decrypt_stream` where the `n < TAG_SIZE` branch corrupted GCM auth state by decrypting data twice.
+- **Subscription Notification Loop**: Opening a chat with a DinoX contact always showed "Send subscription request" at the top, even though chat worked normally. Two bugs: (1) The `ask` field was stored to DB but never loaded back in `RosterStoreImpl` constructor, so DinoX forgot that a subscription request was already sent. (2) The notification now suppressed entirely for conversations with existing message activity (`last_active != null`), since subscription is only needed for presence/status updates, not messaging.
+- **Telegram Bridge Timeout Spam**: Long-polling timeout responses from Telegram API logged as `WARNING`. Demoted to `debug` level since timeouts are normal behavior for long polling.
+- **AppImage Missing Icons**: Icons missing in menu, systray, and About dialog on fresh AppImage installations. Three fixes: (1) `build-appimage.sh` now copies all 6 icon sizes (16/32/48/128/256/512px) instead of only 256px, and generates icon cache. (2) `AppRun` sets `XDG_DATA_DIRS` to include `$APPDIR/usr/share`. (3) `application.vala` sets `XDG_DATA_DIRS` programmatically when `APPDIR` env var is present (safety net).
+- **AppImage Systray Icon**: SNI `StatusNotifierItem` now exposes `IconThemePath` D-Bus property pointing to `$APPDIR/usr/share/icons` when running as AppImage, so desktop environments can find the icon.
+
+### Changed
+- **Version**: Bumped from 1.1.0.3 to 1.1.0.4
+
+## [1.1.0.3] - 2026-02-16
+
+### Added
+- **Clickable Bot Command Menus**: All interactive bot menus (`/help`, `/ki`, `/telegram`, `/api` and their sub-menus) now generate clickable `xmpp:` URIs. Users can click commands directly instead of typing them. Links display only the command text (e.g. `/ki`) instead of the full URI. Clicking sends the command in the current conversation without opening an external dialog or switching accounts.
+- **DTMF Support (RFC 4733)**: Full telephone-event DTMF implementation for audio and video calls. DTMF tones are sent as RFC 4733 RTP packets by injecting them directly into the audio RTP stream (replacing audio payloads during tone duration). This preserves the same sequence number stream and SSRC, avoiding any SRTP replay protection conflicts. Supports digits 0-9, *, #, A-D with configurable duration (default 250ms). Payload type is dynamically resolved from the negotiated session parameters (typically PT 101 at 8kHz or PT 110 at 48kHz depending on remote client).
+- **Dialpad UI**: New `CallDialpad` popover widget with 3x4 grid (0-9, *, #) including telephone-style sublabels (ABC, DEF, etc.). Accessible via dialpad button in the call bottom bar during active audio/video calls. Digits queued automatically when typing faster than tone duration to prevent dropped inputs.
+- **SIP & DTMF Analysis Document**: Comprehensive 8-section analysis (`docs/internal/SIP_DTMF_ANALYSIS.md`) covering the Jingle call stack, codec inventory, DTMF methods (RFC 4733 vs XEP-0181), ejabberd mod_sip evaluation, SIP-Gateway compatibility (Opal.im), and implementation roadmap.
+
+### Fixed
+- **Dialpad Disappearing During Video Calls**: The call window's auto-hide timer (3 seconds of no mouse movement) was closing the dialpad popover because `is_menu_active()` only checked audio/video settings popovers. Now also checks the dialpad popover state, keeping controls visible while the dialpad is open.
+- **DTMF Lag During Video Calls**: DTMF timing was driven by `Timeout.add()` and `Idle.add()` on the GLib main loop, which is heavily loaded during video rendering. Replaced with RTP-timestamp-based timing in the streaming thread — duration is now measured in audio clockrate samples (e.g. 12000 samples = 250ms at 48kHz), completely independent of UI thread load.
+
+### Changed
+- **Version**: Bumped from 1.1.0.2 to 1.1.0.3
+
+## [1.1.0.2] - 2026-02-16
+
+### Fixed
+- **Password dialog i18n**: All 22 German gettext msgid strings in password dialogs (unlock, set password, change DB password, backup restore) converted to English. Non-German/non-English users previously saw German fallback text instead of their language.
+- **change_password_dialog.vala**: Wrapped 2 hardcoded English strings (`"Error: %s"`, `"Wrong current password"`) in `_()` for translation.
+- **Translation files (.po)**: Updated all 47 language files with new English msgids. Fixed format-spec errors in 12 .po files caused by `msguniq` concatenating duplicate `msgstr` values.
+
+### Changed
+- **Website**: Fixed XMPP contact URI from `?join` (MUC) to `?message` (regular JID) in contact section and footer.
+- **Website**: Clarified footer text — AI is available via extensible REST API with 9 providers, not built-in.
+- **Version**: Bumped from 1.1.0.1 to 1.1.0.2
+
+## [1.1.0.1] - 2026-02-15
+
+### Added
+- **Telegram Inline Media Display**: Photos, videos, audio and GIFs sent from Telegram now display inline in XMPP conversations. Previously they appeared as `[photo] URL` text. Solution: Two-message approach — info text followed by bare URL so Dino's file provider regex matches and triggers inline rendering.
+- **Telegram Sticker Handling**: Static `.webp` stickers are forwarded as inline images. Animated `.tgs` and video `.webm` stickers are converted to their emoji representation (since these formats cannot be displayed inline).
+- **`/clear` Command**: New bot command to clean up dedicated bot conversations. Clears AI conversation history (RAM) and local DinoX SQLite database. Optional `/clear mam` deletes the global ejabberd MAM archive (with warning that it affects all users).
+- **ejabberd MAM Delete API**: `EjabberdApi.delete_mam_messages()` method for server-side MAM archive cleanup via ejabberd REST API (`delete_old_mam_messages`).
+
+### Fixed
+- **Telegram 409 Polling Conflicts**: Added per-bot polling lock, long polling (25s timeout), `deleteWebhook` on startup, and 5-second backoff on HTTP 409 errors using monotonic time skip to prevent rapid re-polling.
+
+### Changed
+- **Debug Logging**: Downgraded verbose media detection logs from `message()` to `debug()` for cleaner runtime output.
+- **Version**: Bumped from 1.1.0.0 to 1.1.0.1
+
+## [1.1.0.0] - 2026-02-15
+
+### Added
+- **AI Integration (9 Providers)**: Full AI chat integration with support for OpenAI, Claude, Gemini, Groq, Mistral, DeepSeek, Perplexity, Ollama and OpenClaw. Configurable via interactive `/ki` chat menu or HTTP API. Requires Botmother to be set up first. Per-bot provider, model, endpoint and API key settings with persistent storage. Each provider is independently enable/disable-able per bot. See [API_BOTMOTHER_AI_GUIDE.md](API_BOTMOTHER_AI_GUIDE.md) for full documentation.
+- **OpenClaw Agent Support**: OpenClaw as 9th AI provider — autonomous agent integration via simple `{"message": "..."}` POST with Bearer token auth. Flexible JSON response parsing (tries response/text/message/content/reply/result fields, falls back to raw body).
+- **Telegram Bridge**: Bidirectional XMPP-to-Telegram message bridge. Configure via `/telegram` chat command or HTTP API. Supports polling mode with auto-reconnect, message forwarding in both directions, and connection testing.
+- **HTTP API Extensions (Telegram)**: 5 new REST endpoints — `/bot/telegram/setup` (POST), `/bot/telegram/status` (GET), `/bot/telegram/enable` (POST), `/bot/telegram/send` (POST), `/bot/telegram/test` (POST).
+- **HTTP API Extensions (AI)**: 4 new REST endpoints — `/bot/ai/setup` (POST), `/bot/ai/status` (GET), `/bot/ai/enable` (POST), `/bot/ai/ask` (POST). Total: 31 REST endpoints.
+- **TLS API Server**: HTTP API server now supports TLS with auto-generated self-signed certificates (cert_gen.c). Configurable via preferences UI (enable/disable TLS, port, certificate paths).
+- **Auto-Restart API Server**: API server automatically restarts when settings change (port, TLS toggle, certificate paths) without requiring app restart.
+- **Dedicated Bot Mode with OMEMO**: Bots operate with full OMEMO encryption support. Session pool management for concurrent encrypted bot conversations.
+- **Interactive Menu System**: BotFather-style chat menus for `/help`, `/ki` (AI setup/providers/models), `/telegram` (bridge config), and `/api` (server settings). Rich formatted output with inline options.
+- **i18n Audit**: ~195 German strings changed to English with `_()` gettext wrappers across 6 source files for proper internationalization.
+- **API_BOTMOTHER_AI_GUIDE.md**: Comprehensive 12-chapter documentation covering bot management, AI integration, Telegram bridge, HTTP API (31 endpoints), TLS setup, and curl/Python examples.
+
+### Changed
+- **Version**: Bumped from 1.0.1.0 to 1.1.0.0
+- **meson.build**: Project version updated to 1.1.0.0
+- **DOAP files**: Added release entries for 1.0.0.0, 1.0.1.0, 1.1.0.0. Updated dino.doap.in URLs to dinox.im, added Windows to OS list, fixed repository URL.
+
+## [1.0.1.0] - 2026-02-13
+
+### Added
+- **Botmother Chat Interface**: Interactive bot management via self-chat commands (Telegram BotFather-style). Commands: `/newbot`, `/mybots`, `/deletebot`, `/token`, `/showtoken`, `/revoke`, `/activate`, `/deactivate`, `/setcommands`, `/setdescription`, `/status`, `/help`. Modern output with emoji icons, line separators, JSON examples and curl usage. **Note: Currently only "Personal" (local) mode is functional. "Group" and "Broadcast" modes are not yet implemented.**
+- **Botmother UI — BotManagerDialog**: GTK4/libadwaita dialog showing all bots with status icons (🟢/🔴), mode, token copy button, and delete button. Auto-refreshes on focus. Accessible via Settings → Account → "Botmother".
+- **Botmother UI — BotCreateDialog**: Create new bots with name and mode selection (Personal/Group/Broadcast). Note: Currently only "Personal" (local) mode is implemented and tested.
+- **Per-Account Botmother Toggle**: AdwSwitchRow in BotManagerDialog to enable/disable Botmother per account. Disabling unpins and closes the self-chat conversation. Global toggle in general settings overrides per-account settings.
+- **Bot Activate/Deactivate**: `/activate <ID>` and `/deactivate <ID>` commands to set bots active or disabled. Disabled bots reject API requests. Status visible in `/mybots` and UI.
+- **Token Display**: `/showtoken <ID>` shows the current API token. Token plaintext stored in new `token_raw` DB column (DB schema v1→v2 migration). Previously only the SHA-256 hash was stored.
+- **Auto-Pin Self-Chat**: Botmother self-chat conversation is automatically pinned when the account has bots and Botmother is enabled. Unpinned and closed when disabled or last bot deleted.
+
+### Fixed
+- **OMEMO Race Condition (MessageState NULL Crash)**: `message_states.unset()` in `on_pre_message_send` was outside the `lock(message_states)` block, causing concurrent HashMap modification during iteration. Iterator yielded stale keys → `message_states[msg]` returned NULL → crash on property access. Fix: Added missing lock, switched from `keys` + re-lookup to `entries` iterator, added null guards.
+- **SQLite Upsert Crash**: `set_setting()` in BotRegistry called `upsert().value(key_, key)` without marking it as the conflict column. Generated SQL had empty `ON CONFLICT ()`. Fix: `.value(key_, key, true)` to set the upsert conflict key.
+- **GTK Warning in OccupantMenu**: `Gtk-WARNING: Allocating size to GtkPopoverMenu without calling measure()`. Fix: Deferred `hide()` call via `Idle.add()`.
+- **Bot-Features DB Migration**: Adding `token_raw` column without bumping DB version caused `no such column: token_raw` crash on existing databases. Fix: Set `min_version = 2` on the column and bumped `VERSION` from 1 to 2 for Qlite auto-migration.
+
+## [1.0.0.0] - 2026-02-13
+
+### Added
+- **XEP-0050 Ad-Hoc Commands**: New XMPP module for executing, listing and handling ad-hoc commands.
+- **Bot-Features Plugin**: New plugin providing a local HTTP API (localhost:7842) for bot management and XMPP message routing. Includes token authentication, rate limiting, webhook support, and 16 REST endpoints (create, delete, list, sendMessage, getUpdates, setWebhook, sendFile, setCommands, joinRoom, leaveRoom, sendReaction, getMe, getInfo, getCommands, deleteWebhook, health).
+
+### Fixed
+- **Sticker Publish Uploads Encrypted Garbage**: `publish_pack()` uploaded sticker files directly from disk, but those files are AES-256-GCM encrypted at rest. Recipients received undecryptable ciphertext and the HTTP slot size was wrong (ciphertext > plaintext). Now decrypts to a temp file before uploading and reports the correct plaintext size.
+- **Sticker Chooser Lag (O(n^2) Clear)**: `clear_sticker_store()` used `remove(0)` in a loop. GLib.ListStore is array-backed, so each removal shifted all remaining elements. 40 stickers = 1600 element shifts. Replaced with `remove_all()` (O(1)).
+- **Sticker Thumbnail Worker Too Slow**: Background thumb worker had `Thread.usleep(30ms)` between every thumbnail decode. 40 stickers = 1.2 seconds of pure sleep. Reduced to 2ms (CPU yield only), increasing throughput from ~33 to ~500 thumbs/sec.
+- **Sticker Thumb Cache Flash**: When the 256-entry thumbnail cache overflowed, `thumb_cache.clear()` wiped all entries at once, forcing a visible re-decode flash of every thumbnail in view. Now evicts only ~half the entries via iterator, preserving recently used textures.
+
+## [0.9.9.9] - 2026-02-13
+
+### Fixed
+- **Status/Presence (6 Bugs Fixed)**: Global status setting was broken in multiple ways:
+  - Changing status show (Online/Away/DND/XA) discarded the status message — now preserves the current message
+  - Status was not persisted to database — restarting DinoX always reset to "online". Now saved/restored via DB settings
+  - Main window menu and systray always initialized to "online" regardless of actual status — now reads from PresenceManager
+  - "Away" and "Extended Away" (XA) had identical orange color in the status menu — XA now uses gray (`dim-label`)
+  - Initial presence broadcast after stream negotiation always sent "online" before the correct status — now injects show/status via `pre_send_presence_stanza` hook, eliminating the brief flash
+  - Status message dialog and sending chain were functional but status message was only visible in conversation list tooltip on hover (by design)
+- **Conversation List Status Dots**: Emoji status dots (🟢🟠🔴⭕) next to own-account JIDs in the conversation list did not update when changing status. Added `on_own_status_changed()` handler connected to `PresenceManager.status_changed` signal.
+- **Status Dot Flickering**: After changing status, dots briefly showed the correct emoji but then reverted. Root cause: incoming presence from other connected resources (e.g. Monal-iOS still "online") triggered `update_status()` via `on_presence_changed`, overwriting the manually set dot. Fix: `on_presence_changed` now skips `update_status()` for own-account conversations — those are managed exclusively by `on_own_status_changed`.
+- **Green Dot Hidden**: Status dots showed correctly for Away/DND/XA but the green dot for "online" was always hidden. The `on_own_status_changed` handler had a special case hiding the dot for "online". Removed — all four states now always display their emoji.
+- **External Contact Avatars Missing on Startup**: Avatars for external contacts in the conversation list were blank after launching DinoX — only appearing after clicking the conversation. Root cause: Race condition where `ConversationManager` created sidebar rows (triggering avatar lookup) before `AvatarManager` had loaded hashes from the database. Fix: Pre-load all avatar hashes in the `AvatarManager` constructor, before any signal connections.
+- **MUC OMEMO Own Keys Not Visible**: In MUC conversation details, OMEMO keys for the own JID were filtered out. Now shows "Your devices" section first, followed by each MUC member's devices.
+- **MUC OMEMO Trust Management**: Clicking a member's device row in MUC OMEMO details now opens ManageKeyDialog for that JID. Added auto-accept toggle (blind trust) per member and accept/reject for new/changed devices.
+- **MUC OMEMO Double Widget Fetch**: `conversation_details.vala` called `get_widget()` twice per provider — once to check null, once to add. Now caches the result.
+- **MUC OMEMO Undecryptable Warning for Own JID**: "Does not trust this device" banner was shown for own JID in MUC context when other own devices couldn't decrypt. Now skipped for own JID.
+- **MUC Destroy Room**: Destroy room IQ errors were silently swallowed. Now checks `is_error()` on IQ result and throws `GLib.IOError.FAILED` with error text.
+- **MUC Destroy Room Cleanup**: `destroy_room()` now performs full cleanup chain: send destroy IQ → remove bookmark → remove from mucs_joined → send exit presence → cancel MAM sync → close conversation.
+- **OMEMO v1/v2 MUC Version Selection**: In MUC, if one member was v2-only, the entire message was sent as v2 — v1 clients couldn't decrypt. Fixed: v2 is now only used when ALL MUC recipients are v2-capable. Default changed from `use_v2=false` (escalate on first v2-only) to `use_v2=true` (downgrade on first v1-only).
+- **OMEMO Stale Device Accumulation**: Old device IDs from previous installations, AppImage tests, and other clients accumulated on the PubSub device list but were never removed. New `cleanup_stale_own_devices()` runs on every connect: deactivates all non-own devices in the local DB, publishes a clean device list (v1+v2) containing only the current device, and deletes stale bundle nodes (v1) / retracts stale bundle items (v2) from the server.
+- **MUC Duplicate in Channel Dialog**: Opening "Kanal beitreten" could show the same MUC twice if bookmark events arrived during refresh. `add_conference()` now deduplicates by JID, and `refresh_conferences()` properly clears the widget cache after removing list items.
+- **MUC Lock Icon Missing on Startup**: Private room lock icon in "Kanal beitreten" was always missing on first open because it only checked in-memory MUC flags (empty on startup). Now uses `is_private_room()` which also checks the database for cached disco#info features.
+- **Channel Dialog Type Check**: The "Join" button enable/disable logic used an incorrect GLib type check (`row.get_type().is_a(typeof(AddListRow))`) that always returned false. Fixed to `row.child is AddListRow`.
+- **Channel Dialog Password Field**: Setting a conference password targeted the wrong stack widget (`nick_stack` instead of `password_stack`), making the password label invisible.
+- **Channel Dialog Join Button Stuck**: If the JID entered in the join dialog was invalid, the "Join" button remained disabled with spinner text permanently. Now restores the button to "Join" with sensitivity before showing the error.
+- **OMEMO "Does Not Support Encryption" in MUC After Rejoin**: Activating OMEMO in a MUC after rejoin falsely reported the room doesn't support encryption. Root cause: `is_private_room()` returned false because disco#info features weren't loaded yet, causing the code to fall into the 1:1 path which checked OMEMO keys for the MUC JID (always fails). Fix: For GROUPCHAT conversations, never fall through to 1:1 code path; wait up to 3 seconds for room features to load.
+- **OMEMO Solo MUC Encryption**: Sending an encrypted message in a MUC where no other members have OMEMO devices (solo room) was rejected with WONTSEND. Now allows self-only encryption when recipients list is empty in groupchat context.
+- **OMEMO Self-Only Encryption**: When only our own device was in a MUC (no other OMEMO-capable members), encryption failed because `other_devices == 0` rejection didn't distinguish from `own_devices == 0`. Now checks separately: only aborts if own devices are missing, allows sending when only own devices exist.
+- **OMEMO Stale Devices in MUC Member Display**: `get_known_devices()` and `get_new_devices()` did not filter by `now_active`, showing old/inactive devices that were no longer published on the server. Added `now_active = true` filter to both queries.
+- **OMEMO MUC Device Display Improved**: MUC member device list now filters out devices with no communication history (`last_active` is null), sorts remaining devices by most recent activity first, and shows "Last seen: today/yesterday/X days ago" per device. Inactive device count shown in subtitle (e.g. "+3 inactive").
+- **OMEMO Device List Refresh**: `insert_device_list()` previously overwrote `last_active` timestamps for **all** devices on every PubSub device-list update, making the field meaningless. Now only sets `last_active` for genuinely new devices; existing devices retain their decryption-based timestamps.
+- **OMEMO Cleanup on MUC Destroy**: When a MUC room is destroyed, OMEMO data (identity_meta, session, trust entries) stored under the room JID is now automatically cleaned up. Member keys stored under real JIDs are intentionally preserved since they are shared with 1:1 conversations.
+- **OMEMO Device List JID Filter**: `on_device_list_loaded()` (v1 and v2) now filters out non-user JIDs such as PubSub service components (`pubsub.example.com`) and MUC room JIDs. Previously these created garbage entries in identity_meta and trust tables that could never be used.
+- **Double Ringtone Prevention**: Freedesktop notification for incoming calls previously set `sound-name=phone-incoming-call` as a hint, causing some desktop environments (GNOME) to play their own ringtone in addition to the plugin's ringtone. Replaced with `suppress-sound=true` so only the notification-sound plugin controls all audio feedback.
+
+### Added
+- **MUC Destroy Room Menu**: Right-click context menu on MUC conversations now shows "Destroy Room" option (only visible for room owners).
+- **Notification Sound Plugin Enabled by Default**: The libcanberra notification sound plugin is now compiled and loaded by default on Linux. Previously it was disabled and only built in Flatpak/AppImage. Fixed null safety issues, added error handling for context creation, and set `plugin-notification-sound` meson option from `disabled` to `auto`.
+- **Call Ringtone**: Incoming audio/video calls now play the `phone-incoming-call` freedesktop sound event via libcanberra in a 3-second loop until the call is accepted, rejected, or missed. Previously only the notification daemon hint was used, which many desktop environments silently ignored.
+
+## [0.9.9.8] - 2026-02-12
+
+### Fixed
+- **Undecryptable OMEMO Ghost Messages**: When OMEMO decryption failed (missing session, ratchet mismatch, etc.), the sender's fallback body text `[This message is OMEMO encrypted]` was stored as a normal plaintext message. These ghost messages accumulated in conversations and could never be decrypted. Now both v1 and v2 decrypt listeners clear the message body on failure, causing the pipeline's empty-message filter to silently drop them.
+- **MAM Re-sync After History Clear**: Clearing conversation history previously deleted MAM catchup ranges, forcing a complete archive re-sync from the server on next startup. This caused all old messages to reappear as undecryptable OMEMO blobs (since the ratchet had moved forward). MAM catchup ranges are now preserved, so only new messages are fetched after clearing.
+- **Cleared Conversation Filter**: Hardened the MAM message filter for cleared conversations — now falls back to `message.time` when `server_time` is null, and uses inclusive timestamp comparison to properly filter edge-case messages at the exact clear boundary.
+- **Avatar Sync (6 Bugs Fixed)**: Avatars were unreliable — sometimes showing, sometimes blank, especially after Clear Cache or reconnect:
+  - In-memory avatar hash caches were not cleared after DB purge → stale data, failed fetches with no retry
+  - No re-fetch on reconnect — if an avatar file was missing, it stayed blank permanently until a new presence arrived
+  - Empty SHA1 hash from `<photo/>` in XEP-0153 presence was stored as a valid hash, causing phantom fetch attempts
+  - XEP-0084 (PubSub) avatar fetch used `request_all()` instead of `request_item(hash)` → wrong avatar version returned → SHA1 mismatch → silent failure
+  - vCard `fetch_image()` did not strip whitespace from Base64 BINVAL (unlike `VCardInfo.from_node()`) → multi-line base64 caused SHA1 mismatch → avatar silently lost
+  - Empty/null hash IDs in `on_user_avatar_received`/`on_vcard_avatar_received` not filtered
+
+### Important — Upgrade Notice
+> **Users upgrading from v0.9.9.7 or earlier should delete their local database and perform a fresh start.**
+> Previous versions stored undecryptable OMEMO fallback text as plaintext messages and had inconsistent avatar cache state.
+> To clean up:
+> 1. Close DinoX
+> 2. Delete `~/.local/share/dinox/dino.db`
+> 3. Delete `~/.cache/dinox/` (avatar + file cache)
+> 4. Restart DinoX — accounts will reconnect, MAM will sync fresh messages, avatars will be re-fetched
+>
+> Alternatively, use **Settings → Clear Cache** (clears avatars, thumbnails, MAM sync state) and then manually clear old conversations that show ghost messages.
+
+## [0.9.9.7] - 2026-02-12
+
+### Fixed
+- **Clipboard Paste Lag**: Fixed UI lag on every paste event (Ctrl+V). `read_texture_async` was called unconditionally, causing GDK to probe all clipboard formats including unsupported ones like `image/x-xpixmap`, blocking the main thread. Now checks clipboard formats first and only attempts texture read when a supported image format (PNG, JPEG, BMP, GIF, TIFF, WebP, SVG) is present.
+
+## [0.9.9.6] - 2026-02-12
+
+### Fixed
+- **OMEMO v1/v2 Session Conflict**: Fixed `SG_ERR_LEGACY_MESSAGE` decryption failures caused by v1 and v2 OMEMO sharing the same Signal Protocol session store. When a v2 bundle arrived first, it created a version-4 session that the v1 encryptor would use without the correct cipher version, producing unreadable messages. Fix: (1) v1 `start_session` now detects v4 sessions and replaces them with v3, (2) v2 sessions are no longer created for JIDs that have v1 devices, (3) `SG_ERR_LEGACY_MESSAGE` now triggers automatic session repair.
+- **GTK4 Double Dispose Crash**: Fixed `GLib-GObject-CRITICAL` errors from `dispose()` being called multiple times on GTK4 widgets (`MessageWidget`, `ConversationView`, `ListRow`, `CallWidget`). Added null guards and sentinel resets to prevent double-free.
+
+## [0.9.9.5] - 2026-02-12
+
+### Added
+- **OMEMO Fingerprint Display**: Fingerprints are now displayed in standardized XEP-0384 §8 format (8 groups of 8 hex digits) across all OMEMO UI views — device management, trust dialogs, and key verification.
+- **OMEMO Device Labels**: Own device label (e.g. "DinoX - Linux") is now automatically set and published for both OMEMO v1 and v2. Remote device labels (e.g. "Kaidan - KDE Flatpak", "Conversations - Pixel 8") are fetched from v2 device lists and displayed in all device management views.
+- **Server Cleanup on Account Deletion**: Deleting an account from the server now performs a full PubSub cleanup before XEP-0077 unregistration — removes the v2 device list, v1 device list, and all individual OMEMO v1 bundle nodes (`eu.siacs.conversations.axolotl.bundles:DEVICE_ID`) from the server.
+
+### Fixed
+- **GTK Widget Assertion**: Fixed `gtk_widget_set_parent: assertion 'child->priv->parent == NULL' failed` error caused by widget reparenting during UI updates.
+
+## [0.9.9.4] - 2026-02-12
+
+### Fixed
+- **OMEMO Device Management**: Fixed PubSub device list management — devices can now be properly removed from the server. Device management dialog shows detailed device information including labels, trust status, and last activity.
+- **OMEMO Session Auto-Repair**: Automatically detects and repairs broken OMEMO sessions by clearing corrupt session data and re-fetching bundles, preventing permanent message decryption failures.
+- **OMEMO Session Thrashing Guard**: Prevents rapid session rebuild loops by tracking recent repairs and skipping redundant re-keying within a cooldown period.
+- **OMEMO Broken Bundle Handling**: Devices with broken bundles (empty identity key, signed prekey, or signature) are now counted as "lost" instead of "unknown", allowing messages to be sent to other working devices instead of blocking encryption entirely.
+- **OMEMO V2 Bundle Fetch on Delay**: When an OMEMO V2 encrypted message triggers a delayed bundle fetch, the V2 bundle is now correctly requested. Previously only the legacy bundle was fetched, causing messages to hang indefinitely.
+- **Account Deletion**: Deleting an account now performs a complete cascade delete across 25+ database tables, preventing orphaned data from remaining after account removal.
+- **Clear Cache**: The "Clear Cache" function now properly purges 10 database cache tables (avatar, entity_feature, entity_identity, roster, settings, mam_catchup, etc.) in addition to clearing the file system cache directory.
+
+### Added
+- **OMEMO Bundle Retry**: When a device's bundle cannot be fetched, it is automatically retried every 10 minutes (up to 5 attempts) before being permanently marked as unavailable.
+- **OMEMO Device Labels**: Device labels are now stored in the database and displayed in the OMEMO device management UI alongside device IDs and trust status.
+
+### Improved
+- **Repository Cleanup**: Removed obsolete files (icon_backup/, meson_options.txt, cross_file.txt, check_translations.py, OMEMO2_IMPLEMENTATION_PLAN.md). Moved documentation files to docs/internal/.
+
+## [0.9.9.3] - 2026-02-10
+
+### Fixed
+- **CRITICAL: bind_property Lifecycle Fix**: Fixed `dino_entities_file_transfer_get_mime_type: assertion 'self != NULL' failed` crash caused by dangling GObject bind_property bindings. FileWidget, FileImageWidget, VideoPlayerWidget, and AudioPlayerWidget now store Binding references and unbind them in dispose(), preventing access to destroyed FileTransfer objects during widget recycling.
+- **Thumbnail Parsing**: Fixed SFS/thumbnail metadata parsing for incoming file transfers with XEP-0264 thumbnails.
+
+### Improved
+- **Debug Output Cleanup**: Removed 57 leftover debug print/warning statements across the codebase for cleaner runtime output.
+- **OMEMO 1 + 2 End-to-End Encryption**: Stabilized dual-protocol OMEMO support (legacy XEP-0384 v0.3 + modern v0.8) introduced in v0.9.9.1.
+
+## [0.9.9.2] - 2026-02-09
+
+### Added
+- **Server Certificate Info (GitHub Issue #10)**: Account preferences now show the TLS certificate details of the connected XMPP server — status (CA-signed or pinned), issuer, validity period, and SHA-256 fingerprint. Pinned (self-signed) certificates can be removed directly from the UI. Certificate details are also shown in the "Trust This Certificate" dialog during account setup.
+
+### Fixed
+- **App Icon in About Dialog**: Fixed app icon appearing light/white in AppImage and Flatpak builds. The GResource-bundled SVG (base64-wrapped PNG) was being prioritized by GTK4/librsvg and rendered with a light background. Removed SVG from GResource so GTK resolves the icon from installed hicolor PNGs.
+
+### Improved
+- **App Icon Rounded Corners**: All app icon sizes (16–512px) now have slightly rounded corners to avoid the "Minecraft cube" look on desktop environments like Linux Mint Cinnamon.
+- **Menu Order**: Moved "Panic Wipe" to the bottom of the hamburger menu, below "About DinoX", to prevent accidental activation.
+
+## [0.9.9.1] - 2026-02-09
+
+### Added
+- **OMEMO 2 Support (XEP-0384 v0.8+)**: Full implementation of OMEMO 2 with backward compatibility to legacy OMEMO. Includes SCE envelope layer (XEP-0420), OMEMO 2 XML parsers, bundle/stream management for `urn:xmpp:omemo:2` namespace, and HKDF-SHA-256 / AES-256-CBC / HMAC-SHA-256 crypto primitives via libgcrypt. OMEMO 2 device lists and bundles are published and subscribed alongside legacy OMEMO. Interop testing pending (Kaidan Flatpak currently broken).
+
+### Fixed
+- **HTTP File Transfer with Self-Signed Certificates**: Fixed file upload/download failing when the XMPP server uses a self-signed certificate. Previously, only the XMPP connection checked pinned certificates — HTTP uploads (PUT), downloads (GET), metadata requests (HEAD), and sticker uploads all rejected self-signed certs even when the user had already accepted them. Now all HTTP file operations respect pinned certificates from the database.
+
+## [0.9.9.0] - 2026-02-09
+
+### Fixed
+- **Backup/Restore after Panic Wipe**: Fixed critical bug where restoring a backup after a Panic Wipe would fail because the database was encrypted with the original password, but the app tried to open it with the newly set password. After restore, DinoX now shows a clear dialog asking for the backup's original database password. Panic Wipe is disabled during this phase to prevent accidental data loss.
+- **Backup Password Leak**: OpenSSL backup encryption/decryption no longer passes the password via command line (`-pass pass:...`). Passwords are now securely piped via stdin (`-pass stdin`), preventing exposure in process listings (`/proc/PID/cmdline`) and log output.
+
+## [0.9.8.8] - 2026-02-09
+### Fixed
+- **Windows GStreamer Plugins**: Fixed GStreamer plugin DLL loading failures (d3d11, d3d12, isomp4, libav, rtpmanager, webrtc). The auto-dependency detection now scans GStreamer plugin subdirectory for missing DLLs. Moved GStreamer/GIO/GDK-Pixbuf copy steps before auto-detect to ensure all transitive dependencies are resolved.
+- **Windows OMEMO & RTP Plugins**: Fixed `omemo.dll` and `rtp.dll` failing to load ("Das angegebene Modul wurde nicht gefunden"). DinoX plugins are now copied before the auto-dependency scan so their transitive DLL dependencies are resolved automatically.
+- **Windows About Dialog**: Debug Information now shows all 3 data paths (Data & Database, Configuration, Cache) instead of combining Data and Configuration into one line. On Windows these are separate directories.
+
+### Improved
+- **Windows: No more batch file needed**: `dinox.exe` now sets all required environment variables (GTK paths, GStreamer plugins, SSL certificates) internally on startup. Users can double-click `dinox.exe` directly — the batch file is kept only as a legacy fallback.
+- **Windows: No terminal window**: `dinox.exe` now uses the Windows GUI subsystem (`-mwindows`), so launching it no longer opens a console window in the background.
+- **Windows: App icon in .exe**: The DinoX application icon is now embedded in `dinox.exe` via a Windows resource file, so it shows in Explorer, taskbar, and Alt+Tab.
+
+### Fixed
+- **System Tray (Linux)**: Restored full StatusNotifierItem systray with libdbusmenu that was accidentally removed during Windows porting. Linux users have tray icon, background mode, and status menu back. Added `GApplication.hold()` fallback for GNOME desktops without AppIndicator extension.
+- **Platform Split**: Systray implementation is now platform-conditional — Linux gets full SNI/dbusmenu tray, Windows gets clean quit-on-close behavior.
+
+## [0.9.8.7] - 2026-02-09
+
+### Added
+- **SHA256 Checksums**: All binary downloads (AppImages, Flatpaks, Windows zip) now include SHA256 checksum files for integrity verification.
+
+### Fixed
+- **AppImage Filename**: Fixed missing version number in AppImage filenames (was `DinoX--aarch64.AppImage`, now `DinoX-0.9.8.7-aarch64.AppImage`).
+
+## [0.9.8.6] - 2026-02-09
+
+### Fixed
+- **Certificate Pinning**: Fixed SQL syntax error when pinning self-signed certificates. The upsert query had empty `ON CONFLICT()` and a leading comma in the INSERT column list because `domain` was not marked as a key column. Clicking "Trust This Certificate" now works correctly.
+- **CI/CD**: Switched aarch64 AppImage and Flatpak builds from QEMU emulation to native GitHub ARM64 runners (`ubuntu-24.04-arm`). Eliminates compiler crashes and dramatically improves build speed.
+
+## [0.9.8.5] - 2026-02-08
+
+### Added
+- **Windows Support**: DinoX is now available for Windows 10/11 via MSYS2/MINGW64. Automated CI/CD builds with GitHub Actions produce ready-to-use Windows distribution archives.
+- **XEP-0027 (OpenPGP Legacy)**: Full implementation of legacy OpenPGP signing and encryption for maximum interoperability with older XMPP clients (Gajim, Psi, etc.).
+- **OpenPGP Manager (XEP-0373/0374)**: Completely reworked OpenPGP key management. The OpenPGP manager now handles key generation, key selection, key deletion, and key revocation in one unified UI. Key exchange happens automatically via PEP (XEP-0373) — no more manual keyserver exchange required.
+- **PGP Key Revocation**: Added key revocation options (revoke, revoke+delete, delete-only) in OpenPGP key management dialog with XEP-0373 revocation announcement to all contacts.
+- **Self-Signed Certificate Trust**: Added "Trust This Certificate" dialog for self-signed TLS certificates (GitHub Issue #9). Uses Certificate Pinning (TOFU) with SHA-256 fingerprint stored in database.
+- **GitHub Actions CI/CD**: Added Windows CI/CD workflow using MSYS2/MINGW64 with automated build, artifact upload, and optional release creation on tag push.
+
+### Fixed
+- **Video Freeze**: Fixed video preview freeze with lazy viewport-based initialization.
+- **File Transfer Crash**: Added null guards to prevent CRITICAL assertion during widget recycling.
+- **App Icon (Windows)**: Embedded SVG app icon in GResource bundle for reliable display on Windows. Added hicolor/index.theme for GTK icon theme discovery.
+- **GStreamer Plugins**: Fixed plugin names (audiofx instead of scaletempo), added isomp4 and libav plugins.
+- **Hash Verification**: Hash verification now always runs on decrypted plaintext; warns but keeps file on mismatch.
+- **Certificate Dialog**: Fixed reconnect logic to properly disconnect before reconnecting.
+- **GTK Markup**: Fixed `&` to `&amp;` in encryption preferences entry.
+- **Flatpak**: Removed duplicate webrtc-audio-processing module from manifest.
+
+## [0.9.8.4] - 2026-01-24
+
+### Fixed
+- **UI Performance**: Fixed a freeze in the progress bar during file uploads by throttling property update notifications.
+- **Message Retraction**: Implemented robust XEP-0424 support with "Dual Stack" strategy (XEP-0422 Fastening + Legacy V1 Child) to ensure compatibility with both modern clients (Conversations) and legacy clients (Monal/iOS).
+- **Interoperability**: Corrected message ID usage in Group Chats (preferring XEP-0359 Origin IDs over Server IDs) to fix retraction failures with Android clients.
+
+## [0.9.8.3] - 2026-01-24
+
+### Fixed
+- **File Transfer**: Fixed a critical issue where sending video files would hang indefinitely (UI freeze) if metadata extraction stalled. Added a robust timeout mechanism to ensure sending proceeds even if metadata fails.
+- **Stability**: Fixed a crash (`malloc(): smallbin double linked list corrupted`) and persistent `GtkStack` warnings in the file preview widget caused by race conditions during widget cleanup.
+
+## [0.9.8.2] - 2026-01-24
+
+### Fixed
+- **Media**: Fixed inline playback for encrypted MOV/MP4 videos. Videos are now decrypted to a temporary file for playback with Gtk.Video/GStreamer.
+- **UI**: Fixed `GtkStack` warnings ("child not found") in file preview widgets.
+- **Localization**: Fixed a regression where English users were prompted for the database password in German.
+
+## [0.9.8.1] - 2026-01-23
+
+### Fixed
+- **Stability**: Fixed a critical "double free" crash when canceling or completing encrypted file uploads (HTTP Upload / AES-GCM).
+- **Performance**: Disabled checksum calculation for files larger than 50MB. This prevents UI freezes and "Source ID not found" crashes when sending large video files.
+
+## [0.9.8.0] - 2026-01-19
+
+### Added
+- **Audio**: Implemented manual audio gain (post-processing) with a new UI slider to bypass WebRTC AGC limits. This allows increasing microphone volume significantly beyond standard levels.
+
+## [0.9.7.9] - 2026-01-13
+
+### Added
+- **Audio/Video Backend**: Added native **PipeWire support** (`pipewiresrc`) as the primary audio source for Calls and Voice Notes. This massively improves stability and quality on modern Linux distributions (Mint, Fedora, Arch) and fixes "Device not found" errors.
+- **Voice Notes**: Added a +8dB volume boost to voice messages to fix low microphone volume issues.
+- **Voice Notes**: Enabled "Faststart" (Web Optimized) for MP4 recordings. This ensures compatibility with iOS devices and the Conversations app, which previously refused to play DinoX voice notes.
+
+### Changed
+- **Tor Manager**: Enhanced connection logic and settings UI:
+    - Included a **Firewall Mode** to restrict Tor traffic to ports 80 and 443 only.
+    - Added an intelligent **Bridge Filter** for OBFS4 that prioritizes bridges on ports 80/443 for better reachability in restrictive networks.
+    - Improved UI clarity for adding custom bridges.
+- **UI**: Various refinements to Conversation View, File Sending Overlay, and Dialogs for a smoother user experience.
+
+### Fixed
+- **Packaging**: Correctly bundled `gstreamer1.0-pipewire` in **AppImage** and compiled a minimal `pipewire` GStreamer plugin for **Flatpak**. This ensures the new PipeWire backend works reliably in sandboxed environments and prevents fallback to incompatible audio drivers.
+- **UI Responsiveness**: Fixed layout rendering issues in the Preferences dialog (specifically Tor settings). The settings window now adapts correctly to narrow window sizes (mobile layout), ensuring all controls remain accessible without being cut off.
+
+## [0.9.7.8] - 2026-01-12
+
+### Fixed
+- **Release Integrity**: Included all pending critical code fixes (Audio, Avatars, Refactoring) that were missing in v0.9.7.7 due to a build system error.
+- **Audio Sensitivity**: Reverted internal digital gain boost from 15dB to safe 6dB default to prevent clipping/distortion with high-quality microphones (e.g., USB DACs).
+- **Crash Fix**: Resolved a critical segmentation fault when ending video/voice calls caused by GStreamer buffer refcounting race conditions. Implemented deep buffer copying for the native WebRTC thread.
+
+## [0.9.7.7] - 2026-01-12
+
+### Note
+- This release was tagged incorrectly without the intended code changes. Please use v0.9.7.8.
+
+## [0.9.7.6] - 2026-01-11
+
+### Fixed
+- **Interoperability**: When setting a user avatar, it is now published to both PEP (XEP-0084, OMEMO-encrypted capable) and vCard-temp (XEP-0054, legacy compatibility). This fixes avatar visibility issues in clients like Conversations.
+
+## [0.9.7.5] - 2026-01-10
+
+### Fixed
+- **AppImage**: Bundled missing GStreamer plugins (`libgstisomp4`, `libgstvoaacenc`) to fix AppImage audio recording error "Could not create GStreamer elements".
+- **AppImage**: Bundled essential GStreamer audio conversion and playback elements (`audioconvert`, `playback`, `volume`) to ensure reliable audio I/O.
+
+## [0.9.7.4] - 2026-01-10
+
+### Fixed
+- **Stability**: Added additional null-checks for peer fingerprints to preventing crashes if the Jingle negotiation is incomplete or malformed (further hardening against Monal interoperability issues).
+
+## [0.9.7.3] - 2026-01-10
+
+### Fixed
+- **Stability**: Fixed a segmentation fault (crash) during video call setup when the remote client (e.g., Monal) does not specify a fingerprint hashing algorithm. Defaulting to SHA-256 in such cases.
+
+## [0.9.7.2] - 2026-01-10
+
+### Fixed
+- **Call Interoperability**: Fixed video calls failing when initiated from DinoX to certain iOS clients (Monal/Siskin). 
+  - Added support for **SHA-512**, **SHA-384**, and **SHA-1** DTLS fingerprints.
+  - Added case-insensitive handling of fingerprint algorithms.
+
+## [0.9.7.1] - 2026-01-10
+
+### Added
+- **Hardware Acceleration**: Added `gstreamer1.0-vaapi` to AppImage build to enable hardware-accelerated video enc/decoding (VAAPI) for smoother video calls and reduced CPU usage.
+
+### Fixed
+- **UI/Theming**: Removed usage of SVG icons in AppImage. Now enforcing PNG icons to resolve issue where icons appeared light/invisible on dark themes.
+
+## [0.9.7.0] - 2026-01-10
+
+### Added
+- **Out-of-the-Box Tor & Privacy**
+  - **Integrated Tor & Obfs4proxy**: The application now comes with Tor and Obfs4proxy pre-bundled and pre-configured for instant use (AppImage & Flatpak). No manual installation of Tor is required.
+  - **Zero-Config Privacy**: Simply enable Tor in the account settings, and DinoX handles the process management, bridge configuration, and SOCKS5 proxy setup automatically.
+  - **Stable Connectivity**: Implemented smart connection handling to wait for Tor circuits to stabilize before connecting XMPP, preventing connection errors on startup.
+
+### Fixed
+- **Startup Sync**: Solved race conditions where the account would try to connect before the local Tor process was ready.
+- **Log Hygiene**: Reduced terminal noise by moving verbose connection logs to debug level, keeping the console clean for production use.
+
+### Infrastructure
+- **Universal Linux Support (Multi-Arch)**
+  - Full automated build support for **Aarch64 (ARM64)** and **x86_64**, ensuring the "Out of the Box" privacy experience works on standard PCs, Raspberry Pis, and ARM laptops.
+
+## [0.9.6.0] - 2026-01-09
+
+### Added
+- **Sender Identity Selection**
+  - Select which account to use when starting a new chat (1:1).
+  - Select account when joining or creating a Group Chat (MUC).
+  - Chat Input displays the avatar of the currently selected sending account.
+  - Accounts can be engaged/disabled in backend, hiding them from the UI.
+- **In-Band Registration (XEP-0077)**
+  - Register new accounts directly from the client.
+    Portable Zip:   - Change password support.
+  - Support for CAPTCHA forms (XEP-0158) and Data Forms validation.
+- **UI Responsiveness**
+  - Improved responsiveness in Room Browser Dialog (ellipsized text).
+  - Fixed layout issues in "Create Group Chat" dialog for smaller screens.
+
+### Changed
+- Replaced deprecated `Gtk.ComboBoxText` with `Gtk.DropDown` for better GTK4 compliance.
+- Improved "Add Conversation" workflow with integrated account selection.
+
+## [0.9.5.0] - 2026-01-08
+
+### Added
+- **MUC Avatars (XEP-0486)**
+  - Full support for setting, updating, and displaying group chat avatars.
+  - Automatic resizing and conversion to PNG.
+  - Robust persistence via vCard support on MUC JIDs.
+- **Status UI**
+  - Moved status selection from hamburger menu to a dedicated button in the header bar.
+  - Status icon changes color based on reachability (Green/Orange/Red).
+
+### Removed
+- **Help Button**
+  - "Join Channel Help" button removed from header bar.
+
+## [0.9.4.0] - 2026-01-08
+
+### Added
+- **User Search Integration (XEP-0055)**
+  - Implemented direct "Search Directory" option in the "Start Conversation" dialog.
+  - Integration with server-side User Directories (JUD).
+  - Improved handling of XEP-0004 Data Forms (`<item>` parsing support), enabling robust search results.
+- **UI Tweaks**
+  - Removed logo from empty chat placeholder for a cleaner look.
+
+## [0.9.3.0] - 2026-01-02
+
+### Added
+- **Full Local Encryption**
+  - All local files (`files/`, `avatars/`, `stickers/`) are now transparently encrypted at rest using AES-256-GCM.
+  - Migrated `pgp.db` to SQLCipher (previously unencrypted).
+- **Secure Deletion**
+  - Added "Also delete for chat partner" option to "Clear History" dialog for 1:1 chats (triggers XEP-0424).
+  - Implemented **Smart Throttling** for message retraction (max 5 msgs/sec) to prevent server disconnects/bans during bulk deletion.
+  - Enforced zero-trace cleanup of decrypted cache files (`~/.cache/dinox`) on application exit (including Tray Quit).
+- **UI Improvements**
+  - Updated "About" dialog to correctly reflect data storage paths (`~/.local/share/dinox`).
+
+## [0.9.2.0] - 2026-01-02
+
+### Added
+- **Encrypted File Upload**
+  - Added support for encrypted file uploads in OMEMO-encrypted chats.
+  - Implemented **AES-GCM URI Scheme** (`aesgcm://`) for compatibility with Conversations, Monal, and Gajim.
+  - Implemented **XEP-0448** (Encryption for Stateless File Sharing) for future-proof, standard-compliant encryption.
+  - Files are encrypted on-the-fly during upload (AES-256-GCM).
+  - Keys are transmitted securely within the OMEMO-encrypted message.
+
+## [0.9.1.0] - 2026-01-01
+
+### Added
+- **XEP Support**
+  - Added support for vCard4 (XEP-0292).
+  - Added support for User Nickname (XEP-0172).
+  - Added fallback support for vCard-temp (XEP-0054).
+- **Translations**
+  - Added translations for Privacy settings in 47 languages.
+
+### Fixed
+- **System Tray**
+  - Fixed issue where tray icon would not reappear after shell restart.
+- **Application Lifecycle**
+  - Fixed clean shutdown when using Ctrl+Q (now properly routed through SystrayManager).
+
+## [0.9.0.0] - 2025-12-31
+
+### Fixed
+- **UI/Layout**
+  - Fixed responsive layout for video player in chat (now scales correctly on smaller screens).
+  - Fixed responsive layout for map previews (OSM) in chat (prevented full-width stretching).
+  - Adjusted audio player layout for better responsiveness.
+- **Translations**
+  - Fixed syntax errors in translation files (PO) that caused build failures.
+  - Updated and corrected fuzzy translations across multiple languages.
+
+## [0.8.6.15] - 2025-12-31
+
+### Added
+- **Location Sharing (XEP-0080)**
+  - Added ability to send current location (requires GeoClue2).
+  - Added "Send Location" button to chat input menu.
+  - Added "Share Location" toggle in Preferences (Privacy section).
+  - Implemented XEP-0080 (User Location) for publishing location.
+- **Geo URI / Map Preview**
+  - Added inline map preview for `geo:` URIs (XEP-0080).
+  - Added "Open OpenStreetMap" link and click-to-open behavior.
+  - Added location marker pin.
+- **Status & Presence**
+  - Added "Status" menu to application menu (Online, Away, Busy, Not Available).
+  - Added "Set Status Message..." dialog to set custom presence status.
+  - Added presence status indicator (emoji) to conversation list rows.
+- **Notifications**
+  - Added "Mute/Unmute" button to conversation details dialog.
+  - Added mute status indicator to conversation list rows.
+
+## [0.8.6.14] - 2025-12-28
+
+### Added
+- **Sticker UI Refactor**
+  - Redesigned Sticker Manager with modern UI.
+  - Added support for APNG (Animated PNG) stickers.
+  - Added "Share" and "Publish" buttons for sticker packs.
+  - Added a "Close" button to the sticker chooser popover.
+
+## [0.8.6.13] - 2025-12-28
+
+### Fixed
+- **UI/Dialogs**
+  - Fixed "Leave Conversation" button in conversation details dialog not working.
+  - Fixed responsiveness issues when opening conversation details from chat input (e.g., "You are not a member of this room").
+  - Fixed empty dialogs by removing `show-title-buttons` property from UI files (Libadwaita 1.5+ compatibility).
+
+## [0.8.6.12] - 2025-12-28
+
+### Changed
+- **Audio Tuning**
+  - Reduced AGC compression gain from 9dB to 6dB to prevent amplification of residual echo.
+  - Enabled WebRTC Transient Suppression to filter out impulsive noises (keyboard clicks, etc.).
+
+## [0.8.6.11] - 2025-12-28
+
+### Fixed
+- **Calls (Echo Cancellation)**
+  - Fixed a critical issue where AEC was not wired into the pipeline, causing severe echo for remote parties.
+  - Enabled "Mobile Mode" and "Adaptive Digital" AGC for better audio quality on Linux devices.
+
+### Changed
+- **Build / Dependencies**
+  - Removed support for the obsolete `webrtc-audio-processing` v0.3 library to prevent build regressions.
+  - Flatpak and AppImage builds now strictly use `webrtc-audio-processing` v2.1 (Jan 2025).
+
+## [0.8.6.10] - 2025-12-20
+
+### Fixed
+- **Calls (AppImage / GitHub Releases)**
+  - Bundle the missing GStreamer `audiorate` plugin (`libgstaudiorate.so`) so 1:1 call audio works reliably (e.g., Monal interop).
+
+## [0.8.6.9] - 2025-12-19
+
+### Changed
+- **Branding**
+  - Replaced the DinoX logo/icon across the app (bundled icons), README, and website assets.
+
+### Fixed
+- **UI markup helper**
+  - Avoid `string_slice` CRITICALs by guarding against invalid fallback slice ranges.
+
+### Added
+- **Calls (debug only)**
+  - Extra VoiceProcessor init debug logging (AEC/NS/AGC/VAD flags) when debug logging is enabled.
+
+## [0.8.6.8] - 2025-12-19
+
+### Fixed
+- **Startup (Flatpak)**
+  - Fix a crash in the HTTP file upload plugin caused by re-entrant recursion when hopping to libsoup's main context.
+
+## [0.8.6.7] - 2025-12-19
+
+### Fixed
+- **Build (Flatpak/AppImage)**
+  - Fix Vala compile error by disambiguating `Spinner` between `Gtk.Spinner` and `Adw.Spinner`.
+
+## [0.8.6.6] - 2025-12-19
+
+### Security
+- **Encrypted local data is now mandatory**
+  - DinoX requires a password at startup to open the encrypted SQLCipher database (no plaintext fallback).
+- **Panic wipe**
+  - Added a Panic Wipe action (menu + shortcut `Ctrl+Shift+Alt+P`).
+  - After 3 failed unlock attempts, DinoX wipes local data and exits.
+
+### Added
+- **Change database password**
+  - Preferences → Database Maintenance → Change Database Password (SQLCipher `PRAGMA rekey`).
+- **OpenPGP keyring isolation**
+  - OpenPGP plugin uses an app-scoped `GNUPGHOME` so Panic Wipe removes OpenPGP material.
+
+### Fixed
+- **Guards against log spam / CRITICALs**
+  - Avoid CRITICAL errors when message retraction is requested without a message reference ID.
+  - Validate reply fallback ranges before slicing strings.
+- **Flatpak SVG loader crash (stickers)**
+  - Avoid triggering the gdk-pixbuf SVG loader from background metadata/thumbnail generation by blacklisting SVG mime types and skipping files that look like SVG/SVGZ (gzip).
+- **Stickers import responsiveness**
+  - Generate sticker thumbnails off the main thread to avoid UI stalls.
+- **HTTP MainContext handling (libsoup)**
+  - Avoid re-entrant recursion by using `GLib.MainContext.is_owner()` checks.
+- **Unlock window placement (X11)**
+  - Center the unlock window on X11 (best-effort; helps Cinnamon/Muffin).
+
+## [0.8.6.4] - 2025-12-19
+
+- Prevent crashes on sticker pack import/publish caused by SVG data mislabeled as raster images by sniffing file contents and skipping SVG thumbnail generation.
+- Improve feedback for long-running sticker pack actions by disabling controls while operations are running.
+
+## [0.8.6.3] - 2025-12-19
+
+### Fixed
+- **Sticker SVG crash (Flatpak)**
+  - Avoid decoding/displaying SVG stickers in the UI (sticker chooser thumbnails + inline sticker rendering) to prevent gdk-pixbuf SVG loader crashes.
+
+## [0.8.6.2] - 2025-12-18
+
+### Fixed
+- **Sticker pack import stability**
+  - Avoid generating thumbnails for non-raster sticker types (e.g. SVG) during import to prevent Flatpak crashes.
+- **Flatpak translations (GitHub bundle installs)**
+  - Ship translations in the main app by disabling `separate-locales` in the Flatpak manifest.
+
+## [0.8.6.1] - 2025-12-18
+
+### Fixed
+- **Flatpak startup stability**
+  - Fixed libsoup assertion crash by ensuring HTTP sessions are used on their creating `GLib.MainContext`.
+- **Sticker chooser (GTK4)**
+  - Removed invalid `modal` popover property usage to avoid runtime GObject criticals.
+- **Database (Qlite/SQLCipher)**
+  - Reduced log noise for plaintext fallback and added best-effort automatic plaintext-encrypted migration when a key is provided.
+
+## [0.8.6] - 2025-12-18
+
+### Added
+- **Stickers (XEP-0449)**
+  - End-to-end support for sending and receiving stickers (`urn:xmpp:stickers:0`).
+  - Sticker packs: import via `xmpp:` PubSub links, publish packs to PEP, and share pack URIs.
+  - New preferences: **Enable Stickers** and **Enable Sticker Animations**.
+
+### Fixed
+- **GitHub AppImage: missing audio / media capabilities**
+  - Bundled `gst-plugin-scanner` and resolved/copy shared-library dependencies recursively.
+  - Improved GStreamer plugin discovery behavior to avoid silently missing WebRTC/audio/video elements.
+- **Sticker chooser stability & performance**
+  - Avoided reload spikes on chat switch by deferring heavy reloads until the popover is opened.
+  - Fixed a thumbnail update use-after-free by using `WeakRef`-based lifetime checks.
+- **GTK4 build compatibility**
+  - Replaced deprecated `mapped` property usage with `get_mapped()`.
+
+### Documentation / Translations
+- Updated gettext extraction for sticker UI and refreshed translations (incl. German fixes for the new sticker settings).
+
+### Changed
+- **Media rendering / performance**
+  - Animated sticker playback and inline video playback now react to visibility (mapped + in-viewport) to reduce CPU/battery usage.
+  - Added a small first-frame cache for animated stickers to improve perceived performance.
+  - File/image loads are cancellable to avoid blocking chat switching.
+- **UI timing logs**
+  - Added optional UI timing instrumentation via `DINOX_UI_TIMING`.
+- **Release engineering (GitHub Actions)**
+  - AppImage/Flatpak artifacts are versioned from tags and attached to the GitHub Release.
+  - Release body generation now includes Flatpak bundle install instructions.
+
+### Notes
+- `webrtc-audio-processing` (AEC/NS/AGC) remains supported when present; builds remain functional without it.
+
+## [0.8.5] - 2025-12-16
+
+This release significantly improves 1:1 Jingle audio/video call interoperability with
+**Conversations (Android)** and **Monal (iOS)** while keeping DinoX’s existing media stack
+(GStreamer RTP/rtpbin + libnice ICE + DTLS-SRTP).
+
+### Changed
+- **Interop profile (WebRTC-compatible Jingle subset)**
+  - Prefer **ICE-UDP** + **DTLS-SRTP** only (no SDES-SRTP) to match modern WebRTC clients.
+  - Streamlined codec negotiation to a minimal baseline for better cross-client compatibility.
+- **RTP jitter handling (Monal startup)**
+  - Increased rtpbin latency and disabled aggressive startup dropping to eliminate initial “knacken”
+    (audio crackle) reported with Monal.
+
+### Fixed
+- **Startup artifacts (DTLS/SRTP timing)**
+  - Reduced audible pops/crackle at call start by handling packets that arrive before DTLS-SRTP is
+    fully ready, instead of dropping them outright.
+- **Call teardown robustness**
+  - Addressed GLib signal disconnect warnings during cleanup (double-disconnect / stale handler IDs).
+  - Adjusted ICE teardown ordering to avoid a libnice-related crash observed during TURN refresh
+    cleanup paths.
+
+### Technical
+- **Codecs / negotiation**
+  - Narrowed baseline call codecs to **Opus (audio)** and **VP8 (video)** for reliable interop.
+  - Disabled legacy/optional paths that caused negotiation or compatibility issues (e.g. SDES-SRTP,
+    Speex).
+- **Audio processing (webrtc-audio-processing)**
+  - Improved EchoProbe reverse-stream feeding stability (consistent 10ms chunking).
+  - Stabilized delay estimation / stream delay adjustments to improve AEC convergence and reduce echo.
+
+### Documentation
+- **Debugging calls (reproducible logs)**
+  - Added helper scripts for starting/stopping full-debug runs with reliable PID + log tracking:
+    `scripts/run-dinox-debug.sh`, `scripts/stop-dinox.sh`, `scripts/scan-dinox-latest-log.sh`.
+  - Extended `DEBUG.md` with a detailed, copy/paste workflow for collecting and scanning call logs.
+
+### Notes
+- DinoX now diverges more clearly from upstream Dino in the A/V call pipeline and interoperability
+  focus. The goal is stable cross-client calling (Conversations/Monal) using the existing
+  GStreamer/libnice/DTLS-SRTP stack rather than switching to a full Google/libwebrtc-based stack.
+- Known noise: libnice may still emit “alive TURN refreshes” warnings on teardown in some setups;
+  this is currently treated as a warning (no observed crash in follow-up runs).
+- Thanks to sponsor **@jacquescomeaux** for supporting DinoX.
+
+## [0.8.4] - 2025-12-03
+
+### Added
+- **WebRTC Video Calls** - Complete implementation of video calls
+  - Added support for VP8, VP9, and H.264 codecs
+  - Implemented ICE-TCP candidate support (RFC 6544) for better connectivity in restrictive networks
+  - Improved codec negotiation logic
+- **Security Hardening**
+  - Fixed a Path Traversal vulnerability in file transfer (sanitizing filenames)
+  - Verified and documented SQLCipher database encryption
+
+## [0.8.3] - 2025-12-02
+
+### Added
+- **Video Codec Improvements** - Enhanced video call quality and compatibility
+  - Enabled H.264 codec by default for better compatibility
+  - Enabled VA-API hardware acceleration by default for GStreamer >= 1.26
+  - Replaced deprecated VA-API elements with modern alternatives
+  - Optimized x264 encoding speed preset (faster instead of ultrafast)
+  - Added fallback to H.264 software decoder from ffmpeg/libav if hardware decoding fails
+  - Removed VP9 support to streamline codec negotiation
+
+## [0.8.2] - 2025-12-01
+
+### Security
+- **Database Encryption** - Implemented full database encryption using SQLCipher to protect local user data
+- **System Hardening** - Improved overall system security and data protection
+
+### Changed
+- **Build Process** - Hardened build process and improved dependency management
+- **Code Cleanup** - Removed internal development artifacts
+- **Logging Improvements** - Replaced raw print statements with proper GLib structured logging (debug/warning) for better system integration
+- **UI** - Updated copyright information in About dialog
+
+## [0.8.1] - 2025-12-01
+
+### Added
+- **Full OpenPGP Localization** - Completed translations for all 47 supported languages
+  - Added missing translations for OpenPGP key management and preferences
+  - Languages updated: ar, bg, ca, cs, da, de, el, en, eo, es, et, eu, fa, fi, fr, gl, he, hi, hr, hu, ia, id, ie, is, it, ja, kab, ko, lb, lt, lv, nb, nl, oc, pl, pt, pt_BR, ro, ru, sq, sv, ta, th, tr, uk, vi, zh_CN, zh_TW
+
+## [0.8.0] - 2025-12-01
+
+### Added
+- **Disappearing Messages** - Auto-delete messages after configurable time periods
+  - Timer options: 15 minutes, 30 minutes, 1 hour, 24 hours, 7 days, 30 days
+  - Per-conversation setting in conversation details
+  - Visual banner in chat showing current auto-delete setting
+  - Own messages deleted globally via XEP-0424 (server + local)
+  - Received messages deleted locally only
+  - Background timer checks every 5 minutes for expired messages
+  - Database schema updated (version 34) with `message_expiry_seconds` column
+
+- **MUC Password Bookmark Sync** - Room passwords now saved to bookmarks
+  - When changing room password in settings, bookmark is automatically updated
+  - Fixes issue where room password changes prevented auto-join on restart
+
+### Technical
+- New `expiry_notification.vala` for chat banner display
+- Extended `ContentItemStore` with `get_items_older_than()` method
+- Extended `MessageDeletion` with timer and expiry checking
+- Extended `Conversation` entity with `message_expiry_seconds` property
+- Extended `muc_manager.vala` to sync password changes to bookmarks
+
+## [0.7.9] - 2025-11-30
+
+### Added
+- **OpenPGP Key Management Dialog** - New dedicated dialog for managing PGP keys
+  - Key selection dropdown showing all available secret keys
+  - Key fingerprint display with proper formatting
+  - Generate new PGP key functionality (creates ED25519 key with 2-year expiry)
+  - Delete key button with confirmation dialog
+  - Password verification before key operations
+
+### Fixed
+- **Window Size Bug** - Fixed window not appearing after factory reset
+  - Added minimum window size (400x300) to prevent invisible windows
+  - Fallback to default 900x600 when config values are 0 or invalid
+  
+- **OMEMO Decryption Logging** - Added more debug output for session issues
+  - Logs sender address when starting/continuing session for decryption
+  - Helps diagnose OMEMO session desynchronization problems
+
+### Changed
+- **Certificate Pinning UI** - Simplified certificate display
+  - Show SHA-256 in addition to SHA-1 fingerprint
+  - Better fingerprint formatting with colons
+
+### Technical
+- New `key_management_dialog.vala` for OpenPGP key operations
+- Extended GPGHelper with `get_all_key_info()` for CLI-based key name retrieval
+- Improved OMEMO debug logging in `decrypt.vala`
+
+## [0.7.8] - 2025-11-30
+
+### Added
+- **TLS Certificate Pinning** - Support for self-hosted XMPP servers with self-signed certificates
+  - Certificate trust/pin dialog like Conversations Android (GitHub issue #1801)
+  - Shows certificate details: SHA-256 fingerprint, issuer, validity period
+  - "Trust Certificate" button in account preferences when TLS errors occur
+  - Stores pinned certificate fingerprints in database
+  - Supports unpinning/removing trusted certificates
+
+### Technical
+- New `pinned_certificate` database table (database version 33)
+- `CertificateManager` service for fingerprint calculation and validation
+- Extended `ConnectionError` with TLS certificate and flags properties
+- Extended `XmppStreamResult` with peer certificate property
+
+## [0.7.7] - 2025-11-30
+
+### Added
+- **Database Maintenance** - New "Clean Database" option in hamburger menu
+  - Removes orphaned records (messages without conversation, etc.)
+  - VACUUM optimization for smaller database files
+  - Shows count of cleaned entries
+
+- **Backup & Restore** - Complete data backup functionality
+  - Full backup of `~/.local/share/dinox/` and `~/.config/dinox/`
+  - Optional **GPG encryption** with AES-256 (password-protected)
+  - Restore from unencrypted (`.tar.gz`) or encrypted (`.tar.gz.gpg`) backups
+  - Automatic detection of encrypted backups
+  - All settings (Dark/Light mode, etc.) correctly restored
+  - Automatic app restart after restore
+
+### Fixed
+- **Backup Restore** - Settings no longer overwritten on shutdown after restore
+  - Uses `Process.exit(0)` instead of `quit()` to preserve restored data
+  
+- **Password Dialogs** - Improved UX for backup password entry
+  - Enter key now works properly (no double-click needed)
+  - Uses `Gtk.PasswordEntry` for better focus handling
+
+### Technical
+- GPG integration with `--pinentry-mode loopback` for headless password handling
+- Secure password handling with `Shell.quote()`
+- Progress spinner during backup/restore operations
+
+## [0.7.6] - 2025-11-29
+
+### Fixed
+- **Call Stability** - Fixed null pointer crash in GStreamer device cleanup
+- **OMEMO Call Sessions** - Auto-refresh stale OMEMO bundles when call decryption fails
+- **Audio Quality** - Prefer Opus codec (48kHz) over legacy PCMA (8kHz) for much better sound
+
+### Changed
+- Volume slider now only shown in group calls (not needed for 1:1 calls)
+- Codec selection prioritizes high-quality codecs: Opus > Speex > G.722 > PCMU > PCMA
+
+## [0.7.5] - 2025-11-29
+
+### Added
+- **Individual Volume per Participant** - Each call participant has their own volume slider
+  - Volume slider visible on hover over participant video
+  - Icon changes based on volume level (muted/low/medium/high)
+  - Works for 1:1 calls and MUJI group calls
+  - Real-time adjustment of incoming audio per participant
+
+- **V4L2 Hardware Decoding** - ARM device support (Raspberry Pi, etc.)
+  - V4L2 stateful decoder support (opt-in)
+  - V4L2 stateless decoder support (auto, requires GStreamer 1.26+)
+  - H.264, VP8, VP9 hardware decoding on ARM
+  - Based on dino/dino#1781 by Robert Mader
+
+### Changed
+- Updated VAAPI decoder names to new `va*` prefix (vah264dec, vavp8dec, vavp9dec)
+- About dialog: "DinoX Maintainer" now listed first, "Dino Project" instead of "original authors"
+
+## [0.7.4] - 2025-11-29
+
+### Added
+- **Volume Controls** - Microphone and speaker volume sliders in call settings
+  - Slider controls for microphone input level
+  - Slider controls for speaker output level
+  - Works for 1:1 calls and MUJI group calls
+  - Real-time volume adjustment during calls
+
+### Changed
+- Updated website with new screenshots
+- Added new development plan
+
+## [0.7.3] - 2025-11-29
+
+### Fixed
+- **GStreamer Plugin Scanner** - Fixed "External plugin loader failed" warning
+  - Removed bundled gst-plugin-scanner (doesn't work without libc)
+  - Set GST_REGISTRY_FORK=no to avoid forking issues
+  - AppImage now uses system gst-plugin-scanner with proper fallbacks
+  - Based on GStreamer documentation and msys2/MINGW-packages#20492
+
+## [0.7.2] - 2025-11-29
+
+### Fixed
+- **AppImage System Libraries** - Fixed crashes caused by bundled system libraries
+  - Removed blacklisted libraries (libc, libstdc++, libX11, libwayland, etc.)
+  - AppImage now uses host system libraries as required by AppImage specification
+  - Fixes "undefined symbol: __tunable_is_initialized" errors
+  - Should now pass AppImageHub compatibility tests
+
+### Added
+- **AppImage Auto-Updates** - zsync support for delta updates
+  - AppImage can now update itself using appimagetool's built-in updater
+  - Generates .zsync file alongside AppImage for efficient updates
+  - Uses GitHub Releases as update source
+
+### Changed
+- **Website & Documentation** - Updated download references
+  - Website now points to GitHub Releases for downloads
+  - README updated to use GitHub Releases
+
+## [0.7.1] - 2025-11-28
+
+### Changed
+- **Dark Theme as Default** - DinoX now starts with dark theme by default
+  - New installations will have dark mode enabled automatically
+  - Existing users keep their chosen setting
+  - Can still be changed in Preferences → General → Appearance
+
+### Fixed
+- **AppImage Audio/Video Support** - Fixed voice and video calls in AppImage builds
+  - Added missing GStreamer plugins: `gstreamer1.0-nice`, `pulseaudio`, `pipewire`, `alsa`, `v4l2`
+  - Fixed `gst-plugin-scanner` path for proper plugin detection
+  - Bundled all required WebRTC plugins (nice, srtp, dtls, webrtc)
+  - Camera and microphone now properly detected in AppImage
+
+- **AppImage Locale Support** - Fixed translations not working in AppImage
+  - Added `TEXTDOMAINDIR` environment variable support
+  - AppImage now respects system locale (LANG, LC_ALL)
+  - All 45 languages now work correctly in AppImage builds
+
+### Documentation
+- **BUILD.md Updated** - Added missing build dependencies
+  - Added `gstreamer1.0-nice` to Debian/Ubuntu build instructions
+  - Added `gstreamer1-plugins-bad-free-extras` to Fedora instructions
+  - New "AppImage Build" section with complete build guide
+  - GStreamer plugin troubleshooting section added
+
+## [0.7] - 2025-11-28
+
+### Changed
+- **Complete Translation Overhaul** - All 45 languages now at 100% translation coverage (361/361 strings)
+  - Previously: Most languages were at 70-85%
+  - Now: Every single language is fully translated
+  - Languages: Arabic, Catalan, Czech, Danish, German, Greek, Esperanto, Spanish, Estonian, Basque, Persian, Finnish, French, Galician, Hindi, Hungarian, Armenian, Indonesian, Interlingue, Icelandic, Italian, Japanese, Kabyle, Korean, Luxembourgish, Lithuanian, Latvian, Norwegian Bokmål, Dutch, Occitan, Polish, Portuguese, Brazilian Portuguese, Romanian, Russian, Sinhala, Albanian, Swedish, Tamil, Thai, Turkish, Ukrainian, Vietnamese, Chinese (Simplified), Chinese (Traditional)
+
+## [0.6.9] - 2025-11-28
+
+### Added
+- **Backup User Data** - Complete data backup functionality in Preferences → General
+  - One-click backup of all DinoX data (database, keys, settings)
+  - Creates timestamped `.tar.gz` archive (e.g., `dinox-backup-20251128-143022.tar.gz`)
+  - File chooser dialog to select save location
+  - Progress notification with toast messages
+  - Success notification shows backup file size
+  - Includes both `~/.local/share/dinox` and `~/.config/dinox` directories
+
+- **User Data Locations** - View data paths in Preferences → General
+  - Shows Config, Data, and Cache directory locations
+  - Helpful for manual backup or troubleshooting
+  - Info dialog with backup instructions
+
+- **MUC Room Privacy Control** - Comprehensive room privacy management
+  - Automatic OMEMO enable/disable when room privacy changes
+  - When room becomes **public**: OMEMO automatically disabled with warning
+  - When room becomes **private**: OMEMO automatically enabled
+  - System notification messages sent to room when privacy changes
+  - Automatic member addition when switching to members-only (prevents Status 322 kicks)
+  - Feature cache refresh after config change (lock icon updates immediately)
+
+### Improved
+- **MUC Tooltip Enhancements** - Better room information display
+  - Room subject/topic now displayed in conversation list tooltips
+  - Tooltip shows: Account, Room JID, Subject, Member count
+  - First line of multi-line subjects shown with "..." indicator
+  - Empty subjects hidden from tooltip (cleaner display)
+  
+- **MUC Room Name Updates** - Room configuration changes now properly reflected
+  - Bookmark name updated when room name changed in config
+  - Room name in sidebar updates immediately after config change
+  - Room info refresh triggered after configuration saved
+
+### Technical Details
+- Backend: `libdino/src/service/muc_manager.vala` - Extended `set_config_form` with privacy detection
+- New function: `add_occupants_as_members()` - Auto-adds users when switching to members-only
+- New function: `send_room_notification()` - Sends groupchat messages about privacy changes
+- New function: `refresh_features()` in `entity_info.vala` - Invalidates and refreshes entity cache
+- UI: `encryption_button.vala` - Added `check_encryption_validity()` for auto OMEMO toggle
+- UI: `application.vala` - Added `create_backup()` and `perform_backup()` functions
+
+## [0.6.8] - 2025-11-27
+
+### Added
+- **Dark Mode Toggle** - Manual color scheme control in Preferences → General
+  - New "Appearance" section with "Color Scheme" dropdown
+  - Three options: "Default (Follow System)", "Light", "Dark"
+  - Instant switching - Changes apply immediately without restart
+  - Persistent setting saved to database
+  - Implementation: `Adw.StyleManager` with `FORCE_LIGHT`, `FORCE_DARK`, or `DEFAULT` modes
+
+### Technical Details
+- Backend: `libdino/src/entity/settings.vala` - Added `color_scheme` property
+- UI: New "Appearance" preferences group with ComboRow
+- Live updates: `settings.notify["color-scheme"]` signal triggers instant theme change
+- No restart required - immediate visual feedback
+
+## [0.6.7] - 2025-11-27
+
+### Added
+- **Browse Contacts** - New contact browser dialog in Start Conversation
+  - Click magnifying glass icon to browse all roster contacts
+  - Search/filter contacts by name or JID
+  - Square avatars matching system design (unlike round MUC avatars)
+  - Consistent UX with Browse Rooms dialog
+  - Implementation: `main/src/ui/add_conversation/contact_browser_dialog.vala`
+
+### Improved
+- **Browse Rooms Enhancements** - Better MUC discovery and joining experience
+  - Deduplicate rooms by JID (fixes confusing "dinomuc (2)" duplicate entries)
+  - Display member count as subtitle ("N members" parsed from room names)
+  - Mark already-joined rooms with green "Joined" label
+  - Change button to "Open" for joined rooms (was "Join")
+  - Double-click joined rooms to open conversation directly
+  - Filter out already-joined rooms from Join Channel suggestions
+  - Implementation: `main/src/ui/add_conversation/room_browser_dialog.vala`
+
+### Fixed
+- **Leave Group** - Now actually leaves MUC rooms instead of just removing bookmark
+  - Previous "Delete Group" only removed bookmark, didn't send room part
+  - Now calls `MucManager.part()` before `remove_bookmark()`
+  - Renamed to "Leave Group" for clarity
+  - Implementation: `main/src/ui/add_conversation/add_conference_dialog.vala`
+- **Placeholder Text** - Context-specific search field hints
+  - "Search or enter channel address..." for Join Channel dialog
+  - "Search or enter contact address..." for Start Conversation dialog
+- **Compiler Warnings** - Removed 2 unreachable catch clause warnings
+  - Fixed `Bus.get_proxy()` error handling (only throws IOError, not generic Error)
+  - Removed try-catch from `int.parse()` (doesn't throw exceptions)
+  - Fixed `new Jid()` to catch specific `InvalidJidError` instead of generic `Error`
+
+## [0.6.6] - 2025-11-27
+
+### Added
+- **Conversation List Context Menu** - Right-click context menu on conversation entries in sidebar
+  - **MUC Options**: Conversation Details, Invite Contact, Mute/Unmute, Delete Conversation History, Leave and Close
+  - **1:1 Chat Options**: Conversation Details, Edit Alias, Mute/Unmute, Block/Unblock, Delete Conversation History, Remove Contact
+  - Provides unified UX matching three-dot menu functionality
+  - Especially useful for quick MUC invitations directly from bookmarks
+  - Implementation: `main/src/ui/conversation_selector/conversation_selector_row.vala`
+
+### Changed
+- **MUC Invite Access** - Invite feature now accessible from three locations:
+  1. Occupant menu (user icon in titlebar)
+  2. Three-dot menu in conversation titlebar
+  3. Right-click context menu on conversation list _(new)_
+
+## [0.6.5.5] - 2025-11-27
+
+### Fixed
+- **OMEMO Decryption Bug** - Fixed critical bug where incoming OMEMO encrypted messages showed "[This message is OMEMO encrypted]" in old/inactive chats after DinoX restart
+  - Root cause: Other clients had stale device list cache with old DinoX device ID
+  - Solution: Force republish device list on connect to notify all subscribers
+  - Impact: Encryption now works immediately after restart without sending a message first
+  - See OMEMO_BUG_FIX.md for detailed technical analysis
+
+## [0.6.5.4] - 2025-11-27
+
+### Added
+- **Background Mode Toggle** - New "Keep Running in Background" setting in Preferences → General
+  - ON (default): Window closes to systray, app keeps running
+  - OFF: Window close triggers application quit
+  - Systray Quit menu properly disconnects XMPP and exits process cleanly
+  - Fixes Flatpak background process issue with proper Process.exit(0)
+
+### Fixed
+- **Desktop Notifications** - Resolved notification system deadlock that prevented notifications from appearing
+  - Fixed infinite wait in register_notification_provider()
+  - First provider now set immediately without waiting
+  - Desktop notifications for incoming messages and calls now work correctly
+
+## [0.6.5.3] - 2025-11-25
+
+### Added
+- **MUJI Group Calls - Phase 1** - Complete implementation of XEP-0272 (Jingle Multiparty) UI enhancements
+  - **Participant List Sidebar** - Live participant list during group calls with connection status
+  - **Private Room Creation** - Checkbox "Create as private room" automatically configures rooms as members-only, non-anonymous, and persistent
+  - **Private Room Indicator** - Lock icon in conversation list and group chat dialogs for private rooms
+  - **MUC Server Warning** - Warning dialog when no default conference server is configured
+  - **Group Call Button** - "Start group call" button now only visible for MUC conversations
+
+### Fixed
+- **Entity Capabilities** - Fixed XEP-0115 hash mismatch handling by saving disco#info data with computed hash as fallback, improving MUJI capability detection
+
+### Documentation
+- **MUJI_GROUP_CALLS.md** - Complete guide for MUJI group calls (414 lines)
+- **MUJI_IMPROVEMENTS.md** - Detailed implementation plan and bug tracker (691 lines)
+
+## [0.6.5.2] - 2025-11-24
+
+### Fixed
+- **SFS (Stateless File Sharing)** - Fixed file sharing in MUC private messages
+  - Added support for GROUPCHAT_PM conversation type
+  - Fixed null file_sharing_id handling to prevent crashes
+  - Parse SFS metadata (mime_type) from incoming messages
+- **Audio Player** - Fixed voice message playback in private conversations
+  - Added automatic download for received audio files
+  - Fixed file availability check before pipeline setup
+- **Video Player** - Fixed video display in private conversations
+  - Added automatic download for received video files
+  - Parse mime_type from SFS element for correct widget selection
+
+## [0.6.5.1] - 2025-11-24
+
+### Fixed
+- **Video Player Layout** - Fixed video sizing issues where videos appeared too small or expanded beyond chat boundaries
+  - Videos now have consistent size (400x225 pixels, 16:9 aspect ratio)
+  - AspectFrame maintains proper aspect ratio for all video formats
+  - MediaControls width matches video width (400px)
+- **Video Player UI** - Resolved UI conflicts and positioning issues
+  - Videos appear left-aligned next to username (not full-width)
+  - Message actions (Reply, Reaction, Delete) remain visible on the right
+  - Video menu (Open, Save) positioned top-left to avoid conflicts
+  - Eliminated size jumps when loading multiple videos in chat
+- **Video Format Support** - Enhanced codec compatibility
+  - MP4 playback working correctly
+  - MOV (iPhone) playback working correctly  
+  - WebM playback working correctly with GStreamer plugins
+
+## [0.6.5] - 2025-11-23
+
+### Added
+- **Video Player** - Implemented a robust video player using `Gtk.AspectFrame` and `Gtk.MediaFile` for stable playback in chat.
+- **Flatpak Codecs** - Added `org.freedesktop.Platform.ffmpeg-full` extension to Flatpak manifest to support H.264/HEVC (iPhone/Android videos) out of the box.
+
+### Fixed
+- **Chat Layout** - Prevented chat view from collapsing when displaying video messages.
+
+## [0.6.4] - 2025-11-23
+
+### Added
+- **Audio Recording** - Switched to **m4a/AAC** format (MPEG-4 container, AAC-LC, 44.1kHz, 64kbps) for full compatibility with Android (Conversations) and iOS (Monal/Siskin).
+- **Audio Streaming** - Enabled `faststart` (moov atom at beginning) for instant playback of voice messages.
+
+### Fixed
+- **Zombie Process** - Fixed application hang on exit caused by incorrect GStreamer deinitialization.
+- **Message Deletion** - Fixed deleted messages reappearing after restart (implemented persistent "hide" flag in database).
+- **File Deletion** - Fixed missing context menu for file messages, allowing deletion of all file types.
+- **Quote Interaction** - Fixed right-click on quoted messages triggering "jump to message" instead of opening the context menu.
+- **Empty Messages** - Prevented sending empty or whitespace-only messages which caused "Message deleted" errors.
+- **Flatpak Audio** - Added missing permissions (`org.freedesktop.ScreenSaver`, `org.mpris.MediaPlayer2.Dino`) to ensure audio recording/playback works correctly in Flatpak.
+
+## [0.6.3] - 2025-11-23
+
+### Added
+- **Timed Bans** - Ban users from MUCs for 10, 15, or 30 minutes (auto-unban).
+- **Moderation Menu** - Comprehensive menu for MUC admins/owners:
+    - Kick users
+    - Ban users (Permanent or Timed)
+    - Change Affiliations (Make Admin, Make Owner, Make Member, Revoke)
+    - Mute/Unmute users (Voice management)
+- **UI Polish** - Improved occupant menu layout:
+    - Left-aligned buttons for better readability
+    - Compact spacing
+    - Section headers (Moderation, Administration)
+
+### Fixed
+- **Server Compatibility** - Added workaround for servers missing Status Code 110 (Self-Presence).
+- **Menu Behavior** - Fixed popup menu not closing after action selection.
+
+## [0.6.2] - 2025-11-22
+
+### Added
+- **Message Retraction** - Added "Delete for everyone" vs "Delete locally" dialog (XEP-0424).
+
+### Fixed
+- **Systray Icon** - Fixed missing permissions in Flatpak manifest (`org.kde.StatusNotifierWatcher`).
+- **Release Notes** - Cleaned up release notes format.
+
+## [0.6.1] - 2025-11-22
+
+### Added
+- **User Status** - Set global presence status (Online, Away, DND, Invisible) via main menu.
+
+### Fixed
+- **Flatpak Build** - Fixed `libdbusmenu` installation path issue causing build failures.
+
+## [0.6.0] - 2025-11-21
+
+**First release of DinoX!**
+
+### Added
+- **Systray Support** (#98) - StatusNotifierItem with libdbusmenu
+- **Background Mode** (#299) - Keep running when window closed
+- **Custom Server Settings** (#115) - Advanced connection options
+- **Delete Conversation History** (#472) - Clear chat with XEP-0425 persistence
+- **Contact Management Suite**:
+  - Central Contacts management page in Preferences
+  - Edit contact names with duplicate detection
+  - Mute contacts (disable notifications)
+  - Block contacts (XEP-0191 Blocking Command)
+  - Remove contacts from roster with full cleanup
+  - Right-click context menu on conversation rows
+  - Visual status badges (mute icon, block icon)
+- **XEP-0191** (Blocking Command) - Full UI implementation
+- **XEP-0424** (Message Retraction) - Backend support for delete history
+- **XEP-0425** (Message Moderation) - Backend support for MUC
+
+### Fixed
+- **Memory Leak** (#1766) - MAM cleanup prevents GB RAM growth
+- **File Transfer Crash** (#1764) - Segfault on upload error
+- **Message Sync** (#1746) - MAM/Carbon messages no longer lost
+- **Long Messages** (#1779) - Increased limit to 100k characters
+- **OMEMO Offline Messages** (#440) - Fixed unreadable messages
+- **OMEMO File Transfer** (#752) - Can now send files with encryption
+- **Call Connection** (#1271) - No longer stuck with Conversations app
+- **File Button Bug** (#1796) - UI button now visible
+- **Avatar Deletion** - Added remove avatar button
+- **Edit/Delete Message Buttons** - Fixed GTK4 migration issues
+- **Blocking Manager** - Fixed immediate UI updates
+
+### Changed
+- **GTK4 Migration** - Complete migration to GTK4 4.14.5
+- **Libadwaita 1.5** - Updated to latest version
+- **Database Schema v32** - Added `history_cleared_at` column
+- **MAM Batch Size** - Increased from 20 to 200 for faster sync
+- **Message Display** - 10k → 100k character limit
+- **Project Rebranding**:
+  - Binary renamed: `dino` → `dinox`
+  - App ID changed: `im.dino.Dino` → `im.dinox.dinox`
+  - All icons renamed to DinoX branding
+  - Repository moved to DinoX upstream
+  - Professional logo and badges
+- **Icon Installation** - Added PNG icons (16px-512px) for systray support
+- **Build System**:
+  - GitHub Actions CI/CD with Flatpak builds
+  - Multi-architecture support (x86_64, aarch64)
+  - Automated releases with artifacts
+
+### Removed
+- Archive conversation feature (doesn't fit XMPP model)
+
+### Technical
+- 0 GTK deprecation warnings
+- 541 build targets compile cleanly
+- XEP compliance: 60+ protocols supported
+- Full OMEMO support with history management
+- Flatpak packaging with complete dependency management
+- libdbusmenu integration for StatusNotifierItem/AppIndicator support
+- Meson build system with automated translations (50+ languages)
+
+[Unreleased]: https://git.dinox.im/dinoxim/dinox/compare/v2.3.6...HEAD
+[2.0.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.3
+[2.0.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.2
+[2.0.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.1
+[1.1.8.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.8.1
+[1.1.8.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.8.0
+[1.1.7.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.9
+[1.1.7.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.8
+[1.1.7.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.7
+[1.1.7.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.6
+[1.1.7.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.5
+[1.1.7.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.4
+[1.1.7.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.3
+[1.1.7.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.2
+[1.1.7.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.1
+[1.1.7.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.7.0
+[1.1.6.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.9
+[1.1.6.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.8
+[1.1.6.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.7
+[1.1.6.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.6
+[1.1.6.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.5
+[1.1.6.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.4
+[1.1.6.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.3
+[1.1.6.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.2
+[1.1.6.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.1
+[1.1.6.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.6.0
+[1.1.5.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.9
+[1.1.5.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.8
+[1.1.5.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.7
+[1.1.5.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.6
+[1.1.5.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.5
+[1.1.5.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.4
+[1.1.5.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.3
+[1.1.5.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.2
+[1.1.5.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.1
+[1.1.5.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.5.0
+[1.1.4.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4.9
+[1.1.4.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4.8
+[1.1.4.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4.7
+[1.1.4.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4.6
+[1.1.4.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4.5
+[1.1.4.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4.4
+[1.1.4.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4.3
+[1.1.4.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4.2
+[1.1.4.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4.1
+[1.1.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.4
+[1.1.3.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.3.1
+[1.1.3.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.3.0
+[1.1.2.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.9
+[1.1.2.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.8
+[1.1.2.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.7
+[1.1.2.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.6
+[1.1.2.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.5
+[1.1.2.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.4
+[1.1.2.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.3
+[1.1.2.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.2
+[1.1.2.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.1
+[1.1.2.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.2.0
+[1.1.1.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.9
+[1.1.1.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.8
+[1.1.1.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.7
+[1.1.1.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.6
+[1.1.1.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.5
+[1.1.1.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.4
+[1.1.1.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.3
+[1.1.1.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.2
+[1.1.1.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.1
+[1.1.1.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.1.0
+[1.1.0.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.9
+[1.1.0.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.8
+[1.1.0.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.7
+[1.1.0.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.6
+[1.1.0.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.5
+[1.1.0.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.4
+[1.1.0.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.3
+[1.1.0.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.2
+[1.1.0.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.1
+[1.1.0.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.1.0.0
+[1.0.1.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.0.1.0
+[1.0.0.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v1.0.0.0
+[0.9.9.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.9
+[0.9.9.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.8
+[0.9.9.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.7
+[0.9.9.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.6
+[0.9.9.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.5
+[0.9.9.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.4
+[0.9.9.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.3
+[0.9.9.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.2
+[0.9.9.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.1
+[0.9.9.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.9.0
+[0.9.8.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.8.8
+[0.9.8.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.8.7
+[0.9.8.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.8.6
+[0.9.8.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.8.5
+[0.9.8.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.8.4
+[0.9.8.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.8.3
+[0.9.8.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.8.2
+[0.9.8.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.8.1
+[0.9.8.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.8.0
+[0.9.7.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.9
+[0.9.7.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.8
+[0.9.7.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.7
+[0.9.7.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.6
+[0.9.7.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.5
+[0.9.7.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.4
+[0.9.7.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.3
+[0.9.7.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.2
+[0.9.7.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.1
+[0.9.7.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.7.0
+[0.9.6.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.6.0
+[0.9.5.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.5.0
+[0.9.4.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.4.0
+[0.9.3.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.3.0
+[0.9.2.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.2.0
+[0.9.1.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.1.0
+[0.9.0.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.9.0.0
+[0.8.6.15]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.15
+[0.8.6.14]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.14
+[0.8.6.13]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.13
+[0.8.6.12]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.12
+[0.8.6.11]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.11
+[0.8.6.10]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.10
+[0.8.6.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.9
+[0.8.6.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.8
+[0.8.6.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.7
+[0.8.6.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.6
+[0.8.6.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.4
+[0.8.6.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.3
+[0.8.6.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.2
+[0.8.6.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6.1
+[0.8.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.6
+[0.8.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.5
+[0.8.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.4
+[0.8.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.3
+[0.8.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.2
+[0.8.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.1
+[0.8.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.8.0
+[0.7.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.7.9
+[0.7.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.7.8
+[0.7.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.7.7
+[0.7.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.7.6
+[0.7.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.7.5
+[0.7.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.7.4
+[0.7.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.7.3
+[0.7.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.7.2
+[0.7.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.7.1
+[0.6.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.9
+[0.6.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.8
+[0.6.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.7
+[0.6.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.6
+[0.6.5.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.5.5
+[0.6.5.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.5.4
+[0.6.5.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.5.3
+[0.6.5.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.5.2
+[0.6.5.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.5.1
+[0.6.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.5
+[0.6.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.4
+[0.6.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.3
+[0.6.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.2
+[0.6.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.1
+[0.6.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v0.6.0
+[2.0.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.0
+[2.0.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.4
+[2.0.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.5
+[2.0.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.6
+[2.0.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.7
+[2.0.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.8
+[2.0.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.0.9
+[2.1.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.0
+[2.1.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.1
+[2.1.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.2
+[2.1.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.3
+[2.1.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.4
+[2.1.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.5
+[2.1.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.6
+[2.1.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.7
+[2.1.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.8
+[2.1.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.1.9
+[2.2.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.0
+[2.2.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.1
+[2.2.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.2
+[2.2.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.3
+[2.2.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.4
+[2.2.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.5
+[2.2.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.6
+[2.2.7]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.7
+[2.2.8]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.8
+[2.2.9]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.2.9
+[2.3.0]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.3.0
+[2.3.1]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.3.1
+[2.3.2]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.3.2
+
+[2.3.3]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.3.3
+
+[2.3.4]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.3.4
+
+[2.3.5]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.3.5
+
+[2.3.6]: https://git.dinox.im/dinoxim/dinox/releases/tag/v2.3.6

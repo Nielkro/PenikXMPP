@@ -1,0 +1,1289 @@
+name: Build
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*.*'
+  workflow_dispatch:
+    inputs:
+      build_deb:
+        description: 'Ubuntu 24.04 / Mint 22 Paket (.deb) bauen'
+        type: boolean
+        default: true
+      build_appimage:
+        description: 'AppImage bauen'
+        type: boolean
+        default: false
+      build_flatpak:
+        description: 'Flatpak bauen'
+        type: boolean
+        default: false
+      release_candidate:
+        description: 'Release-Candidate prüfen: alle Linux-Pakete ohne Release-Upload bauen'
+        type: boolean
+        default: false
+      mirror_appimage_runtimes:
+        description: 'AppImage-Runtimes nach vendor-deps spiegeln'
+        type: boolean
+        default: false
+      release_tag:
+        description: 'Vollstaendiges Draft-Release bauen und nach allen Paketgates veroeffentlichen, z.B. v2.0.8'
+        type: string
+        default: ''
+      release_candidate_run:
+        description: 'Numerische ID des erfolgreichen Release-Candidate-Runs (Pflicht bei release_tag)'
+        type: string
+        default: ''
+#      build_guix:
+#        description: 'Guix Paket bauen'
+#        type: boolean
+#        default: false
+
+concurrency:
+  # A manual release for vX and the automatic refs/tags/vX run must serialize
+  # against the same Forgejo draft/assets.
+  group: dinox-build-${{ inputs.release_tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  CI: true
+  DINOX_CI: true
+  DINOX_CI_JOBS: "4"
+  MAKEFLAGS: "-j4"
+  CMAKE_BUILD_PARALLEL_LEVEL: "4"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  DINOX_LIBWEBRTC_RUNTIME_URL: "https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/libwebrtc-m152-linux-x86_64-runtime-abi40-ipc10-sha256-2479cdb9ab7e.tar.gz"
+  DINOX_LIBWEBRTC_RUNTIME_SHA256: "2479cdb9ab7eace826e28d519a9dd33478329e34c303ed716c196005d9cec46f"
+  # M152 DEB includes the codec sources; the observed package is about 137 MiB.
+  DINOX_MAX_DEB_ARTIFACT_BYTES: "167772160"
+  DINOX_MAX_APPIMAGE_ARTIFACT_BYTES: "268435456"
+  DINOX_MAX_FLATPAK_ARTIFACT_BYTES: "536870912"
+
+jobs:
+  validate-dispatch:
+    name: "Validate Manual Selection"
+    runs-on: docker
+    container:
+      image: catthehacker/ubuntu:act-24.04
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: "Selected package jobs"
+        run: |
+          echo "build_deb=${{ inputs.build_deb }}"
+          echo "build_appimage=${{ inputs.build_appimage }}"
+          echo "build_flatpak=${{ inputs.build_flatpak }}"
+          echo "release_candidate=${{ inputs.release_candidate }}"
+          echo "mirror_appimage_runtimes=${{ inputs.mirror_appimage_runtimes }}"
+          echo "release_tag=${{ inputs.release_tag }}"
+          echo "release_candidate_run=${{ inputs.release_candidate_run }}"
+
+          release_candidate="${{ inputs.release_candidate }}"
+          build_deb="${{ inputs.build_deb }}"
+          build_appimage="${{ inputs.build_appimage }}"
+          build_flatpak="${{ inputs.build_flatpak }}"
+          mirror_appimage_runtimes="${{ inputs.mirror_appimage_runtimes }}"
+          release_tag="${{ inputs.release_tag }}"
+          release_candidate_run="${{ inputs.release_candidate_run }}"
+
+          if [ "$build_deb" != "true" ] &&
+             [ "$build_appimage" != "true" ] &&
+             [ "$build_flatpak" != "true" ] &&
+             [ "$mirror_appimage_runtimes" != "true" ]; then
+            echo "select at least one package build or runtime mirroring" >&2
+            exit 1
+          fi
+
+          if [ "$release_candidate" = "true" ]; then
+            [ "$build_deb" = "true" ] || { echo "release_candidate requires build_deb=true" >&2; exit 1; }
+            [ "$build_appimage" = "true" ] || { echo "release_candidate requires build_appimage=true" >&2; exit 1; }
+            [ "$build_flatpak" = "true" ] || { echo "release_candidate requires build_flatpak=true" >&2; exit 1; }
+            [ "$mirror_appimage_runtimes" != "true" ] || { echo "release_candidate cannot mirror runtimes" >&2; exit 1; }
+            [ -z "$release_tag" ] || { echo "release_candidate must not set release_tag" >&2; exit 1; }
+            [ -z "$release_candidate_run" ] || { echo "release_candidate must not set release_candidate_run" >&2; exit 1; }
+          fi
+
+          if [ -n "$release_tag" ]; then
+            [ "$release_candidate" != "true" ] || { echo "release_tag and release_candidate are mutually exclusive" >&2; exit 1; }
+            [ "$build_deb" = "true" ] || { echo "release_tag requires build_deb=true" >&2; exit 1; }
+            [ "$build_appimage" = "true" ] || { echo "release_tag requires build_appimage=true" >&2; exit 1; }
+            [ "$build_flatpak" = "true" ] || { echo "release_tag requires build_flatpak=true" >&2; exit 1; }
+            [ "$mirror_appimage_runtimes" != "true" ] || { echo "release_tag cannot mirror runtimes" >&2; exit 1; }
+            [[ "$release_candidate_run" =~ ^[0-9]+$ ]] || { echo "release_tag requires a numeric release_candidate_run" >&2; exit 1; }
+            [[ "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] || { echo "invalid release_tag: $release_tag" >&2; exit 1; }
+          elif [ -n "$release_candidate_run" ]; then
+            echo "release_candidate_run is only valid together with release_tag" >&2
+            exit 1
+          fi
+
+  mirror-appimage-runtimes:
+    name: "Mirror AppImage Runtimes"
+    runs-on: docker
+    needs: [validate-dispatch]
+    container:
+      image: catthehacker/ubuntu:act-24.04
+    if: |
+      always() &&
+      github.event_name == 'workflow_dispatch' &&
+      needs.validate-dispatch.result == 'success' &&
+      (inputs.mirror_appimage_runtimes == true || inputs.mirror_appimage_runtimes == 'true')
+    steps:
+      - name: "Checkout sources"
+        uses: https://git.dinox.im/dinoxim/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: "Shell Script Syntax"
+        run: |
+          chmod +x scripts/check-shell-syntax.sh scripts/release.sh scripts/release_helper.sh \
+            scripts/forgejo-release.sh \
+            scripts/prepare-forgejo-release.sh scripts/verify-release-candidate.sh \
+            scripts/mirror-appimage-runtimes.sh
+          ./scripts/check-shell-syntax.sh --self-test
+          ./scripts/check-shell-syntax.sh
+          ./scripts/release.sh --self-test
+          ./scripts/release_helper.sh --self-test
+          ./scripts/forgejo-release.sh --self-test
+          ./scripts/prepare-forgejo-release.sh --self-test
+          ./scripts/verify-release-candidate.sh --self-test
+          ./scripts/mirror-appimage-runtimes.sh --self-test
+
+      - name: "Install Upload Dependencies"
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl python3 wget
+
+      - name: "Documentation Links"
+        run: |
+          chmod +x scripts/check-doc-links.py
+          ./scripts/check-doc-links.py --self-test
+          ./scripts/check-doc-links.py
+
+      - name: "Hidden Unicode"
+        run: |
+          chmod +x scripts/scan_unicode.py
+          ./scripts/scan_unicode.py --self-test
+          ./scripts/scan_unicode.py
+
+      - name: "Python Syntax"
+        run: |
+          chmod +x scripts/check-python-syntax.py
+          ./scripts/check-python-syntax.py --self-test
+          ./scripts/check-python-syntax.py
+
+      - name: "Mirror AppImage Runtimes"
+        run: |
+          chmod +x scripts/mirror-appimage-runtimes.sh scripts/forgejo-release.sh
+          ./scripts/mirror-appimage-runtimes.sh --upload
+
+  release-preflight:
+    name: "Release Preflight"
+    runs-on: docker
+    timeout-minutes: 30
+    container:
+      image: git.dinox.im/dinoxim/linux-package-builder-dinox@sha256:5804b93b0bb1ca900470873e1de128f4e4e6ec634d5768f90399e3f756509230
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: "Checkout sources"
+        uses: https://git.dinox.im/dinoxim/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: "Static Release Checks"
+        run: |
+          chmod +x scripts/run_all_tests.sh scripts/check-doc-links.py scripts/check_translations.py \
+            scripts/check-python-syntax.py scripts/scan_unicode.py scripts/check-shell-syntax.sh \
+            scripts/release.sh scripts/release_helper.sh scripts/forgejo-release.sh \
+            scripts/prepare-forgejo-release.sh scripts/verify-release-candidate.sh \
+            scripts/mirror-appimage-runtimes.sh \
+            scripts/package-runtime-matrix.sh
+          ./scripts/run_all_tests.sh --static
+
+  build:
+    name: "Core Build"
+    runs-on: docker
+    needs: [validate-dispatch, release-preflight]
+    timeout-minutes: 120
+    container:
+      image: git.dinox.im/dinoxim/linux-package-builder-dinox@sha256:5804b93b0bb1ca900470873e1de128f4e4e6ec634d5768f90399e3f756509230
+      options: --cpus=4
+    if: |
+      always() &&
+      (
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && needs.release-preflight.result == 'success') ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          needs.validate-dispatch.result == 'success' &&
+          (
+            inputs.release_candidate == true ||
+            inputs.release_candidate == 'true' ||
+            inputs.release_tag != '' ||
+            inputs.build_deb == true ||
+            inputs.build_deb == 'true'
+          )
+        )
+      )
+    steps:
+      - name: "Checkout sources"
+        uses: https://git.dinox.im/dinoxim/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: "Static Checks"
+        if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/v') == false
+        env:
+          DINOX_SKIP_FLATPAK_MANIFEST_STATIC: "1"
+        run: |
+          chmod +x scripts/run_all_tests.sh scripts/check-doc-links.py scripts/check_translations.py \
+            scripts/check-python-syntax.py \
+            scripts/scan_unicode.py scripts/release.sh scripts/release_helper.sh \
+            scripts/check-shell-syntax.sh scripts/forgejo-release.sh \
+            scripts/prepare-forgejo-release.sh scripts/verify-release-candidate.sh \
+            scripts/mirror-appimage-runtimes.sh \
+            scripts/package-runtime-matrix.sh
+          ./scripts/run_all_tests.sh --static
+
+      - name: "Mark Release Candidate"
+        if: github.event_name == 'workflow_dispatch' && (inputs.release_candidate == true || inputs.release_candidate == 'true')
+        run: |
+          echo "DINOX_RELEASE_CANDIDATE=1"
+          echo "commit=${GITHUB_SHA:-unknown}"
+          echo "build_deb=${{ inputs.build_deb }}"
+          echo "build_appimage=${{ inputs.build_appimage }}"
+          echo "build_flatpak=${{ inputs.build_flatpak }}"
+
+      - name: "Verify VAAPI dev headers"
+        run: pkg-config --modversion libva && echo "VAAPI OK" || echo "VAAPI NOT FOUND"
+
+      - name: "Verify package builder image"
+        run: bash scripts/verify-package-builder-for-package-job.sh
+
+      - name: "Verify custom dependencies"
+        run: bash scripts/verify-ci-deps.sh
+
+      - name: "Verify custom lib locations"
+        run: |
+          prefix="${DINOX_CUSTOM_DEPENDENCY_PREFIX:-/opt/dinox-deps}"
+          echo "Private dependency prefix: $prefix"
+          find "$prefix/lib" -maxdepth 1 -name 'libomemo-c.so*' -print
+          test "$(pkg-config --variable=pcfiledir libomemo-c)" = "$prefix/lib/pkgconfig"
+
+      - name: "Prepare pinned Google/libwebrtc runtime"
+        run: |
+          mkdir -p .vendor-deps
+          curl -fsSL "$DINOX_LIBWEBRTC_RUNTIME_URL" -o .vendor-deps/libwebrtc-runtime.tar.gz
+          echo "$DINOX_LIBWEBRTC_RUNTIME_SHA256  .vendor-deps/libwebrtc-runtime.tar.gz" | sha256sum -c -
+          tar -xzf .vendor-deps/libwebrtc-runtime.tar.gz -C .vendor-deps
+          runtime_root="$GITHUB_WORKSPACE/.vendor-deps/libwebrtc-m152-linux-x86_64-runtime"
+          scripts/check-libwebrtc-linux-runtime.sh "$runtime_root"
+          echo "DINOX_LIBWEBRTC_RUNTIME_ROOT=$runtime_root" >> "$GITHUB_ENV"
+
+      - name: "Package Test Policy Notice"
+        run: echo "Meson test suites run in the local release gate, not in Forgejo package builds; this job keeps static checks and package runtime/install gates."
+
+      - name: "Build Debian Package"
+        if: github.event_name == 'push' || inputs.build_deb == true || inputs.build_deb == 'true'
+        run: |
+          chmod +x scripts/build-deb.sh
+          version="$(tr -d '[:space:]' < VERSION)"
+          architecture="$(dpkg --print-architecture)"
+          deb_file="./dinox_${version}_${architecture}.deb"
+          checksum_file="${deb_file}.sha256"
+          find . -maxdepth 1 -type f \
+            \( -name 'dinox_*_*.deb' -o -name 'dinox_*_*.deb.sha256' \) \
+            -delete
+          ./scripts/build-deb.sh --strict
+          test -s "$deb_file"
+          test -s "$checksum_file"
+          artifact_size="$(stat -c '%s' "$deb_file")"
+          echo "Debian package size: $artifact_size bytes"
+          [ "$artifact_size" -le "$DINOX_MAX_DEB_ARTIFACT_BYTES" ] || {
+            echo "Debian package exceeds the ${DINOX_MAX_DEB_ARTIFACT_BYTES}-byte package limit: $deb_file" >&2
+            exit 1
+          }
+
+      - name: "Prepare Forgejo Draft Release"
+        if: |
+          (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        env:
+          DINOX_SKIP_FLATPAK_MANIFEST_STATIC: "1"
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          DINOX_REGISTRY_TOKEN: ${{ secrets.DINOX_REGISTRY_TOKEN }}
+          DINOX_MANUAL_RELEASE_CANDIDATE_RUN: ${{ inputs.release_candidate_run }}
+        run: |
+          chmod +x scripts/forgejo-release.sh scripts/prepare-forgejo-release.sh scripts/verify-release-candidate.sh
+          release_tag="$GITHUB_REF_NAME"
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ]; then
+            release_tag="${{ inputs.release_tag }}"
+            git fetch --quiet --tags origin
+            [[ "${DINOX_MANUAL_RELEASE_CANDIDATE_RUN:-}" =~ ^[0-9]+$ ]] || {
+              echo "A numeric release-candidate run id is required before creating a release draft." >&2
+              exit 1
+            }
+          fi
+          release_commit="$(git rev-list -n 1 "$release_tag")"
+          checkout_commit="$(git rev-parse HEAD)"
+          [ "$checkout_commit" = "$release_commit" ] || {
+            echo "Checked-out commit $checkout_commit does not match release tag $release_tag ($release_commit)." >&2
+            exit 1
+          }
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ]; then
+            DINOX_RELEASE_CANDIDATE_RUN="$DINOX_MANUAL_RELEASE_CANDIDATE_RUN" \
+              scripts/verify-release-candidate.sh "$release_commit"
+          fi
+          scripts/prepare-forgejo-release.sh "$release_tag"
+
+      - name: "Runtime Matrix: Debian package"
+        if: github.event_name == 'push' || inputs.build_deb == true || inputs.build_deb == 'true'
+        run: |
+          chmod +x scripts/package-runtime-matrix.sh
+          version="$(tr -d '[:space:]' < VERSION)"
+          architecture="$(dpkg --print-architecture)"
+          deb_file="./dinox_${version}_${architecture}.deb"
+          test -s "$deb_file"
+          ./scripts/package-runtime-matrix.sh deb "$deb_file"
+
+      - name: "Clean-install Debian package gate"
+        if: github.event_name == 'push' || inputs.build_deb == true || inputs.build_deb == 'true'
+        timeout-minutes: 30
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+        run: |
+          command -v docker >/dev/null || {
+            echo "docker CLI is required for the isolated Debian install gate" >&2
+            exit 1
+          }
+          docker info >/dev/null
+          version="$(tr -d '[:space:]' < VERSION)"
+          architecture="$(dpkg --print-architecture)"
+          deb_file="./dinox_${version}_${architecture}.deb"
+          checksum_file="${deb_file}.sha256"
+          test -s "$deb_file"
+          test -s "$checksum_file"
+          mapfile -d '' -t deb_files < <(
+            find . -maxdepth 1 -type f -name 'dinox_*_*.deb' -print0
+          )
+          [ "${#deb_files[@]}" -eq 1 ] || {
+            printf 'expected exactly one DinoX Debian package, found %s\n' "${#deb_files[@]}" >&2
+            printf '  %s\n' "${deb_files[@]}" >&2
+            exit 1
+          }
+          [ "${deb_files[0]}" = "$deb_file" ] || {
+            echo "unexpected Debian package: ${deb_files[0]} (expected $deb_file)" >&2
+            exit 1
+          }
+          checksum_target="$(awk 'NF { count++; target = $2 } END { if (count != 1) exit 1; sub(/^\*/, "", target); print target }' "$checksum_file")"
+          [ "$checksum_target" = "$(basename "$deb_file")" ] || {
+            echo "checksum file targets $checksum_target instead of $(basename "$deb_file")" >&2
+            exit 1
+          }
+          (
+            cd "$(dirname "$deb_file")"
+            sha256sum -c "$(basename "$checksum_file")"
+          )
+          gate_name="dinox-deb-gate-${GITHUB_RUN_ID:-0}-${GITHUB_RUN_ATTEMPT:-0}"
+          cleanup_deb_gate() {
+            docker rm -f "$gate_name" >/dev/null 2>&1 || true
+          }
+          trap cleanup_deb_gate EXIT
+          cleanup_deb_gate
+          docker pull ubuntu:24.04
+          docker image inspect \
+            --format 'Ubuntu gate image: {{index .RepoDigests 0}} ({{.Id}})' \
+            ubuntu:24.04
+          gate_script="$(cat <<'DEB_GATE'
+          set -euo pipefail
+          export LC_ALL=C.UTF-8
+          export HOME=/tmp/dinox-deb-gate-home
+          mkdir -p "$HOME"
+
+          fail() {
+            echo "Deb cold-install gate failed: $*" >&2
+            exit 1
+          }
+
+          apt-get update
+          apt-get install -y --no-install-recommends /tmp/dinox.deb
+          apt-get check
+
+          audit_output="$(dpkg --audit 2>&1)" || fail "dpkg --audit returned non-zero: $audit_output"
+          [ -z "$audit_output" ] || fail "dpkg --audit reported problems: $audit_output"
+
+          installed_status="$(dpkg-query -W -f='${db:Status-Abbrev}' dinox)"
+          installed_version="$(dpkg-query -W -f='${Version}' dinox)"
+          installed_architecture="$(dpkg-query -W -f='${Architecture}' dinox)"
+          package_version="$(dpkg-deb --field /tmp/dinox.deb Version)"
+          package_architecture="$(dpkg-deb --field /tmp/dinox.deb Architecture)"
+          [ "$installed_status" = "ii " ] || fail "dinox is not fully installed: $installed_status"
+          [ "$package_version" = "$DINOX_EXPECTED_VERSION" ] || fail "package version is $package_version, expected $DINOX_EXPECTED_VERSION"
+          [ "$installed_version" = "$DINOX_EXPECTED_VERSION" ] || fail "installed version is $installed_version, expected $DINOX_EXPECTED_VERSION"
+          [ "$package_architecture" = "$DINOX_EXPECTED_ARCHITECTURE" ] || fail "package architecture is $package_architecture, expected $DINOX_EXPECTED_ARCHITECTURE"
+          [ "$installed_architecture" = "$DINOX_EXPECTED_ARCHITECTURE" ] || fail "installed architecture is $installed_architecture, expected $DINOX_EXPECTED_ARCHITECTURE"
+
+          version_output="$(dinox --version 2>&1)" || fail "dinox --version failed: $version_output"
+          printf '%s\n' "$version_output"
+          grep -Fxq "DinoX $DINOX_EXPECTED_VERSION" <<<"$version_output" || fail "unexpected dinox --version output"
+
+          private_library_path=/usr/lib/dinox
+          grep -Fq 'export LD_LIBRARY_PATH=/usr/lib/dinox${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}' /usr/bin/dinox \
+            || fail "dinox launcher does not activate the packaged private library directory"
+
+          worker=/usr/lib/dinox/dinox-webrtc-worker
+          wrapper=/usr/lib/dinox/libdinox-google-webrtc.so
+          test -x "$worker" || fail "Google/libwebrtc worker is missing"
+          test -s "$wrapper" || fail "Google/libwebrtc wrapper is missing"
+          worker_ldd="$(ldd "$worker" 2>&1)" || fail "worker ldd failed: $worker_ldd"
+          printf '%s\n' "$worker_ldd"
+          grep -Fq 'not found' <<<"$worker_ldd" && fail "worker has unresolved libraries"
+          grep -Fq "libdinox-google-webrtc.so => $wrapper " <<<"$worker_ldd" || fail "worker does not resolve its sibling Google/libwebrtc wrapper"
+          set +e
+          timeout --signal=TERM --kill-after=2s 10s "$worker" >/tmp/dinox-worker-probe.log 2>&1
+          worker_rc=$?
+          set -e
+          [ "$worker_rc" -eq 2 ] || {
+            cat /tmp/dinox-worker-probe.log >&2 || true
+            fail "unexpected Google/libwebrtc worker probe exit: $worker_rc"
+          }
+
+          mapfile -d '' -t google_plugins < <(
+            find /usr/lib -type f -path '*/dino/plugins/google-webrtc.so' -print0
+          )
+          [ "${#google_plugins[@]}" -eq 1 ] || fail "expected exactly one google-webrtc.so plugin, found ${#google_plugins[@]}"
+          google_plugin="${google_plugins[0]}"
+          google_ldd="$(env LD_LIBRARY_PATH="$private_library_path" ldd "$google_plugin" 2>&1)" || fail "google-webrtc plugin ldd failed: $google_ldd"
+          printf '%s\n' "$google_ldd"
+          grep -Fq 'not found' <<<"$google_ldd" && fail "google-webrtc plugin has unresolved libraries"
+          grep -Fq "libdinox-google-webrtc.so => $wrapper " <<<"$google_ldd" || fail "google-webrtc plugin does not resolve the packaged wrapper"
+
+          mapfile -d '' -t bot_plugins < <(
+            find /usr/lib -type f -path '*/dino/plugins/bot-features.so' -print0
+          )
+          [ "${#bot_plugins[@]}" -eq 1 ] || fail "expected exactly one bot-features.so plugin, found ${#bot_plugins[@]}"
+          bot_plugin="${bot_plugins[0]}"
+          omemo_plugin="$(dirname "$bot_plugin")/omemo.so"
+          test -s "$omemo_plugin" || fail "sibling omemo.so is missing"
+          bot_ldd="$(env LD_LIBRARY_PATH="$private_library_path" ldd "$bot_plugin" 2>&1)" || fail "bot-features plugin ldd failed: $bot_ldd"
+          printf '%s\n' "$bot_ldd"
+          grep -Fq 'not found' <<<"$bot_ldd" && fail "bot-features plugin has unresolved libraries"
+          grep -Fq "omemo.so => $omemo_plugin " <<<"$bot_ldd" || fail "bot-features does not resolve the sibling omemo.so"
+
+          encoders="$(timeout --signal=TERM --kill-after=2s 15s ffmpeg -hide_banner -encoders 2>&1)" || fail "ffmpeg encoder list failed"
+          muxers="$(timeout --signal=TERM --kill-after=2s 15s ffmpeg -hide_banner -muxers 2>&1)" || fail "ffmpeg muxer list failed"
+          awk '$2 == "aac" { found = 1 } END { exit(found ? 0 : 1) }' <<<"$encoders" || fail "ffmpeg AAC encoder is missing"
+          awk '$2 == "ipod" { found = 1 } END { exit(found ? 0 : 1) }' <<<"$muxers" || fail "ffmpeg ipod/M4A muxer is missing"
+          awk '$2 == "mp4" { found = 1 } END { exit(found ? 0 : 1) }' <<<"$muxers" || fail "ffmpeg MP4 muxer is missing"
+          video_encoder_args=()
+          if awk '$2 == "libx264" { found = 1 } END { exit(found ? 0 : 1) }' <<<"$encoders"; then
+            video_encoder=libx264
+            video_encoder_args=( -preset veryfast -tune zerolatency -profile:v baseline )
+          elif awk '$2 == "libopenh264" { found = 1 } END { exit(found ? 0 : 1) }' <<<"$encoders"; then
+            video_encoder=libopenh264
+          else
+            fail "ffmpeg has neither libx264 nor libopenh264"
+          fi
+
+          media_tmp="$(mktemp -d /tmp/dinox-deb-media.XXXXXX)"
+          dd if=/dev/zero bs=24000 count=1 2>/dev/null \
+            | timeout --signal=TERM --kill-after=2s 20s \
+                ffmpeg -hide_banner -loglevel error -y \
+                  -f s16le -ar 48000 -ac 1 -i pipe:0 -vn \
+                  -c:a aac -b:a 96000 -movflags +faststart \
+                  -f ipod "$media_tmp/audio.m4a"
+          test -s "$media_tmp/audio.m4a" || fail "AAC/M4A writer produced no output"
+          dd if=/dev/zero bs=49152 count=1 2>/dev/null \
+            | timeout --signal=TERM --kill-after=2s 20s \
+                ffmpeg -hide_banner -loglevel error -y \
+                  -f rawvideo -pix_fmt bgra -s:v 64x64 -r 5 -i pipe:0 -an \
+                  -c:v "$video_encoder" "${video_encoder_args[@]}" \
+                  -b:v 300000 -maxrate 300000 -bufsize 600000 \
+                  -pix_fmt yuv420p -movflags +faststart \
+                  -f mp4 "$media_tmp/video.mp4"
+          test -s "$media_tmp/video.mp4" || fail "H.264/MP4 writer produced no output"
+          timeout --signal=TERM --kill-after=2s 20s \
+            ffmpeg -hide_banner -loglevel error -y \
+              -i "$media_tmp/video.mp4" -i "$media_tmp/audio.m4a" \
+              -map 0:v:0 -map 1:a:0 -c copy -shortest \
+              -movflags +faststart -f mp4 "$media_tmp/audio-video.mp4"
+          test -s "$media_tmp/audio-video.mp4" || fail "audio/video copy mux produced no output"
+          [ "$(ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "$media_tmp/audio.m4a")" = aac ] || fail "M4A codec probe failed"
+          [ "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$media_tmp/video.mp4")" = h264 ] || fail "MP4 codec probe failed"
+
+          gst_plugins=(
+            libgstcoreelements.so libgstapp.so libgsttypefindfunctions.so
+            libgstplayback.so libgstaudioparsers.so libgstaudioconvert.so
+            libgstaudioresample.so libgstlevel.so libgstvolume.so
+            libgstopus.so libgstvorbis.so libgstvpx.so libgstlibav.so
+            libgstvideoconvertscale.so libgstvideoparsersbad.so
+            libgstisomp4.so libgstmatroska.so libgstgio.so libgstogg.so
+            libgstwavparse.so libgstautodetect.so libgstpulseaudio.so
+          )
+          for plugin in "${gst_plugins[@]}"; do
+            mapfile -d '' -t matches < <(
+              find /usr/lib -type f -path '*/gstreamer-1.0/*' -name "$plugin" -print0
+            )
+            [ "${#matches[@]}" -gt 0 ] || fail "missing GStreamer playback plugin: $plugin"
+            for plugin_path in "${matches[@]}"; do
+              plugin_ldd="$(ldd "$plugin_path" 2>&1)" || fail "GStreamer plugin ldd failed: $plugin_path: $plugin_ldd"
+              grep -Fq 'not found' <<<"$plugin_ldd" && fail "GStreamer plugin has unresolved libraries: $plugin_path: $plugin_ldd"
+            done
+          done
+
+          echo "Deb cold-install/runtime gate passed."
+          DEB_GATE
+          )"
+          docker create --name "$gate_name" \
+            --env DEBIAN_FRONTEND=noninteractive \
+            --env DINOX_EXPECTED_VERSION="$version" \
+            --env DINOX_EXPECTED_ARCHITECTURE="$architecture" \
+            ubuntu:24.04 bash -lc "$gate_script"
+          docker cp "$deb_file" "$gate_name:/tmp/dinox.deb"
+          docker start --attach "$gate_name"
+          [ "$(docker inspect --format '{{.State.ExitCode}}' "$gate_name")" -eq 0 ]
+
+      - name: "Upload Debian Artifact"
+        if: github.event_name == 'push' || inputs.build_deb == true || inputs.build_deb == 'true'
+        env:
+          NODE_OPTIONS: "--no-deprecation"
+        uses: https://git.dinox.im/dinoxim/upload-artifact@v4
+        with:
+          name: dinox-debian-package
+          path: |
+            *.deb
+            *.deb.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: "Upload Debian Release Assets"
+        if: |
+          (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        env:
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          DINOX_REGISTRY_TOKEN: ${{ secrets.DINOX_REGISTRY_TOKEN }}
+        run: |
+          release_tag="$GITHUB_REF_NAME"
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ]; then
+            release_tag="${{ inputs.release_tag }}"
+          fi
+          for file in *.deb; do
+            sha256sum "$file" > "$file.sha256"
+            sha256sum -c "$file.sha256"
+          done
+          chmod +x scripts/forgejo-release.sh
+          scripts/forgejo-release.sh upload "$release_tag" *.deb *.deb.sha256
+
+  build-appimage:
+    name: "Build AppImage"
+    runs-on: docker
+    needs: [validate-dispatch, release-preflight, build]
+    # Run 264 needed about 95 minutes before the final package checks.
+    # Keep room for both gates (30 + 20 minutes) and artifact uploads.
+    timeout-minutes: 180
+    container:
+      image: git.dinox.im/dinoxim/linux-package-builder-dinox@sha256:5804b93b0bb1ca900470873e1de128f4e4e6ec634d5768f90399e3f756509230
+      options: --cpus=4
+    if: |
+      always() &&
+      (
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && needs.release-preflight.result == 'success' && needs.build.result == 'success') ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          needs.validate-dispatch.result == 'success' &&
+          (inputs.build_appimage == true || inputs.build_appimage == 'true') &&
+          (
+            needs.build.result == 'success' ||
+            (
+              needs.build.result == 'skipped' &&
+              inputs.release_tag == '' &&
+              inputs.release_candidate != true &&
+              inputs.release_candidate != 'true'
+            )
+          )
+        )
+      )
+    steps:
+      - name: "Checkout sources"
+        uses: https://git.dinox.im/dinoxim/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: "Shell Script Syntax"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/check-shell-syntax.sh scripts/release.sh scripts/release_helper.sh \
+            scripts/forgejo-release.sh \
+            scripts/prepare-forgejo-release.sh scripts/verify-release-candidate.sh \
+            scripts/mirror-appimage-runtimes.sh
+          ./scripts/check-shell-syntax.sh --self-test
+          ./scripts/check-shell-syntax.sh
+          ./scripts/release.sh --self-test
+          ./scripts/release_helper.sh --self-test
+          ./scripts/forgejo-release.sh --self-test
+          ./scripts/prepare-forgejo-release.sh --self-test
+          ./scripts/verify-release-candidate.sh --self-test
+          ./scripts/mirror-appimage-runtimes.sh --self-test
+
+      - name: "Documentation Links"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/check-doc-links.py
+          ./scripts/check-doc-links.py --self-test
+          ./scripts/check-doc-links.py
+
+      - name: "Translation Syntax"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/check_translations.py
+          ./scripts/check_translations.py --self-test
+          ./scripts/check_translations.py --syntax-only
+
+      - name: "Hidden Unicode"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/scan_unicode.py
+          ./scripts/scan_unicode.py --self-test
+          ./scripts/scan_unicode.py
+
+      - name: "Python Syntax"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/check-python-syntax.py
+          ./scripts/check-python-syntax.py --self-test
+          ./scripts/check-python-syntax.py
+
+      - name: "Runtime Matrix: app metadata"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/package-runtime-matrix.sh
+          ./scripts/package-runtime-matrix.sh self-test
+          ./scripts/package-runtime-matrix.sh metadata
+
+      - name: "Verify package builder image"
+        run: bash scripts/verify-package-builder-for-package-job.sh
+
+      - name: "Verify custom dependencies"
+        run: bash scripts/verify-ci-deps.sh
+
+      - name: "Prepare pinned Google/libwebrtc runtime"
+        run: |
+          mkdir -p .vendor-deps
+          curl -fsSL "$DINOX_LIBWEBRTC_RUNTIME_URL" -o .vendor-deps/libwebrtc-runtime.tar.gz
+          echo "$DINOX_LIBWEBRTC_RUNTIME_SHA256  .vendor-deps/libwebrtc-runtime.tar.gz" | sha256sum -c -
+          tar -xzf .vendor-deps/libwebrtc-runtime.tar.gz -C .vendor-deps
+          runtime_root="$GITHUB_WORKSPACE/.vendor-deps/libwebrtc-m152-linux-x86_64-runtime"
+          scripts/check-libwebrtc-linux-runtime.sh "$runtime_root"
+          echo "DINOX_LIBWEBRTC_RUNTIME_ROOT=$runtime_root" >> "$GITHUB_ENV"
+
+      - name: "Install matching AppImage runtime modules"
+        timeout-minutes: 10
+        run: |
+          # The verified builder pins APT to its Ubuntu snapshot. Match the GTK
+          # media module exactly to the installed toolkit; never use host DSOs.
+          gtk_version="$(dpkg-query -W -f='${Version}' libgtk-4-1)"
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            "libgtk-4-media-gstreamer=$gtk_version" \
+            glib-networking dconf-gsettings-backend gvfs gsettings-desktop-schemas \
+            libheif-plugin-dav1d libheif-plugin-libde265 sound-theme-freedesktop \
+            libpulse-dev libasound2-dev libvorbis-dev libtdb-dev libltdl-dev
+
+      - name: "Build AppImage"
+        run: |
+          chmod +x scripts/build-appimage.sh
+          ./scripts/build-appimage.sh
+
+      - name: "Package size gate: AppImage"
+        run: |
+          shopt -s nullglob
+          appimages=( ./*.AppImage )
+          [ "${#appimages[@]}" -eq 1 ] || {
+            echo "expected exactly one AppImage, found ${#appimages[@]}" >&2
+            exit 1
+          }
+          artifact_size="$(stat -c '%s' "${appimages[0]}")"
+          echo "AppImage package size: $artifact_size bytes"
+          [ "$artifact_size" -le "$DINOX_MAX_APPIMAGE_ARTIFACT_BYTES" ] || {
+            echo "AppImage exceeds the ${DINOX_MAX_APPIMAGE_ARTIFACT_BYTES}-byte package limit: ${appimages[0]}" >&2
+            exit 1
+          }
+
+      - name: "Runtime Matrix: final AppImage"
+        # Extraction and full source-provenance verification exceeded 10 minutes
+        # in run 264; do not shorten the checks to fit the old deadline.
+        timeout-minutes: 30
+        run: |
+          shopt -s nullglob
+          appimages=( ./*.AppImage )
+          [ "${#appimages[@]}" -eq 1 ] || {
+            echo "expected exactly one AppImage, found ${#appimages[@]}" >&2
+            exit 1
+          }
+          appimage="$(realpath "${appimages[0]}")"
+          source_bundles=( ./*.AppImage.sources.tar.xz )
+          [ "${#source_bundles[@]}" -eq 1 ] || {
+            echo "expected exactly one AppImage corresponding-source bundle, found ${#source_bundles[@]}" >&2
+            exit 1
+          }
+          sha256sum -c "${source_bundles[0]}.sha256"
+          source_bundle="$(realpath "${source_bundles[0]}")"
+          chmod +x "$appimage" scripts/package-runtime-matrix.sh
+          gate_dir="$GITHUB_WORKSPACE/.appimage-runtime-gate"
+          rm -rf "$gate_dir"
+          mkdir -p "$gate_dir"
+          cleanup_appimage_gate() {
+            rm -rf "$gate_dir"
+          }
+          trap cleanup_appimage_gate EXIT
+          (
+            cd "$gate_dir"
+            "$appimage" --appimage-extract >/dev/null
+          )
+          mkdir -p "$gate_dir/source-sidecar"
+          tar -xJf "$source_bundle" -C "$gate_dir/source-sidecar"
+          ./scripts/package-runtime-matrix.sh appdir "$gate_dir/squashfs-root"
+          ./scripts/package-runtime-matrix.sh appdir-provenance \
+            "$gate_dir/squashfs-root" \
+            "$gate_dir/source-sidecar"
+          timeout 20 "$gate_dir/squashfs-root/AppRun" --version | grep -Eq '^DinoX [0-9]'
+
+      - name: "Offline AppImage gate: minimal Debian 13 desktop ABI"
+        timeout-minutes: 20
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+        run: |
+          command -v docker >/dev/null || {
+            echo "docker CLI is required for the isolated AppImage runtime gate" >&2
+            exit 1
+          }
+          docker info >/dev/null
+          shopt -s nullglob
+          appimages=( ./*.AppImage )
+          [ "${#appimages[@]}" -eq 1 ] || {
+            echo "expected exactly one AppImage, found ${#appimages[@]}" >&2
+            exit 1
+          }
+          appimage="$(realpath "${appimages[0]}")"
+          test -s "$appimage"
+          version="$(tr -d '[:space:]' < VERSION)"
+          gate_name="dinox-appimage-gate-${GITHUB_RUN_ID:-0}-${GITHUB_RUN_ATTEMPT:-0}"
+          gate_image="dinox-appimage-runtime-gate:${GITHUB_RUN_ID:-0}-${GITHUB_RUN_ATTEMPT:-0}"
+          cleanup_appimage_container() {
+            docker rm -f "$gate_name" >/dev/null 2>&1 || true
+            docker image rm -f "$gate_image" >/dev/null 2>&1 || true
+          }
+          trap cleanup_appimage_container EXIT
+          cleanup_appimage_container
+
+          docker build --pull --tag "$gate_image" \
+            ci/images/appimage-runtime-gate
+          docker create --name "$gate_name" \
+            --network none \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 128 \
+            --env "DINOX_EXPECTED_VERSION=$version" \
+            --env HOME=/tmp/dinox-home \
+            --env TMPDIR=/tmp/dinox-tmp \
+            --env XDG_RUNTIME_DIR=/tmp/dinox-runtime \
+            --tmpfs /tmp:rw,exec,nosuid,nodev,size=2g \
+            "$gate_image"
+          [ "$(docker inspect --format '{{.HostConfig.NetworkMode}}' "$gate_name")" = "none" ]
+          [ "$(docker inspect --format '{{.Config.User}}' "$gate_name")" = "65534:65534" ]
+          docker cp "$appimage" "$gate_name:/opt/DinoX.AppImage"
+          docker start --attach "$gate_name"
+          [ "$(docker inspect --format '{{.State.ExitCode}}' "$gate_name")" -eq 0 ]
+
+      - name: "Upload AppImage Package Artifact"
+        env:
+          NODE_OPTIONS: "--no-deprecation"
+        uses: https://git.dinox.im/dinoxim/upload-artifact@v4
+        with:
+          name: dinox-appimage
+          path: |
+            *.AppImage
+            *.AppImage.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: "Upload AppImage Corresponding-Source Artifact"
+        env:
+          NODE_OPTIONS: "--no-deprecation"
+        uses: https://git.dinox.im/dinoxim/upload-artifact@v4
+        with:
+          name: dinox-appimage-corresponding-sources
+          path: |
+            *.AppImage.sources.tar.xz
+            *.AppImage.sources.tar.xz.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: "Upload AppImage Release Assets"
+        if: |
+          (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        env:
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          DINOX_REGISTRY_TOKEN: ${{ secrets.DINOX_REGISTRY_TOKEN }}
+        run: |
+          release_tag="$GITHUB_REF_NAME"
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ]; then
+            release_tag="${{ inputs.release_tag }}"
+          fi
+          for file in *.AppImage; do
+            sha256sum "$file" > "$file.sha256"
+            sha256sum -c "$file.sha256"
+          done
+          shopt -s nullglob
+          source_bundles=( *.AppImage.sources.tar.xz )
+          [ "${#source_bundles[@]}" -eq 1 ] || {
+            echo "expected exactly one AppImage corresponding-source bundle, found ${#source_bundles[@]}" >&2
+            exit 1
+          }
+          sha256sum -c "${source_bundles[0]}.sha256"
+          chmod +x scripts/forgejo-release.sh
+          scripts/forgejo-release.sh upload "$release_tag" \
+            *.AppImage *.AppImage.sha256 \
+            *.AppImage.sources.tar.xz *.AppImage.sources.tar.xz.sha256
+
+  build-flatpak:
+    name: "Build Flatpak"
+    runs-on: docker
+    needs: [validate-dispatch, release-preflight, build, build-appimage]
+    timeout-minutes: 180
+    if: |
+      always() &&
+      (
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && needs.release-preflight.result == 'success' && needs.build.result == 'success' && needs.build-appimage.result == 'success') ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          needs.validate-dispatch.result == 'success' &&
+          (inputs.build_flatpak == true || inputs.build_flatpak == 'true' || github.event.inputs.build_flatpak == 'true') &&
+          (needs.build-appimage.result == 'success' || needs.build-appimage.result == 'skipped') &&
+          (
+            needs.build.result == 'success' ||
+            (
+              needs.build.result == 'skipped' &&
+              inputs.release_tag == '' &&
+              inputs.release_candidate != true &&
+              inputs.release_candidate != 'true'
+            )
+          )
+        )
+      )
+    container:
+      image: git.dinox.im/dinoxim/flatpak-builder-dinox@sha256:c4c54d8bc30b8ddbcac2a5b012895248813ff888e800f59eae41dae330537404
+      options: --privileged --cpus=4
+    env:
+      FLATPAK_CI_ROOT: /var/tmp/dinox-flatpak
+      TMPDIR: /var/tmp/dinox-flatpak/tmp
+      XDG_CACHE_HOME: /var/tmp/dinox-flatpak/cache
+      XDG_DATA_HOME: /var/tmp/dinox-flatpak/data
+      XDG_STATE_HOME: /var/tmp/dinox-flatpak/state
+      FLATPAK_USER_DIR: /var/tmp/dinox-flatpak/user
+      FLATPAK_BUILDER_STATE_DIR: /var/tmp/dinox-flatpak/state/flatpak-builder
+      CCACHE_DIR: /var/tmp/dinox-flatpak/ccache
+    steps:
+      - name: "Checkout sources"
+        uses: https://git.dinox.im/dinoxim/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: "Initialize Flatpak CI directories"
+        run: |
+          mkdir -p "$TMPDIR" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" \
+            "$FLATPAK_USER_DIR" "$FLATPAK_BUILDER_STATE_DIR" "$CCACHE_DIR"
+
+      - name: "Shell Script Syntax"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/check-shell-syntax.sh scripts/release.sh scripts/release_helper.sh \
+            scripts/forgejo-release.sh \
+            scripts/prepare-forgejo-release.sh scripts/verify-release-candidate.sh \
+            scripts/mirror-appimage-runtimes.sh
+          ./scripts/check-shell-syntax.sh --self-test
+          ./scripts/check-shell-syntax.sh
+          ./scripts/release.sh --self-test
+          ./scripts/release_helper.sh --self-test
+          ./scripts/forgejo-release.sh --self-test
+          ./scripts/prepare-forgejo-release.sh --self-test
+          ./scripts/verify-release-candidate.sh --self-test
+          ./scripts/mirror-appimage-runtimes.sh --self-test
+
+      - name: "Documentation Links"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/check-doc-links.py
+          ./scripts/check-doc-links.py --self-test
+          ./scripts/check-doc-links.py
+
+      - name: "Translation Syntax"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/check_translations.py
+          ./scripts/check_translations.py --self-test
+          ./scripts/check_translations.py --syntax-only
+
+      - name: "Hidden Unicode"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/scan_unicode.py
+          ./scripts/scan_unicode.py --self-test
+          ./scripts/scan_unicode.py
+
+      - name: "Python Syntax"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/check-python-syntax.py
+          ./scripts/check-python-syntax.py --self-test
+          ./scripts/check-python-syntax.py
+
+      - name: "Flatpak manifest gates"
+        run: |
+          chmod +x scripts/package-runtime-matrix.sh scripts/check-flatpak-runtime.sh
+          ./scripts/package-runtime-matrix.sh flatpak-manifest im.dinox.dinox.json
+          ./scripts/check-flatpak-runtime.sh manifest im.dinox.dinox.json packaging/flatpak/THIRD_PARTY_NOTICES.md
+          ./scripts/check-flatpak-runtime.sh --self-test im.dinox.dinox.json packaging/flatpak/THIRD_PARTY_NOTICES.md
+
+      - name: "Runtime Matrix: app metadata"
+        if: needs.build.result != 'success'
+        run: |
+          chmod +x scripts/package-runtime-matrix.sh
+          # The general self-test includes AppImage Debian-source provenance
+          # and intentionally requires dpkg-source, which is not a Flatpak tool.
+          python3 scripts/test-package-workflow-budgets.py
+          ./scripts/package-runtime-matrix.sh metadata
+
+      - name: "Cache Flatpak state"
+        id: cache-flatpak
+        uses: https://git.dinox.im/dinoxim/cache@v4
+        with:
+          path: |
+            /var/tmp/dinox-flatpak/cache
+            /var/tmp/dinox-flatpak/data
+            /var/tmp/dinox-flatpak/state
+            /var/tmp/dinox-flatpak/user
+            /var/tmp/dinox-flatpak/ccache
+          key: flatpak-v3-gnome50-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('im.dinox.dinox.json') }}
+          restore-keys: |
+            flatpak-v3-gnome50-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: "Inspect restored Flatpak cache"
+        run: |
+          echo "cache-hit=${{ steps.cache-flatpak.outputs.cache-hit }}"
+          manifest_hash="$(sha256sum im.dinox.dinox.json | awk '{print $1}')"
+          echo "manifest-sha256=$manifest_hash"
+          echo "cache-primary-prefix=flatpak-v3-gnome50-${{ runner.os }}-${{ runner.arch }}-"
+          echo "cache-restore-prefix=flatpak-v3-gnome50-${{ runner.os }}-${{ runner.arch }}-"
+          for dir in "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$FLATPAK_USER_DIR" "$CCACHE_DIR"; do
+            if [ -d "$dir" ]; then
+              du -sh "$dir" 2>/dev/null || true
+              find "$dir" -mindepth 1 -maxdepth 2 -printf '%y %p\n' 2>/dev/null | sort | head -n 80 || true
+            else
+              echo "missing $dir"
+            fi
+          done
+          if command -v ccache >/dev/null 2>&1; then
+            ccache --set-config="cache_dir=$CCACHE_DIR" || true
+            ccache --show-stats || true
+          fi
+
+      - name: "Prepare Flatpak build directories"
+        run: |
+          rm -rf "$TMPDIR" "$FLATPAK_CI_ROOT/build"
+          mkdir -p "$TMPDIR" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" \
+            "$FLATPAK_USER_DIR" "$FLATPAK_BUILDER_STATE_DIR" "$CCACHE_DIR" "$FLATPAK_CI_ROOT/build"
+          df -h "$GITHUB_WORKSPACE" "$FLATPAK_CI_ROOT" "$TMPDIR" "$XDG_CACHE_HOME" \
+            "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$FLATPAK_USER_DIR" "$CCACHE_DIR"
+          du -sh "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$FLATPAK_USER_DIR" "$CCACHE_DIR" 2>/dev/null || true
+
+      - name: "Verify preinstalled Flatpak runtimes"
+        run: |
+          for ref in \
+            runtime/org.gnome.Platform/x86_64/50 \
+            runtime/org.gnome.Sdk/x86_64/50 \
+            runtime/org.gnome.Sdk.Locale/x86_64/50 \
+            runtime/org.freedesktop.Platform.GL.default/x86_64/25.08 \
+            runtime/org.freedesktop.Platform.GL.default/x86_64/25.08-extra \
+            runtime/org.freedesktop.Platform.codecs-extra/x86_64/25.08-extra \
+            runtime/org.freedesktop.Sdk.Extension.golang/x86_64/25.08
+          do
+            flatpak info --system "$ref" >/dev/null
+            echo "OK $ref"
+          done
+
+      - name: "Build"
+        run: |
+          echo "Flatpak builder state before build:"
+          find "$FLATPAK_BUILDER_STATE_DIR" -mindepth 1 -maxdepth 3 -printf '%y %p\n' 2>/dev/null | sort | head -n 160 || true
+          echo "Flatpak user installation before build:"
+          flatpak --user list --columns=application,branch,arch 2>/dev/null || true
+          ccache_args=()
+          if command -v ccache >/dev/null 2>&1; then
+            ccache_args+=(--ccache)
+            ccache --set-config="cache_dir=$CCACHE_DIR" || true
+            ccache --max-size=2G || true
+            ccache --show-stats || true
+          fi
+          flatpak-builder \
+            --user \
+            --repo="$FLATPAK_CI_ROOT/build/repo" \
+            --disable-rofiles-fuse \
+            --disable-updates \
+            --subject="Built from ${GITHUB_SHA:-unknown}" \
+            --force-clean \
+            --default-branch=master \
+            --arch=x86_64 \
+            --jobs="${DINOX_CI_JOBS:-2}" \
+            --state-dir "$FLATPAK_BUILDER_STATE_DIR" \
+            "${ccache_args[@]}" \
+            "$FLATPAK_CI_ROOT/build/flatpak_app" \
+            im.dinox.dinox.json
+          echo "Flatpak builder state after build:"
+          find "$FLATPAK_BUILDER_STATE_DIR" -mindepth 1 -maxdepth 3 -printf '%y %p\n' 2>/dev/null | sort | head -n 200 || true
+          echo "Flatpak cache sizes after build:"
+          du -sh "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$FLATPAK_USER_DIR" "$CCACHE_DIR" 2>/dev/null || true
+          if command -v ccache >/dev/null 2>&1; then
+            ccache --show-stats || true
+          fi
+          flatpak build-bundle \
+            "$FLATPAK_CI_ROOT/build/repo" \
+            im.dinox.dinox.flatpak \
+            --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
+            --arch=x86_64 \
+            im.dinox.dinox \
+            master
+
+      - name: "Checksum Flatpak Artifact"
+        run: |
+          sha256sum im.dinox.dinox.flatpak > im.dinox.dinox.flatpak.sha256
+          sha256sum -c im.dinox.dinox.flatpak.sha256
+          artifact_size="$(stat -c '%s' im.dinox.dinox.flatpak)"
+          echo "Flatpak package size: $artifact_size bytes"
+          [ "$artifact_size" -le "$DINOX_MAX_FLATPAK_ARTIFACT_BYTES" ] || {
+            echo "Flatpak exceeds the ${DINOX_MAX_FLATPAK_ARTIFACT_BYTES}-byte package limit" >&2
+            exit 1
+          }
+
+      - name: "Clean-install Flatpak bundle and sandbox runtime gates"
+        timeout-minutes: 45
+        env:
+          FLATPAK_GATE_ROOT: /var/tmp/dinox-flatpak/gate-user
+        run: |
+          rm -rf "$FLATPAK_GATE_ROOT"
+          mkdir -p "$FLATPAK_GATE_ROOT/tmp" "$FLATPAK_GATE_ROOT/cache" \
+            "$FLATPAK_GATE_ROOT/data" "$FLATPAK_GATE_ROOT/state" \
+            "$FLATPAK_GATE_ROOT/home" "$FLATPAK_GATE_ROOT/system-flatpak" \
+            "$FLATPAK_GATE_ROOT/user-flatpak"
+          export TMPDIR="$FLATPAK_GATE_ROOT/tmp"
+          export XDG_CACHE_HOME="$FLATPAK_GATE_ROOT/cache"
+          export XDG_DATA_HOME="$FLATPAK_GATE_ROOT/data"
+          export XDG_STATE_HOME="$FLATPAK_GATE_ROOT/state"
+          export HOME="$FLATPAK_GATE_ROOT/home"
+          export FLATPAK_SYSTEM_DIR="$FLATPAK_GATE_ROOT/system-flatpak"
+          export FLATPAK_USER_DIR="$FLATPAK_GATE_ROOT/user-flatpak"
+          cleanup_flatpak_gate() {
+            rm -rf "$FLATPAK_GATE_ROOT"
+          }
+          trap cleanup_flatpak_gate EXIT
+
+          # Both Flatpak installations are empty here. This proves that opening
+          # the release bundle resolves its embedded runtime-repo dependencies;
+          # it cannot accidentally reuse the builder image's system runtimes.
+          [ -z "$(flatpak --system list --columns=ref 2>/dev/null || true)" ] || {
+            echo "isolated Flatpak system installation is unexpectedly populated" >&2
+            exit 1
+          }
+          [ -z "$(flatpak --user list --columns=ref 2>/dev/null || true)" ] || {
+            echo "isolated Flatpak user installation is unexpectedly populated" >&2
+            exit 1
+          }
+
+          flatpak install --user --noninteractive ./im.dinox.dinox.flatpak
+          flatpak info --user im.dinox.dinox
+          flatpak info --user org.gnome.Platform/x86_64/50
+          flatpak info --user org.freedesktop.Platform.codecs-extra/x86_64/25.08-extra
+          flatpak --user list --runtime --columns=ref
+          flatpak run --user --command=dinox im.dinox.dinox --version | grep -Eq '^DinoX [0-9]'
+          flatpak run --user --env=TMPDIR=/tmp --command=/app/libexec/dinox-flatpak-runtime-gate \
+            im.dinox.dinox layout
+          flatpak run --user --env=TMPDIR=/tmp --command=/app/libexec/dinox-flatpak-runtime-gate \
+            im.dinox.dinox writer
+
+          # Keep GStreamer verification file-based here. Running gst-inspect in
+          # Forgejo/DIND can leave an unkillable gst-plugin-scanner on the host.
+          flatpak run --user --command=sh im.dinox.dinox -c '
+            set -eu
+            for plugin in libgstplayback.so libgstisomp4.so libgstapp.so libgstlibav.so; do
+              find /usr/lib /app/lib -type f -name "$plugin" -print -quit | grep -q . || {
+                echo "missing GStreamer playback plugin: $plugin" >&2
+                exit 1
+              }
+            done
+          '
+
+      - name: "Install Node.js for upload"
+        run: |
+          if command -v node >/dev/null 2>&1; then
+            node --version
+            exit 0
+          fi
+          if command -v apt-get >/dev/null 2>&1; then
+            apt-get update
+            apt-get install -y nodejs
+          elif command -v dnf >/dev/null 2>&1; then
+            dnf install -y nodejs
+          elif command -v microdnf >/dev/null 2>&1; then
+            microdnf install -y nodejs
+          elif command -v apk >/dev/null 2>&1; then
+            apk add --no-cache nodejs
+          elif command -v zypper >/dev/null 2>&1; then
+            zypper --non-interactive install nodejs
+          else
+            cat /etc/os-release
+            exit 1
+          fi
+          node --version
+
+      - name: "Upload Flatpak Artifact"
+        env:
+          NODE_OPTIONS: "--no-deprecation"
+        uses: https://git.dinox.im/dinoxim/upload-artifact@v4
+        with:
+          name: dinox-flatpak-x86_64
+          path: |
+            im.dinox.dinox.flatpak
+            im.dinox.dinox.flatpak.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: "Install release upload tools"
+        if: |
+          (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        run: |
+          if command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+            exit 0
+          fi
+          if command -v apt-get >/dev/null 2>&1; then
+            apt-get update
+            apt-get install -y curl python3
+          elif command -v dnf >/dev/null 2>&1; then
+            dnf install -y curl python3
+          elif command -v microdnf >/dev/null 2>&1; then
+            microdnf install -y curl python3
+          elif command -v apk >/dev/null 2>&1; then
+            apk add --no-cache curl python3
+          elif command -v zypper >/dev/null 2>&1; then
+            zypper --non-interactive install curl python3
+          else
+            cat /etc/os-release
+            exit 1
+          fi
+
+      - name: "Upload Flatpak Release Assets"
+        if: |
+          (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        env:
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          DINOX_REGISTRY_TOKEN: ${{ secrets.DINOX_REGISTRY_TOKEN }}
+        run: |
+          release_tag="$GITHUB_REF_NAME"
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ]; then
+            release_tag="${{ inputs.release_tag }}"
+          fi
+          version="${release_tag#v}"
+          flatpak_asset="dinox-${version}-x86_64.flatpak"
+          cp im.dinox.dinox.flatpak "$flatpak_asset"
+          sha256sum "$flatpak_asset" > "$flatpak_asset.sha256"
+          sha256sum -c "$flatpak_asset.sha256"
+          chmod +x scripts/forgejo-release.sh
+          scripts/forgejo-release.sh upload "$release_tag" "$flatpak_asset" "$flatpak_asset.sha256"
+
+      - name: "Publish complete Forgejo Release"
+        if: |
+          (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        env:
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          DINOX_REGISTRY_TOKEN: ${{ secrets.DINOX_REGISTRY_TOKEN }}
+        run: |
+          release_tag="$GITHUB_REF_NAME"
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ]; then
+            release_tag="${{ inputs.release_tag }}"
+          fi
+          chmod +x scripts/forgejo-release.sh
+          scripts/forgejo-release.sh publish "$release_tag"
+#  build-guix:
+#    name: "Build Guix Package"
+#    runs-on: trixie
+#    needs: [build]
+#    if: |
+#      always() && (
+#        github.event_name == 'push' ||
+#        inputs.build_guix == true
+#      ) && (
+#        needs.build.result == 'success' ||
+#        needs.build.result == 'skipped'
+#      )
+#    steps:
+#      - name: "Install Node.js und Tools"
+#        run: |
+#          apt-get update
+#          apt-get upgrade -y --no-install-recommends
+#          apt-get install -y nodejs wget xz-utils procps bsdutils
+# 
+#      - name: "Checkout sources"
+#        uses: https://git.dinox.im/dinoxim/checkout@v6
+#        with:
+#          fetch-depth: 1
+# 
+#      - name: "Install Guix 1.5.0"
+#        run: |
+#          wget -q https://ftp.gnu.org/gnu/guix/guix-binary-1.5.0.x86_64-linux.tar.xz
+#          tar -xJf guix-binary-1.5.0.x86_64-linux.tar.xz -C /
+#          groupadd --system guixbuild 2>/dev/null || true
+#          for i in $(seq -w 1 10); do
+#            useradd -g guixbuild -G guixbuild -d /var/empty \
+#              -s $(which nologin 2>/dev/null || echo /bin/false) \
+#              -c "Guix build user $i" --system guixbuilder${i} 2>/dev/null || true
+#          done
+#          /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon \
+#            --build-users-group=guixbuild --disable-chroot &
+#          sleep 5
+#          pgrep guix-daemon && echo "Daemon läuft" || echo "FEHLER: Daemon nicht gestartet"
+#          ln -sf /var/guix/profiles/per-user/root/current-guix/bin/guix /usr/local/bin/guix
+#          guix --version
+ 
+#      - name: "Update Guix channels"
+#        run: guix pull
+# 
+#      - name: "Update Guix channels"
+#        run: |
+#          mkdir -p ~/.config/guix
+#          cat > ~/.config/guix/channels.scm << 'EOF'
+#          (list (channel
+#                  (name 'guix)
+#                  (url "https://codeberg.org/guix/guix-mirror.git")
+#                  (branch "master")
+#                  (introduction
+#                    (make-channel-introduction
+#                      "9edb3f66fd807b096b48283debdcddccfea34bad"
+#                      (openpgp-fingerprint
+#                        "BBB0 2DDF 2CEA F6A8 0D1D  E643 A2A0 6DF2 A33A 54FA")))))
+#          EOF
+#          script -q -e -c "TERM=xterm guix pull --substitute-urls='https://bordeaux.guix.gnu.org https://ci.guix.gnu.org'" /dev/null 2>&1 | tail -20
+#
+#      - name: "Build Guix Package"
+#        run: |
+#          guix build --no-grafts -f .guix/modules/dinox.scm 2>&1 | tee guix-build.log
+# 
+#      - name: "Upload Guix Artifact"
+#        env:
+#          NODE_OPTIONS: "--no-deprecation"
+#        uses: https://git.dinox.im/dinoxim/upload-artifact@v4
+#        with:
+#          name: dinox-guix
+#          path: guix-build.log
+#          retention-days: 10
+# 

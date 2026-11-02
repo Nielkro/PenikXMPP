@@ -1,0 +1,433 @@
+{
+  "scope": "SOURCE_PROVENANCE_ONLY_NOT_RUNTIME_RESULTS",
+  "files": {
+    "shell-v2/native_absence_probe.py": {
+      "origin": "local/monocles-dinox-interop-20261018/capture-shell-v2/native_absence_probe.py",
+      "original_sha256": "0f268b566f98ba57d13a8be910d30359009f4ad2c641882cc41cb6c0495b15a2",
+      "original_bytes": 4521,
+      "sha256": "0f268b566f98ba57d13a8be910d30359009f4ad2c641882cc41cb6c0495b15a2",
+      "bytes": 4521
+    },
+    "shell-v2/runtime_consent/native_absence.py": {
+      "origin": "local/monocles-dinox-interop-20261018/capture-shell-v2/runtime_consent/native_absence.py",
+      "original_sha256": "4c522b4c3e343c2429e617d175845e0db1aeff88c94bdaccea9544617f7fdc41",
+      "original_bytes": 2827,
+      "sha256": "4c522b4c3e343c2429e617d175845e0db1aeff88c94bdaccea9544617f7fdc41",
+      "bytes": 2827
+    },
+    "driver-relink/README.md": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/from-existing-image/README.md",
+      "original_sha256": "d72f890c0180e876c7f241324ae083a89afcb7fc40293523236803a959f3802d",
+      "original_bytes": 3114,
+      "sha256": "d72f890c0180e876c7f241324ae083a89afcb7fc40293523236803a959f3802d",
+      "bytes": 3114
+    },
+    "driver-relink/input-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/from-existing-image/input-manifest.json",
+      "original_sha256": "326a6a57c711950ca9bb8c3a9c6861c7ec03aa049681a00a77d3f19c5412b1b1",
+      "original_bytes": 34194,
+      "sha256": "326a6a57c711950ca9bb8c3a9c6861c7ec03aa049681a00a77d3f19c5412b1b1",
+      "bytes": 34194
+    },
+    "driver-relink/server_compile.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/from-existing-image/server_compile.py",
+      "original_sha256": "b476b7b025c8887a92f278cf009d48478c50bb4bcd39d0c8212128036e2b92ef",
+      "original_bytes": 10762,
+      "sha256": "b476b7b025c8887a92f278cf009d48478c50bb4bcd39d0c8212128036e2b92ef",
+      "bytes": 10762
+    },
+    "driver-relink/server_run.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/from-existing-image/server_run.py",
+      "original_sha256": "a619f7bd4af3c2705777a13710d3dfbb63bcffa271f4f3ad338194c1bd373f07",
+      "original_bytes": 8325,
+      "sha256": "a619f7bd4af3c2705777a13710d3dfbb63bcffa271f4f3ad338194c1bd373f07",
+      "bytes": 8325
+    },
+    "driver-relink/source-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/from-existing-image/source-manifest.json",
+      "original_sha256": "3ead32384ff0e0f15783b5dccbd2961902b91f0c255ec0d9b18fd141baa1c578",
+      "original_bytes": 1099,
+      "sha256": "3ead32384ff0e0f15783b5dccbd2961902b91f0c255ec0d9b18fd141baa1c578",
+      "bytes": 1099
+    },
+    "native-runtime/README.md": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/README.md",
+      "original_sha256": "0060f1e1cddb79a10812dd4a759af172ab67050377e032bc575eeae2579126c9",
+      "original_bytes": 7403,
+      "sha256": "0060f1e1cddb79a10812dd4a759af172ab67050377e032bc575eeae2579126c9",
+      "bytes": 7403
+    },
+    "native-runtime/checks.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/checks.py",
+      "original_sha256": "f644d81d6d53f690aa642c556e193807c1d007b296530ada22b27ee5c4c8c031",
+      "original_bytes": 16328,
+      "sha256": "f644d81d6d53f690aa642c556e193807c1d007b296530ada22b27ee5c4c8c031",
+      "bytes": 16328
+    },
+    "native-runtime/historical-create-command.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/historical-create-command.json",
+      "original_sha256": "89e8143b90f30c75f1dfffc6720ee587eac81e5161b350ccfd9853a9566e88bb",
+      "original_bytes": 1597,
+      "sha256": "89e8143b90f30c75f1dfffc6720ee587eac81e5161b350ccfd9853a9566e88bb",
+      "bytes": 1597
+    },
+    "native-runtime/idle_native_peers.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/idle_native_peers.py",
+      "original_sha256": "0849424ecc31f7f7602c456d420368159e6402386da2a0682d799d9e65c9b1da",
+      "original_bytes": 7726,
+      "sha256": "0849424ecc31f7f7602c456d420368159e6402386da2a0682d799d9e65c9b1da",
+      "bytes": 7726
+    },
+    "native-runtime/inner_maps.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/inner_maps.py",
+      "original_sha256": "2c7f37aea4f86a14b8bfe2f2d7973259f6b0bba5047220c0418f4bc2fc422dad",
+      "original_bytes": 5258,
+      "sha256": "2c7f37aea4f86a14b8bfe2f2d7973259f6b0bba5047220c0418f4bc2fc422dad",
+      "bytes": 5258
+    },
+    "native-runtime/launch-template.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/launch-template.json",
+      "original_sha256": "79d1bd7b42cb4101205f5ccdd5113709015eb3fa48fee085060da99fc79a9279",
+      "original_bytes": 5388,
+      "sha256": "79d1bd7b42cb4101205f5ccdd5113709015eb3fa48fee085060da99fc79a9279",
+      "bytes": 5388
+    },
+    "native-runtime/native_control.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/native_control.py",
+      "original_sha256": "00ecb9700f20e2bb15e93346480dbd1db8ac23c3eeebd6e8d2d70caf522133eb",
+      "original_bytes": 3818,
+      "sha256": "00ecb9700f20e2bb15e93346480dbd1db8ac23c3eeebd6e8d2d70caf522133eb",
+      "bytes": 3818
+    },
+    "native-runtime/native_recorder.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/native_recorder.py",
+      "original_sha256": "5d408f9dadf27c700648ac73712e12093dd81924da4916e258e4209e13ac9cdb",
+      "original_bytes": 4889,
+      "sha256": "0c22ad889fb4e600abdfcc777dd2f3c6db1791adc7446287fd08d15c8711efdf",
+      "bytes": 4888,
+      "normalization": "remove redundant empty lines at EOF; unchanged Python AST"
+    },
+    "native-runtime/overlay-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/overlay-manifest.json",
+      "original_sha256": "8e4193f3d102c469139d1a2bd7d11985fae9e84bbba319eddd5a80ea249622fd",
+      "original_bytes": 20750,
+      "sha256": "8e4193f3d102c469139d1a2bd7d11985fae9e84bbba319eddd5a80ea249622fd",
+      "bytes": 20750
+    },
+    "native-runtime/recreate_stopped_native_peers.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/recreate_stopped_native_peers.py",
+      "original_sha256": "c1745adabcaa9739439c9f2b1f60581dbcfd586d9152dce495cc0acdb2cb3992",
+      "original_bytes": 6261,
+      "sha256": "c1745adabcaa9739439c9f2b1f60581dbcfd586d9152dce495cc0acdb2cb3992",
+      "bytes": 6261
+    },
+    "native-runtime/runtime_spec.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/runtime_spec.py",
+      "original_sha256": "9c977b2821e257a6ac691e8ba2b17b8e8494489844fd77529d9a4ef1346329e8",
+      "original_bytes": 6632,
+      "sha256": "9c977b2821e257a6ac691e8ba2b17b8e8494489844fd77529d9a4ef1346329e8",
+      "bytes": 6632
+    },
+    "native-runtime/server_control_base.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/server_control_base.py",
+      "original_sha256": "0fe86a2329e77b2f35b804596f900a0d4341d7d2640d8264342cb8e94bbc6555",
+      "original_bytes": 14027,
+      "sha256": "0fe86a2329e77b2f35b804596f900a0d4341d7d2640d8264342cb8e94bbc6555",
+      "bytes": 14027
+    },
+    "native-runtime/server_entry_felix.sh": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/server_entry_felix.sh",
+      "original_sha256": "622c375bb725f245d011857801a7bdacc4e80aadb189dc62df71f4eb158b9f2b",
+      "original_bytes": 1607,
+      "sha256": "622c375bb725f245d011857801a7bdacc4e80aadb189dc62df71f4eb158b9f2b",
+      "bytes": 1607
+    },
+    "native-runtime/server_entry_leon.sh": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/server_entry_leon.sh",
+      "original_sha256": "b382c557bef2d6b2dd981f61bdeecfe251c4307ee34cad34bca78136c58cad79",
+      "original_bytes": 1559,
+      "sha256": "b382c557bef2d6b2dd981f61bdeecfe251c4307ee34cad34bca78136c58cad79",
+      "bytes": 1559
+    },
+    "native-runtime/source-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/source-manifest.json",
+      "original_sha256": "3f9f8fc46e95cd20864e417560366a182e4f94f92e734189b9ad4ae7824584d4",
+      "original_bytes": 7483,
+      "sha256": "3f9f8fc46e95cd20864e417560366a182e4f94f92e734189b9ad4ae7824584d4",
+      "bytes": 7483
+    },
+    "native-runtime/stage_native_overlay.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/runtime-source/stage_native_overlay.py",
+      "original_sha256": "fe7bd2ee62b8f98a2769160a0b83e0032b5b00754c7ed3625a53d9e84fd08a31",
+      "original_bytes": 8721,
+      "sha256": "fe7bd2ee62b8f98a2769160a0b83e0032b5b00754c7ed3625a53d9e84fd08a31",
+      "bytes": 8721
+    },
+    "native-container-scope/README.md": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/precreate-container-scope-fix/README.md",
+      "original_sha256": "b23ab0a1e2f35b082cf9f3ce3f9279cec29cfd78e8dd4221d0079719cbe4c5be",
+      "original_bytes": 992,
+      "sha256": "b23ab0a1e2f35b082cf9f3ce3f9279cec29cfd78e8dd4221d0079719cbe4c5be",
+      "bytes": 992
+    },
+    "native-container-scope/check_source_only.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/precreate-container-scope-fix/check_source_only.py",
+      "original_sha256": "78eac9627e32b899f9e0b33eca6bb90bee5dcf79a7411dcc5acb1e222179cc69",
+      "original_bytes": 3163,
+      "sha256": "78eac9627e32b899f9e0b33eca6bb90bee5dcf79a7411dcc5acb1e222179cc69",
+      "bytes": 3163
+    },
+    "native-container-scope/recreate_stopped_native_peers_container_scope.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/precreate-container-scope-fix/recreate_stopped_native_peers_container_scope.py",
+      "original_sha256": "f77a7715f865aa335de2c6632f75d140b47e7d57c7d8c71460d77e81ba368fee",
+      "original_bytes": 6340,
+      "sha256": "f77a7715f865aa335de2c6632f75d140b47e7d57c7d8c71460d77e81ba368fee",
+      "bytes": 6340
+    },
+    "native-container-scope/source-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/precreate-container-scope-fix/source-manifest.json",
+      "original_sha256": "911a21737aaa65e97941eb2aa4423f4c8a98ce7a821734eb90c410899ee090b9",
+      "original_bytes": 1344,
+      "sha256": "911a21737aaa65e97941eb2aa4423f4c8a98ce7a821734eb90c410899ee090b9",
+      "bytes": 1344
+    },
+    "mixed-video-case/README.md": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-three-video/README.md",
+      "original_sha256": "8244bd35dfe2d408b20f7998ffe5405fea8536ff1432e468d36dc719706c0164",
+      "original_bytes": 2462,
+      "sha256": "8244bd35dfe2d408b20f7998ffe5405fea8536ff1432e468d36dc719706c0164",
+      "bytes": 2462
+    },
+    "mixed-video-case/check_media_proof.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-three-video/check_media_proof.py",
+      "original_sha256": "ffe14588ce65440f3a2c317eb0fe1d4314815b0027dec8e92191e78363b43b1f",
+      "original_bytes": 5242,
+      "sha256": "ffe14588ce65440f3a2c317eb0fe1d4314815b0027dec8e92191e78363b43b1f",
+      "bytes": 5242
+    },
+    "mixed-video-case/media_case.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-three-video/media_case.py",
+      "original_sha256": "4ba30539fb8259fd717d83f3f9a619a8fe167bde884d520760993c9eb8434a54",
+      "original_bytes": 10335,
+      "sha256": "4ba30539fb8259fd717d83f3f9a619a8fe167bde884d520760993c9eb8434a54",
+      "bytes": 10335
+    },
+    "mixed-video-case/source-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-three-video/source-manifest.json",
+      "original_sha256": "6fcc7e333ede7ed0eca700b1a8af345a44fa580e0c5bb3eb93e60e4ae489dab9",
+      "original_bytes": 804,
+      "sha256": "6fcc7e333ede7ed0eca700b1a8af345a44fa580e0c5bb3eb93e60e4ae489dab9",
+      "bytes": 804
+    },
+    "mixed-video-owner/README.md": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/README.md",
+      "original_sha256": "adcda87176775b4807ca99454374681c379f6ca5acde79e179576dfd58c7558f",
+      "original_bytes": 9486,
+      "sha256": "adcda87176775b4807ca99454374681c379f6ca5acde79e179576dfd58c7558f",
+      "bytes": 9486
+    },
+    "mixed-video-owner/check_lifecycle_scan.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/check_lifecycle_scan.py",
+      "original_sha256": "52dc74f7fd8a1733526a46b15cc55327d8d52cc8aa4517ef8989cd488c7aebe6",
+      "original_bytes": 2665,
+      "sha256": "52dc74f7fd8a1733526a46b15cc55327d8d52cc8aa4517ef8989cd488c7aebe6",
+      "bytes": 2665
+    },
+    "mixed-video-owner/check_source_only.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/check_source_only.py",
+      "original_sha256": "7539e86360ac742c9292ed7875d7a395532e34df8492d93f4826a7590c06ed07",
+      "original_bytes": 10271,
+      "sha256": "7539e86360ac742c9292ed7875d7a395532e34df8492d93f4826a7590c06ed07",
+      "bytes": 10271
+    },
+    "mixed-video-owner/control.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/control.py",
+      "original_sha256": "b9ac71d2c1c3d3d216464edd05f8609b486b2638088b55493eef8e58ed80b285",
+      "original_bytes": 9236,
+      "sha256": "b9ac71d2c1c3d3d216464edd05f8609b486b2638088b55493eef8e58ed80b285",
+      "bytes": 9236
+    },
+    "mixed-video-owner/derive_source.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/derive_source.py",
+      "original_sha256": "a3914ca1ceb5f8578fe3dab6e1f0547ac4f2196b5d0d78af608f92d8672f5f46",
+      "original_bytes": 14004,
+      "sha256": "a3914ca1ceb5f8578fe3dab6e1f0547ac4f2196b5d0d78af608f92d8672f5f46",
+      "bytes": 14004
+    },
+    "mixed-video-owner/freeze.json": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/freeze.json",
+      "original_sha256": "07d2662015e858872ea02476f739aea08811797d0c56dbccc8ac84e9fa2c29e9",
+      "original_bytes": 3644,
+      "sha256": "07d2662015e858872ea02476f739aea08811797d0c56dbccc8ac84e9fa2c29e9",
+      "bytes": 3644
+    },
+    "mixed-video-owner/monitor.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/monitor.py",
+      "original_sha256": "25f3cdae2cb4155d2f93ee219e834f9321d033fd258590352f8eb5fe5f1d6370",
+      "original_bytes": 3622,
+      "sha256": "25f3cdae2cb4155d2f93ee219e834f9321d033fd258590352f8eb5fe5f1d6370",
+      "bytes": 3622
+    },
+    "mixed-video-owner/owner_helpers.source": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/owner_helpers.source",
+      "original_sha256": "533f7d4e5177adc05e5c44307b3f175a0e53e7472d9d8b8396aa5b5ef517d825",
+      "original_bytes": 3407,
+      "sha256": "82d2cd76d4e59ef04c797e32966766e5b4252bc0d27305bc6823b8f0c33ebb01",
+      "bytes": 3405,
+      "normalization": "remove redundant empty lines at EOF; unchanged Python fragment AST"
+    },
+    "mixed-video-owner/process_lifecycle.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/process_lifecycle.py",
+      "original_sha256": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9",
+      "original_bytes": 15866,
+      "sha256": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9",
+      "bytes": 15866
+    },
+    "mixed-video-owner/recorder.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/recorder.py",
+      "original_sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+      "original_bytes": 4044,
+      "sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+      "bytes": 4044
+    },
+    "mixed-video-owner/runtime.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/runtime.py",
+      "original_sha256": "ffc188c4d2c179ff3b66fd8a06a01b05ee6b62938e46a35f854f73e46526de51",
+      "original_bytes": 49551,
+      "sha256": "ffc188c4d2c179ff3b66fd8a06a01b05ee6b62938e46a35f854f73e46526de51",
+      "bytes": 49551
+    },
+    "mixed-video-owner/scenario.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/scenario.py",
+      "original_sha256": "e96f3cb63200f96fa7a79c1b6c9f7f12840a1fc662d4d0b95af23a22aa69f13f",
+      "original_bytes": 20698,
+      "sha256": "e96f3cb63200f96fa7a79c1b6c9f7f12840a1fc662d4d0b95af23a22aa69f13f",
+      "bytes": 20698
+    },
+    "mixed-video-owner/source-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-source/source-manifest.json",
+      "original_sha256": "e3431bddb31aa783ffa608018d228126000e82087df29fccce57bed453431c74",
+      "original_bytes": 5588,
+      "sha256": "e3431bddb31aa783ffa608018d228126000e82087df29fccce57bed453431c74",
+      "bytes": 5588
+    },
+    "mixed-video-owner-900/README.md": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/README.md",
+      "original_sha256": "f8dc18ea2d0faf00551bed752d0e34df0b1c7386f1438a3d9b49e700cc19127b",
+      "original_bytes": 3060,
+      "sha256": "f8dc18ea2d0faf00551bed752d0e34df0b1c7386f1438a3d9b49e700cc19127b",
+      "bytes": 3060
+    },
+    "mixed-video-owner-900/check_budget_source.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/check_budget_source.py",
+      "original_sha256": "79d63561c2ee64faef45c158b86db24d4edb9917e624d3e2aeac1bab0ad6c620",
+      "original_bytes": 9513,
+      "sha256": "79d63561c2ee64faef45c158b86db24d4edb9917e624d3e2aeac1bab0ad6c620",
+      "bytes": 9513
+    },
+    "mixed-video-owner-900/check_lifecycle_scan.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/check_lifecycle_scan.py",
+      "original_sha256": "52dc74f7fd8a1733526a46b15cc55327d8d52cc8aa4517ef8989cd488c7aebe6",
+      "original_bytes": 2665,
+      "sha256": "52dc74f7fd8a1733526a46b15cc55327d8d52cc8aa4517ef8989cd488c7aebe6",
+      "bytes": 2665
+    },
+    "mixed-video-owner-900/check_source_only.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/check_source_only.py",
+      "original_sha256": "7539e86360ac742c9292ed7875d7a395532e34df8492d93f4826a7590c06ed07",
+      "original_bytes": 10271,
+      "sha256": "7539e86360ac742c9292ed7875d7a395532e34df8492d93f4826a7590c06ed07",
+      "bytes": 10271
+    },
+    "mixed-video-owner-900/control.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/control.py",
+      "original_sha256": "b9ac71d2c1c3d3d216464edd05f8609b486b2638088b55493eef8e58ed80b285",
+      "original_bytes": 9236,
+      "sha256": "b9ac71d2c1c3d3d216464edd05f8609b486b2638088b55493eef8e58ed80b285",
+      "bytes": 9236
+    },
+    "mixed-video-owner-900/derive_source.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/derive_source.py",
+      "original_sha256": "9ab15194efed5c058a3010d04b843bdef3f57a2acefddcd578735a20cff9549f",
+      "original_bytes": 14370,
+      "sha256": "9ab15194efed5c058a3010d04b843bdef3f57a2acefddcd578735a20cff9549f",
+      "bytes": 14370
+    },
+    "mixed-video-owner-900/freeze.json": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/freeze.json",
+      "original_sha256": "aa26bdddf406771b167bdffca3ec4a62b5339f6d8990f2b4dc9af2790b4e4fe2",
+      "original_bytes": 3644,
+      "sha256": "aa26bdddf406771b167bdffca3ec4a62b5339f6d8990f2b4dc9af2790b4e4fe2",
+      "bytes": 3644
+    },
+    "mixed-video-owner-900/monitor.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/monitor.py",
+      "original_sha256": "25f3cdae2cb4155d2f93ee219e834f9321d033fd258590352f8eb5fe5f1d6370",
+      "original_bytes": 3622,
+      "sha256": "25f3cdae2cb4155d2f93ee219e834f9321d033fd258590352f8eb5fe5f1d6370",
+      "bytes": 3622
+    },
+    "mixed-video-owner-900/owner_helpers.source": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/owner_helpers.source",
+      "original_sha256": "b54ed2eca9e502e06bcb17c28002e9b241a8ede3544353ef6457eac36b2068a3",
+      "original_bytes": 4367,
+      "sha256": "b54ed2eca9e502e06bcb17c28002e9b241a8ede3544353ef6457eac36b2068a3",
+      "bytes": 4367
+    },
+    "mixed-video-owner-900/process_lifecycle.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/process_lifecycle.py",
+      "original_sha256": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9",
+      "original_bytes": 15866,
+      "sha256": "cbccb23b594d64471ce2851dd9105c99a874bd3bc061e7631e2fd4dd9a46fff9",
+      "bytes": 15866
+    },
+    "mixed-video-owner-900/recorder.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/recorder.py",
+      "original_sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+      "original_bytes": 4044,
+      "sha256": "416a89203a246dd481f8a79fd08dd930f6ed988d8eccceb5a12ed31bbdfb16b5",
+      "bytes": 4044
+    },
+    "mixed-video-owner-900/runtime.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/runtime.py",
+      "original_sha256": "ffc188c4d2c179ff3b66fd8a06a01b05ee6b62938e46a35f854f73e46526de51",
+      "original_bytes": 49551,
+      "sha256": "ffc188c4d2c179ff3b66fd8a06a01b05ee6b62938e46a35f854f73e46526de51",
+      "bytes": 49551
+    },
+    "mixed-video-owner-900/scenario.py": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/scenario.py",
+      "original_sha256": "dfd3bcf8473092c8ec38ab0ddaa17b6ac5e514b9dfc9a868ffc3f89847bbda6f",
+      "original_bytes": 21632,
+      "sha256": "dfd3bcf8473092c8ec38ab0ddaa17b6ac5e514b9dfc9a868ffc3f89847bbda6f",
+      "bytes": 21632
+    },
+    "mixed-video-owner-900/source-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/mixed-video-owner-900-source/source-manifest.json",
+      "original_sha256": "303cb669ce0e737b76ef45f78ed1dad10d52877cb199209a62dde9d05701a577",
+      "original_bytes": 8619,
+      "sha256": "303cb669ce0e737b76ef45f78ed1dad10d52877cb199209a62dde9d05701a577",
+      "bytes": 8619
+    }
+  },
+  "count": 94,
+  "bytes": 969668,
+  "excluded": [
+    "private account inputs and credentials",
+    "operational admissions and markers",
+    "logs and actual results, including offline result reports",
+    "captures, profiles, binaries, generated code, transfer archives",
+    "historical diff copies; original source manifests may reference omitted files"
+  ],
+  "live_lab_or_portable_execution_authorized": false,
+  "monocles_only_relocation": {
+    "repository": "dinoxim/monocles-chat",
+    "commit": "a4980b9f43bc6288cc0cfc0abcf188623f1949ea",
+    "path": "tools/interop/retained_fixture",
+    "manifest_sha256": "1986b912c829fc3303ca96166c6563eb2f6c8e9a3dfcb6ea1c76cc32a284347e",
+    "files": 184,
+    "bytes": 2565762,
+    "byte_identical": true,
+    "historical_paths_and_pins_not_rewritten": true
+  }
+}

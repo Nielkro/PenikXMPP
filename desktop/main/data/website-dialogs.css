@@ -1,0 +1,60 @@
+/* Dialog windows, embedded sheets and transient hints share the palette.
+ * Native destructive/warning/success controls keep their semantic colors. */
+window.messagedialog,
+window.dialog.message,
+window.dialog-window,
+dialog-host > dialog.background sheet,
+dialog-host > dialog.alert sheet {
+    background-color: @dialog_bg_color;
+    color: @dialog_fg_color;
+}
+
+tooltip.background,
+toast {
+    background-color: @popover_bg_color;
+    color: @popover_fg_color;
+}
+
+/* Call chrome follows the design; camera frames and black video margins are
+ * untouched. Solid overlays keep labels readable over arbitrary live video. */
+window.dino-call-window {
+    background-color: @window_bg_color;
+    color: @window_fg_color;
+}
+
+.dino-call-window .participant-header-bar,
+.dino-call-window .call-header-bar {
+    background: alpha(@headerbar_bg_color, 0.96);
+    color: @headerbar_fg_color;
+}
+
+.dino-call-window .participant-header-bar .titles {
+    color: @headerbar_fg_color;
+    text-shadow: none;
+}
+
+.dino-call-window .participant-header-bar button:not(.unencrypted) image,
+.dino-call-window .participant-header-bar button:not(.unencrypted):hover image {
+    color: @headerbar_fg_color;
+}
+
+.dino-call-window .participant-header-bar button:hover:not(.close) {
+    background: alpha(@headerbar_fg_color, 0.12);
+}
+
+.dino-call-window .call-bottom-bar {
+    background: linear-gradient(alpha(@window_bg_color, 0), alpha(@window_bg_color, 0.96));
+    color: @window_fg_color;
+}
+
+.dino-call-window .call-duration,
+.dino-call-window .text-no-controls {
+    background: @popover_bg_color;
+    color: @popover_fg_color;
+    text-shadow: none;
+}
+
+.dino-call-window .sidebar {
+    background-color: @sidebar_bg_color;
+    color: @sidebar_fg_color;
+}

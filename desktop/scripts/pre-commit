@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# ──────────────────────────────────────────────────────────────
+# DinoX pre-commit hook
+#
+# Runs documentation link, link checker self-test, translation syntax, hidden
+# Unicode scan, Python/shell syntax self-test/check, test runner self-test,
+# local and Forgejo release helper self-tests, release-candidate verifier,
+# Linux package-builder digest invariants, AppImage runtime mirror,
+# libwebrtc wrapper configure helper self-test, runtime matrix self-test, package metadata, Flatpak manifest and
+# strict build checks
+# before every commit.
+# Rejects commits that break local docs links, checker parsing, translation
+# syntax, hidden Unicode checks, Python/shell syntax discovery/checks, test
+# runner argument handling, local or Forgejo release helper logic, release-candidate verifier,
+# Linux package-builder digest pins, AppImage runtime mirror and libwebrtc wrapper configure
+# argument checks, runtime matrix logic, package metadata,
+# Flatpak manifest or compiler warnings.
+#
+# Install:  cp scripts/pre-commit .git/hooks/pre-commit
+#    or:    ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
+#
+# Skip once: git commit --no-verify
+# ──────────────────────────────────────────────────────────────
+set -euo pipefail
+
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Handle both .git/hooks/ and scripts/ locations
+if [[ "$SCRIPT_DIR" == *".git/hooks"* ]]; then
+    PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+else
+    PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+fi
+BUILD_DIR="$PROJECT_DIR/build"
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking documentation links ━━━━━━━━━━━${NC}"
+(cd "$PROJECT_DIR" && ./scripts/check-doc-links.py --self-test && ./scripts/check-doc-links.py) || {
+    echo -e "${RED}━━━ DOC LINK CHECK FAILED — commit rejected ━━━━━━━━━━━${NC}"
+    echo -e "  Fix documentation links or link checker self-test failures before committing."
+    echo -e "  Skip with: ${CYAN}git commit --no-verify${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+}
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking translation syntax ━━━━━━━━━━━${NC}"
+(cd "$PROJECT_DIR" && ./scripts/check_translations.py --self-test && ./scripts/check_translations.py --syntax-only) || {
+    echo -e "${RED}━━━ TRANSLATION SYNTAX CHECK FAILED — commit rejected ━${NC}"
+    echo -e "  Fix PO syntax errors before committing."
+    echo -e "  Skip with: ${CYAN}git commit --no-verify${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+}
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking hidden Unicode ━━━━━━━━━━━━━━━${NC}"
+(cd "$PROJECT_DIR" && ./scripts/scan_unicode.py --self-test && ./scripts/scan_unicode.py) || {
+    echo -e "${RED}━━━ HIDDEN UNICODE CHECK FAILED — commit rejected ━━━━${NC}"
+    echo -e "  Remove dangerous Unicode control characters before committing."
+    echo -e "  Skip with: ${CYAN}git commit --no-verify${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+}
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking Python syntax ━━━━━━━━━━━━━━━━${NC}"
+(cd "$PROJECT_DIR" && ./scripts/check-python-syntax.py --self-test && ./scripts/check-python-syntax.py) || {
+    echo -e "${RED}━━━ PYTHON SYNTAX CHECK FAILED — commit rejected ━━━━━${NC}"
+    echo -e "  Fix Python syntax errors before committing."
+    echo -e "  Skip with: ${CYAN}git commit --no-verify${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+}
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking shell script syntax ━━━━━━━━━━${NC}"
+(cd "$PROJECT_DIR" && ./scripts/check-shell-syntax.sh --self-test && ./scripts/check-shell-syntax.sh) || {
+    echo -e "${RED}━━━ SHELL SYNTAX CHECK FAILED — commit rejected ━━━━━━${NC}"
+    echo -e "  Fix shell syntax errors before committing."
+    echo -e "  Skip with: ${CYAN}git commit --no-verify${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+}
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking test runner self-test ━━━━━━━━${NC}"
+(cd "$PROJECT_DIR" && ./scripts/run_all_tests.sh --self-test) || {
+    echo -e "${RED}━━━ TEST RUNNER SELF-TEST FAILED — commit rejected ━━━${NC}"
+    echo -e "  Fix test runner argument validation before committing."
+    echo -e "  Skip with: ${CYAN}git commit --no-verify${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+}
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking release helper self-tests ━━━━━${NC}"
+(cd "$PROJECT_DIR" \
+    && ./scripts/release.sh --self-test \
+    && ./scripts/release_helper.sh --self-test \
+    && ./scripts/forgejo-release.sh --self-test \
+    && ./scripts/prepare-forgejo-release.sh --self-test \
+    && ./scripts/verify-release-candidate.sh --self-test \
+    && ./scripts/update-linux-package-builder-digest.sh --self-test \
+    && ./scripts/update-linux-package-builder-digest.sh --check-current \
+    && ./scripts/mirror-appimage-runtimes.sh --self-test \
+    && ./scripts/configure-libwebrtc-wrapper-build.sh --self-test \
+    && ./scripts/build-windows-dist.sh --self-test) || {
+    echo -e "${RED}━━━ RELEASE HELPER SELF-TEST FAILED — commit rejected ━${NC}"
+    echo -e "  Fix release helper validation logic before committing."
+    echo -e "  Skip with: ${CYAN}git commit --no-verify${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+}
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking runtime matrix self-test ━━━━━━${NC}"
+(cd "$PROJECT_DIR" && ./scripts/package-runtime-matrix.sh self-test) || {
+    echo -e "${RED}━━━ RUNTIME MATRIX SELF-TEST FAILED — commit rejected ━${NC}"
+    echo -e "  Fix package runtime matrix logic before committing."
+    echo -e "  Skip with: ${CYAN}git commit --no-verify${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+}
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking package metadata ━━━━━━━━━━━━━${NC}"
+(cd "$PROJECT_DIR" \
+    && ./scripts/package-runtime-matrix.sh metadata \
+    && ./scripts/package-runtime-matrix.sh flatpak-manifest im.dinox.dinox.json) || {
+    echo -e "${RED}━━━ PACKAGE METADATA CHECK FAILED — commit rejected ━━━${NC}"
+    echo -e "  Fix AppStream, desktop or Flatpak manifest metadata before committing."
+    echo -e "  Skip with: ${CYAN}git commit --no-verify${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+}
+
+echo -e "${CYAN}━━━ Pre-Commit: Checking for compiler warnings ━━━━━━━━${NC}"
+
+if [ ! -d "$BUILD_DIR" ]; then
+    echo -e "${YELLOW}⚠  No build directory — skipping warning check.${NC}"
+    echo -e "   Run: meson setup build"
+    exit 0
+fi
+
+# Use the canonical build entrypoint, including DINOX_BUILD_JOBS and the
+# project's complete warning check. A bare ninja invocation ignores that limit.
+(cd "$PROJECT_DIR" && ./scripts/build.sh --strict) || {
+    echo -e "${RED}━━━ STRICT BUILD FAILED — commit rejected ━━━━━━━━━━━━━${NC}"
+    exit 1
+}

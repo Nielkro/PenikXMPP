@@ -1,0 +1,675 @@
+# Bengali translations for dino-omemo.
+# Copyright (C) 2026 DinoX Team
+# This file is distributed under the same license as the DinoX package.
+msgid ""
+msgstr ""
+"Project-Id-Version: DinoX\n"
+"Report-Msgid-Bugs-To: https://git.dinox.im/dinoxim/dinox/issues\n"
+"POT-Creation-Date: 2026-10-29 20:45+0100\n"
+"PO-Revision-Date: 2026-10-29 22:00+0100\n"
+"Last-Translator: DinoX Team\n"
+"Language-Team: Bengali\n"
+"Language: bn\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: plugins/omemo/data/encryption_preferences_entry.ui:8
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:92
+msgid ""
+"Each device has its own OMEMO key. Messages can only be decrypted by a "
+"device if they are encrypted to its key. Messages are only encrypted to "
+"accepted devices."
+msgstr ""
+"প্রতিটি ডিভাইসের নিজস্ব OMEMO কী আছে। বার্তাগুলি শুধুমাত্র একটি ডিভাইস "
+"দ্বারা ডিক্রিপ্ট করা যেতে পারে যদি সেগুলি তার কীতে এনক্রিপ্ট করা থাকে৷ "
+"বার্তাগুলি শুধুমাত্র গৃহীত ডিভাইসগুলিতে এনক্রিপ্ট করা হয়৷"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:17
+#: plugins/omemo/src/ui/contact_details_provider.vala:52
+#: plugins/omemo/src/ui/contact_details_provider.vala:99
+msgid "OMEMO Encryption"
+msgstr "OMEMO এনক্রিপশন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:18
+msgid ""
+"Older hidden messages have no recorded fingerprint and cannot be safely "
+"assigned to this key."
+msgstr ""
+"পুরানো লুকানো বার্তাগুলির কোনও রেকর্ড করা ফিঙ্গারপ্রিন্ট নেই এবং এই কীটিতে "
+"নিরাপদে বরাদ্দ করা যাবে না৷"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:19
+#: plugins/omemo/src/ui/manage_key_dialog.vala:36
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:36
+msgid "Close"
+msgstr "বন্ধ করুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Key changed"
+msgstr "চাবি পরিবর্তন করা হয়েছে"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Could not update device"
+msgstr "ডিভাইস আপডেট করা যায়নি"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:34
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:34
+msgid ""
+"The device key has changed. Review the current fingerprint before trying "
+"again."
+msgstr ""
+"ডিভাইস কী পরিবর্তন করা হয়েছে। আবার চেষ্টা করার আগে বর্তমান ফিঙ্গারপ্রিন্ট "
+"পর্যালোচনা করুন।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:35
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:35
+msgid "The device settings could not be changed. Please try again."
+msgstr "ডিভাইস সেটিংস পরিবর্তন করা যাবে না. আবার চেষ্টা করুন."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:75
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:415
+#: plugins/omemo/src/ui/contact_details_provider.vala:227
+msgid "Manage Key"
+msgstr "কী পরিচালনা করুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:76
+msgid ""
+"Compare the fingerprint, character by character, with the one shown on your "
+"contact's device."
+msgstr ""
+"আপনার পরিচিতির ডিভাইসে প্রদর্শিত ফিঙ্গারপ্রিন্ট, অক্ষর অনুসারে অক্ষরের সাথে "
+"তুলনা করুন।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:77
+msgid "Fingerprints differ"
+msgstr "ফিঙ্গারপ্রিন্ট আলাদা"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:78
+msgid "Fingerprints match"
+msgstr "ফিঙ্গারপ্রিন্ট মেলে"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:86
+#: plugins/omemo/src/ui/manage_key_dialog.vala:148
+#: plugins/omemo/src/ui/manage_key_dialog.vala:154
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:342
+msgid "Cancel"
+msgstr "বাতিল করুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:87
+#: plugins/omemo/src/ui/manage_key_dialog.vala:122
+#: plugins/omemo/src/ui/manage_key_dialog.vala:161
+#: plugins/omemo/src/ui/manage_key_dialog.vala:234
+msgid "Confirm"
+msgstr "নিশ্চিত করুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:94
+#, c-format
+msgid ""
+"Account: %s\n"
+"Contact: %s\n"
+"Device: %s"
+msgstr ""
+"অ্যাকাউন্ট: %s\n"
+"পরিচিতি: %s\n"
+"ডিভাইস: %s"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:126
+msgid "Verify key"
+msgstr "চাবি যাচাই করুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:127
+#, c-format
+msgid ""
+"Future messages sent by %s from the device that uses this key will be "
+"highlighted accordingly in the chat window."
+msgstr ""
+"এই কী ব্যবহার করে এমন ডিভাইস থেকে %s দ্বারা প্রেরিত ভবিষ্যত বার্তাগুলি চ্যাট"
+" উইন্ডোতে সেই অনুযায়ী হাইলাইট করা হবে৷"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:138
+msgid "Fingerprints do not match"
+msgstr "ফিঙ্গারপ্রিন্ট মেলে না"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:139
+#, c-format
+msgid ""
+"Please verify that you are comparing the correct fingerprint. If "
+"fingerprints do not match, %s's account may be compromised and you should "
+"consider rejecting this key."
+msgstr ""
+"সঠিক ফিঙ্গারপ্রিন্ট তুলনা করছেন কি না দেখুন। ফিঙ্গারপ্রিন্ট না মিললে %s-এর "
+"অ্যাকাউন্ট অন্যের নিয়ন্ত্রণে চলে গিয়ে থাকতে পারে। সে ক্ষেত্রে এই চাবি "
+"প্রত্যাখ্যান করার কথা বিবেচনা করুন।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+#: plugins/omemo/src/ui/manage_key_dialog.vala:259
+#: plugins/omemo/src/ui/manage_key_dialog.vala:261
+msgid "Remove device"
+msgstr "ডিভাইস সরান"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+msgid "Open"
+msgstr "খুলুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid "Verify key fingerprint"
+msgstr "কী ফিঙ্গারপ্রিন্ট যাচাই করুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid ""
+"Compare this key's fingerprint with the fingerprint displayed on the "
+"contact's device."
+msgstr ""
+"পরিচিতির ডিভাইসে প্রদর্শিত ফিঙ্গারপ্রিন্টের সাথে এই কীটির ফিঙ্গারপ্রিন্ট "
+"তুলনা করুন।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+#: plugins/omemo/src/ui/manage_key_dialog.vala:243
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:609
+#: plugins/omemo/src/ui/contact_details_provider.vala:315
+msgid "Reject key"
+msgstr "কী প্রত্যাখ্যান করুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+msgid ""
+"Block encrypted communication with the contact's device that uses this key."
+msgstr ""
+"এই কী ব্যবহার করে এমন পরিচিতির ডিভাইসের সাথে এনক্রিপ্ট করা যোগাযোগ ব্লক "
+"করুন।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+#: plugins/omemo/src/ui/manage_key_dialog.vala:251
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:604
+#: plugins/omemo/src/ui/contact_details_provider.vala:310
+msgid "Accept key"
+msgstr "চাবি গ্রহণ করুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+msgid ""
+"Allow encrypted communication with the contact's device that uses this key."
+msgstr ""
+"এই কী ব্যবহার করে এমন পরিচিতির ডিভাইসের সাথে এনক্রিপ্ট করা যোগাযোগের অনুমতি "
+"দিন।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+#: plugins/omemo/src/ui/manage_key_dialog.vala:268
+msgid "Reset session"
+msgstr "সেশন রিসেট করুন"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+msgid ""
+"Delete the encryption session for this device. A fresh session will be "
+"established on the next message. Use this when messages are not arriving."
+msgstr ""
+"এই ডিভাইসের জন্য এনক্রিপশন সেশন মুছুন। পরবর্তী বার্তায় একটি নতুন অধিবেশন "
+"প্রতিষ্ঠিত হবে। যখন বার্তা আসছে না তখন এটি ব্যবহার করুন।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+msgid ""
+"Delete this device's key and session data. Use this for old or inactive "
+"devices."
+msgstr ""
+"এই ডিভাইসের কী এবং সেশন ডেটা মুছুন। পুরানো বা নিষ্ক্রিয় ডিভাইসের জন্য এটি "
+"ব্যবহার করুন."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid "This key is currently %s."
+msgstr "এই কী বর্তমানে %s।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+msgid "accepted"
+msgstr "গৃহীত"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#, c-format
+msgid ""
+"This means it can be used by %s to receive and send encrypted messages."
+msgstr ""
+"এর অর্থ হল এটি %s দ্বারা এনক্রিপ্ট করা বার্তাগুলি গ্রহণ এবং পাঠাতে ব্যবহার "
+"করা যেতে পারে৷"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid "verified"
+msgstr "যাচাই করা হয়েছে"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid ""
+"Additionally it has been verified to match the key on the contact's device."
+msgstr "অতিরিক্তভাবে এটি পরিচিতির ডিভাইসে কী মেলে তা যাচাই করা হয়েছে।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+msgid "rejected"
+msgstr "প্রত্যাখ্যাত"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid ""
+"This means it cannot be used by %s to decipher your messages, and you won't "
+"see messages encrypted with it."
+msgstr ""
+"এর মানে হল এটি %s দ্বারা আপনার বার্তাগুলির পাঠোদ্ধার করতে ব্যবহার করা যাবে "
+"না এবং আপনি এটির সাথে এনক্রিপ্ট করা বার্তাগুলি দেখতে পাবেন না৷"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:244
+#, c-format
+msgid ""
+"You won't see encrypted messages from the device of %s that uses this key. "
+"Conversely, that device won't be able to decipher your messages anymore."
+msgstr ""
+"আপনি এই কী ব্যবহার করে %s ডিভাইস থেকে এনক্রিপ্ট করা বার্তা দেখতে পাবেন না। "
+"বিপরীতভাবে, সেই ডিভাইসটি আর আপনার বার্তা পাঠোদ্ধার করতে সক্ষম হবে না।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:252
+#, c-format
+msgid ""
+"You will be able to exchange encrypted messages with the device of %s that "
+"uses this key."
+msgstr ""
+"আপনি %s ডিভাইসের সাথে এনক্রিপ্ট করা বার্তা বিনিময় করতে সক্ষম হবেন যা এই কী "
+"ব্যবহার করে।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+#, c-format
+msgid ""
+"The key and session data for this device of %s will be deleted. If the "
+"device is still active, it will re-appear when a new message is received."
+msgstr ""
+"%s-এর এই ডিভাইসের কী এবং সেশন ডেটা মুছে ফেলা হবে। যদি ডিভাইসটি এখনও সক্রিয় "
+"থাকে, একটি নতুন বার্তা প্রাপ্ত হলে এটি পুনরায় প্রদর্শিত হবে৷"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+msgid "Please click “Remove device” at the top to confirm deletion."
+msgstr "মুছে ফেলা নিশ্চিত করতে উপরে \"ডিভাইস সরান\" ক্লিক করুন."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:269
+#, c-format
+msgid ""
+"The encryption session for this device of %s will be deleted. A fresh "
+"session will be negotiated automatically when the next message is sent. The "
+"key and trust level are preserved."
+msgstr ""
+"%s-এর এই ডিভাইসের এনক্রিপশন সেশন মুছে যাবে। পরের বার বার্তা পাঠালে "
+"স্বয়ংক্রিয়ভাবে নতুন সেশন তৈরি হবে। চাবি ও বিশ্বাসের স্তর অপরিবর্তিত থাকবে।"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:275
+msgid "Back"
+msgstr "ফিরে যান"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Review key"
+msgstr "চাবি পর্যালোচনা করুন"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Manage"
+msgstr "পরিচালনা করুন"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:100
+msgid ""
+"A device for this contact has a new encryption key. DinoX will use it only "
+"after your review."
+msgstr ""
+"এই পরিচিতির জন্য একটি ডিভাইসে একটি নতুন এনক্রিপশন কী রয়েছে৷ DinoX আপনার "
+"পর্যালোচনার পরেই এটি ব্যবহার করবে৷"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:101
+msgid "This contact has new devices"
+msgstr "এই পরিচিতির নতুন ডিভাইস আছে"
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:36
+msgid "This call is <b>encrypted and verified</b> with OMEMO."
+msgstr "এই কল OMEMO দিয়ে <b>এনক্রিপ্ট করা ও যাচাই করা</b> হয়েছে।"
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:40
+msgid "This call is encrypted with OMEMO."
+msgstr "এই কল OMEMO দিয়ে এনক্রিপ্ট করা হয়েছে।"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:16
+msgid "Reset all sessions"
+msgstr "সমস্ত সেশন রিসেট করুন"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:17
+msgid ""
+"Delete all encryption sessions. Fresh sessions will be established on the "
+"next message."
+msgstr ""
+"সমস্ত এনক্রিপশন সেশন মুছুন। পরবর্তী বার্তায় নতুন সেশন স্থাপন করা হবে।"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:18
+msgid "Reset"
+msgstr "রিসেট করুন"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:30
+msgid "Sessions reset. A fresh key exchange will happen on the next message."
+msgstr "সেশনগুলি রিসেট হয়েছে। পরের বার্তায় নতুন করে চাবি বিনিময় হবে।"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:93
+msgid "OMEMO by default"
+msgstr "ডিফল্ট হিসেবে OMEMO"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:94
+msgid "Enable OMEMO encryption for new conversations"
+msgstr "নতুন কথোপকথনের জন্য OMEMO এনক্রিপশন সক্ষম করুন৷"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:95
+#: plugins/omemo/src/ui/contact_details_provider.vala:166
+msgid "Encrypt to new devices"
+msgstr "নতুন ডিভাইসে এনক্রিপ্ট করুন"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:96
+msgid "Automatically encrypt to new devices from this contact."
+msgstr "এই পরিচিতি থেকে নতুন ডিভাইসে স্বয়ংক্রিয়ভাবে এনক্রিপ্ট করুন।"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:97
+msgid "New keys"
+msgstr "নতুন কী"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:169
+msgid ""
+"New encryption keys from your other devices will be accepted automatically."
+msgstr ""
+"আপনার অন্যান্য ডিভাইস থেকে নতুন এনক্রিপশন কী স্বয়ংক্রিয়ভাবে গ্রহণ করা হবে।"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:291
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:293
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:372
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:374
+msgid "This device"
+msgstr "এই ডিভাইস"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:299
+msgid "Set device name"
+msgstr "ডিভাইসের নাম সেট করুন"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Device Name"
+msgstr "ডিভাইসের নাম"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Set a name for this device that other contacts can see."
+msgstr "এই ডিভাইসের জন্য একটি নাম সেট করুন যা অন্য পরিচিতিরা দেখতে পারে৷"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:343
+msgid "Save"
+msgstr "সংরক্ষণ করুন"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:461
+msgid "Other device"
+msgstr "অন্য ডিভাইস"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:463
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Device"
+msgstr "ডিভাইস"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:468
+msgid "inactive"
+msgstr "নিষ্ক্রিয়"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:481
+#: plugins/omemo/src/ui/contact_details_provider.vala:212
+msgid "today"
+msgstr "আজ"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:483
+#: plugins/omemo/src/ui/contact_details_provider.vala:214
+msgid "yesterday"
+msgstr "গতকাল"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:485
+#: plugins/omemo/src/ui/contact_details_provider.vala:216
+#, c-format
+msgid "%d days ago"
+msgstr "%d দিন আগে"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:488
+#: plugins/omemo/src/ui/contact_details_provider.vala:219
+#, c-format
+msgid "%d month ago"
+msgid_plural "%d months ago"
+msgstr[0] "%d মাস আগে"
+msgstr[1] "%d মাস আগে"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:491
+#: plugins/omemo/src/ui/contact_details_provider.vala:222
+#, c-format
+msgid "%d year ago"
+msgid_plural "%d years ago"
+msgstr[0] "%d বছর আগে"
+msgstr[1] "%d বছর আগে"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:493
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+#: plugins/omemo/src/ui/contact_details_provider.vala:224
+msgid "Last seen"
+msgstr "শেষ দেখা"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+msgid "unknown"
+msgstr "অজানা"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:500
+msgid "Accepted"
+msgstr "গৃহীত"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:503
+msgid "Rejected"
+msgstr "প্রত্যাখ্যাত"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:506
+#: plugins/omemo/src/ui/contact_details_provider.vala:365
+msgid "Verified"
+msgstr "যাচাই করা হয়েছে"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:527
+msgid "Inactive"
+msgstr "নিষ্ক্রিয়"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:531
+msgid "Not seen recently"
+msgstr "সম্প্রতি দেখা যায়নি"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:533
+msgid "This DinoX has not observed any activity from this device for over 60 days. The device may still be in use."
+msgstr "এই DinoX গত 60 দিনেরও বেশি সময় ধরে এই ডিভাইসের কোনো কার্যকলাপ শনাক্ত করেনি। ডিভাইসটি এখনও ব্যবহৃত হতে পারে।"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:585
+#: plugins/omemo/src/ui/contact_details_provider.vala:293
+msgid "Encryption key changed"
+msgstr "এনক্রিপশন কী পরিবর্তিত হয়েছে"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:589
+#: plugins/omemo/src/ui/contact_details_provider.vala:297
+msgid "New device"
+msgstr "নতুন ডিভাইস"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:596
+#: plugins/omemo/src/ui/contact_details_provider.vala:304
+msgid ""
+"This device has a new encryption key, for example after a reinstall. DinoX "
+"will use it only after your review."
+msgstr ""
+"এই ডিভাইসটিতে একটি নতুন এনক্রিপশন কী রয়েছে, উদাহরণস্বরূপ একটি পুনরায় "
+"ইনস্টল করার পরে৷ DinoX আপনার পর্যালোচনার পরেই এটি ব্যবহার করবে৷"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:135
+msgid "Verifying private room members…"
+msgstr "ব্যক্তিগত রুমের সদস্যদের যাচাই করা হচ্ছে..."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:148
+msgid "Can't use encryption in a groupchat private message."
+msgstr ""
+"গ্রুপের কোনো অংশগ্রহণকারীকে আলাদা ব্যক্তিগত বার্তায় এনক্রিপশন ব্যবহার করা "
+"যায় না।"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:156
+msgid "OMEMO is initializing, please wait a moment..."
+msgstr "OMEMO শুরু হচ্ছে, অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন..."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:166
+msgid "OMEMO initialization failed. Please try again."
+msgstr "OMEMO সূচনা ব্যর্থ হয়েছে৷ আবার চেষ্টা করুন."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:194
+msgid "OMEMO can't be used in public (non-members-only) rooms."
+msgstr ""
+"যেসব উন্মুক্ত রুমে যোগ দেওয়া শুধু সদস্যদের মধ্যে সীমিত নয়, সেখানে OMEMO "
+"ব্যবহার করা যায় না।"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:197
+msgid "No other room members are available for OMEMO encryption."
+msgstr "OMEMO এনক্রিপশনের জন্য অন্য কোন রুমের সদস্য উপলব্ধ নেই।"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:200
+#, c-format
+msgid "A member does not support OMEMO: %s"
+msgstr "একজন সদস্য OMEMO সমর্থন করেন না: %s"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:207
+msgid "The private room member list could not be verified."
+msgstr "ব্যক্তিগত কক্ষ সদস্য তালিকা যাচাই করা যায়নি."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:217
+msgid "This contact does not support OMEMO encryption"
+msgstr "এই পরিচিতি OMEMO এনক্রিপশন সমর্থন করে না"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:53
+#: plugins/omemo/src/ui/contact_details_provider.vala:100
+msgid "Encryption keys for room members"
+msgstr "রুম সদস্যদের জন্য এনক্রিপশন কী"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:105
+msgid "No member JIDs available. This may be an anonymous room."
+msgstr "কোন সদস্য JID উপলব্ধ নেই. এটি একটি বেনামী রুম হতে পারে."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:155
+msgid "Your devices"
+msgstr "আপনার ডিভাইস"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#: plugins/omemo/src/ui/contact_details_provider.vala:161
+#, c-format
+msgid "%d device"
+msgid_plural "%d devices"
+msgstr[0] "%d ডিভাইস"
+msgstr[1] "%d ডিভাইস"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#, c-format
+msgid " (+%d inactive)"
+msgstr " (+%d নিষ্ক্রিয়)"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:159
+#, c-format
+msgid "%d inactive devices"
+msgstr "%d নিষ্ক্রিয় ডিভাইস"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:168
+msgid "Automatically accept new keys from your other devices."
+msgstr "স্বয়ংক্রিয়ভাবে আপনার অন্যান্য ডিভাইস থেকে নতুন কী গ্রহণ করুন."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:169
+msgid "Automatically accept new keys from this contact."
+msgstr "এই পরিচিতি থেকে স্বয়ংক্রিয়ভাবে নতুন কী গ্রহণ করুন।"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Your device"
+msgstr "আপনার ডিভাইস"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:367
+msgid "Trusted"
+msgstr "বিশ্বস্ত"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:369
+msgid "Untrusted"
+msgstr "অবিশ্বস্ত"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:371
+msgid "Unknown"
+msgstr "অজানা"
+
+#: plugins/omemo/src/ui/own_notifications.vala:30
+msgid "OMEMO trust decision required"
+msgstr "OMEMO বিশ্বাসের সিদ্ধান্ত প্রয়োজন"
+
+#: plugins/omemo/src/ui/own_notifications.vala:32
+#, c-format
+msgid "Did you add a new device for account %s?"
+msgstr "আপনি কি %s অ্যাকাউন্টের জন্য একটি নতুন ডিভাইস যোগ করেছেন?"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:193
+#, c-format
+msgid ""
+"%s has been using an untrusted device. You won't see messages from devices "
+"that you do not trust."
+msgstr ""
+"%s একটি অবিশ্বস্ত ডিভাইস ব্যবহার করছে৷ আপনি বিশ্বাস করেন না এমন ডিভাইসগুলি "
+"থেকে বার্তাগুলি দেখতে পাবেন না৷"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:194
+msgid "Manage devices"
+msgstr "ডিভাইসগুলি পরিচালনা করুন"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:196
+#, c-format
+msgid ""
+"%s sent messages without a key for this device. Those messages could not be "
+"decrypted."
+msgstr ""
+"%s এই ডিভাইসের জন্য একটি কী ছাড়াই বার্তা পাঠিয়েছে। সেই বার্তাগুলিকে "
+"ডিক্রিপ্ট করা যায়নি৷"
+
+#: plugins/omemo/src/logic/manager.vala:746
+#, c-format
+msgid ""
+"No active OMEMO devices were published for %s. Check the recipient's "
+"devices, then retry the encrypted message."
+msgstr ""
+"%s-এর জন্য কোনো সক্রিয় OMEMO ডিভাইস প্রকাশিত হয়নি। প্রাপকের ডিভাইসগুলি "
+"পরীক্ষা করুন, তারপর এনক্রিপ্ট করা বার্তাটি আবার চেষ্টা করুন৷"
+
+#: plugins/omemo/src/logic/manager.vala:1664
+msgid "Could not retrieve the OMEMO device list. Retry the encrypted message."
+msgstr ""
+"OMEMO ডিভাইস তালিকা পুনরুদ্ধার করা যায়নি। এনক্রিপ্ট করা বার্তা পুনরায় "
+"চেষ্টা করুন."
+
+#: plugins/omemo/src/logic/manager.vala:1677
+msgid ""
+"The server requires a presence subscription to access this account's OMEMO "
+"keys. Check account permissions, then retry the encrypted message."
+msgstr ""
+"এই অ্যাকাউন্টের OMEMO চাবি পেতে সার্ভার অনলাইন অবস্থার সাবস্ক্রিপশন চায়। "
+"অ্যাকাউন্টের অনুমতি দেখে এনক্রিপ্ট করা বার্তা আবার পাঠান।"
+
+#: plugins/omemo/src/logic/manager.vala:1678
+msgid ""
+"The server denied access to this account's OMEMO keys. Check account "
+"permissions, then retry the encrypted message."
+msgstr ""
+"সার্ভার এই অ্যাকাউন্টের OMEMO কীগুলিতে অ্যাক্সেস অস্বীকার করেছে৷ অ্যাকাউন্ট "
+"অনুমতি পরীক্ষা করুন, তারপর এনক্রিপ্ট করা বার্তা পুনরায় চেষ্টা করুন।"
+
+#: plugins/omemo/src/logic/manager.vala:1681
+msgid ""
+"OMEMO key access requires a presence subscription. Ask the contact to "
+"approve it, then retry the encrypted message."
+msgstr ""
+"OMEMO চাবি পেতে অনলাইন অবস্থার সাবস্ক্রিপশন প্রয়োজন। পরিচিতিকে অনুমোদন করতে"
+" বলে এনক্রিপ্ট করা বার্তা আবার পাঠান।"
+
+#: plugins/omemo/src/logic/manager.vala:1682
+msgid ""
+"The server denied access to the OMEMO keys. Check contact permissions, then "
+"retry the encrypted message."
+msgstr ""
+"সার্ভার OMEMO কীগুলিতে অ্যাক্সেস অস্বীকার করেছে৷ যোগাযোগের অনুমতি পরীক্ষা "
+"করুন, তারপর এনক্রিপ্ট করা বার্তা পুনরায় চেষ্টা করুন।"

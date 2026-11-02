@@ -1,0 +1,104 @@
+# Additive Nora-only overrides. Historical e406 functions run in their own module.
+import importlib.util as _iu
+assert sha(Path(_BASELINE_))=='bdcf594aa98be73fc08fb4ce1a955d53671a91bc0c523df4ba26b4ef1bd52816'
+_spec = _iu.spec_from_file_location('historical_join_v2_nora', Path(_BASELINE_))
+_historical = _iu.module_from_spec(_spec); _spec.loader.exec_module(_historical)
+_old_role_config = role_config
+_old_control_settings = control_settings
+PRODUCT = _PRODUCT_
+NORMAL_MIXED_CONSENT_UI_SHA256 = _MIXED_SHA_
+MIXED_HELPER = Path(_MIXED_PATH_)
+LAYOUT_CAPTURE = Path(_LAYOUT_PATH_)
+LAYOUT_CAPTURE_SHA256 = _LAYOUT_SHA_
+APKS = {'main.apk': PRODUCT['main_sha256'], 'android-test.apk': PRODUCT['test_sha256']}
+APK_PATHS = {'main.apk': Path(PRODUCT['main_path']), 'android-test.apk': Path(PRODUCT['test_path'])}
+CLIENT_VARIANT = 'device-dialects-landscape-616-Nora-only-2048-lowram'
+JOIN_PRODUCT_PROOF = dict(_historical.JOIN_PRODUCT_PROOF, main_sha256=PRODUCT['main_sha256'],
+    source_manifest_sha256=PRODUCT['source']['sha256'], actual_jvm_tests=616,
+    reviewed_source_commit=PRODUCT['commit'], local_handoff_path=PRODUCT['handoff']['path'],
+    local_handoff_sha256=PRODUCT['handoff']['sha256'])
+
+def _current_product():
+    for name in ('handoff','build','jvm','source'):
+        ref=PRODUCT[name];assert sha(Path(ref['path']))==ref['sha256']
+    h,b,j=(read(PRODUCT[k]['path']) for k in ('handoff','build','jvm'))
+    assert h['result']==b['result']==j['result']=='PASS'
+    assert h['apk_sha256']==b['apk_sha256']==APKS['main.apk']
+    assert h['actual_jvm_tests']==b['actual_jvm_tests']==j['tests']==j['unique_cases']==616
+    assert h['test_apk_sha256']==APKS['android-test.apk']
+    assert j['failures']==j['errors']==j['skipped']==0
+    assert h['signer_certificate_sha256']==PRODUCT['signer_certificate_sha256']
+    return dict(JOIN_PRODUCT_PROOF)
+
+def frozen_files():
+    assert _historical.frozen_files()=='e406750ab36b260618f254c15d8cedcbc52db6dcfa0a1e26e073aaf1cf46df28'
+    value=read(HERE/'freeze.json')
+    assert value['mode']=='Nora-only-2048-devicefix-consent' and value['roles']==['nora']
+    assert value['files_sha256']=={name:sha(HERE/name) for name in ('runtime.py','control.py','recorder.py','scenario.py')}
+    assert value['apk_sha256']==APKS and value['product']==PRODUCT
+    assert sha(MIXED_HELPER)==NORMAL_MIXED_CONSENT_UI_SHA256
+    assert sha(LAYOUT_CAPTURE)==LAYOUT_CAPTURE_SHA256
+    _current_product();return sha(HERE/'freeze.json')
+
+def role_config(role):
+    assert role=='nora','This derivative cannot start/control Android Leon or Felix'
+    return _old_role_config(role)
+
+def verify_join_product():return _current_product()
+
+def verify_derivation():
+    return {'historical_e406':_historical.verify_derivation(),'current_616':_current_product(),
+        'installed_apk_sha256':APKS,'historical_eight_not_relabelled':True}
+
+def _native_readonly_bindings(value, now):
+    assert set(value)=={'directory','control_sha256','recorder_sha256','admission_sha256','owner_admission','inspects'}
+    directory=Path(value['directory']).resolve(strict=True)
+    assert directory.is_relative_to(HERE.parent)
+    script=directory/'native_control.py';assert sha(script)==value['control_sha256']
+    assert sha(directory/'native_recorder.py')==value['recorder_sha256']
+    spec=_iu.spec_from_file_location('admitted_native_readonly',script)
+    native=_iu.module_from_spec(spec);spec.loader.exec_module(native)
+    admission=native.admission(value['admission_sha256']);assert admission==value['owner_admission']
+    assert set(value['inspects'])=={'leon','felix'}
+    for role,ref in value['inspects'].items():
+        assert 0<=now-ref['observed_unix']<=300
+        assert sha(Path(ref['path']))==ref['sha256'];info=read(ref['path'])
+        if isinstance(info,list):assert len(info)==1;info=info[0]
+        native.check_container(info,admission['roles'][role],role)
+    return value
+
+def gate(role,memory_mib=2048,lowram=True,android_tests_before_bridge=False):
+    assert role=='nora' and memory_mib==2048 and lowram is True and android_tests_before_bridge is False
+    freeze=frozen_files();path=STATE/'allow-nora.json';assert path.stat().st_mode&0o077==0
+    value=read(path);now=time.time()
+    assert value['schema_version']==2 and value['run_id']==RUN and value['role']=='nora'
+    assert value['mode']=='bridge' and value['freeze_sha256']==freeze and value['installed_apk_sha256']==APKS
+    assert value['guest_memory_mib']==2048 and value['lowram_emulation_variant'] is True
+    assert value['android_tests_before_bridge'] is False and value['single_nora_memory_probe'] is True
+    assert re.fullmatch('[0-9a-f]{32}',value['batch_id'])
+    assert 0<=now-value['created_unix']<=300 and now<value['expires_unix']<=value['created_unix']+600
+    assert now<value['batch_deadline_unix']<=value['created_unix']+2700
+    assert value['inputs_sha256']==sha(ROOT/'runtime-inputs.json')=='497bdf37cdcd317895a8d33efc3e0f9be189d4110f81f89d218b0c1817f775c2'
+    _native_readonly_bindings(value['native_bindings'],now)
+    probe_path=HERE.parent/'triple_v3/gpu_probe/probe.py'
+    assert sha(probe_path)=='30302b9f69432122545a388b7947faf9774cf5e6988950f2624dc111edce5f6f'
+    spec=_iu.spec_from_file_location('nora_sdk_inventory_guard',probe_path)
+    inventory=_iu.module_from_spec(spec);spec.loader.exec_module(inventory)
+    inventory.require_no_guests(inventory.guest_processes(inventory.load_baseline()))
+    # Existing historical evidence remains historical; no currently running native
+    # testpeer is required OFF by this one-Android profile.
+    verify_install_apks();verify_current_eight();verify_invite_history()
+    return {'freeze_sha256':freeze,'inputs_sha256':value['inputs_sha256'],'client_variant':CLIENT_VARIANT,
+        'source_manifest_sha256':PRODUCT['source']['sha256'],'apk_sha256':APKS,
+        'approval_sha256':sha(path),'batch_id':value['batch_id'],'batch_deadline_unix':value['batch_deadline_unix'],
+        'derivation':verify_derivation(),'native_readonly_bindings':value['native_bindings']}
+
+def control_settings(role):
+    settings=_old_control_settings(role)
+    session=read(settings['state']/'live-session.json')
+    assert time.time()<session['batch_deadline_unix']
+    script=Path(sys.argv[0]).resolve(strict=True)
+    approved={HERE/'runtime.py',HERE/'control.py',HERE/'recorder.py',HERE/'scenario.py',MIXED_HELPER}
+    assert script in approved,'Exact frozen Nora caller required'
+    if script==MIXED_HELPER:assert sha(script)==NORMAL_MIXED_CONSENT_UI_SHA256
+    return settings

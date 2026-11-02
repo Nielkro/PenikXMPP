@@ -1,0 +1,10 @@
+// Windows Resource file for DinoX
+// Embeds the application icon and UTF-8 process manifest into dinox.exe
+
+// Resource ID 1 — must match the numeric ID used in systray_win32.c
+// LoadImageW(... MAKEINTRESOURCEW(1) ...) to load this icon.
+1 ICON "dinox.ico"
+
+// Resource type 24 is RT_MANIFEST. The UTF-8 active code page keeps legacy
+// narrow-path consumers in GnuTLS and Gettext compatible with Unicode paths.
+1 24 "dinox.exe.manifest"

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface domain="dino">
+  <requires lib="gtk" version="4.0"/>
+  <object class="GtkGrid" id="main_grid">
+    <property name="column-spacing">7</property>
+    <property name="row-spacing">2</property>
+    <child>
+      <object class="DinoUiAvatarPicture" id="avatar_picture">
+        <property name="height-request">35</property>
+        <property name="width-request">35</property>
+        <property name="valign">start</property>
+        <property name="margin-top">2</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="row-span">2</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <!-- Keep metadata in one natural-width group. Content in another row
+           must not distribute its width between the individual labels. -->
+      <object class="GtkBox" id="header_box">
+        <property name="orientation">horizontal</property>
+        <property name="spacing">6</property>
+        <property name="halign">start</property>
+        <property name="valign">baseline</property>
+        <property name="hexpand">False</property>
+        <child>
+          <object class="GtkLabel" id="name_label">
+            <property name="ellipsize">end</property>
+            <property name="max-width-chars">24</property>
+            <property name="single-line-mode">True</property>
+            <property name="xalign">0</property>
+            <property name="valign">baseline</property>
+            <attributes>
+              <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
+            </attributes>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="time_label">
+            <property name="xalign">0</property>
+            <property name="single-line-mode">True</property>
+            <property name="valign">baseline</property>
+            <attributes>
+              <attribute name="scale" value="0.8"/>
+            </attributes>
+            <style>
+              <class name="dim-label"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkImage" id="encrypted_image">
+            <property name="opacity">0.4</property>
+            <property name="pixel-size">12</property>
+            <property name="valign">center</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkImage" id="marked_image">
+            <property name="opacity">0.4</property>
+            <property name="pixel-size">13</property>
+            <property name="valign">center</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="mention_indicator_label">
+            <property name="label">@</property>
+            <property name="visible">False</property>
+            <property name="valign">baseline</property>
+            <property name="xalign">0</property>
+            <property name="hexpand">False</property>
+            <property name="tooltip-text" translatable="yes">You have been mentioned</property>
+            <attributes>
+              <attribute name="scale" value="0.8"/>
+              <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
+            </attributes>
+            <style>
+              <class name="chat-mention-indicator"/>
+            </style>
+          </object>
+        </child>
+        <layout>
+          <property name="column">2</property>
+          <property name="row">0</property>
+        </layout>
+      </object>
+    </child>
+  </object>
+</interface>

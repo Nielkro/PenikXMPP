@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+    <requires lib="gtk" version="4.0"/>
+    <template class="DinoUiOccupantMenuList">
+        <property name="width-request">316</property>
+        <property name="height-request">408</property>
+        <child>
+            <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                    <object class="GtkSearchEntry" id="search_entry">
+                        <property name="margin_top">8</property>
+                        <property name="margin_bottom">8</property>
+                        <property name="margin_start">8</property>
+                        <property name="margin_end">8</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel" id="summary_label">
+                        <property name="visible">False</property>
+                        <property name="margin_start">10</property>
+                        <property name="margin_end">10</property>
+                        <property name="margin_bottom">6</property>
+                        <property name="xalign">0</property>
+                        <style>
+                            <class name="dim-label"/>
+                        </style>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton" id="show_list_button">
+                        <property name="label" translatable="yes">Show member list</property>
+                        <property name="vexpand">True</property>
+                        <property name="valign">center</property>
+                        <property name="margin_start">8</property>
+                        <property name="margin_end">8</property>
+                        <property name="margin_bottom">8</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkBox" id="loading_box">
+                        <property name="orientation">horizontal</property>
+                        <property name="spacing">8</property>
+                        <property name="visible">False</property>
+                        <property name="vexpand">True</property>
+                        <property name="valign">center</property>
+                        <property name="halign">center</property>
+                        <property name="margin_start">10</property>
+                        <property name="margin_end">10</property>
+                        <property name="margin_bottom">8</property>
+                        <child>
+                            <object class="GtkSpinner" id="loading_spinner"/>
+                        </child>
+                        <child>
+                            <object class="GtkLabel" id="loading_label">
+                                <property name="xalign">0</property>
+                                <property name="hexpand">True</property>
+                                <style>
+                                    <class name="dim-label"/>
+                                    <class name="caption"/>
+                                </style>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkScrolledWindow" id="scrolled_window">
+                        <property name="visible">False</property>
+                        <property name="min_content_width">316</property>
+                        <property name="max_content_width">316</property>
+                        <property name="min_content_height">360</property>
+                        <property name="max_content_height">360</property>
+                        <property name="propagate_natural_width">False</property>
+                        <property name="propagate_natural_height">False</property>
+                        <child>
+                            <object class="GtkListView" id="list_view">
+                                <property name="single-click-activate">True</property>
+                                <property name="vexpand">True</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </template>
+</interface>

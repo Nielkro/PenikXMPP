@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "mode": "Nora-only-persistent-room-service-20261018",
+  "roles": [
+    "nora"
+  ],
+  "parent_A_freeze_sha256": "131aa89a08adf3075e7ddcbc62af03b4ac14a682e3df4547099cd6bd6ef7b294",
+  "product": {
+    "handoff": {
+      "path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/main-artifacts/local-artifact-handoff.json",
+      "sha256": "592877fbf8760b4579f831b6a33096f59631d2634b82722711a2791e18961dca"
+    },
+    "build": {
+      "path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/main-artifacts/main-build-receipt.json",
+      "sha256": "81f1d2f5ec05a1ec06958d32afd3374f8c8b98f52564d0dbde254a1271c92fd8"
+    },
+    "jvm": {
+      "path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/jvm-results/jvm-receipt.json",
+      "sha256": "4f47c0fc108684c2bdf1706d77c72d45ff841acc7b87c34fcd47909beb020229"
+    },
+    "source": {
+      "path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/main-artifacts/source-reviewed-jvm.json",
+      "sha256": "b1ac6b70000caa0b5e512e94da128508ad09bc2a14d0b8b86708404db7cd4491"
+    },
+    "main_path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/muji-device-landscape-fix/main-artifacts/main-device-layout-fixed.apk",
+    "main_sha256": "0a8ce212645b5a4876ee7f88122e5065d8f34a4f2a5c212ac91eec4402d0bebe",
+    "test_path": "/media/linux/SSD128/xmppwin/local/monocles-server-validation-20261015/test-bridge-api35-fix/signpair/artifacts/test-interop-signed.apk",
+    "test_sha256": "486b06a8f472fc68d89f9ced35b1befbc67805f22aa0d3dbf1c162cf3aab6e65",
+    "commit": "05ea2fb4c144f5373883dbc1124396d12bd4ed4d",
+    "actual_jvm_tests": 616,
+    "signer_certificate_sha256": "89ad5d0085ecee67350b62cb634d5d2ee7255f928c9979e32753f4e4bc519ecf"
+  },
+  "apk_sha256": {
+    "main.apk": "0a8ce212645b5a4876ee7f88122e5065d8f34a4f2a5c212ac91eec4402d0bebe",
+    "android-test.apk": "486b06a8f472fc68d89f9ced35b1befbc67805f22aa0d3dbf1c162cf3aab6e65"
+  },
+  "files_sha256": {
+    "runtime.py": "a4f1b23d9a1b6759543cea757ec15551f4697caed834cb5b19f48f1bef81cf5f",
+    "control.py": "e51e28b94dfc2a09b5424592d79e19d9b057ed0e6c3371be8cf9e2e1a756f42c",
+    "recorder.py": "588219cf99c4b94ab5215447988571299ad64bc999b17b238c88171cf1335b3a",
+    "scenario.py": "86222e30ed66b8d2670cc2a3bbeea12fc48752103a8c29d9a9407346f357bd11",
+    "service_support.py": "0a74b6302f07bc62c6b475953e495de4a66d38c0682ba476f637af7a521a2daf",
+    "room_scope.py": "b78eab85823a6aae378ebfed1bd906aa5f0a8fd454e6de9bb40e02891ec1bbfd",
+    "monitor.py": "f66b72dd17b59862d3649f932d12dbf1d6e670c6f7ba0d8df556fb7e858b06f9"
+  },
+  "root_start_authorized": false,
+  "marker_created": false,
+  "runtime_started": false
+}

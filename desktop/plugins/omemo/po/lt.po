@@ -1,0 +1,764 @@
+# Lithuanian translations for DinoX.
+# This file is distributed under the same license as the DinoX package.
+msgid ""
+msgstr ""
+"Project-Id-Version: DinoX\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-26 12:04+0100\n"
+"PO-Revision-Date: 2026-10-26 22:26+0100\n"
+"Last-Translator: DinoX contributors\n"
+"Language-Team: Lithuanian\n"
+"Language: lt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: plugins/omemo/data/encryption_preferences_entry.ui:8
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:92
+msgid ""
+"Each device has its own OMEMO key. Messages can only be decrypted by a "
+"device if they are encrypted to its key. Messages are only encrypted to "
+"accepted devices."
+msgstr ""
+"Kiekvienas įrenginys turi savo OMEMO raktą. Žinutes įrenginys gali "
+"iššifruoti tik tuo atveju, jei jos užšifruotos jo raktu. Žinutės šifruojamos"
+" tik priimtiems įrenginiams."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:17
+#: plugins/omemo/src/ui/contact_details_provider.vala:52
+#: plugins/omemo/src/ui/contact_details_provider.vala:99
+msgid "OMEMO Encryption"
+msgstr "OMEMO šifravimas"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:18
+msgid ""
+"Older hidden messages have no recorded fingerprint and cannot be safely "
+"assigned to this key."
+msgstr ""
+"Senesnės paslėptos žinutės neturi įrašyto rakto atspaudo ir negali būti "
+"saugiai priskirtos šiam raktui."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:19
+#: plugins/omemo/src/ui/manage_key_dialog.vala:36
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:36
+msgid "Close"
+msgstr "Uždaryti"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Key changed"
+msgstr "Raktas pasikeitė"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Could not update device"
+msgstr "Nepavyko atnaujinti įrenginio"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:34
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:34
+msgid ""
+"The device key has changed. Review the current fingerprint before trying "
+"again."
+msgstr ""
+"Įrenginio raktas pasikeitė. Prieš bandydami dar kartą peržiūrėkite dabartinį"
+" atspaudą."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:35
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:35
+msgid "The device settings could not be changed. Please try again."
+msgstr "Nepavyko pakeisti įrenginio nustatymų. Bandykite dar kartą."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:75
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:415
+#: plugins/omemo/src/ui/contact_details_provider.vala:227
+msgid "Manage Key"
+msgstr "Tvarkyti raktą"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:76
+msgid ""
+"Compare the fingerprint, character by character, with the one shown on your "
+"contact's device."
+msgstr ""
+"Palyginkite rakto atspaudą simbolis po simbolio su rodomu adresato "
+"įrenginyje."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:77
+msgid "Fingerprints differ"
+msgstr "Atspaudai skiriasi"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:78
+msgid "Fingerprints match"
+msgstr "Atspaudai sutampa"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:86
+#: plugins/omemo/src/ui/manage_key_dialog.vala:148
+#: plugins/omemo/src/ui/manage_key_dialog.vala:154
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:342
+msgid "Cancel"
+msgstr "Atšaukti"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:87
+#: plugins/omemo/src/ui/manage_key_dialog.vala:122
+#: plugins/omemo/src/ui/manage_key_dialog.vala:161
+#: plugins/omemo/src/ui/manage_key_dialog.vala:234
+msgid "Confirm"
+msgstr "Patvirtinti"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:94
+#, c-format
+msgid ""
+"Account: %s\n"
+"Contact: %s\n"
+"Device: %s"
+msgstr ""
+"Paskyra: %s\n"
+"Adresatas: %s\n"
+"Įrenginys: %s"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:126
+msgid "Verify key"
+msgstr "Patikrinti raktą"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:127
+#, c-format
+msgid ""
+"Future messages sent by %s from the device that uses this key will be "
+"highlighted accordingly in the chat window."
+msgstr ""
+"Būsimos žinutės, kurias %s siųs iš šį raktą naudojančio įrenginio, bus "
+"atitinkamai paryškintos pokalbio lange."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:138
+msgid "Fingerprints do not match"
+msgstr "Atspaudai nesutampa"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:139
+#, c-format
+msgid ""
+"Please verify that you are comparing the correct fingerprint. If "
+"fingerprints do not match, %s's account may be compromised and you should "
+"consider rejecting this key."
+msgstr ""
+"Įsitikinkite, kad lyginate teisingą atspaudą. Jei atspaudai nesutampa, %s "
+"paskyra gali būti perimta ir turėtumėte apsvarstyti šio rakto atmetimą."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+#: plugins/omemo/src/ui/manage_key_dialog.vala:259
+#: plugins/omemo/src/ui/manage_key_dialog.vala:261
+msgid "Remove device"
+msgstr "Pašalinti įrenginį"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+msgid "Open"
+msgstr "Atverti"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid "Verify key fingerprint"
+msgstr "Patikrinti rakto atspaudą"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid ""
+"Compare this key's fingerprint with the fingerprint displayed on the "
+"contact's device."
+msgstr ""
+"Palyginkite šio rakto atspaudą su adresato įrenginyje rodomu atspaudu."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+#: plugins/omemo/src/ui/manage_key_dialog.vala:243
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:609
+#: plugins/omemo/src/ui/contact_details_provider.vala:315
+msgid "Reject key"
+msgstr "Atmesti raktą"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+msgid ""
+"Block encrypted communication with the contact's device that uses this key."
+msgstr ""
+"Blokuoti šifruotą bendravimą su šį raktą naudojančiu adresato įrenginiu."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+#: plugins/omemo/src/ui/manage_key_dialog.vala:251
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:604
+#: plugins/omemo/src/ui/contact_details_provider.vala:310
+msgid "Accept key"
+msgstr "Priimti raktą"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+msgid ""
+"Allow encrypted communication with the contact's device that uses this key."
+msgstr ""
+"Leisti šifruotą bendravimą su šį raktą naudojančiu adresato įrenginiu."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+#: plugins/omemo/src/ui/manage_key_dialog.vala:268
+msgid "Reset session"
+msgstr "Atkurti seansą"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+msgid ""
+"Delete the encryption session for this device. A fresh session will be "
+"established on the next message. Use this when messages are not arriving."
+msgstr ""
+"Ištrinti šio įrenginio šifravimo seansą. Naujas seansas bus užmegztas su "
+"kita žinute. Naudokite, kai žinutės negaunamos."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+msgid ""
+"Delete this device's key and session data. Use this for old or inactive "
+"devices."
+msgstr ""
+"Ištrinti šio įrenginio rakto ir seanso duomenis. Naudokite seniems ar "
+"neaktyviems įrenginiams."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid "This key is currently %s."
+msgstr "Šiuo metu šis raktas yra %s."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+msgid "accepted"
+msgstr "priimtas"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#, c-format
+msgid ""
+"This means it can be used by %s to receive and send encrypted messages."
+msgstr ""
+"Tai reiškia, kad %s gali jį naudoti šifruotų žinučių siuntimui ir gavimui."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid "verified"
+msgstr "patvirtintas"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid ""
+"Additionally it has been verified to match the key on the contact's device."
+msgstr ""
+"Be to, jis buvo patikrintas ir sutampa su adresato įrenginyje rodomu raktu."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+msgid "rejected"
+msgstr "atmestas"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid ""
+"This means it cannot be used by %s to decipher your messages, and you won't "
+"see messages encrypted with it."
+msgstr ""
+"Tai reiškia, kad %s negali jo naudoti jūsų žinutėms iššifruoti, o jūs "
+"nematysite juo užšifruotų žinučių."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:244
+#, c-format
+msgid ""
+"You won't see encrypted messages from the device of %s that uses this key. "
+"Conversely, that device won't be able to decipher your messages anymore."
+msgstr ""
+"Nematysite šifruotų žinučių iš šį raktą naudojančio %s įrenginio. Savo "
+"ruožtu tas įrenginys nebegalės iššifruoti jūsų žinučių."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:252
+#, c-format
+msgid ""
+"You will be able to exchange encrypted messages with the device of %s that "
+"uses this key."
+msgstr ""
+"Jūs galite keistis šifruotomis žinutėmis su %s įrenginiu, kuris naudoja šį "
+"raktą."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+#, c-format
+msgid ""
+"The key and session data for this device of %s will be deleted. If the "
+"device is still active, it will re-appear when a new message is received."
+msgstr ""
+"Šio %s įrenginio rakto ir seanso duomenys bus ištrinti. Jei įrenginys vis "
+"dar aktyvus, jis vėl atsiras gavus naują žinutę."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+msgid "Please click “Remove device” at the top to confirm deletion."
+msgstr ""
+"Norėdami patvirtinti trynimą, viršuje spustelėkite „Pašalinti įrenginį“."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:269
+#, c-format
+msgid ""
+"The encryption session for this device of %s will be deleted. A fresh "
+"session will be negotiated automatically when the next message is sent. The "
+"key and trust level are preserved."
+msgstr ""
+"Šio %s įrenginio šifravimo seansas bus ištrintas. Siunčiant kitą žinutę "
+"automatiškai bus užmegztas naujas seansas. Raktas ir pasitikėjimo lygis "
+"išsaugomi."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:275
+msgid "Back"
+msgstr "Atgal"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Review key"
+msgstr "Peržiūrėti raktą"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Manage"
+msgstr "Tvarkyti"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:100
+msgid ""
+"A device for this contact has a new encryption key. DinoX will use it only "
+"after your review."
+msgstr ""
+"Šio adresato įrenginys turi naują šifravimo raktą. DinoX jį naudos tik jums "
+"peržiūrėjus."
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:101
+msgid "This contact has new devices"
+msgstr "Šis adresatas turi naujų įrenginių"
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:36
+msgid "This call is <b>encrypted and verified</b> with OMEMO."
+msgstr "Šis skambutis <b>užšifruotas ir patvirtintas</b> naudojant OMEMO."
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:40
+msgid "This call is encrypted with OMEMO."
+msgstr "Šis skambutis užšifruotas naudojant OMEMO."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:16
+msgid "Reset all sessions"
+msgstr "Atkurti visus seansus"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:17
+msgid ""
+"Delete all encryption sessions. Fresh sessions will be established on the "
+"next message."
+msgstr ""
+"Ištrinti visus šifravimo seansus. Nauji seansai bus užmegzti su kita žinute."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:18
+msgid "Reset"
+msgstr "Atkurti"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:30
+msgid "Sessions reset. A fresh key exchange will happen on the next message."
+msgstr "Seansai atkurti. Naujas apsikeitimas raktais vyks su kita žinute."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:93
+msgid "OMEMO by default"
+msgstr "OMEMO pagal numatymą"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:94
+msgid "Enable OMEMO encryption for new conversations"
+msgstr "Įjungti naujiems pokalbiams OMEMO šifravimą"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:95
+#: plugins/omemo/src/ui/contact_details_provider.vala:166
+msgid "Encrypt to new devices"
+msgstr "Šifruoti į naujus įrenginius"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:96
+msgid "Automatically encrypt to new devices from this contact."
+msgstr "Automatiškai šifruoti į naujus įrenginius iš šio adresato."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:97
+msgid "New keys"
+msgstr "Nauji raktai"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:169
+msgid ""
+"New encryption keys from your other devices will be accepted automatically."
+msgstr ""
+"Nauji šifravimo raktai iš jūsų kitų įrenginių bus priimti automatiškai."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:291
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:293
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:372
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:374
+msgid "This device"
+msgstr "Šis įrenginys"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:299
+msgid "Set device name"
+msgstr "Nustatyti įrenginio pavadinimą"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Device Name"
+msgstr "Įrenginio pavadinimas"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Set a name for this device that other contacts can see."
+msgstr "Nustatykite šio įrenginio pavadinimą, kurį matys kiti adresatai."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:343
+msgid "Save"
+msgstr "Išsaugoti"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:461
+msgid "Other device"
+msgstr "Kitas įrenginys"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:463
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Device"
+msgstr "Įrenginys"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:468
+msgid "inactive"
+msgstr "neaktyvus"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:481
+#: plugins/omemo/src/ui/contact_details_provider.vala:212
+msgid "today"
+msgstr "šiandien"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:483
+#: plugins/omemo/src/ui/contact_details_provider.vala:214
+msgid "yesterday"
+msgstr "vakar"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:485
+#: plugins/omemo/src/ui/contact_details_provider.vala:216
+#, c-format
+msgid "%d days ago"
+msgstr "prieš %d d."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:488
+#: plugins/omemo/src/ui/contact_details_provider.vala:219
+#, c-format
+msgid "%d month ago"
+msgid_plural "%d months ago"
+msgstr[0] "prieš %d mėnesį"
+msgstr[1] "prieš %d mėnesius"
+msgstr[2] "prieš %d mėnesių"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:491
+#: plugins/omemo/src/ui/contact_details_provider.vala:222
+#, c-format
+msgid "%d year ago"
+msgid_plural "%d years ago"
+msgstr[0] "prieš %d metus"
+msgstr[1] "prieš %d metus"
+msgstr[2] "prieš %d metų"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:493
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+#: plugins/omemo/src/ui/contact_details_provider.vala:224
+msgid "Last seen"
+msgstr "Paskutinį kartą matytas"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+msgid "unknown"
+msgstr "nežinoma"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:500
+msgid "Accepted"
+msgstr "Priimtas"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:503
+msgid "Rejected"
+msgstr "Atmestas"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:506
+#: plugins/omemo/src/ui/contact_details_provider.vala:365
+msgid "Verified"
+msgstr "Patvirtintas"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:527
+msgid "Inactive"
+msgstr "Neaktyvus"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:531
+msgid "Not seen recently"
+msgstr "Pastaruoju metu nepastebėtas"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:533
+msgid "This DinoX has not observed any activity from this device for over 60 days. The device may still be in use."
+msgstr "Šis „DinoX“ daugiau nei 60 dienų neužfiksavo šio įrenginio veiklos. Įrenginys vis dar gali būti naudojamas."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:585
+#: plugins/omemo/src/ui/contact_details_provider.vala:293
+msgid "Encryption key changed"
+msgstr "Šifravimo raktas pasikeitė"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:589
+#: plugins/omemo/src/ui/contact_details_provider.vala:297
+msgid "New device"
+msgstr "Naujas įrenginys"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:596
+#: plugins/omemo/src/ui/contact_details_provider.vala:304
+msgid ""
+"This device has a new encryption key, for example after a reinstall. DinoX "
+"will use it only after your review."
+msgstr ""
+"Šis įrenginys turi naują šifravimo raktą, pavyzdžiui, po pakartotinio "
+"diegimo. DinoX jį naudos tik jums peržiūrėjus."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:135
+msgid "Verifying private room members…"
+msgstr "Tikrinami privačios grupės nariai…"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:148
+msgid "Can't use encryption in a groupchat private message."
+msgstr "Privačioje grupės žinutėje šifravimo naudoti negalima."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:156
+msgid "OMEMO is initializing, please wait a moment..."
+msgstr "OMEMO inicijuojama, šiek tiek palaukite..."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:166
+msgid "OMEMO initialization failed. Please try again."
+msgstr "Nepavyko inicijuoti OMEMO. Bandykite dar kartą."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:194
+msgid "OMEMO can't be used in public (non-members-only) rooms."
+msgstr "OMEMO negalima naudoti viešose (ne tik nariams skirtose) grupėse."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:197
+msgid "No other room members are available for OMEMO encryption."
+msgstr "Nėra kitų grupės narių, kuriems būtų galima šifruoti su OMEMO."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:200
+#, c-format
+msgid "A member does not support OMEMO: %s"
+msgstr "Narys nepalaiko OMEMO: %s"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:207
+msgid "The private room member list could not be verified."
+msgstr "Nepavyko patikrinti privačios grupės narių sąrašo."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:217
+msgid "This contact does not support OMEMO encryption"
+msgstr "Šis adresatas nepalaiko OMEMO šifravimo"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:53
+#: plugins/omemo/src/ui/contact_details_provider.vala:100
+msgid "Encryption keys for room members"
+msgstr "Grupės narių šifravimo raktai"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:105
+msgid "No member JIDs available. This may be an anonymous room."
+msgstr "Narių JID neprieinami. Tai gali būti anoniminė grupė."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:155
+msgid "Your devices"
+msgstr "Jūsų įrenginiai"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#: plugins/omemo/src/ui/contact_details_provider.vala:161
+#, c-format
+msgid "%d device"
+msgid_plural "%d devices"
+msgstr[0] "%d įrenginys"
+msgstr[1] "%d įrenginiai"
+msgstr[2] "%d įrenginių"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#, c-format
+msgid " (+%d inactive)"
+msgstr " (+%d neaktyvių)"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:159
+#, c-format
+msgid "%d inactive devices"
+msgstr "Neaktyvūs įrenginiai: %d"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:168
+msgid "Automatically accept new keys from your other devices."
+msgstr "Automatiškai priimti naujus raktus iš kitų jūsų įrenginių."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:169
+msgid "Automatically accept new keys from this contact."
+msgstr "Automatiškai priimti naujus šio adresato raktus."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Your device"
+msgstr "Jūsų įrenginys"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:367
+msgid "Trusted"
+msgstr "Patikimas"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:369
+msgid "Untrusted"
+msgstr "Nepatikimas"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:371
+msgid "Unknown"
+msgstr "Nežinomas"
+
+#: plugins/omemo/src/ui/own_notifications.vala:30
+msgid "OMEMO trust decision required"
+msgstr "OMEMO reikia pasitikėjimo sprendimo"
+
+#: plugins/omemo/src/ui/own_notifications.vala:32
+#, c-format
+msgid "Did you add a new device for account %s?"
+msgstr "Ar savo %s paskyrai pridėjote naują įrenginį?"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:193
+#, c-format
+msgid ""
+"%s has been using an untrusted device. You won't see messages from devices "
+"that you do not trust."
+msgstr ""
+"%s naudoja nepatikimą įrenginį. Jūs nematysite žinučių iš įrenginių, kuriais"
+" nepasitikite."
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:194
+msgid "Manage devices"
+msgstr "Tvarkyti įrenginius"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:196
+#, c-format
+msgid ""
+"%s sent messages without a key for this device. Those messages could not be "
+"decrypted."
+msgstr ""
+"%s atsiuntė žinutes be rakto šiam įrenginiui. Šių žinučių iššifruoti "
+"nepavyko."
+
+#: plugins/omemo/src/logic/manager.vala:746
+#, c-format
+msgid ""
+"No active OMEMO devices were published for %s. Check the recipient's "
+"devices, then retry the encrypted message."
+msgstr ""
+"Nepaskelbta aktyvių %s OMEMO įrenginių. Patikrinkite gavėjo įrenginius, tada"
+" bandykite užšifruotą žinutę siųsti dar kartą."
+
+#: plugins/omemo/src/logic/manager.vala:1664
+msgid "Could not retrieve the OMEMO device list. Retry the encrypted message."
+msgstr ""
+"Nepavyko gauti OMEMO įrenginių sąrašo. Bandykite užšifruotą žinutę siųsti "
+"dar kartą."
+
+#: plugins/omemo/src/logic/manager.vala:1677
+msgid ""
+"The server requires a presence subscription to access this account's OMEMO "
+"keys. Check account permissions, then retry the encrypted message."
+msgstr ""
+"Serveris reikalauja prisijungimo būsenos prenumeratos, kad būtų galima "
+"pasiekti šios paskyros OMEMO raktus. Patikrinkite paskyros leidimus, tada "
+"bandykite užšifruotą žinutę siųsti dar kartą."
+
+#: plugins/omemo/src/logic/manager.vala:1678
+msgid ""
+"The server denied access to this account's OMEMO keys. Check account "
+"permissions, then retry the encrypted message."
+msgstr ""
+"Serveris neleido pasiekti šios paskyros OMEMO raktų. Patikrinkite paskyros "
+"leidimus, tada bandykite užšifruotą žinutę siųsti dar kartą."
+
+#: plugins/omemo/src/logic/manager.vala:1681
+msgid ""
+"OMEMO key access requires a presence subscription. Ask the contact to "
+"approve it, then retry the encrypted message."
+msgstr ""
+"Prieigai prie OMEMO raktų būtina prisijungimo būsenos prenumerata. "
+"Paprašykite adresato ją patvirtinti, tada bandykite užšifruotą žinutę siųsti"
+" dar kartą."
+
+#: plugins/omemo/src/logic/manager.vala:1682
+msgid ""
+"The server denied access to the OMEMO keys. Check contact permissions, then "
+"retry the encrypted message."
+msgstr ""
+"Serveris neleido pasiekti OMEMO raktų. Patikrinkite adresato leidimus, tada "
+"bandykite užšifruotą žinutę siųsti dar kartą."
+
+#, c-format
+#~ msgid ""
+#~ "%s does not trust this device. That means, you might be missing messages."
+#~ msgstr ""
+#~ "%s nepasitiki šiuo įrenginiu. Tai reiškia, kad galite nematyti žinučių."
+
+#~ msgid "OMEMO Key Management"
+#~ msgstr "OMEMO raktų tvarkymas"
+
+#~ msgid "Automatically accept new keys"
+#~ msgstr "Automatiškai priimti naujus raktus"
+
+#~ msgid "New encryption keys from this contact will be accepted automatically."
+#~ msgstr "Nauji šifravimo raktai iš šio kontakto bus priimti automatiškai."
+
+#~ msgid "Own key"
+#~ msgstr "Nuosavas raktas"
+
+#~ msgid "Associated keys"
+#~ msgstr "Susieti raktai"
+
+#~ msgid "Inactive keys"
+#~ msgstr "Neaktyvūs raktai"
+
+#~ msgid "Unused"
+#~ msgstr "Nenaudojamas"
+
+#~ msgid "Own fingerprint"
+#~ msgstr "Nuosavas kontrolinis kodas"
+
+#~ msgid "Will be generated on first connection"
+#~ msgstr "Bus sugeneruotas pirmojo prisijungimo metu"
+
+#~ msgid "Your contact"
+#~ msgstr "Jūsų adresatas"
+
+#~ msgid "Not matching"
+#~ msgstr "Nesutampa"
+
+#~ msgid "Matching"
+#~ msgstr "Sutampa"
+
+#~ msgid ""
+#~ "Once confirmed, any future messages sent by %s using this key will be "
+#~ "highlighted accordingly in the chat window."
+#~ msgstr ""
+#~ "Patikrinus, bet kokios būsimos žinutės, kurias %s išsiųs naudodamas šį "
+#~ "raktą, bus atitinkamai paryškintos pokalbių kambaryje."
+
+#~ msgid ""
+#~ "Stop accepting this key during communication with its associated contact."
+#~ msgstr "Nustoti priiminėti šį raktą bendravimo su susietu adresatu metu."
+
+#~ msgid ""
+#~ "Start accepting this key during communication with its associated contact"
+#~ msgstr "Pradėti priiminėti šį raktą bendravimo su susietu adresatu metu"
+
+#~ msgid ""
+#~ "This means it cannot be used by %s to receive messages, and any messages "
+#~ "sent by it will be ignored."
+#~ msgstr ""
+#~ "Tai reiškia, kad %s negali jo naudoti, kad gautų žinutes, o bet kurių "
+#~ "adresato siunčiamų žinučių bus nepaisoma."
+
+#~ msgid ""
+#~ "Once confirmed, any future messages sent by %s using this key will be "
+#~ "ignored and none of your messages will be readable using this key."
+#~ msgstr ""
+#~ "Patvirtinus, bet kurių būsimų žinučių, kurias %s išsiųs naudodamas šį raktą,"
+#~ " bus nepaisoma ir jokių jūsų žinučių nebus įmanoma perskaityti naudojant šį "
+#~ "raktą."
+
+#~ msgid ""
+#~ "Once confirmed this key will be usable by %s to receive and send messages."
+#~ msgstr ""
+#~ "Patvirtinus, šis raktas taps tinkamu naudoti %s, kad gautų ir siųstų "
+#~ "žinutes."
+
+#~ msgid ""
+#~ "When this contact adds new encryption keys to their account, automatically "
+#~ "accept them."
+#~ msgstr ""
+#~ "Kai šis adresatas prie savo paskyros pridės naujus šifravimo raktus, "
+#~ "automatiškai juos priimti."
+
+#~ msgid ""
+#~ "When you add new encryption keys to your account, automatically accept them."
+#~ msgstr ""
+#~ "Kai pridedate naujus šifravimo raktus prie savo paskyros, automatiškai juos "
+#~ "priimti."

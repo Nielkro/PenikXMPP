@@ -1,0 +1,370 @@
+--- frozen-native/server_compile.py
++++ current-native/server_compile.py
+@@ -2 +2 @@
+-"""Use the existing private Vala/cache payload for the real IQ ordering tests only."""
++"""Relink the unchanged private observer against pinned current call inputs only."""
+@@ -8 +7,0 @@
+-import shutil
+@@ -14 +13 @@
+-HERE = ROOT / 'wiretest'
++HERE = ROOT / 'native-current-driver'
+@@ -17,10 +16 @@
+-WIRE = 'plugins/google-webrtc/src/engine_jingle_wire_session.vala'
+-MANIFEST_SHA = '5fc6a9c88e4f14b967599a65283432c513842d39cca67d47391493e489e31c1d'
+-LIBRARY_ORIGINS = {
+-    'libdino.so.0': ('build/libdino/libdino.so.0.0', '47f2aec35fac12abb725ae9cf861ce5aafe031af0d422b3d4a146d11c1438ec9'),
+-    'omemo.so': ('build/plugins/omemo/omemo.so', '38c5f53387afbe4be31bd99b377fd07b77a96326a1e379d6f1d5b5d8ce6dd633'),
+-    'libdinox-google-webrtc.so': ('local/video-effects-extended-20261010/shipping-native/libwebrtc-m152-linux-x86_64-runtime/lib/libdinox-google-webrtc.so',
+-                                '7f18a3970b4107c106cfe62011ca8328aaea80f1449d87c06d9fb0d3da166ef6'),
+-}
+-LIBRARIES = ['libdino.so.0', 'libqlite.so.0', 'libxmpp-vala.so.0',
+-             'libdinox-google-webrtc.so', 'omemo.so', 'libcrypto-vala.so.0', 'libomemo-c.so.0']
++MANIFEST_SHA = '0e561ea789e456709fb725bd312ea9a8c8c9ed70e099779dc23d89db7393f8d3'
+@@ -44 +34 @@
+-    assert os.getpriority(os.PRIO_PROCESS, 0) == 19, 'Run inside the authorized Nice-19 job'
++    assert os.getpriority(os.PRIO_PROCESS, 0) == 19
+@@ -47,7 +37,5 @@
+-    old_path = ROOT / 'original/compile-receipt.json'
+-    old = json.loads(old_path.read_bytes())
+-    assert len(old['sources']) == 30 and WIRE in old['sources']
+-    assert old['sources'][WIRE] == manifest['files']['inputs/unfixed-engine_jingle_wire_session.vala']['sha256']
+-    protected = {str(old_path): sha(old_path)}
+-    sources = []
+-    for name, expected in old['sources'].items():
++    assert manifest['scope'] == 'CURRENT_WIRE_PREBUILT_IQ_RUNTIME_DRIVER_ONLY_SOURCE_DERIVATION'
++    assert not ARTIFACTS.exists(), 'Never overwrite an actual run'
++    protected = {}
++    for name, expected in manifest['cache_files_sha256'].items():
++        path = ROOT / name
+@@ -55,2 +43 @@
+-        path = ROOT / 'original/sources' / name
+-        assert sha(path) == expected, ('Existing source changed', name)
++        assert sha(path) == expected, ('Retained compiler-cache input differs', name)
+@@ -58,14 +44,0 @@
+-        if not name.startswith('local/'):
+-            assert path.suffix in ('.vala', '.vapi')
+-            sources.append((name, path))
+-    header_manifest = manifest['existing_header_manifest']
+-    assert sha(header_manifest['path']) == header_manifest['sha256']
+-    protected[header_manifest['path']] = header_manifest['sha256']
+-    existing_headers = json.loads(Path(header_manifest['path']).read_bytes())
+-    for name, item in existing_headers.items():
+-        path = ROOT / name
+-        assert sha(path) == item['sha256'] and path.stat().st_size == item['bytes']
+-        protected[str(path)] = item['sha256']
+-    for name, expected in manifest['extra_existing_headers_sha256'].items():
+-        assert sha(ROOT / name) == expected
+-        protected[str(ROOT / name)] = expected
+@@ -74,2 +47,4 @@
+-        assert path.is_relative_to(HERE / 'inputs') and '..' not in path.parts
+-        assert sha(path) == item['sha256'] and path.stat().st_size == item['bytes']
++        assert not Path(name).is_absolute() and '..' not in Path(name).parts
++        assert path.is_relative_to(HERE / 'inputs')
++        assert path.is_file() and not path.is_symlink()
++        assert path.stat().st_size == item['bytes'] and sha(path) == item['sha256']
+@@ -77,33 +52,18 @@
+-    for name, (origin, expected) in LIBRARY_ORIGINS.items():
+-        assert old['linked_artifacts'][origin] == expected and sha(PAYLOAD / name) == expected
+-    direct_session_library = manifest['direct_session_library']
+-    assert direct_session_library['name'] == 'libomemo-c.so.0'
+-    assert sha(PAYLOAD / direct_session_library['name']) == direct_session_library['sha256']
+-    for name in LIBRARIES:
+-        protected[str(PAYLOAD / name)] = sha(PAYLOAD / name)
+-    iq_overlay = manifest['iq_overlay']
+-    iq_library = HERE / iq_overlay['library']
+-    assert sha(PAYLOAD / 'libxmpp-vala.so.0') == iq_overlay['historical_payload_library_sha256']
+-    assert old['sources']['build/xmpp-vala/xmpp-vala.vapi'] == iq_overlay['historical_original_vapi_sha256']
+-    for item in (iq_overlay['vapi'], iq_overlay['header']):
+-        assert sha(item['path']) == item['sha256']
+-    core_library = HERE / manifest['core_overlay']['library']
+-    assert sha(ROOT / 'build/libdino/libdino.h') == manifest['core_overlay']['public_header_unchanged_sha256']
+-    assert old['sources']['build/libdino/libdino.vapi'] == manifest['core_overlay']['public_vapi_unchanged_sha256']
+-    prior = json.loads((HERE / 'inputs/prior-before-receipt.json').read_bytes())
+-    before = prior['variants']['before']
+-    assert before['expected_outcome_observed'] and before['test_exit_code'] == 1
+-    assert before['test_log_sha256'] == sha(HERE / 'inputs/prior-before-iq-ordering.log')
+-    assert prior['iq_overlay_library_sha256'] == sha(iq_library)
+-    assert 'ICE must not overtake a setup waiting in an IQ security filter' in (HERE / 'inputs/prior-before-iq-ordering.log').read_text()
+-    local = json.loads((HERE / 'inputs/current-canonical-build-receipt.json').read_bytes())
+-    assert local['result'] == 'PASS' and local['build_exit'] == local['audit_exit'] == 0 and local['warnings'] == ''
+-    assert local['audit_case_count'] == 52 and local['audit_exact52'] is True
+-    assert local['source_sha256']['libdino/src/service/call_state.vala'] == manifest['core_overlay']['source_call_state_sha256']
+-    assert local['source_sha256']['libdino/tests/audit_call_state.vala'] == manifest['core_overlay']['audit_source_sha256']
+-    assert sha(HERE / 'inputs/current-call-state.vala') == manifest['core_overlay']['source_call_state_sha256']
+-    assert sha(HERE / 'inputs/current-audit-call-state.vala') == manifest['core_overlay']['audit_source_sha256']
+-    assert sha(HERE / 'inputs/current-canonical-call-state52.tap') == local['audit_log_sha256']
+-    assert (HERE / 'inputs/current-canonical-call-state52.tap').read_text().count('ok ') == 52
+-    assert sha(core_library) == manifest['core_overlay']['library_sha256']
+-    assert not ARTIFACTS.exists(), 'Keep each actual run separate; do not overwrite results'
++    for name, expected in manifest['retained_payload_sha256'].items():
++        path = PAYLOAD / name
++        assert sha(path) == expected, ('Read-only retained payload differs', name)
++        protected[str(path)] = expected
++    runtime = HERE / 'inputs/qualified-runtime'
++    metadata = json.loads((runtime / 'manifest.json').read_bytes())
++    assert (metadata['wrapper_abi'], metadata['ipc_protocol_version']) == (40, 10)
++    assert metadata['target_os'] == 'linux' and metadata['target_cpu'] == 'x64'
++    assert sha(runtime / 'include/dinox_webrtc.h') == sha(HERE / 'inputs/current/google-webrtc/include/dinox_webrtc.h')
++    current = HERE / 'inputs/current'
++    libraries = {name: HERE / path for name, path in manifest['link_libraries'].items()}
++    libraries.update({name: PAYLOAD / name for name in manifest['retained_link_libraries']})
++    iq_library = libraries['libxmpp-vala.so.0']
++    core_library = libraries['libdino.so.0']
++    omemo_library = libraries['omemo.so']
++    library_path = ':'.join(map(str, [omemo_library.parent, core_library.parent,
++                                    runtime / 'lib', PAYLOAD]))
++    env = {**os.environ, 'LD_LIBRARY_PATH': library_path, 'G_DEBUG': 'fatal-criticals'}
+@@ -112,5 +72,5 @@
+-               'server_compile_sha256': sha(__file__), 'original_compile_receipt_sha256': sha(old_path),
+-               'original_sources_sha256': old['sources'], 'protected_inputs_sha256': protected,
+-               'iq_overlay': iq_overlay, 'iq_overlay_library_sha256': sha(iq_library),
+-               'variants': {}, 'commands': [], 'private_native_observer_driver_build': True, 'plugin_recompiled': False, 'core_library_prebuilt_and_validated': manifest['core_overlay'], 'prior_before_repro_receipt_sha256': sha(HERE / 'inputs/prior-before-receipt.json'),
+-               'native_sdk_download_or_account_runtime': False}
++               'server_compile_sha256': sha(__file__), 'product_commit': manifest['product_commit'],
++               'protected_inputs_sha256': protected, 'commands': [],
++               'core_plugin_IQ_native_SDK_JNI_rebuilt': False,
++               'driver_only_compile': True, 'account_profile_or_media_runtime': False,
++               'runtime_wrapper_abi': 40, 'runtime_ipc': 10}
+@@ -119 +79 @@
+-    def command(argv, log, env=None):
++    def command(argv, log, custom_env=None):
+@@ -121 +81 @@
+-        assert remaining > 0, 'The bounded private test deadline expired'
++        assert remaining > 0, 'The bounded driver-only deadline expired'
+@@ -126,2 +86,2 @@
+-            result = subprocess.run(argv, stdout=output, stderr=subprocess.STDOUT, env=env,
+-                                    timeout=min(180, remaining))
++            result = subprocess.run(argv, stdout=output, stderr=subprocess.STDOUT,
++                                    env=custom_env, timeout=min(180, remaining))
+@@ -133 +93 @@
+-        assert set(required) <= names, ('Required actual public symbols missing', str(path), set(required) - names)
++        assert set(required) <= names, ('Required actual symbols missing', str(path), set(required) - names)
+@@ -135,10 +95,2 @@
+-    def reuse_verified_omemo():
+-        source = HERE / manifest['existing_plugin']['directory']
+-        artifacts = ARTIFACTS / 'plugin'; artifacts.mkdir()
+-        for name, expected in manifest['existing_plugin']['files_sha256'].items():
+-            assert sha(source / name) == expected
+-            shutil.copyfile(source / name, artifacts / name)
+-        binary = artifacts / 'omemo.so'
+-        env = {**os.environ, 'LD_LIBRARY_PATH': str(artifacts) + ':' + str(iq_library.parent) + ':' + str(PAYLOAD)}
+-        log = artifacts / 'actual-loader.log'
+-        assert command(['ldd', '-r', str(binary)], log, env) == 0
++    def loader(path, log):
++        assert command(['ldd', '-r', str(path)], log, env) == 0
+@@ -147,6 +99,3 @@
+-        assert 'libdino.so.0 => ' + str(core_library) + ' (' in text
+-        assert 'libxmpp-vala.so.0 => ' + str(iq_library) + ' (' in text
+-        receipt['omemo_plugin'] = {'binary_sha256': sha(binary), 'reused_existing_actual_plugin': True,
+-            'actual_handoff_sha256': manifest['existing_plugin']['actual_handoff_sha256'],
+-            'loader_log_sha256': sha(log), 'no_plugin_compile': True}
+-        return binary, artifacts
++        for name in ('libdino.so.0', 'libxmpp-vala.so.0'):
++            assert name + ' => ' + str(libraries[name]) + ' (' in text
++        return text
+@@ -156,8 +105,23 @@
+-        for args in (['valac', '--version'], ['cc', '--version']):
+-            assert command(args, config_log) == 0
+-        symbol_log = ARTIFACTS / 'actual-iq-overlay-symbols.log'
+-        assert command(['nm', '-D', '--defined-only', str(iq_library)], symbol_log) == 0
+-        assert any(line.split()[-2:] == ['T', 'xmpp_iq_module_local_failure']
+-                   for line in symbol_log.read_text().splitlines() if line.split())
+-        cflags = shlex.split(subprocess.check_output(['pkg-config', '--cflags'] + PC_PACKAGES, text=True))
+-        ldflags = shlex.split(subprocess.check_output(['pkg-config', '--libs'] + PC_PACKAGES, text=True))
++        for argv in (['valac', '--version'], ['cc', '--version']):
++            assert command(argv, config_log) == 0
++        for name, required in manifest['required_symbols'].items():
++            symbols(libraries[name], required, ARTIFACTS / ('symbols-' + name + '.log'))
++        loader(omemo_library, ARTIFACTS / 'plugin-loader.log')
++        receipt['plugin_loader_log_sha256'] = sha(ARTIFACTS / 'plugin-loader.log')
++        # Matching workers are loader-checked without starting a media process.
++        for name in ('dinox-webrtc-worker', 'dinox-vision-worker', 'libavcodec-dinox-hw.so.62',
++                     'libavutil-dinox-hw.so.60', 'libdinox-google-webrtc.so'):
++            log = ARTIFACTS / ('runtime-loader-' + name + '.log')
++            assert command(['ldd', '-r', str(runtime / 'lib' / name)], log, env) == 0
++            text = log.read_text()
++            assert 'not found' not in text and 'undefined symbol:' not in text
++            if name == 'dinox-webrtc-worker':
++                assert 'libdinox-google-webrtc.so => ' + str(libraries['libdinox-google-webrtc.so']) + ' (' in text
++        remaining = deadline - time.monotonic()
++        assert remaining > 0
++        cflags = shlex.split(subprocess.check_output(['pkg-config', '--cflags'] + PC_PACKAGES,
++                                                   text=True, timeout=min(30, remaining)))
++        remaining = deadline - time.monotonic()
++        assert remaining > 0
++        ldflags = shlex.split(subprocess.check_output(['pkg-config', '--libs'] + PC_PACKAGES,
++                                                    text=True, timeout=min(30, remaining)))
+@@ -165,72 +129,47 @@
+-        for name, expected in manifest['dependency_interface_sha256'].items():
+-            assert sha(ROOT / name) == expected, ('Cached API closure differs', name)
+-        symbols(core_library, ['dino_stream_interactor_get_connected_stream_for_action',
+-            'dino_connection_manager_disconnect_account', 'dino_connection_manager_disconnect_account_finish'],
+-            ARTIFACTS / 'required-core-symbols.log')
+-        symbols(iq_library, ['xmpp_iq_module_add_incoming_request_filter', 'xmpp_iq_module_remove_incoming_request_filter',
+-            'xmpp_stanza_node_to_xml', 'xmpp_stanza_attribute_new_build'], ARTIFACTS / 'required-iq-symbols.log')
+-        symbols(PAYLOAD / direct_session_library['name'], direct_session_library['required_symbols'],
+-            ARTIFACTS / 'required-direct-session-library-symbols.log')
+-        receipt['direct_session_library'] = direct_session_library
+-        omemo_library, omemo_generated = reuse_verified_omemo()
+-        receipt['observer_source_manifest_sha256'] = manifest['observer_manifest_sha256']
+-        receipt['observer_review_sha256'] = manifest['observer_review_sha256']
+-        for variant, wire_name, test_name in (
+-                ('native-driver', 'fixed-engine_jingle_wire_session.vala', 'dinox_interop.vala'),):
+-            out = HERE / 'generated' / variant
+-            out.mkdir(parents=True)
+-            artifacts = ARTIFACTS / variant
+-            artifacts.mkdir()
+-            compiler_log = artifacts / 'compiler.log'
+-            test_log = artifacts / 'iq-ordering.log'
+-            selected = [HERE / 'inputs' / wire_name if name == WIRE else
+-                        Path(iq_overlay['vapi']['path']) if name == 'build/xmpp-vala/xmpp-vala.vapi' else path
+-                        for name, path in sources]
+-            selected += [omemo_generated / 'omemo.vapi', ROOT / 'build/crypto-vala/crypto-vala.vapi',
+-                         HERE / 'inputs' / test_name] + [HERE / name for name in manifest['private_observer_sources']]
+-            args = ['valac', '-C', '--debug', '--define=GOOGLE_WEBRTC_EFFECT_TEST', '--directory', str(out),
+-                    '--basedir', str(ROOT), '--library', 'iq-wire-engine', '--header', str(out / 'iq-wire-engine.h'),
+-                    '--vapi', str(out / 'iq-wire-engine.vapi'), '--vapidir', str(ROOT / 'qlite/vapi'),
+-                    '--vapidir', str(ROOT / 'plugins/omemo/vapi')]
+-            for package in PACKAGES:
+-                args += ['--pkg', package]
+-            assert command(args + list(map(str, selected)), compiler_log) == 0, variant + ' Vala compile failed'
+-            includes = [out, omemo_generated, HERE / 'inputs/plugins/omemo/src', ROOT / 'google-webrtc/include', ROOT / 'plugins/google-webrtc/src',
+-                        ROOT / 'libdino/src', ROOT / 'libdino', ROOT / 'build/libdino', ROOT / 'build/qlite',
+-                        ROOT / 'build/xmpp-vala', ROOT / 'build/crypto-vala', ROOT / 'build/plugins/omemo',
+-                        ROOT / 'plugins/omemo/src', Path('/opt/dinox-deps/include')]
+-            objects = []
+-            for index, source in enumerate(sorted(out.rglob('*.c'))):
+-                obj = out / ('unit-' + str(index) + '.o')
+-                args = ['cc', '-c', '-g', '-O0', '-pthread', '-fPIC', '-DGETTEXT_PACKAGE="dino"']
+-                args += ['-I' + str(path) for path in includes] + cflags + [str(source), '-o', str(obj)]
+-                assert command(args, compiler_log) == 0, variant + ' C compile failed'
+-                objects.append(str(obj))
+-            assert objects
+-            binary = artifacts / ('dinox-interop-fixed' if variant == 'native-driver' else 'iq-wire-test')
+-            args = ['cc', '-o', str(binary)] + objects + ['-Wl,--start-group']
+-            args += [str(iq_library if name == 'libxmpp-vala.so.0' else core_library if name == 'libdino.so.0' else omemo_library if name == 'omemo.so' else PAYLOAD / name) for name in LIBRARIES] + ldflags
+-            library_path = str(omemo_library.parent) + ':' + str(iq_library.parent) + ':' + str(PAYLOAD)
+-            args += ['-Wl,--end-group', '-Wl,-rpath,' + library_path, '-Wl,-rpath-link,' + library_path, '-lm']
+-            assert command(args, compiler_log) == 0, variant + ' link failed'
+-            env = {**os.environ, 'LD_LIBRARY_PATH': library_path, 'G_DEBUG': 'fatal-criticals'}
+-            loader_log = artifacts / 'actual-loader.log'
+-            assert command(['ldd', '-r', str(binary)], loader_log, env) == 0
+-            loader = loader_log.read_text()
+-            assert 'not found' not in loader and 'undefined symbol:' not in loader
+-            assert 'libxmpp-vala.so.0 => ' + str(iq_library) + ' (' in loader
+-            assert 'libdino.so.0 => ' + str(core_library) + ' (' in loader
+-            assert 'omemo.so => ' + str(omemo_library) + ' (' in loader
+-            assert 'libdinox-google-webrtc.so => ' + str(PAYLOAD / 'libdinox-google-webrtc.so') + ' (' in loader
+-            exit_code = command([str(binary)] + ([] if variant == 'native-driver' else ['--iq-ordering-only']), test_log, env)
+-            actual = test_log.read_text(errors='replace')
+-            if variant == 'native-driver':
+-                assert exit_code == 2 and 'Expected one isolated command-directory path' in actual
+-            else:
+-                assert exit_code == 0 and '6 regression groups passed (real IQ/filter/write pipeline)' in actual
+-            receipt['variants'][variant] = {'binary_sha256': sha(binary), 'test_exit_code': exit_code,
+-                'compiler_log_sha256': sha(compiler_log), 'test_log_sha256': sha(test_log),
+-                'loader_log_sha256': sha(loader_log), 'actual_iq_library': str(iq_library), 'actual_core_library': str(core_library),
+-                'selected_sources_sha256': {str(path): sha(path) for path in selected},
+-                'generated_c_units': len(objects), 'expected_outcome_observed': True}
+-        receipt['result'] = 'PASS_PREBUILT_CORE52_EXISTING_PLUGIN_PRIVATE_LATE_ATTACH_DRIVER_PROFILE_FREE'
++        out = HERE / 'generated/native-driver'
++        out.mkdir(parents=True)
++        artifacts = ARTIFACTS / 'native-driver'
++        artifacts.mkdir()
++        compiler_log = artifacts / 'compiler.log'
++        selected = [HERE / name for name in manifest['selected_sources']]
++        assert len(selected) == len(set(selected))
++        assert current / 'plugins/google-webrtc/src/engine_jingle_wire_session.vala' in selected
++        assert not any('fixed-engine_jingle_wire_session.vala' in str(p) for p in selected)
++        args = ['valac', '-C', '--debug', '--define=GOOGLE_WEBRTC_EFFECT_TEST', '--directory', str(out),
++                '--basedir', str(ROOT), '--library', 'iq-wire-engine', '--header', str(out / 'iq-wire-engine.h'),
++                '--vapi', str(out / 'iq-wire-engine.vapi'), '--vapidir', str(ROOT / 'qlite/vapi'),
++                '--vapidir', str(ROOT / 'plugins/omemo/vapi')]
++        for package in PACKAGES:
++            args += ['--pkg', package]
++        assert command(args + list(map(str, selected)), compiler_log) == 0, 'Driver Vala compile failed'
++        includes = [out, omemo_library.parent, current / 'build/xmpp-vala',
++                    current / 'google-webrtc/include', current / 'plugins/google-webrtc/src',
++                    HERE / 'inputs/plugins/omemo/src', ROOT / 'libdino/src', ROOT / 'libdino',
++                    ROOT / 'build/libdino', ROOT / 'build/qlite', ROOT / 'build/crypto-vala',
++                    ROOT / 'plugins/omemo/src', Path('/opt/dinox-deps/include')]
++        objects = []
++        for index, source in enumerate(sorted(out.rglob('*.c'))):
++            obj = out / ('unit-' + str(index) + '.o')
++            args = ['cc', '-c', '-g', '-O0', '-pthread', '-fPIC', '-DGETTEXT_PACKAGE="dino"']
++            args += ['-I' + str(path) for path in includes] + cflags + [str(source), '-o', str(obj)]
++            assert command(args, compiler_log) == 0, 'Driver C compile failed'
++            objects.append(str(obj))
++        assert objects
++        binary = artifacts / 'dinox-interop-current'
++        args = ['cc', '-o', str(binary)] + objects + ['-Wl,--start-group']
++        args += [str(path) for path in libraries.values()] + ldflags
++        args += ['-Wl,--end-group', '-Wl,-rpath,' + library_path, '-Wl,-rpath-link,' + library_path, '-lm']
++        assert command(args, compiler_log) == 0, 'Driver link failed'
++        actual_loader = loader(binary, artifacts / 'actual-loader.log')
++        for name in ('omemo.so', 'libdinox-google-webrtc.so', 'libomemo-c.so.0'):
++            assert name + ' => ' + str(libraries[name]) + ' (' in actual_loader
++        test_log = artifacts / 'no-argument.log'
++        exit_code = command([str(binary)], test_log, env)
++        assert exit_code == 2 and 'Expected one isolated command-directory path' in test_log.read_text(errors='replace')
++        receipt.update({'result': 'PASS_CURRENT_DRIVER_ONLY_PROFILE_FREE',
++                        'binary_sha256': sha(binary), 'test_exit_code': exit_code,
++                        'compiler_log_sha256': sha(compiler_log), 'test_log_sha256': sha(test_log),
++                        'loader_log_sha256': sha(artifacts / 'actual-loader.log'),
++                        'actual_link_libraries': {name: {'path': str(path), 'sha256': sha(path)} for name, path in libraries.items()},
++                        'selected_sources_sha256': {str(path): sha(path) for path in selected},
++                        'generated_c_units': len(objects)})
+--- frozen-native/server_run.py
++++ current-native/server_run.py
+@@ -2 +2 @@
+-"""One isolated, offline test job using the existing stopped compiler cache."""
++"""One separately authorized current-driver job in the retained compiler cache."""
+@@ -6,0 +7 @@
++import re
+@@ -32,0 +34,2 @@
++    assert re.fullmatch(r'[a-f0-9]{64}', expected) and re.fullmatch(r'[a-f0-9]{32}', token)
++    assert not any((ROOT / name).exists() for name in ('launch.json', 'terminal.json', 'console.log', 'artifacts', 'job-cleanup.json')), 'Use a fresh actual-job directory'
+@@ -36 +39 @@
+-        for directory in ('wiretest', 'wiretest/inputs'):
++        for directory in ('native-current-driver', 'native-current-driver/inputs'):
+@@ -39 +42,13 @@
+-        compiler_sha = hashlib.sha256(payload.extractfile('wiretest/server_compile.py').read()).hexdigest()
++        members = payload.getmembers()
++        assert len({m.name for m in members}) == len(members)
++        assert all(not Path(m.name).is_absolute() and '..' not in Path(m.name).parts and (m.isdir() or m.isfile()) for m in members)
++        input_bytes = payload.extractfile('native-current-driver/input-manifest.json').read()
++        assert hashlib.sha256(input_bytes).hexdigest() == '0e561ea789e456709fb725bd312ea9a8c8c9ed70e099779dc23d89db7393f8d3'
++        inputs = json.loads(input_bytes)
++        expected_files = {'native-current-driver/' + name for name in inputs['files']} | {'native-current-driver/server_compile.py', 'native-current-driver/input-manifest.json'}
++        assert {m.name for m in members if m.isfile()} == expected_files
++        expected_directories = {str(parent) for name in expected_files for parent in Path(name).parents if str(parent) != '.'}
++        assert {m.name for m in members if m.isdir()} == expected_directories
++        assert all(m.uid == m.gid == 1000 and m.mode == (0o700 if m.isdir() else 0o600) for m in members)
++        compiler_sha = hashlib.sha256(payload.extractfile('native-current-driver/server_compile.py').read()).hexdigest()
++        assert compiler_sha == hashlib.file_digest((ROOT / 'server_compile.py').open('rb'), 'sha256').hexdigest()
+@@ -43,2 +58,2 @@
+-    name = 'dinox-muji-auth-native-' + token
+-    tag = 'dinox-muji-auth-cache:' + token
++    name = 'dinox-current-driver-' + token
++    tag = 'dinox-current-driver-cache:' + token
+@@ -56 +71 @@
+-            '--user', '1000:1000', '--workdir', '/work/wiretest',
++            '--user', '1000:1000', '--workdir', '/work/native-current-driver',
+@@ -61 +76 @@
+-            '/work/wiretest/server_compile.py'], text=True).strip()
++            '/work/native-current-driver/server_compile.py'], text=True).strip()
+@@ -64 +79 @@
+-        copied = command(['cp', container + ':/work/wiretest/server_compile.py', '-'])
++        copied = command(['cp', container + ':/work/native-current-driver/server_compile.py', '-'])
+@@ -72 +87 @@
+-        assert item['Config']['User'] == '1000:1000' and item['Config']['WorkingDir'] == '/work/wiretest'
++        assert item['Config']['User'] == '1000:1000' and item['Config']['WorkingDir'] == '/work/native-current-driver'
+@@ -84 +99 @@
+-        print('BOUNDED_OFFLINE_TEST_STARTED', name, flush=True)
++        print('BOUNDED_OFFLINE_DRIVER_STARTED', name, flush=True)
+@@ -92 +107 @@
+-        print('BOUNDED_OFFLINE_TEST_FINISHED', exit_code, flush=True)
++        print('BOUNDED_OFFLINE_DRIVER_FINISHED', exit_code, flush=True)
+@@ -112 +127 @@
+-                    exported = command(['cp', container + ':/work/wiretest/artifacts', '-'])
++                    exported = command(['cp', container + ':/work/native-current-driver/artifacts', '-'])

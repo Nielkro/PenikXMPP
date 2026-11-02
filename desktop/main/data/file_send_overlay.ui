@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+    <requires lib="gtk" version="4.0"/>
+    <template class="DinoUiFileSendOverlay">
+        <property name="title" translatable="yes">Send a file</property>
+        <property name="content-width">400</property>
+        <property name="content-height">440</property>
+        <property name="follows-content-size">False</property>
+        <child>
+            <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                    <object class="AdwHeaderBar">
+                        <style>
+                            <class name="flat"/>
+                        </style>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkBox">
+                        <property name="margin-start">14</property>
+                        <property name="margin-end">14</property>
+                        <property name="margin-top">14</property>
+                        <property name="margin-bottom">14</property>
+                        <property name="halign">center</property>
+                        <property name="valign">center</property>
+                        <property name="spacing">14</property>
+                        <property name="orientation">vertical</property>
+                        <child>
+                            <object class="DinoUiSizingBin" id="file_widget_insert">
+                                <property name="halign">center</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkBox" id="transfer_method_box">
+                                <property name="visible">0</property>
+                                <property name="halign">fill</property>
+                                <property name="hexpand">1</property>
+                                <property name="spacing">8</property>
+                                <property name="orientation">horizontal</property>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label" translatable="yes">Transfer method</property>
+                                        <property name="xalign">0</property>
+                                        <property name="hexpand">1</property>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkDropDown" id="transfer_method_dropdown">
+                                        <property name="focusable">1</property>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkBox">
+                                <property name="halign">end</property>
+                                <property name="spacing">5</property>
+                                <child>
+                                    <object class="GtkLabel" id="info_label"/>
+                                </child>
+                                <child>
+                                    <object class="GtkButton" id="send_button">
+                                        <property name="label" translatable="yes">Send</property>
+                                        <property name="focusable">1</property>
+                                        <signal name="clicked" handler="on_send_button_clicked" />
+                                        <style>
+                                            <class name="suggested-action"/>
+                                        </style>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </template>
+</interface>

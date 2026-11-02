@@ -1,0 +1,756 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+# DinoX Team <contact@dinox.im>, 2026.
+msgid ""
+msgstr ""
+"Project-Id-Version: dino-omemo\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-28 23:39+0100\n"
+"PO-Revision-Date: 2026-10-29 00:06+0100\n"
+"Last-Translator: DinoX Team <contact@dinox.im>\n"
+"Language-Team: DinoX Team <contact@dinox.im>\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+#: plugins/omemo/data/encryption_preferences_entry.ui:8
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:92
+msgid ""
+"Each device has its own OMEMO key. Messages can only be decrypted by a "
+"device if they are encrypted to its key. Messages are only encrypted to "
+"accepted devices."
+msgstr ""
+"لكل جهاز مفتاح OMEMO خاص به. لا يستطيع الجهاز فك تشفير الرسائل إلا إذا شُفرت"
+" بمفتاحه. لا تُشفر الرسائل إلا للأجهزة المقبولة."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:17
+#: plugins/omemo/src/ui/contact_details_provider.vala:52
+#: plugins/omemo/src/ui/contact_details_provider.vala:99
+msgid "OMEMO Encryption"
+msgstr "تشفير OMEMO"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:18
+msgid ""
+"Older hidden messages have no recorded fingerprint and cannot be safely "
+"assigned to this key."
+msgstr ""
+"الرسائل المخفية الأقدم ليس لها بصمة مسجلة ولا يمكن نسبتها إلى هذا المفتاح "
+"بأمان."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:19
+#: plugins/omemo/src/ui/manage_key_dialog.vala:36
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:36
+msgid "Close"
+msgstr "إغلاق"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Key changed"
+msgstr "تغير المفتاح"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Could not update device"
+msgstr "تعذر تحديث الجهاز"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:34
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:34
+msgid ""
+"The device key has changed. Review the current fingerprint before trying "
+"again."
+msgstr "تغير مفتاح الجهاز. راجع البصمة الحالية قبل المحاولة مجددًا."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:35
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:35
+msgid "The device settings could not be changed. Please try again."
+msgstr "تعذر تغيير إعدادات الجهاز. حاول مجددًا."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:75
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:415
+#: plugins/omemo/src/ui/contact_details_provider.vala:227
+msgid "Manage Key"
+msgstr "إدارة المفتاح"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:76
+msgid ""
+"Compare the fingerprint, character by character, with the one shown on your "
+"contact's device."
+msgstr "قارن البصمة حرفًا بحرف مع تلك التي تظهر على جهاز مُراسِلك."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:77
+msgid "Fingerprints differ"
+msgstr "البصمات غير متطابقة"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:78
+msgid "Fingerprints match"
+msgstr "البصمات متطابقة"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:86
+#: plugins/omemo/src/ui/manage_key_dialog.vala:148
+#: plugins/omemo/src/ui/manage_key_dialog.vala:154
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:342
+msgid "Cancel"
+msgstr "ألغِ"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:87
+#: plugins/omemo/src/ui/manage_key_dialog.vala:122
+#: plugins/omemo/src/ui/manage_key_dialog.vala:161
+#: plugins/omemo/src/ui/manage_key_dialog.vala:234
+msgid "Confirm"
+msgstr "أكِّد"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:94
+#, c-format
+msgid ""
+"Account: %s\n"
+"Contact: %s\n"
+"Device: %s"
+msgstr ""
+"الحساب: %s\n"
+"جهة الاتصال: %s\n"
+"الجهاز: %s"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:126
+msgid "Verify key"
+msgstr "تحقق من المفتاح"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:127
+#, c-format
+msgid ""
+"Future messages sent by %s from the device that uses this key will be "
+"highlighted accordingly in the chat window."
+msgstr ""
+"ستميز الرسائل القادمة المرسلة بواسطة %s من الجهاز الذي يستخدم هذا المفتاح "
+"وفقًا لذلك في نافذة الدردشة."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:138
+msgid "Fingerprints do not match"
+msgstr "البصمات غير متطابقة"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:139
+#, c-format
+msgid ""
+"Please verify that you are comparing the correct fingerprint. If "
+"fingerprints do not match, %s's account may be compromised and you should "
+"consider rejecting this key."
+msgstr ""
+"تحقق بأنك تقارن البصمة الصحيحة من فضلك. إن لم تكن البصمات متطابقة فإن حساب "
+"%s قد يكون مخترقًا، ومن المستحسن التفكير برفض هذا المفتاح."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+#: plugins/omemo/src/ui/manage_key_dialog.vala:259
+#: plugins/omemo/src/ui/manage_key_dialog.vala:261
+msgid "Remove device"
+msgstr "إزالة الجهاز"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+msgid "Open"
+msgstr "فتح"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid "Verify key fingerprint"
+msgstr "تحقق مِن بصمة المفتاح"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid ""
+"Compare this key's fingerprint with the fingerprint displayed on the "
+"contact's device."
+msgstr "قارن بصمة هذا المفتاح مع البصمة المعروضة على جهاز مُراسِلك."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+#: plugins/omemo/src/ui/manage_key_dialog.vala:243
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:609
+#: plugins/omemo/src/ui/contact_details_provider.vala:315
+msgid "Reject key"
+msgstr "ارفض المفتاح"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+msgid ""
+"Block encrypted communication with the contact's device that uses this key."
+msgstr "يحظر الاتصال المشفر مع جهاز المراسل الذي يستخدم هذا المفتاح."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+#: plugins/omemo/src/ui/manage_key_dialog.vala:251
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:604
+#: plugins/omemo/src/ui/contact_details_provider.vala:310
+msgid "Accept key"
+msgstr "اقبل المفتاح"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+msgid ""
+"Allow encrypted communication with the contact's device that uses this key."
+msgstr "يسمح بالاتصال المشفر بجهاز المراسل الذي يستخدم هذا المفتاح."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+#: plugins/omemo/src/ui/manage_key_dialog.vala:268
+msgid "Reset session"
+msgstr "إعادة تعيين الجلسة"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+msgid ""
+"Delete the encryption session for this device. A fresh session will be "
+"established on the next message. Use this when messages are not arriving."
+msgstr ""
+"حذف جلسة التشفير لهذا الجهاز. ستُنشأ جلسة جديدة عند الرسالة التالية. استخدم "
+"هذا عندما لا تصل الرسائل."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+msgid ""
+"Delete this device's key and session data. Use this for old or inactive "
+"devices."
+msgstr ""
+"حذف مفتاح هذا الجهاز وبيانات جلسته. استخدم هذا للأجهزة القديمة أو غير "
+"النشطة."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid "This key is currently %s."
+msgstr "هذا المفتاح %s حاليًا."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+msgid "accepted"
+msgstr "مقبول"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#, c-format
+msgid ""
+"This means it can be used by %s to receive and send encrypted messages."
+msgstr "ذلك يعني أنه بإمكان %s أن يستخدمه لتلقي وإرسال رسائل مشفرة."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid "verified"
+msgstr "مُحَقَّق"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid ""
+"Additionally it has been verified to match the key on the contact's device."
+msgstr "بالإضافة إلى ذلك، فقد تم التحقق من تطابق المفتاح على جهاز المُراسِل."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+msgid "rejected"
+msgstr "مرفوض"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid ""
+"This means it cannot be used by %s to decipher your messages, and you won't "
+"see messages encrypted with it."
+msgstr ""
+"هذا يعني أنه لن يكون بمقدور %s استخدامه لفك تشفير رسائلك، ولن ترى الرسائل "
+"المشفرة به."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:244
+#, c-format
+msgid ""
+"You won't see encrypted messages from the device of %s that uses this key. "
+"Conversely, that device won't be able to decipher your messages anymore."
+msgstr ""
+"لن ترى الرسائل المشفرة من جهاز %s الذي يستخدم هذا المفتاح. وبالمقابل، لن "
+"يتمكن ذلك الجهاز من فك تشفير رسائلك بعد الآن."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:252
+#, c-format
+msgid ""
+"You will be able to exchange encrypted messages with the device of %s that "
+"uses this key."
+msgstr ""
+"سيكون بمقدورك تبادل الرسائل المشفرة مع جهاز %s الذي يستخدم هذا المفتاح."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+#, c-format
+msgid ""
+"The key and session data for this device of %s will be deleted. If the "
+"device is still active, it will re-appear when a new message is received."
+msgstr ""
+"سيُحذف المفتاح وبيانات الجلسة لهذا الجهاز التابع لـ %s. إذا كان الجهاز لا "
+"يزال نشطًا، فسيظهر مجددًا عند تلقي رسالة جديدة."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+msgid "Please click “Remove device” at the top to confirm deletion."
+msgstr "انقر على «إزالة الجهاز» في الأعلى لتأكيد الحذف."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:269
+#, c-format
+msgid ""
+"The encryption session for this device of %s will be deleted. A fresh "
+"session will be negotiated automatically when the next message is sent. The "
+"key and trust level are preserved."
+msgstr ""
+"ستُحذف جلسة التشفير لهذا الجهاز التابع لـ %s. سيجري التفاوض على جلسة جديدة "
+"تلقائيًا عند إرسال الرسالة التالية. سيُحتفظ بالمفتاح ومستوى الثقة."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:275
+msgid "Back"
+msgstr "عُد"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Review key"
+msgstr "مراجعة المفتاح"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Manage"
+msgstr "أدِر"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:100
+msgid ""
+"A device for this contact has a new encryption key. DinoX will use it only "
+"after your review."
+msgstr ""
+"أصبح لأحد أجهزة جهة الاتصال هذه مفتاح تشفير جديد. لن يستخدمه DinoX إلا بعد "
+"مراجعتك."
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:101
+msgid "This contact has new devices"
+msgstr "لدى هذا المُراسِل أجهزة جديدة"
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:36
+msgid "This call is <b>encrypted and verified</b> with OMEMO."
+msgstr "هذه المكالمة <b>مشفرة ومُتحقق منها</b> باستخدام OMEMO."
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:40
+msgid "This call is encrypted with OMEMO."
+msgstr "هذه المكالمة مشفرة باستخدام OMEMO."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:16
+msgid "Reset all sessions"
+msgstr "إعادة تعيين جميع الجلسات"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:17
+msgid ""
+"Delete all encryption sessions. Fresh sessions will be established on the "
+"next message."
+msgstr "حذف جميع جلسات التشفير. ستُنشأ جلسات جديدة عند الرسالة التالية."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:18
+msgid "Reset"
+msgstr "إعادة تعيين"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:30
+msgid "Sessions reset. A fresh key exchange will happen on the next message."
+msgstr "أُعيد تعيين الجلسات. سيحدث تبادل مفاتيح جديد عند الرسالة التالية."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:93
+msgid "OMEMO by default"
+msgstr "OMEMO افتراضيًا"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:94
+msgid "Enable OMEMO encryption for new conversations"
+msgstr "تفعيل تشفير OMEMO للمحادثات الجديدة"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:95
+#: plugins/omemo/src/ui/contact_details_provider.vala:166
+msgid "Encrypt to new devices"
+msgstr "شَفِّر للأجهزة الجديدة"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:96
+msgid "Automatically encrypt to new devices from this contact."
+msgstr "شَفِّر تلقائيًا للأجهزة الجديدة من هذا المراسِل."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:97
+msgid "New keys"
+msgstr "المفاتيح الجديدة"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:169
+msgid ""
+"New encryption keys from your other devices will be accepted automatically."
+msgstr "سَتُقبَل مفاتيح التشفير الجديدة من أجهزتك الأخرى تلقائيًا."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:291
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:293
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:372
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:374
+msgid "This device"
+msgstr "هذا الجهاز"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:299
+msgid "Set device name"
+msgstr "تعيين اسم الجهاز"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Device Name"
+msgstr "اسم الجهاز"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Set a name for this device that other contacts can see."
+msgstr "عيّن اسمًا لهذا الجهاز يمكن لجهات الاتصال الأخرى رؤيته."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:343
+msgid "Save"
+msgstr "حفظ"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:461
+msgid "Other device"
+msgstr "جهاز آخر"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:463
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Device"
+msgstr "جهاز"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:468
+msgid "inactive"
+msgstr "غير نشط"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:481
+#: plugins/omemo/src/ui/contact_details_provider.vala:212
+msgid "today"
+msgstr "اليوم"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:483
+#: plugins/omemo/src/ui/contact_details_provider.vala:214
+msgid "yesterday"
+msgstr "أمس"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:485
+#: plugins/omemo/src/ui/contact_details_provider.vala:216
+#, c-format
+msgid "%d days ago"
+msgstr "منذ %d يوم"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:488
+#: plugins/omemo/src/ui/contact_details_provider.vala:219
+#, c-format
+msgid "%d month ago"
+msgid_plural "%d months ago"
+msgstr[0] "منذ %d شهر"
+msgstr[1] "منذ شهر واحد (%d)"
+msgstr[2] "منذ شهرين (%d)"
+msgstr[3] "منذ %d أشهر"
+msgstr[4] "منذ %d شهرًا"
+msgstr[5] "منذ %d شهر"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:491
+#: plugins/omemo/src/ui/contact_details_provider.vala:222
+#, c-format
+msgid "%d year ago"
+msgid_plural "%d years ago"
+msgstr[0] "منذ %d سنة"
+msgstr[1] "منذ سنة واحدة (%d)"
+msgstr[2] "منذ سنتين (%d)"
+msgstr[3] "منذ %d سنوات"
+msgstr[4] "منذ %d سنة"
+msgstr[5] "منذ %d سنة"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:493
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+#: plugins/omemo/src/ui/contact_details_provider.vala:224
+msgid "Last seen"
+msgstr "آخر ظهور"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+msgid "unknown"
+msgstr "غير معروف"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:500
+msgid "Accepted"
+msgstr "قُبِل"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:503
+msgid "Rejected"
+msgstr "رُفِض"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:506
+#: plugins/omemo/src/ui/contact_details_provider.vala:365
+msgid "Verified"
+msgstr "مُحَقَّق"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:527
+msgid "Inactive"
+msgstr "غير نشط"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:531
+msgid "Not seen recently"
+msgstr "لم يُرصد مؤخرًا"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:533
+msgid "This DinoX has not observed any activity from this device for over 60 days. The device may still be in use."
+msgstr "لم يرصد DinoX هذا أي نشاط من هذا الجهاز منذ أكثر من 60 يومًا. قد يكون الجهاز لا يزال قيد الاستخدام."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:585
+#: plugins/omemo/src/ui/contact_details_provider.vala:293
+msgid "Encryption key changed"
+msgstr "تغير مفتاح التشفير"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:589
+#: plugins/omemo/src/ui/contact_details_provider.vala:297
+msgid "New device"
+msgstr "جهاز جديد"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:596
+#: plugins/omemo/src/ui/contact_details_provider.vala:304
+msgid ""
+"This device has a new encryption key, for example after a reinstall. DinoX "
+"will use it only after your review."
+msgstr ""
+"أصبح لهذا الجهاز مفتاح تشفير جديد، مثلًا بعد إعادة التثبيت. لن يستخدمه DinoX"
+" إلا بعد مراجعتك."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:135
+msgid "Verifying private room members…"
+msgstr "جارٍ التحقق من أعضاء الغرفة الخاصة…"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:148
+msgid "Can't use encryption in a groupchat private message."
+msgstr "لا يمكن استخدام التشفير في رسالة خاصة ضمن محادثة جماعية."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:156
+msgid "OMEMO is initializing, please wait a moment..."
+msgstr "جارٍ تهيئة OMEMO، انتظر قليلًا…"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:166
+msgid "OMEMO initialization failed. Please try again."
+msgstr "فشلت تهيئة OMEMO. حاول مجددًا."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:194
+msgid "OMEMO can't be used in public (non-members-only) rooms."
+msgstr "لا يمكن استخدام OMEMO في الغرف العامة (غير المقصورة على الأعضاء)."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:197
+msgid "No other room members are available for OMEMO encryption."
+msgstr "لا يتوفر أعضاء آخرون في الغرفة لتشفير OMEMO."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:200
+#, c-format
+msgid "A member does not support OMEMO: %s"
+msgstr "أحد الأعضاء لا يدعم OMEMO: %s"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:207
+msgid "The private room member list could not be verified."
+msgstr "تعذر التحقق من قائمة أعضاء الغرفة الخاصة."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:217
+msgid "This contact does not support OMEMO encryption"
+msgstr "جهة الاتصال هذه لا تدعم تشفير OMEMO"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:53
+#: plugins/omemo/src/ui/contact_details_provider.vala:100
+msgid "Encryption keys for room members"
+msgstr "مفاتيح التشفير لأعضاء الغرفة"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:105
+msgid "No member JIDs available. This may be an anonymous room."
+msgstr "لا تتوفر معرفات JID للأعضاء. قد تكون هذه غرفة مجهولة."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:155
+msgid "Your devices"
+msgstr "أجهزتك"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#: plugins/omemo/src/ui/contact_details_provider.vala:161
+#, c-format
+msgid "%d device"
+msgid_plural "%d devices"
+msgstr[0] "لا توجد أجهزة (%d)"
+msgstr[1] "جهاز واحد (%d)"
+msgstr[2] "جهازان (%d)"
+msgstr[3] "%d أجهزة"
+msgstr[4] "%d جهازًا"
+msgstr[5] "%d جهاز"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#, c-format
+msgid " (+%d inactive)"
+msgstr " (+%d غير نشط)"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:159
+#, c-format
+msgid "%d inactive devices"
+msgstr "عدد الأجهزة غير النشطة: %d"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:168
+msgid "Automatically accept new keys from your other devices."
+msgstr "قبول المفاتيح الجديدة من أجهزتك الأخرى تلقائيًا."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:169
+msgid "Automatically accept new keys from this contact."
+msgstr "قبول المفاتيح الجديدة من جهة الاتصال هذه تلقائيًا."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Your device"
+msgstr "جهازك"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:367
+msgid "Trusted"
+msgstr "موثوق"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:369
+msgid "Untrusted"
+msgstr "غير موثوق"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:371
+msgid "Unknown"
+msgstr "مجهول"
+
+#: plugins/omemo/src/ui/own_notifications.vala:30
+msgid "OMEMO trust decision required"
+msgstr "قرار ثقة OMEMO إلزامي"
+
+#: plugins/omemo/src/ui/own_notifications.vala:32
+#, c-format
+msgid "Did you add a new device for account %s?"
+msgstr "هل قمت بإضافة جهاز جديد على حساب %s؟"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:193
+#, c-format
+msgid ""
+"%s has been using an untrusted device. You won't see messages from devices "
+"that you do not trust."
+msgstr "يستخدم %s جهازًا غير موثوق به. لن ترى رسائل من أجهزة لا تثق بها."
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:194
+msgid "Manage devices"
+msgstr "أدِر الأجهزة"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:196
+#, c-format
+msgid ""
+"%s sent messages without a key for this device. Those messages could not be "
+"decrypted."
+msgstr "أرسل %s رسائل دون مفتاح لهذا الجهاز. تعذر فك تشفير تلك الرسائل."
+
+#: plugins/omemo/src/logic/manager.vala:746
+#, c-format
+msgid ""
+"No active OMEMO devices were published for %s. Check the recipient's "
+"devices, then retry the encrypted message."
+msgstr ""
+"لم تُنشر أجهزة OMEMO نشطة لـ %s. تحقق من أجهزة المستلم، ثم أعد محاولة إرسال "
+"الرسالة المشفرة."
+
+#: plugins/omemo/src/logic/manager.vala:1664
+msgid "Could not retrieve the OMEMO device list. Retry the encrypted message."
+msgstr "تعذر جلب قائمة أجهزة OMEMO. أعد محاولة إرسال الرسالة المشفرة."
+
+#: plugins/omemo/src/logic/manager.vala:1677
+msgid ""
+"The server requires a presence subscription to access this account's OMEMO "
+"keys. Check account permissions, then retry the encrypted message."
+msgstr ""
+"يتطلب الخادم اشتراكًا في حالة الاتصال للوصول إلى مفاتيح OMEMO لهذا الحساب. "
+"تحقق من أذونات الحساب، ثم أعد محاولة إرسال الرسالة المشفرة."
+
+#: plugins/omemo/src/logic/manager.vala:1678
+msgid ""
+"The server denied access to this account's OMEMO keys. Check account "
+"permissions, then retry the encrypted message."
+msgstr ""
+"رفض الخادم الوصول إلى مفاتيح OMEMO لهذا الحساب. تحقق من أذونات الحساب، ثم "
+"أعد محاولة إرسال الرسالة المشفرة."
+
+#: plugins/omemo/src/logic/manager.vala:1681
+msgid ""
+"OMEMO key access requires a presence subscription. Ask the contact to "
+"approve it, then retry the encrypted message."
+msgstr ""
+"يتطلب الوصول إلى مفاتيح OMEMO اشتراكًا في حالة الاتصال. اطلب من جهة الاتصال "
+"الموافقة عليه، ثم أعد محاولة إرسال الرسالة المشفرة."
+
+#: plugins/omemo/src/logic/manager.vala:1682
+msgid ""
+"The server denied access to the OMEMO keys. Check contact permissions, then "
+"retry the encrypted message."
+msgstr ""
+"رفض الخادم الوصول إلى مفاتيح OMEMO. تحقق من أذونات جهة الاتصال، ثم أعد "
+"محاولة إرسال الرسالة المشفرة."
+
+#, c-format
+#~ msgid ""
+#~ "%s does not trust this device. That means, you might be missing messages."
+#~ msgstr "لا يثق %s بهذا الجهاز. هذا يعني أنك قد تفقد بعض الرسائل."
+
+#~ msgid "OMEMO Key Management"
+#~ msgstr "إدارة مفاتيح OMEMO"
+
+#~ msgid "Automatically accept new keys"
+#~ msgstr "اقبّل المفاتيح الجديدة تلقائيًا"
+
+#~ msgid "New encryption keys from this contact will be accepted automatically."
+#~ msgstr "ستقبل مفاتيح التشفير الجديدة لهذا المراسل تلقائيًا."
+
+#~ msgid "Own key"
+#~ msgstr "مفتاحك الخاص"
+
+#~ msgid "Associated keys"
+#~ msgstr "المفاتيح المقترِنة"
+
+#~ msgid "Inactive keys"
+#~ msgstr "المفاتيح غير النشِطة"
+
+#~ msgid "Unused"
+#~ msgstr "غير مستخدَم"
+
+#~ msgid "Own fingerprint"
+#~ msgstr "بصمتك الخاصة"
+
+#~ msgid "Will be generated on first connection"
+#~ msgstr "سيتم توليدها عند أول اتصال"
+
+#~ msgid "Not matching"
+#~ msgstr "غير مطابقة"
+
+#~ msgid "Matching"
+#~ msgstr "مطابقة"
+
+#~ msgid ""
+#~ "Once confirmed, any future messages sent by %s using this key will be "
+#~ "highlighted accordingly in the chat window."
+#~ msgstr ""
+#~ "بمجرد تأكيد ذلك ، سيتم تمييز أية رسائل مستقبلية مرسلة مِن %s باستخدام هذا "
+#~ "المفتاح وفقا لذلك في نافذة الدردشة."
+
+#~ msgid ""
+#~ "Stop accepting this key during communication with its associated contact."
+#~ msgstr "توقف عن قبول هذا المفتاح أثناء الاتصال مع المُراسِل المرتبط به."
+
+#~ msgid ""
+#~ "Start accepting this key during communication with its associated contact"
+#~ msgstr "ابدأ في قبول هذا المفتاح أثناء الاتصال مع المُراسِل المرتبط به"
+
+#~ msgid ""
+#~ "This means it cannot be used by %s to receive messages, and any messages "
+#~ "sent by it will be ignored."
+#~ msgstr ""
+#~ "هذا يعني أنه لا يمكن استخدامه مِن طرف %s لاستقبال الرسائل و سيتم تجاهل أية "
+#~ "رسائل بُعِثت به."
+
+#~ msgid ""
+#~ "Once confirmed, any future messages sent by %s using this key will be "
+#~ "ignored and none of your messages will be readable using this key."
+#~ msgstr ""
+#~ "بمجرد التأكيد ، سيتم تجاهل أي رسائل مستقبلية يقوم بإرسالها %s باستخدام هذا "
+#~ "المفتاح ويتصبح كافة رسائلك غير قابلة للقراءة باستخدام هذا المفتاح."
+
+#~ msgid ""
+#~ "Once confirmed this key will be usable by %s to receive and send messages."
+#~ msgstr ""
+#~ "بمجرد تأكيد هذا المفتاح سوف يكون قابلا للاستخدام من قِبل %s لتلقي وإرسال "
+#~ "الرسائل."
+
+#~ msgid ""
+#~ "When this contact adds new encryption keys to their account, automatically "
+#~ "accept them."
+#~ msgstr ""
+#~ "عند قيام جهة الاتصال هذه باضافة مفاتيح تشفير جديدة إلى حسابها ، قم بقبولها "
+#~ "تلقائيا."
+
+#~ msgid ""
+#~ "When you add new encryption keys to your account, automatically accept them."
+#~ msgstr "عند إضافة مفاتيح تشفير جديدة إلى حسابك ، اقبلها تلقائيا."
+
+#~ msgid "Unknown device (0x%.8x)"
+#~ msgstr "جهاز مجهول (0x%.8x)"
+
+#~ msgid "Other devices"
+#~ msgstr "أجهزة أخرى"
+
+#~ msgid "- None -"
+#~ msgstr "- لا شيء -"

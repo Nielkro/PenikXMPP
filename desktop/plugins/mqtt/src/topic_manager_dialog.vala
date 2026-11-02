@@ -1,0 +1,462 @@
+/*
+ * MqttTopicManagerDialog — Visual topic manager for the MQTT Bot.
+ *
+ * An Adw.Dialog that allows the user to manage MQTT topic subscriptions,
+ * QoS levels, priorities, and bridge rules without typing chat commands.
+ *
+ * Opened via the /mqtt manager command or from the MQTT settings page.
+ *
+ * Copyright (C) 2026 Ralf Peter <dinox@handwerker.jetzt>
+ */
+
+using Gtk;
+using Gee;
+using Dino.Entities;
+
+namespace Dino.Plugins.Mqtt {
+
+public class MqttTopicManagerDialog : Adw.Dialog {
+
+    private Plugin plugin;
+    private string? connection_key;  /* null = standalone, else account bare JID */
+
+    /* Widgets */
+    private Adw.PreferencesPage main_page;
+    private Adw.PreferencesGroup topics_group;
+    private Adw.PreferencesGroup bridges_group;
+    private Adw.PreferencesGroup alerts_group;
+
+    /* BUG-11 fix: track dynamic topic rows for clean rebuild */
+    private Gee.ArrayList<Gtk.Widget> topic_rows = new Gee.ArrayList<Gtk.Widget>();
+
+    /* Topic entry */
+    private Entry topic_entry;
+    private DropDown qos_dropdown;
+
+    /* Bridge entry */
+    private Entry bridge_topic_entry;
+    private Entry bridge_jid_entry;
+
+    public MqttTopicManagerDialog(Plugin plugin, string? connection_key = null) {
+        this.plugin = plugin;
+        this.connection_key = connection_key;
+        this.title = connection_key != null
+            ? _("MQTT Topics \u2014 %s").printf(connection_key)
+            : _("MQTT Topic Manager");
+        this.content_width = 480;
+        this.content_height = 600;
+
+        build_ui();
+        populate();
+
+        /* Clear focus entirely on close to prevent GTK "Broken
+         * accounting of active state" and "did not receive a
+         * focus-out event" warnings.  grab_focus() on a container
+         * re-delegates to a child entry — set_focus(null) clears
+         * focus completely. */
+        this.closed.connect(() => {
+            var root = this.get_root() as Gtk.Root;
+            if (root != null) root.set_focus(null);
+        });
+    }
+
+    private void build_ui() {
+        var toolbar_view = new Adw.ToolbarView();
+
+        /* Header bar */
+        var header = new Adw.HeaderBar();
+        toolbar_view.add_top_bar(header);
+
+        /* Main preferences page inside a scrolled window */
+        main_page = new Adw.PreferencesPage();
+
+        /* ── Topic Subscriptions Group ─────────────────────────── */
+        topics_group = new Adw.PreferencesGroup();
+        topics_group.title = _("Topic Subscriptions");
+        topics_group.description = _("Active MQTT topic subscriptions with QoS level");
+
+        /* Add-topic row */
+        var add_topic_box = new Box(Orientation.HORIZONTAL, 6);
+        add_topic_box.margin_top = 6;
+        add_topic_box.margin_bottom = 6;
+
+        topic_entry = new Entry();
+        topic_entry.placeholder_text = "home/sensors/#";
+        topic_entry.hexpand = true;
+        add_topic_box.append(topic_entry);
+
+        /* QoS dropdown */
+        string[] qos_labels = { "QoS 0", "QoS 1", "QoS 2" };
+        qos_dropdown = create_dropdown(qos_labels);
+        qos_dropdown.selected = 0;
+        add_topic_box.append(qos_dropdown);
+
+        var add_btn = new Button.with_label(_("Subscribe"));
+        add_btn.add_css_class("suggested-action");
+        add_btn.clicked.connect(on_subscribe_clicked);
+        add_topic_box.append(add_btn);
+
+        topics_group.add(add_topic_box);
+        main_page.add(topics_group);
+
+        /* ── Bridge Rules Group ────────────────────────────────── */
+        bridges_group = new Adw.PreferencesGroup();
+        bridges_group.title = _("MQTT → XMPP Bridge");
+        bridges_group.description = _("Forward MQTT messages to XMPP contacts");
+
+        var add_bridge_box = new Box(Orientation.HORIZONTAL, 6);
+        add_bridge_box.margin_top = 6;
+        add_bridge_box.margin_bottom = 6;
+
+        bridge_topic_entry = new Entry();
+        bridge_topic_entry.placeholder_text = "home/alerts/#";
+        bridge_topic_entry.hexpand = true;
+        add_bridge_box.append(bridge_topic_entry);
+
+        bridge_jid_entry = new Entry();
+        bridge_jid_entry.placeholder_text = "user@example.com";
+        bridge_jid_entry.hexpand = true;
+        add_bridge_box.append(bridge_jid_entry);
+
+        var add_bridge_btn = new Button.with_label(_("Bridge"));
+        add_bridge_btn.add_css_class("suggested-action");
+        add_bridge_btn.clicked.connect(on_bridge_clicked);
+        add_bridge_box.append(add_bridge_btn);
+
+        bridges_group.add(add_bridge_box);
+        main_page.add(bridges_group);
+
+        /* ── Alerts Group ──────────────────────────────────────── */
+        alerts_group = new Adw.PreferencesGroup();
+        alerts_group.title = _("Alert Rules");
+        alerts_group.description = _("Threshold alerts for MQTT topics");
+        main_page.add(alerts_group);
+
+        toolbar_view.content = main_page;
+        this.child = toolbar_view;
+    }
+
+    private void populate() {
+        /* Clear existing dynamic rows */
+        populate_topics();
+        populate_bridges();
+        populate_alerts();
+    }
+
+    /* ── Topic Display ───────────────────────────────────────────── */
+
+    /**
+     * Get topics string for the current connection context.
+     */
+    private string? get_topics_string() {
+        if (connection_key != null && connection_key != MqttBotConversation.STANDALONE_KEY) {
+            /* Per-account: look up account by bare JID */
+            var accounts = plugin.app.stream_interactor.get_accounts();
+            foreach (var acc in accounts) {
+                if (acc.bare_jid.to_string() == connection_key) {
+                    var cfg = plugin.get_account_config(acc);
+                    return cfg.topics;
+                }
+            }
+            return null;
+        }
+        /* Standalone: read from standalone config */
+        return plugin.get_standalone_config().topics;
+    }
+
+    /**
+     * Save topics string for the current connection context.
+     */
+    private void save_topics_string(string topics) {
+        if (connection_key != null && connection_key != MqttBotConversation.STANDALONE_KEY) {
+            var accounts = plugin.app.stream_interactor.get_accounts();
+            foreach (var acc in accounts) {
+                if (acc.bare_jid.to_string() == connection_key) {
+                    var cfg = plugin.get_account_config(acc);
+                    cfg.topics = topics;
+                    plugin.save_account_config(acc, cfg);
+                    return;
+                }
+            }
+        } else {
+            /* Standalone: save to standalone config */
+            var sa_cfg = plugin.get_standalone_config();
+            sa_cfg.topics = topics;
+            plugin.save_standalone_config();
+        }
+    }
+
+    private void populate_topics() {
+        string? topics_str = get_topics_string();
+        if (topics_str == null || topics_str.strip() == "") return;
+
+        string[] topics = topics_str.split(",");
+
+        MqttConnectionConfig? cfg = get_config();
+
+        foreach (string t in topics) {
+            string topic = t.strip();
+            if (topic == "") continue;
+
+            int qos = (cfg != null) ? cfg.get_topic_qos(topic) : 0;
+            MqttPriority prio = (cfg != null) ?
+                MqttPriority.from_string(cfg.get_topic_priority_key(topic)) : MqttPriority.NORMAL;
+
+            var row = new Adw.ActionRow();
+            row.title = topic;
+            row.subtitle = _("QoS %d \u00b7 %s").printf(qos, prio.to_string_key());
+
+            /* Unsubscribe button */
+            var unsub_btn = new Button.from_icon_name("list-remove-symbolic");
+            unsub_btn.valign = Align.CENTER;
+            unsub_btn.add_css_class("flat");
+            unsub_btn.tooltip_text = _("Unsubscribe");
+            string topic_copy = topic;
+            unsub_btn.clicked.connect(() => {
+                remove_topic(topic_copy);
+            });
+            row.add_suffix(unsub_btn);
+
+            topics_group.add(row);
+            topic_rows.add(row);  /* BUG-11: track for rebuild */
+        }
+    }
+
+    private void populate_bridges() {
+        MqttBridgeManager? bm = plugin.get_bridge_manager();
+        if (bm == null) return;
+
+        var rules = bm.get_rules_for_client(get_client_label());
+        foreach (var rule in rules) {
+            var row = new Adw.ActionRow();
+            row.title = "%s → %s".printf(rule.topic, rule.target_jid);
+            row.subtitle = rule.enabled ? _("Active") : _("Disabled");
+
+            var remove_btn = new Button.from_icon_name("list-remove-symbolic");
+            remove_btn.valign = Align.CENTER;
+            remove_btn.add_css_class("flat");
+            remove_btn.tooltip_text = _("Remove bridge");
+            string rule_id = rule.id;
+            string client_label = rule.client_label;
+            remove_btn.clicked.connect(() => {
+                if (bm.remove_rule(rule_id)) {
+                    plugin.sync_bridge_topics_for_client(client_label);
+                    bridges_group.remove(row);  /* remove from UI */
+                }
+            });
+            row.add_suffix(remove_btn);
+
+            bridges_group.add(row);
+        }
+    }
+
+    private void populate_alerts() {
+        MqttAlertManager? am = plugin.get_alert_manager();
+        if (am == null) return;
+
+        var rules = am.get_rules_for_connection(get_client_label());
+        foreach (var rule in rules) {
+            string field_str = (rule.field != null && rule.field != "")
+                ? ".%s".printf(rule.field) : "";
+
+            var row = new Adw.ActionRow();
+            row.title = "%s%s %s %s".printf(
+                rule.topic, field_str,
+                rule.op.to_symbol(), rule.threshold);
+            row.subtitle = "%s · %s".printf(
+                rule.enabled ? _("Active") : _("Disabled"),
+                rule.priority.to_string_key());
+
+            var toggle = new Switch();
+            toggle.valign = Align.CENTER;
+            toggle.active = rule.enabled;
+            string toggle_id = rule.id;
+            toggle.notify["active"].connect(() => {
+                am.toggle_rule_by_id(toggle_id);
+            });
+            row.add_suffix(toggle);
+
+            var remove_btn = new Button.from_icon_name("list-remove-symbolic");
+            remove_btn.valign = Align.CENTER;
+            remove_btn.add_css_class("flat");
+            remove_btn.tooltip_text = _("Remove alert");
+            string remove_id = rule.id;
+            remove_btn.clicked.connect(() => {
+                if (am.remove_rule(remove_id)) {
+                    alerts_group.remove(row);
+                }
+            });
+            row.add_suffix(remove_btn);
+
+            alerts_group.add(row);
+        }
+    }
+
+    /* ── Button Handlers ─────────────────────────────────────────── */
+
+    private void on_subscribe_clicked() {
+        string topic = topic_entry.text.strip();
+        if (topic == "") return;
+
+        int qos = (int) qos_dropdown.selected;
+
+        /* Subscribe */
+        plugin.subscribe(topic, qos, connection_key);
+
+        /* Persist */
+        string? existing = get_topics_string();
+        string new_topics;
+        if (existing != null && existing != "") {
+            /* Check duplicate — clear entry as visual feedback
+             * so the user knows it was recognized.  (Audit Finding 8) */
+            foreach (string p in existing.split(",")) {
+                if (p.strip() == topic) {
+                    topic_entry.text = "";
+                    return;
+                }
+            }
+            new_topics = existing + "," + topic;
+        } else {
+            new_topics = topic;
+        }
+        save_topics_string(new_topics);
+
+        var cfg = get_config();
+        if (cfg != null) {
+            cfg.set_topic_qos(topic, qos);
+            if (get_client_label() == MqttBotConversation.STANDALONE_KEY) {
+                plugin.save_standalone_config();
+            } else {
+                var accounts = plugin.app.stream_interactor.get_accounts();
+                foreach (var acc in accounts) {
+                    if (acc.bare_jid.to_string() == get_client_label()) {
+                        plugin.save_account_config(acc, cfg);
+                        break;
+                    }
+                }
+            }
+        }
+
+        /* Add row to UI */
+        var row = new Adw.ActionRow();
+        row.title = topic;
+        row.subtitle = _("QoS %d · normal").printf(qos);
+
+        var unsub_btn = new Button.from_icon_name("list-remove-symbolic");
+        unsub_btn.valign = Align.CENTER;
+        unsub_btn.add_css_class("flat");
+        string topic_copy = topic;
+        unsub_btn.clicked.connect(() => { remove_topic(topic_copy); });
+        row.add_suffix(unsub_btn);
+
+        topics_group.add(row);
+        topic_rows.add(row);  /* BUG-11: track for rebuild */
+
+        /* Clear entry */
+        topic_entry.text = "";
+    }
+
+    private void on_bridge_clicked() {
+        string topic = bridge_topic_entry.text.strip();
+        string jid = bridge_jid_entry.text.strip();
+        if (topic == "" || jid == "") return;
+
+        MqttBridgeManager? bm = plugin.get_bridge_manager();
+        if (bm == null) return;
+
+        var rule = new BridgeRule();
+        rule.topic = topic;
+        rule.target_jid = jid;
+        rule.client_label = get_client_label();
+        rule.send_account = get_default_send_account();
+        if (rule.send_account == null || rule.send_account.strip() == "") return;
+        bm.add_rule(rule);
+        plugin.sync_bridge_topics_for_client(rule.client_label);
+
+        /* Add row */
+        var row = new Adw.ActionRow();
+        row.title = "%s → %s".printf(topic, jid);
+        row.subtitle = _("Active");
+        bridges_group.add(row);
+
+        bridge_topic_entry.text = "";
+        bridge_jid_entry.text = "";
+    }
+
+    private string get_client_label() {
+        return (connection_key != null && connection_key != MqttBotConversation.STANDALONE_KEY)
+            ? connection_key
+            : MqttBotConversation.STANDALONE_KEY;
+    }
+
+    private MqttConnectionConfig? get_config() {
+        string label = get_client_label();
+        if (label == MqttBotConversation.STANDALONE_KEY) {
+            return plugin.get_standalone_config();
+        }
+        var accounts = plugin.app.stream_interactor.get_accounts();
+        foreach (var acc in accounts) {
+            if (acc.bare_jid.to_string() == label) {
+                return plugin.get_account_config(acc);
+            }
+        }
+        return null;
+    }
+
+    private string? get_default_send_account() {
+        string label = get_client_label();
+        if (label != MqttBotConversation.STANDALONE_KEY) return label;
+
+        var accounts = plugin.app.stream_interactor.get_accounts();
+        foreach (var acc in accounts) {
+            var state = plugin.app.stream_interactor.connection_manager.get_state(acc);
+            if (state == ConnectionManager.ConnectionState.CONNECTED) {
+                return acc.bare_jid.to_string();
+            }
+        }
+        return accounts.size > 0 ? accounts.first().bare_jid.to_string() : null;
+    }
+
+    private void remove_topic(string topic) {
+        /* Unsubscribe on the relevant connection */
+        plugin.unsubscribe(topic, connection_key);
+
+        /* Remove from persistent topic list */
+        string? existing = get_topics_string();
+        if (existing != null && existing != "") {
+            string[] parts = existing.split(",");
+            var remaining = new ArrayList<string>();
+            foreach (string p in parts) {
+                if (p.strip() != topic) {
+                    remaining.add(p.strip());
+                }
+            }
+            save_topics_string(MqttUtils.join_strings(",", remaining));
+        }
+
+        /* Rebuild topic list UI instead of closing the dialog */
+        rebuild_topics_ui();
+    }
+
+    /**
+     * Clear and re-populate the topics group.
+     */
+    private void rebuild_topics_ui() {
+        /* BUG-11 fix: use tracked rows instead of fragile GTK child iteration */
+        foreach (var w in topic_rows) {
+            topics_group.remove(w);
+        }
+        topic_rows.clear();
+        populate_topics();
+    }
+
+    private static DropDown create_dropdown(string[] labels) {
+        var model = new Gtk.StringList(null);
+        foreach (string label in labels) {
+            model.append(label);
+        }
+        return new DropDown(model, null);
+    }
+}
+
+}

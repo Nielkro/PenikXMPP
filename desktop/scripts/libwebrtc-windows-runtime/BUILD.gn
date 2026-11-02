@@ -1,0 +1,183 @@
+config("dinox_wrapper_config") {
+  include_dirs = [ "include", "ffmpeg-windows-hardware" ]
+  defines = [
+    "DINOX_WEBRTC_MILESTONE=152",
+    "DINOX_WEBRTC_BRANCH=\"7977\"",
+    "DINOX_WEBRTC_COMMIT=\"6f37672d358475cd17544121a12494da454d85fb\"",
+    "DINOX_WEBRTC_ARTIFACT_ABI=\"dinox-libwebrtc-runtime-v2\"",
+    "DINOX_WEBRTC_INSTALLED_WORKER_PATH=\"dinox-webrtc-worker.exe\"",
+  ]
+}
+
+dinox_effect_support_sources = [
+  "src/dinox_webrtc_video_runtime.cpp",
+  "src/dinox_webrtc_video_background_images.cpp",
+  "src/dinox_webrtc_video_background_preparation.cpp",
+  "src/dinox_webrtc_video_compositor.cpp",
+  "src/dinox_webrtc_video_overlays.cpp",
+  "vision/vision_client.cpp",
+  "vision/vision_process_windows.cpp",
+]
+
+shared_library("dinox-google-webrtc") {
+  sources = [
+    "src/dinox_webrtc.cpp",
+    "src/dinox_webrtc_ipc.cpp",
+    "src/dinox_webrtc_video_decoder_factory.cpp",
+    "src/dinox_webrtc_video_mf_codec.cpp",
+    "src/dinox_webrtc_video_effects.cpp",
+    "src/dinox_webrtc_video_ring.cpp",
+    "src/dinox_webrtc_worker_proxy.cpp",
+  ] + dinox_effect_support_sources
+  configs += [ ":dinox_wrapper_config" ]
+  defines = [ "DINOX_WEBRTC_BUILDING_LIBRARY=1" ]
+  deps = [
+    "//:webrtc",
+    "//api/video_codecs:builtin_video_decoder_factory",
+    "//api/video_codecs:builtin_video_encoder_factory",
+  ]
+  if (is_win) {
+    deps += [
+      "//modules/audio_device:audio_device_module_from_input_and_output",
+      "//rtc_base/win:scoped_com_initializer",
+    ]
+  }
+}
+
+executable("dinox-webrtc-worker") {
+  sources = [
+    "src/dinox_webrtc_ipc.cpp",
+    "src/dinox_webrtc_video_ring.cpp",
+    "src/dinox_webrtc_worker_main.cpp",
+  ]
+  configs += [ ":dinox_wrapper_config" ]
+  defines = [ "DINOX_WEBRTC_STATIC=1" ]
+  deps = [ ":dinox-google-webrtc" ]
+}
+
+executable("dinox-webrtc-process-engine-smoke") {
+  sources = [ "tests/process_engine_smoke.cpp" ]
+  configs += [ ":dinox_wrapper_config" ]
+  deps = [ ":dinox-google-webrtc" ]
+}
+
+executable("dinox-webrtc-muji-sdp-smoke") {
+  sources = [ "tests/wrapper_smoke.cpp" ]
+  configs += [ ":dinox_wrapper_config" ]
+  defines = [ "DINOX_WEBRTC_MUJI_SDP_SMOKE_ONLY=1" ]
+  deps = [ ":dinox-google-webrtc" ]
+}
+
+executable("dinox-webrtc-ipc-protocol-smoke") {
+  sources = [
+    "src/dinox_webrtc_ipc.cpp",
+    "tests/ipc_protocol_smoke.cpp",
+  ]
+  configs += [ ":dinox_wrapper_config" ]
+  defines = [ "DINOX_WEBRTC_STATIC=1" ]
+}
+
+executable("dinox-webrtc-video-ring-smoke") {
+  sources = [
+    "src/dinox_webrtc_video_ring.cpp",
+    "tests/video_ring_smoke.cpp",
+  ]
+  include_dirs = [ "src" ]
+  configs += [ ":dinox_wrapper_config" ]
+  defines = [
+    "DINOX_WEBRTC_STATIC=1",
+    "DINOX_WEBRTC_VIDEO_RING_TESTING=1",
+  ]
+}
+
+executable("dinox-webrtc-windows-codec-provider-smoke") {
+  sources = [
+    "src/dinox_webrtc_video_mf_codec.cpp",
+    "tests/windows_codec_provider_smoke.cpp",
+  ]
+  include_dirs = [ "src" ]
+  configs += [ ":dinox_wrapper_config" ]
+  deps = [ "//:webrtc" ]
+}
+
+# --runtime-failure injects failures into the real M152 fallback wrappers;
+# --unavailable-device keeps hardware enabled and verifies automatic software
+# operation on the test VM without GPU video encode/decode facilities.
+executable("dinox-webrtc-video-codec-smoke") {
+  sources = [
+    "src/dinox_webrtc_video_decoder_factory.cpp",
+    "src/dinox_webrtc_video_mf_codec.cpp",
+    "tests/video_codec_smoke.cpp",
+  ]
+  include_dirs = [ "src" ]
+  configs += [ ":dinox_wrapper_config" ]
+  deps = [
+    "//:webrtc",
+    "//api/video_codecs:builtin_video_decoder_factory",
+    "//api/video_codecs:builtin_video_encoder_factory",
+  ]
+}
+
+executable("dinox-webrtc-video-effects-smoke") {
+  sources = [
+    "src/dinox_webrtc_video_effects.cpp",
+    "tests/video_effects_smoke.cpp",
+  ] + dinox_effect_support_sources
+  include_dirs = [ "src" ]
+  configs += [ ":dinox_wrapper_config" ]
+  defines = [ "DINOX_WEBRTC_STATIC=1" ]
+  deps = [ "//:webrtc" ]
+}
+
+executable("dinox-webrtc-video-pipeline-effects-smoke") {
+  sources = [ "tests/video_pipeline_effects_smoke.cpp" ]
+  configs += [ ":dinox_wrapper_config" ]
+  deps = [ ":dinox-google-webrtc" ]
+}
+
+executable("dinox-webrtc-vision-fake-worker") {
+  sources = [ "vision/vision_client_fake_worker.cpp" ]
+  configs += [ ":dinox_wrapper_config" ]
+}
+
+executable("dinox-webrtc-video-pipeline-privacy-smoke") {
+  sources = [ "tests/video_pipeline_privacy_smoke.cpp" ]
+  configs += [ ":dinox_wrapper_config" ]
+  deps = [ ":dinox-google-webrtc" ]
+}
+executable("dinox-webrtc-video-background-api-smoke") {
+  sources = [ "tests/video_background_api_smoke.cpp" ]
+  configs += [ ":dinox_wrapper_config" ]
+  deps = [ ":dinox-google-webrtc" ]
+}
+executable("dinox-webrtc-video-vision-geometry-golden") {
+  sources = [ "tests/video_vision_geometry_golden.cpp" ]
+  include_dirs = [ "src" ]
+  configs += [ ":dinox_wrapper_config" ]
+}
+
+executable("dinox-webrtc-video-effects-baseline") {
+  sources = [ "tests/video_effects_baseline.cpp" ]
+  configs += [ ":dinox_wrapper_config" ]
+  deps = [ ":dinox-google-webrtc" ]
+}
+
+group("dinox-runtime") {
+  deps = [
+    ":dinox-google-webrtc",
+    ":dinox-webrtc-ipc-protocol-smoke",
+    ":dinox-webrtc-process-engine-smoke",
+    ":dinox-webrtc-muji-sdp-smoke",
+    ":dinox-webrtc-video-ring-smoke",
+    ":dinox-webrtc-video-effects-smoke",
+    ":dinox-webrtc-video-pipeline-effects-smoke",
+    ":dinox-webrtc-video-pipeline-privacy-smoke",
+    ":dinox-webrtc-video-background-api-smoke",
+    ":dinox-webrtc-video-vision-geometry-golden",
+    ":dinox-webrtc-vision-fake-worker",
+    ":dinox-webrtc-video-effects-baseline",
+    ":dinox-webrtc-video-codec-smoke",
+    ":dinox-webrtc-windows-codec-provider-smoke",
+    ":dinox-webrtc-worker",
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "scope": "SOURCE_ONLY_HISTORICAL_INTEROP_SNAPSHOT",
+  "portable_test_framework": false,
+  "runtime_permission_granted": false,
+  "runtime_result_claimed": false,
+  "source_pins_preserved": "Copied original manifests retain original hashes and absolute lab paths; any normalized copies record both hashes here. Do not execute this snapshot as a live lab. Private runtime dependencies, admissions, observations and results are excluded.",
+  "files": {
+    "README.md": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/README.md",
+      "sha256": "fdb7acf492dfe85edbea07f282f01b3e3a321d06cb80a965c7b82822785a4ca7",
+      "bytes": 4262
+    },
+    "server_compile.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/server_compile.py",
+      "sha256": "8613975e320ed981a67c80add58d701e9b62f9641eff25a10fb2be14cd82fc00",
+      "bytes": 10949
+    },
+    "server_run.py": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/server_run.py",
+      "sha256": "7943552f5b1385d4f0c000a1a73da70863fff8b1049d91995795b6418c9a4519",
+      "bytes": 8565
+    },
+    "input-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/input-manifest.json",
+      "sha256": "0e561ea789e456709fb725bd312ea9a8c8c9ed70e099779dc23d89db7393f8d3",
+      "bytes": 39376
+    },
+    "source-manifest.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/source-manifest.json",
+      "sha256": "cd2a9fea6d907d99693b4ab5b9585eaed9871d0b8c5e216f2a69cd0deb365e7b",
+      "bytes": 1048
+    },
+    "source-consistency.json": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/source-consistency.json",
+      "sha256": "d4e2cb5cc81d03ae3f3afe30e882163b44777375256839d0d6096b375131e3bd",
+      "bytes": 9148
+    },
+    "derivation.diff": {
+      "origin": "local/monocles-dinox-interop-20261018/native-current-driver/derivation.diff",
+      "sha256": "6c60255fd20c41cdcb0a7767257f6cabd716b100a1b8bbbc5bb079d611c7461a",
+      "bytes": 26520,
+      "origin_sha256": "05ca7c0129e1ead44e9a0e6e176071fd3e4d8b7241201d3aebf383fdf398ee9f",
+      "origin_bytes": 31447,
+      "normalization": "Regenerate zero-context unified diff from the same pinned before/after source pairs"
+    }
+  },
+  "copied_files": 7,
+  "copied_bytes": 99868
+}

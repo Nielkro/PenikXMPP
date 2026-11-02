@@ -1,0 +1,806 @@
+# Dutch translations for DinoX.
+# This file is distributed under the same license as the DinoX package.
+msgid ""
+msgstr ""
+"Project-Id-Version: DinoX\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-26 12:04+0100\n"
+"PO-Revision-Date: 2026-10-26 17:45+0100\n"
+"Last-Translator: DinoX contributors\n"
+"Language-Team: Dutch\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: plugins/omemo/data/encryption_preferences_entry.ui:8
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:92
+msgid ""
+"Each device has its own OMEMO key. Messages can only be decrypted by a "
+"device if they are encrypted to its key. Messages are only encrypted to "
+"accepted devices."
+msgstr ""
+"Elk apparaat heeft zijn eigen OMEMO-sleutel. Berichten kunnen alleen door "
+"een apparaat worden ontsleuteld als ze naar de sleutel ervan zijn "
+"versleuteld. Berichten worden alleen versleuteld naar geaccepteerde "
+"apparaten."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:17
+#: plugins/omemo/src/ui/contact_details_provider.vala:52
+#: plugins/omemo/src/ui/contact_details_provider.vala:99
+msgid "OMEMO Encryption"
+msgstr "OMEMO-versleuteling"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:18
+msgid ""
+"Older hidden messages have no recorded fingerprint and cannot be safely "
+"assigned to this key."
+msgstr ""
+"Oudere verborgen berichten hebben geen vastgelegde vingerafdruk en kunnen "
+"niet veilig aan deze sleutel worden gekoppeld."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:19
+#: plugins/omemo/src/ui/manage_key_dialog.vala:36
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:36
+msgid "Close"
+msgstr "Sluiten"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Key changed"
+msgstr "Sleutel gewijzigd"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:33
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:33
+msgid "Could not update device"
+msgstr "Kan apparaat niet bijwerken"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:34
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:34
+msgid ""
+"The device key has changed. Review the current fingerprint before trying "
+"again."
+msgstr ""
+"De apparaatsleutel is gewijzigd. Controleer de huidige vingerafdruk voordat "
+"je het opnieuw probeert."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:35
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:35
+msgid "The device settings could not be changed. Please try again."
+msgstr "Kan de apparaatinstellingen niet wijzigen. Probeer het opnieuw."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:75
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:415
+#: plugins/omemo/src/ui/contact_details_provider.vala:227
+msgid "Manage Key"
+msgstr "Sleutel beheren"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:76
+msgid ""
+"Compare the fingerprint, character by character, with the one shown on your "
+"contact's device."
+msgstr ""
+"Vergelijk de vingerafdruk teken voor teken met de vingerafdruk op het "
+"apparaat van je contact."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:77
+msgid "Fingerprints differ"
+msgstr "Vingerafdrukken wijken af"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:78
+msgid "Fingerprints match"
+msgstr "Vingerafdrukken komen overeen"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:86
+#: plugins/omemo/src/ui/manage_key_dialog.vala:148
+#: plugins/omemo/src/ui/manage_key_dialog.vala:154
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:342
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:87
+#: plugins/omemo/src/ui/manage_key_dialog.vala:122
+#: plugins/omemo/src/ui/manage_key_dialog.vala:161
+#: plugins/omemo/src/ui/manage_key_dialog.vala:234
+msgid "Confirm"
+msgstr "Bevestigen"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:94
+#, c-format
+msgid ""
+"Account: %s\n"
+"Contact: %s\n"
+"Device: %s"
+msgstr ""
+"Account: %s\n"
+"Contact: %s\n"
+"Apparaat: %s"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:126
+msgid "Verify key"
+msgstr "Sleutel verifiëren"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:127
+#, c-format
+msgid ""
+"Future messages sent by %s from the device that uses this key will be "
+"highlighted accordingly in the chat window."
+msgstr ""
+"Toekomstige berichten van %s van het apparaat dat deze sleutel gebruikt, "
+"worden gemarkeerd in het gespreksvenster."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:138
+msgid "Fingerprints do not match"
+msgstr "Vingerafdrukken komen niet overeen"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:139
+#, c-format
+msgid ""
+"Please verify that you are comparing the correct fingerprint. If "
+"fingerprints do not match, %s's account may be compromised and you should "
+"consider rejecting this key."
+msgstr ""
+"Zorg dat je de juiste vingerafdrukken vergelijkt. Als de vingerafdrukken "
+"niet overeenkomen, kan het zijn dat het account van %s gehackt is. Overweeg "
+"in dat geval deze sleutel te weigeren."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+#: plugins/omemo/src/ui/manage_key_dialog.vala:259
+#: plugins/omemo/src/ui/manage_key_dialog.vala:261
+msgid "Remove device"
+msgstr "Apparaat verwijderen"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:170
+msgid "Open"
+msgstr "Openen"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid "Verify key fingerprint"
+msgstr "Vingerafdruk van sleutel verifiëren"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:193
+msgid ""
+"Compare this key's fingerprint with the fingerprint displayed on the "
+"contact's device."
+msgstr ""
+"Vergelijk de vingerafdruk van deze sleutel met de vingerafdruk die wordt "
+"getoond op het apparaat van je contactpersoon."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+#: plugins/omemo/src/ui/manage_key_dialog.vala:243
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:609
+#: plugins/omemo/src/ui/contact_details_provider.vala:315
+msgid "Reject key"
+msgstr "Sleutel weigeren"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:194
+msgid ""
+"Block encrypted communication with the contact's device that uses this key."
+msgstr ""
+"Blokkeer versleutelde communicatie met het apparaat van deze contactpersoon "
+"dat deze sleutel gebruikt."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+#: plugins/omemo/src/ui/manage_key_dialog.vala:251
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:604
+#: plugins/omemo/src/ui/contact_details_provider.vala:310
+msgid "Accept key"
+msgstr "Sleutel accepteren"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:195
+msgid ""
+"Allow encrypted communication with the contact's device that uses this key."
+msgstr ""
+"Sta versleutelde communicatie toe met het apparaat van deze contactpersoon "
+"dat deze sleutel gebruikt."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+#: plugins/omemo/src/ui/manage_key_dialog.vala:268
+msgid "Reset session"
+msgstr "Sessie opnieuw instellen"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:196
+msgid ""
+"Delete the encryption session for this device. A fresh session will be "
+"established on the next message. Use this when messages are not arriving."
+msgstr ""
+"Verwijder de versleutelingssessie voor dit apparaat. Bij het volgende "
+"bericht wordt een nieuwe sessie opgezet. Gebruik dit als berichten niet "
+"aankomen."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:197
+msgid ""
+"Delete this device's key and session data. Use this for old or inactive "
+"devices."
+msgstr ""
+"Verwijder de sleutel- en sessiegegevens van dit apparaat. Gebruik dit voor "
+"oude of inactieve apparaten."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid "This key is currently %s."
+msgstr "Deze sleutel is momenteel %s."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+msgid "accepted"
+msgstr "geaccepteerd"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:201
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+#, c-format
+msgid ""
+"This means it can be used by %s to receive and send encrypted messages."
+msgstr ""
+"Dit betekent dat %s deze kan gebruiken om versleutelde berichten te "
+"ontvangen en te verzenden."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid "verified"
+msgstr "geverifieerd"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:208
+msgid ""
+"Additionally it has been verified to match the key on the contact's device."
+msgstr ""
+"Er is vastgesteld dat deze sleutel overeenkomt met de sleutel op het "
+"apparaat van de contactpersoon."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+msgid "rejected"
+msgstr "geweigerd"
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:214
+#, c-format
+msgid ""
+"This means it cannot be used by %s to decipher your messages, and you won't "
+"see messages encrypted with it."
+msgstr ""
+"Dit betekent dat %s deze niet kan gebruiken om je berichten te ontsleutelen "
+"en dat je geen berichten ziet die ermee zijn versleuteld."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:244
+#, c-format
+msgid ""
+"You won't see encrypted messages from the device of %s that uses this key. "
+"Conversely, that device won't be able to decipher your messages anymore."
+msgstr ""
+"Je ziet geen versleutelde berichten van het apparaat van %s dat deze sleutel"
+" gebruikt. Daarnaast kan het apparaat jouw berichten niet meer ontsleutelen."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:252
+#, c-format
+msgid ""
+"You will be able to exchange encrypted messages with the device of %s that "
+"uses this key."
+msgstr ""
+"Je kunt versleutelde berichten uitwisselen met het apparaat van %s dat deze "
+"sleutel gebruikt."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+#, c-format
+msgid ""
+"The key and session data for this device of %s will be deleted. If the "
+"device is still active, it will re-appear when a new message is received."
+msgstr ""
+"De sleutel- en sessiegegevens van dit apparaat van %s worden verwijderd. Als"
+" het apparaat nog actief is, verschijnt het opnieuw wanneer een nieuw "
+"bericht wordt ontvangen."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:260
+msgid "Please click “Remove device” at the top to confirm deletion."
+msgstr ""
+"Klik bovenaan op ‘Apparaat verwijderen’ om de verwijdering te bevestigen."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:269
+#, c-format
+msgid ""
+"The encryption session for this device of %s will be deleted. A fresh "
+"session will be negotiated automatically when the next message is sent. The "
+"key and trust level are preserved."
+msgstr ""
+"De versleutelingssessie voor dit apparaat van %s wordt verwijderd. Bij het "
+"verzenden van het volgende bericht wordt automatisch een nieuwe sessie "
+"opgezet. De sleutel en het vertrouwensniveau blijven behouden."
+
+#: plugins/omemo/src/ui/manage_key_dialog.vala:275
+msgid "Back"
+msgstr "Terug"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Review key"
+msgstr "Sleutel controleren"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:92
+msgid "Manage"
+msgstr "Beheren"
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:100
+msgid ""
+"A device for this contact has a new encryption key. DinoX will use it only "
+"after your review."
+msgstr ""
+"Een apparaat van dit contact heeft een nieuwe versleutelingssleutel. DinoX "
+"gebruikt deze pas na je controle."
+
+#: plugins/omemo/src/ui/device_notification_populator.vala:101
+msgid "This contact has new devices"
+msgstr "Deze contactpersoon heeft nieuwe apparaten"
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:36
+msgid "This call is <b>encrypted and verified</b> with OMEMO."
+msgstr "Dit gesprek is <b>versleuteld en geverifieerd</b> met OMEMO."
+
+#: plugins/omemo/src/ui/call_encryption_entry.vala:40
+msgid "This call is encrypted with OMEMO."
+msgstr "Dit gesprek is versleuteld met OMEMO."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:16
+msgid "Reset all sessions"
+msgstr "Alle sessies opnieuw instellen"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:17
+msgid ""
+"Delete all encryption sessions. Fresh sessions will be established on the "
+"next message."
+msgstr ""
+"Verwijder alle versleutelingssessies. Bij het volgende bericht worden nieuwe"
+" sessies opgezet."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:18
+msgid "Reset"
+msgstr "Opnieuw instellen"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:30
+msgid "Sessions reset. A fresh key exchange will happen on the next message."
+msgstr ""
+"Sessies opnieuw ingesteld. Bij het volgende bericht vindt een nieuwe "
+"sleuteluitwisseling plaats."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:93
+msgid "OMEMO by default"
+msgstr "Standaard OMEMO"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:94
+msgid "Enable OMEMO encryption for new conversations"
+msgstr "OMEMO-versleuteling inschakelen voor nieuwe gesprekken"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:95
+#: plugins/omemo/src/ui/contact_details_provider.vala:166
+msgid "Encrypt to new devices"
+msgstr "Voor nieuwe apparaten versleutelen"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:96
+msgid "Automatically encrypt to new devices from this contact."
+msgstr ""
+"Berichten automatisch versleutelen voor nieuwe apparaten van dit contact."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:97
+msgid "New keys"
+msgstr "Nieuwe sleutels"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:169
+msgid ""
+"New encryption keys from your other devices will be accepted automatically."
+msgstr ""
+"Nieuwe sleutels van je andere apparaten worden automatisch geaccepteerd."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:291
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:293
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:372
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:374
+msgid "This device"
+msgstr "Dit apparaat"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:299
+msgid "Set device name"
+msgstr "Apparaatnaam instellen"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Device Name"
+msgstr "Apparaatnaam"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:341
+msgid "Set a name for this device that other contacts can see."
+msgstr "Stel een naam voor dit apparaat in die andere contacten kunnen zien."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:343
+msgid "Save"
+msgstr "Opslaan"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:461
+msgid "Other device"
+msgstr "Ander apparaat"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:463
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Device"
+msgstr "Apparaat"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:468
+msgid "inactive"
+msgstr "inactief"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:481
+#: plugins/omemo/src/ui/contact_details_provider.vala:212
+msgid "today"
+msgstr "vandaag"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:483
+#: plugins/omemo/src/ui/contact_details_provider.vala:214
+msgid "yesterday"
+msgstr "gisteren"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:485
+#: plugins/omemo/src/ui/contact_details_provider.vala:216
+#, c-format
+msgid "%d days ago"
+msgstr "%d dagen geleden"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:488
+#: plugins/omemo/src/ui/contact_details_provider.vala:219
+#, c-format
+msgid "%d month ago"
+msgid_plural "%d months ago"
+msgstr[0] "%d maand geleden"
+msgstr[1] "%d maanden geleden"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:491
+#: plugins/omemo/src/ui/contact_details_provider.vala:222
+#, c-format
+msgid "%d year ago"
+msgid_plural "%d years ago"
+msgstr[0] "%d jaar geleden"
+msgstr[1] "%d jaar geleden"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:493
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+#: plugins/omemo/src/ui/contact_details_provider.vala:224
+msgid "Last seen"
+msgstr "Laatst gezien"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:495
+msgid "unknown"
+msgstr "onbekend"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:500
+msgid "Accepted"
+msgstr "Geaccepteerd"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:503
+msgid "Rejected"
+msgstr "Geweigerd"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:506
+#: plugins/omemo/src/ui/contact_details_provider.vala:365
+msgid "Verified"
+msgstr "Geverifieerd"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:527
+msgid "Inactive"
+msgstr "Inactief"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:531
+msgid "Not seen recently"
+msgstr "Al enige tijd niet gezien"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:533
+msgid "This DinoX has not observed any activity from this device for over 60 days. The device may still be in use."
+msgstr "Deze DinoX heeft al meer dan 60 dagen geen activiteit van dit apparaat waargenomen. Het apparaat kan nog steeds in gebruik zijn."
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:585
+#: plugins/omemo/src/ui/contact_details_provider.vala:293
+msgid "Encryption key changed"
+msgstr "Versleutelingssleutel gewijzigd"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:589
+#: plugins/omemo/src/ui/contact_details_provider.vala:297
+msgid "New device"
+msgstr "Nieuw apparaat"
+
+#: plugins/omemo/src/ui/encryption_preferences_entry.vala:596
+#: plugins/omemo/src/ui/contact_details_provider.vala:304
+msgid ""
+"This device has a new encryption key, for example after a reinstall. DinoX "
+"will use it only after your review."
+msgstr ""
+"Dit apparaat heeft een nieuwe versleutelingssleutel, bijvoorbeeld na een "
+"herinstallatie. DinoX gebruikt deze pas na je controle."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:135
+msgid "Verifying private room members…"
+msgstr "Leden van privékamer verifiëren…"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:148
+msgid "Can't use encryption in a groupchat private message."
+msgstr ""
+"Versleuteling is niet mogelijk in een privébericht binnen een groepschat."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:156
+msgid "OMEMO is initializing, please wait a moment..."
+msgstr "OMEMO wordt geïnitialiseerd, even geduld…"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:166
+msgid "OMEMO initialization failed. Please try again."
+msgstr "OMEMO-initialisatie mislukt. Probeer het opnieuw."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:194
+msgid "OMEMO can't be used in public (non-members-only) rooms."
+msgstr ""
+"OMEMO kan niet worden gebruikt in openbare kamers (die niet uitsluitend voor"
+" leden zijn)."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:197
+msgid "No other room members are available for OMEMO encryption."
+msgstr "Er zijn geen andere kamerleden beschikbaar voor OMEMO-versleuteling."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:200
+#, c-format
+msgid "A member does not support OMEMO: %s"
+msgstr "Een lid ondersteunt geen OMEMO: %s"
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:207
+msgid "The private room member list could not be verified."
+msgstr "De ledenlijst van de privékamer kan niet worden geverifieerd."
+
+#: plugins/omemo/src/ui/encryption_list_entry.vala:217
+msgid "This contact does not support OMEMO encryption"
+msgstr "Dit contact ondersteunt geen OMEMO-versleuteling"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:53
+#: plugins/omemo/src/ui/contact_details_provider.vala:100
+msgid "Encryption keys for room members"
+msgstr "Versleutelingssleutels voor kamerleden"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:105
+msgid "No member JIDs available. This may be an anonymous room."
+msgstr "Geen JID's van leden beschikbaar. Dit is mogelijk een anonieme kamer."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:155
+msgid "Your devices"
+msgstr "Je apparaten"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#: plugins/omemo/src/ui/contact_details_provider.vala:161
+#, c-format
+msgid "%d device"
+msgid_plural "%d devices"
+msgstr[0] "%d OMEMO-apparaat"
+msgstr[1] "%d OMEMO-apparaten"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:157
+#, c-format
+msgid " (+%d inactive)"
+msgstr " (+%d inactief)"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:159
+#, c-format
+msgid "%d inactive devices"
+msgstr "%d inactieve apparaten"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:168
+msgid "Automatically accept new keys from your other devices."
+msgstr "Nieuwe sleutels van je andere apparaten automatisch accepteren."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:169
+msgid "Automatically accept new keys from this contact."
+msgstr "Nieuwe sleutels van dit contact automatisch accepteren."
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:197
+msgid "Your device"
+msgstr "Je apparaat"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:367
+msgid "Trusted"
+msgstr "Vertrouwd"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:369
+msgid "Untrusted"
+msgstr "Niet vertrouwd"
+
+#: plugins/omemo/src/ui/contact_details_provider.vala:371
+msgid "Unknown"
+msgstr "Onbekend"
+
+#: plugins/omemo/src/ui/own_notifications.vala:30
+msgid "OMEMO trust decision required"
+msgstr "OMEMO-vertrouwenskeuze vereist"
+
+#: plugins/omemo/src/ui/own_notifications.vala:32
+#, c-format
+msgid "Did you add a new device for account %s?"
+msgstr "Heb je een nieuw apparaat toegevoegd aan %s?"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:193
+#, c-format
+msgid ""
+"%s has been using an untrusted device. You won't see messages from devices "
+"that you do not trust."
+msgstr ""
+"%s gebruikt een niet-vertrouwd apparaat. Je ziet geen berichten van "
+"apparaten die je niet vertrouwt."
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:194
+msgid "Manage devices"
+msgstr "Apparaten beheren"
+
+#: plugins/omemo/src/ui/bad_messages_populator.vala:196
+#, c-format
+msgid ""
+"%s sent messages without a key for this device. Those messages could not be "
+"decrypted."
+msgstr ""
+"%s heeft berichten verzonden zonder sleutel voor dit apparaat. Die berichten"
+" kunnen niet worden ontsleuteld."
+
+#: plugins/omemo/src/logic/manager.vala:746
+#, c-format
+msgid ""
+"No active OMEMO devices were published for %s. Check the recipient's "
+"devices, then retry the encrypted message."
+msgstr ""
+"Er zijn geen actieve OMEMO-apparaten gepubliceerd voor %s. Controleer de "
+"apparaten van de ontvanger en probeer het versleutelde bericht opnieuw."
+
+#: plugins/omemo/src/logic/manager.vala:1664
+msgid "Could not retrieve the OMEMO device list. Retry the encrypted message."
+msgstr ""
+"Kan de OMEMO-apparatenlijst niet ophalen. Probeer het versleutelde bericht "
+"opnieuw."
+
+#: plugins/omemo/src/logic/manager.vala:1677
+msgid ""
+"The server requires a presence subscription to access this account's OMEMO "
+"keys. Check account permissions, then retry the encrypted message."
+msgstr ""
+"De server vereist een aanwezigheidsabonnement om toegang te krijgen tot de "
+"OMEMO-sleutels van dit account. Controleer de accountrechten en probeer het "
+"versleutelde bericht opnieuw."
+
+#: plugins/omemo/src/logic/manager.vala:1678
+msgid ""
+"The server denied access to this account's OMEMO keys. Check account "
+"permissions, then retry the encrypted message."
+msgstr ""
+"De server heeft de toegang tot de OMEMO-sleutels van dit account geweigerd. "
+"Controleer de accountrechten en probeer het versleutelde bericht opnieuw."
+
+#: plugins/omemo/src/logic/manager.vala:1681
+msgid ""
+"OMEMO key access requires a presence subscription. Ask the contact to "
+"approve it, then retry the encrypted message."
+msgstr ""
+"Toegang tot OMEMO-sleutels vereist een aanwezigheidsabonnement. Vraag het "
+"contact dit goed te keuren en probeer het versleutelde bericht opnieuw."
+
+#: plugins/omemo/src/logic/manager.vala:1682
+msgid ""
+"The server denied access to the OMEMO keys. Check contact permissions, then "
+"retry the encrypted message."
+msgstr ""
+"De server heeft de toegang tot de OMEMO-sleutels geweigerd. Controleer de "
+"contactrechten en probeer het versleutelde bericht opnieuw."
+
+#, c-format
+#~ msgid ""
+#~ "%s does not trust this device. That means, you might be missing messages."
+#~ msgstr "%s vertrouwt dit apparaat niet. Je mist hierdoor mogelijk berichten."
+
+#~ msgid "OMEMO Key Management"
+#~ msgstr "OMEMO-sleutelbeheer"
+
+#~ msgid "Automatically accept new keys"
+#~ msgstr "Nieuwe sleutels automatisch accepteren"
+
+#~ msgid "New encryption keys from this contact will be accepted automatically."
+#~ msgstr ""
+#~ "Nieuwe sleutels van deze contactpersoon worden automatisch geaccepteerd."
+
+#~ msgid "Own key"
+#~ msgstr "Mijn sleutel"
+
+#~ msgid "Associated keys"
+#~ msgstr "Geassocieerde sleutels"
+
+#~ msgid "Inactive keys"
+#~ msgstr "Inactieve sleutels"
+
+#~ msgid "Unused"
+#~ msgstr "Ongebruikt"
+
+#~ msgid "Own fingerprint"
+#~ msgstr "Mijn vingerafdruk"
+
+#~ msgid "Will be generated on first connection"
+#~ msgstr "Wordt bij de eerste verbinding gegenereerd"
+
+#~ msgid "Your contact"
+#~ msgstr "Je contactpersoon"
+
+#~ msgid "Not matching"
+#~ msgstr "Komen niet overeen"
+
+#~ msgid "Matching"
+#~ msgstr "Komen overeen"
+
+#~ msgid ""
+#~ "Once confirmed, any future messages sent by %s using this key will be "
+#~ "highlighted accordingly in the chat window."
+#~ msgstr ""
+#~ "Zodra bevestigd, worden nieuwe berichten verstuurd door %s met deze sleutel "
+#~ "uitgelicht in het chatvenster."
+
+#~ msgid ""
+#~ "Stop accepting this key during communication with its associated contact."
+#~ msgstr ""
+#~ "Accepteer niet langer deze sleutel tijdens communicatie met het bijbehorende"
+#~ " contact."
+
+#~ msgid ""
+#~ "Start accepting this key during communication with its associated contact"
+#~ msgstr ""
+#~ "Accepteer deze sleutel tijdens communicatie met het bijbehorende contact"
+
+#~ msgid ""
+#~ "This means it cannot be used by %s to receive messages, and any messages "
+#~ "sent by it will be ignored."
+#~ msgstr ""
+#~ "Dit betekent dat het niet gebruikt kan worden door %s om berichten te "
+#~ "ontvangen. Berichten die hiermee verstuurd worden worden genegeerd."
+
+#~ msgid ""
+#~ "Once confirmed, any future messages sent by %s using this key will be "
+#~ "ignored and none of your messages will be readable using this key."
+#~ msgstr ""
+#~ "Zodra bevestigd, worden toekomstige berichten die verstuurd worden door %s "
+#~ "met deze sleutel genegeerd en zullen geen van je berichten leesbaar zijn met"
+#~ " deze sleutel."
+
+#~ msgid ""
+#~ "Once confirmed this key will be usable by %s to receive and send messages."
+#~ msgstr ""
+#~ "Zodra bevestigd kan deze sleutel gebruikt worden door %s om berichten te "
+#~ "ontvangen en te versturen."
+
+#~ msgid ""
+#~ "When this contact adds new encryption keys to their account, automatically "
+#~ "accept them."
+#~ msgstr ""
+#~ "Indien dit contact nieuwe encryptiesleutels toevoegt aan hun account, "
+#~ "automatisch accepteren."
+
+#~ msgid ""
+#~ "When you add new encryption keys to your account, automatically accept them."
+#~ msgstr ""
+#~ "Nieuwe encryptiesleutels die aan het account worden toegevoegd automatisch "
+#~ "accepteren."
+
+#, fuzzy
+#~ msgid ""
+#~ "Start accepting this key during communication with its associated contact."
+#~ msgstr ""
+#~ "Accepteer deze sleutel tijdens communicatie met het bijbehorende contact"
+
+#~ msgid "Reject Key"
+#~ msgstr "Sleutel Afwijzen"
+
+#~ msgid "Accept Key"
+#~ msgstr "Sleutel Aanvaarden"
+
+#~ msgid "Unknown device (0x%.8x)"
+#~ msgstr "Onbekend apparaat (0x%.8x)"
+
+#~ msgid "Other devices"
+#~ msgstr "Andere apparaten"
+
+#~ msgid "- None -"
+#~ msgstr "- Geen -"
+
+#~ msgid "OMEMO"
+#~ msgstr "OMEMO"
+
+#~ msgid "Database error"
+#~ msgstr "Databasefout"

@@ -1,0 +1,1897 @@
+# French translations for DinoX.
+# This file is distributed under the same license as the DinoX package.
+msgid ""
+msgstr ""
+"Project-Id-Version: DinoX\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-26 12:04+0100\n"
+"PO-Revision-Date: 2026-10-26 12:26+0100\n"
+"Last-Translator: DinoX contributors\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+
+#: plugins/openpgp/src/contact_details_provider.vala:163
+msgid "OpenPGP Legacy (XEP-0027/keyserver)"
+msgstr "OpenPGP historique (XEP-0027/serveur de clés)"
+
+#: plugins/openpgp/src/contact_details_provider.vala:176
+msgid "Search keyserver"
+msgstr "Rechercher sur le serveur de clés"
+
+#: plugins/openpgp/src/contact_details_provider.vala:184
+msgid "OpenPGP XMPP (XEP-0373/0374)"
+msgstr "OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/contact_details_provider.vala:196
+msgid "Copy XMPP-published OpenPGP fingerprint"
+msgstr "Copier l’empreinte OpenPGP publiée via XMPP"
+
+#: plugins/openpgp/src/contact_details_provider.vala:205
+msgid "Mark XMPP-published key as verified"
+msgstr "Marquer la clé publiée via XMPP comme vérifiée"
+
+#: plugins/openpgp/src/contact_details_provider.vala:211
+msgid "Reset XMPP-published key verification"
+msgstr "Réinitialiser la vérification de la clé publiée via XMPP"
+
+#: plugins/openpgp/src/contact_details_provider.vala:226
+msgid "Refresh XMPP-published key"
+msgstr "Actualiser la clé publiée via XMPP"
+
+#: plugins/openpgp/src/contact_details_provider.vala:337
+msgid "Checking XMPP-published OpenPGP key..."
+msgstr "Vérification de la clé OpenPGP publiée via XMPP…"
+
+#: plugins/openpgp/src/contact_details_provider.vala:350
+msgid "Checking the XMPP-published OpenPGP key timed out."
+msgstr "Le délai de vérification de la clé OpenPGP publiée via XMPP a expiré."
+
+#: plugins/openpgp/src/contact_details_provider.vala:389
+msgid "Checking keyring..."
+msgstr "Vérification du trousseau de clés…"
+
+#: plugins/openpgp/src/contact_details_provider.vala:427
+msgid "Invalid for legacy XEP-0027/keyserver: key has no email user ID."
+msgstr ""
+"Non valide pour le mode historique XEP-0027/serveur de clés : la clé n’a pas"
+" d’identité utilisateur avec adresse e-mail."
+
+#: plugins/openpgp/src/contact_details_provider.vala:428
+msgid "Invalid for OpenPGP for XMPP: key has no matching xmpp: user ID."
+msgstr ""
+"Non valide pour OpenPGP pour XMPP : la clé n’a pas d’identité utilisateur "
+"xmpp: correspondante."
+
+#: plugins/openpgp/src/contact_details_provider.vala:439
+msgid "Key not in keyring"
+msgstr "Clé absente du trousseau"
+
+#: plugins/openpgp/src/contact_details_provider.vala:446
+msgid ""
+"Active: legacy XEP-0027/keyserver key is currently usable for this contact."
+msgstr ""
+"Active : la clé du mode historique XEP-0027/serveur de clés est actuellement"
+" utilisable pour ce contact."
+
+#: plugins/openpgp/src/contact_details_provider.vala:449
+msgid ""
+"Stored: legacy XEP-0027/keyserver key is known, but is not currently active "
+"for this contact."
+msgstr ""
+"Enregistrée : la clé du mode historique XEP-0027/serveur de clés est connue,"
+" mais n’est pas actuellement active pour ce contact."
+
+#: plugins/openpgp/src/contact_details_provider.vala:451
+msgid "Inactive: no legacy XEP-0027/keyserver key is stored."
+msgstr ""
+"Inactive : aucune clé du mode historique XEP-0027/serveur de clés n’est "
+"enregistrée."
+
+#: plugins/openpgp/src/contact_details_provider.vala:457
+msgid "Verified: XMPP-published OpenPGP key is stored and manually verified."
+msgstr ""
+"Vérifiée : la clé OpenPGP publiée via XMPP est enregistrée et a été vérifiée"
+" manuellement."
+
+#: plugins/openpgp/src/contact_details_provider.vala:460
+msgid ""
+"Changed: XMPP-published OpenPGP key differs from the previously verified "
+"key. Verify the fingerprint before trusting this identity."
+msgstr ""
+"Modifiée : la clé OpenPGP publiée via XMPP diffère de la clé précédemment "
+"vérifiée. Vérifiez son empreinte avant de faire confiance à cette identité."
+
+#: plugins/openpgp/src/contact_details_provider.vala:462
+msgid ""
+"Unverified: XMPP-published OpenPGP key is stored. Compare the fingerprint "
+"before trusting this identity."
+msgstr ""
+"Non vérifiée : la clé OpenPGP publiée via XMPP est enregistrée. Comparez son"
+" empreinte avant de faire confiance à cette identité."
+
+#: plugins/openpgp/src/contact_details_provider.vala:465
+msgid ""
+"Supported: contact advertises OpenPGP for XMPP, but no retrievable XMPP-"
+"published key is stored."
+msgstr ""
+"Pris en charge : le contact annonce OpenPGP pour XMPP, mais aucune clé "
+"récupérable publiée via XMPP n’est enregistrée."
+
+#: plugins/openpgp/src/contact_details_provider.vala:467
+msgid "Inactive: no OpenPGP-for-XMPP support or XMPP-published key is known."
+msgstr ""
+"Inactif : aucune prise en charge d’OpenPGP pour XMPP ni clé publiée via XMPP"
+" n’est connue."
+
+#: plugins/openpgp/src/contact_details_provider.vala:497
+msgid "Fingerprint copied"
+msgstr "Empreinte copiée"
+
+#: plugins/openpgp/src/contact_details_provider.vala:520
+msgid "Verifying OpenPGP-for-XMPP key..."
+msgstr "Vérification de la clé OpenPGP pour XMPP…"
+
+#: plugins/openpgp/src/contact_details_provider.vala:554
+msgid ""
+"Cannot verify: key is not in the keyring or has no matching xmpp: user ID."
+msgstr ""
+"Vérification impossible : la clé est absente du trousseau ou ne possède pas "
+"d’identité utilisateur xmpp: correspondante."
+
+#: plugins/openpgp/src/contact_details_provider.vala:611
+msgid "Searching keyserver with fingerprint: "
+msgstr "Recherche sur le serveur de clés avec l’empreinte : "
+
+#: plugins/openpgp/src/contact_details_provider.vala:626
+msgid ""
+"Key not found or has no verified email on keyserver.\n"
+"Ask the contact to verify their email on keys.openpgp.org\n"
+"or send you their public key file directly."
+msgstr ""
+"Clé introuvable ou sans adresse e-mail vérifiée sur le serveur de clés.\n"
+"Demandez au contact de vérifier son adresse e-mail sur keys.openpgp.org\n"
+"ou de vous envoyer directement le fichier de sa clé publique."
+
+#: plugins/openpgp/src/contact_details_provider.vala:628
+msgid "Failed: "
+msgstr "Échec : "
+
+#: plugins/openpgp/src/contact_details_provider.vala:636
+msgid "Searching keyserver with JID..."
+msgstr "Recherche sur le serveur de clés avec l’adresse XMPP…"
+
+#: plugins/openpgp/src/contact_details_provider.vala:657
+msgid "Not found with JID. Enter email address:"
+msgstr "Introuvable avec l’adresse XMPP. Saisissez une adresse e-mail :"
+
+#: plugins/openpgp/src/contact_details_provider.vala:668
+msgid "Enter Email Address"
+msgstr "Saisir une adresse e-mail"
+
+#: plugins/openpgp/src/contact_details_provider.vala:669
+msgid ""
+"The key was not found using the JID.\n"
+"\n"
+"Enter the email address that is in the contact's OpenPGP key:"
+msgstr ""
+"La clé n’a pas été trouvée avec l’adresse XMPP.\n"
+"\n"
+"Saisissez l’adresse e-mail figurant dans la clé OpenPGP du contact :"
+
+#: plugins/openpgp/src/contact_details_provider.vala:671
+#: plugins/openpgp/src/key_management_dialog.vala:1045
+#: plugins/openpgp/src/key_management_dialog.vala:1486
+#: plugins/openpgp/src/key_management_dialog.vala:1654
+#: plugins/openpgp/src/key_management_dialog.vala:1694
+#: plugins/openpgp/src/key_management_dialog.vala:1789
+#: plugins/openpgp/src/key_management_dialog.vala:1924
+#: plugins/openpgp/src/key_management_dialog.vala:2108
+#: plugins/openpgp/src/key_management_dialog.vala:2270
+#: plugins/openpgp/src/key_management_dialog.vala:2866
+#: plugins/openpgp/src/key_management_dialog.vala:3211
+#: plugins/openpgp/src/key_management_dialog.vala:3213
+#: plugins/openpgp/src/plugin.vala:453
+msgid "Cancel"
+msgstr "Annuler"
+
+#: plugins/openpgp/src/contact_details_provider.vala:672
+msgid "Search"
+msgstr "Rechercher"
+
+#: plugins/openpgp/src/contact_details_provider.vala:709
+msgid "Searching keyserver for: "
+msgstr "Recherche sur le serveur de clés pour : "
+
+#: plugins/openpgp/src/contact_details_provider.vala:719
+msgid "Not found: "
+msgstr "Introuvable : "
+
+#: plugins/openpgp/src/encryption_list_entry.vala:66
+msgid "No conversation selected."
+msgstr "Aucune conversation sélectionnée."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:75
+msgid ""
+"You didn't configure OpenPGP for this account. You can do that in the "
+"Accounts Dialog."
+msgstr ""
+"Vous n’avez pas configuré OpenPGP pour ce compte. Vous pouvez le faire dans "
+"la fenêtre des comptes."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:113
+#: plugins/openpgp/src/encryption_list_entry.vala:240
+msgid "OpenPGP manager not available."
+msgstr "Gestionnaire OpenPGP non disponible."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:121
+msgid "OpenPGP-for-XMPP key manager not available."
+msgstr "Gestionnaire de clés OpenPGP pour XMPP indisponible."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:129
+msgid "Checking OpenPGP key via PubSub..."
+msgstr "Vérification de la clé OpenPGP via PubSub…"
+
+#: plugins/openpgp/src/encryption_list_entry.vala:138
+msgid ""
+"Checking the OpenPGP-for-XMPP key via PubSub timed out. Try again, or switch"
+" to legacy XEP-0027 if the contact has a keyserver key."
+msgstr ""
+"Le délai de vérification de la clé OpenPGP pour XMPP via PubSub a expiré. "
+"Réessayez ou passez au mode historique XEP-0027 si le contact possède une "
+"clé sur un serveur de clés."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:150
+msgid ""
+"This contact's OpenPGP-for-XMPP key has not been refreshed yet. Try again "
+"after the contact republishes it, or use the refresh button in contact "
+"details."
+msgstr ""
+"La clé OpenPGP pour XMPP de ce contact n’a pas encore été actualisée. "
+"Réessayez après sa republication par le contact, ou utilisez le bouton "
+"d’actualisation dans les détails du contact."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:159
+#: plugins/openpgp/src/encryption_list_entry.vala:215
+msgid ""
+"This contact has no legacy OpenPGP/XEP-0027 key. Switch your OpenPGP key "
+"usage to DinoX / OpenPGP for XMPP."
+msgstr ""
+"Ce contact n’a pas de clé OpenPGP historique/XEP-0027. Changez l’utilisation"
+" de votre clé OpenPGP pour DinoX / OpenPGP pour XMPP."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:161
+#: plugins/openpgp/src/encryption_list_entry.vala:211
+msgid ""
+"This contact has no OpenPGP-for-XMPP key. Switch to a legacy XEP-0027 key or"
+" ask the contact to publish an OpenPGP-for-XMPP key."
+msgstr ""
+"Ce contact n’a pas de clé OpenPGP pour XMPP. Passez à une clé historique "
+"XEP-0027 ou demandez au contact de publier une clé OpenPGP pour XMPP."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:171
+#: plugins/openpgp/src/manager.vala:1119
+msgid ""
+"This contact's OpenPGP-for-XMPP key changed. Verify the fingerprint in "
+"contact details before sending."
+msgstr ""
+"La clé OpenPGP pour XMPP de ce contact a changé. Vérifiez son empreinte dans"
+" les détails du contact avant d’envoyer un message."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:172
+#: plugins/openpgp/src/manager.vala:1120
+msgid ""
+"This contact's OpenPGP-for-XMPP key is not verified. Verify the fingerprint "
+"in contact details before sending."
+msgstr ""
+"La clé OpenPGP pour XMPP de ce contact n’est pas vérifiée. Vérifiez son "
+"empreinte dans les détails du contact avant d’envoyer un message."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:180
+#: plugins/openpgp/src/encryption_list_entry.vala:219
+#: plugins/openpgp/src/manager.vala:429
+msgid ""
+"This contact has a stored legacy OpenPGP/XEP-0027 key, but it is not "
+"currently active."
+msgstr ""
+"Une clé OpenPGP historique/XEP-0027 est enregistrée pour ce contact, mais "
+"elle n’est pas actuellement active."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:200
+msgid "This contact's OpenPGP key is not in your keyring."
+msgstr "La clé OpenPGP de ce contact n'est pas dans votre trousseau."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:229
+msgid "Legacy OpenPGP (XEP-0027/keyserver) is active for outgoing messages."
+msgstr ""
+"OpenPGP historique (XEP-0027/serveur de clés) est actif pour les messages "
+"sortants."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:231
+msgid "OpenPGP for XMPP (XEP-0373/0374) is active for outgoing messages."
+msgstr ""
+"OpenPGP pour XMPP (XEP-0373/0374) est actif pour les messages sortants."
+
+#: plugins/openpgp/src/encryption_list_entry.vala:249
+#, c-format
+msgid "A member's OpenPGP key is not configured: %s"
+msgstr "La clé OpenPGP d’un membre n’est pas configurée : %s"
+
+#: plugins/openpgp/src/encryption_list_entry.vala:285
+#, c-format
+msgid "A member's OpenPGP key is not in your keyring: %s"
+msgstr "La clé OpenPGP d’un membre n’est pas dans votre trousseau : %s"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:51
+msgid "Loading keys..."
+msgstr "Chargement des clés…"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:121
+#: plugins/openpgp/src/encryption_preferences_entry.vala:127
+#: plugins/openpgp/src/encryption_preferences_entry.vala:157
+msgid "Outgoing OpenPGP messages"
+msgstr "Messages OpenPGP sortants"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:121
+msgid "Error in GnuPG"
+msgstr "Erreur dans GnuPG"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:127
+msgid "No keys available. Generate or import one!"
+msgstr "Aucune clé disponible. Générez-en ou importez-en une !"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:159
+msgid ""
+"DinoX currently sends OpenPGP as legacy XEP-0027 using keyserver/contact "
+"keys."
+msgstr ""
+"DinoX envoie actuellement les messages OpenPGP au format historique XEP-0027"
+" avec les clés des contacts ou du serveur de clés."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:162
+msgid "DinoX currently sends OpenPGP for XMPP using XEP-0373/0374."
+msgstr ""
+"DinoX envoie actuellement les messages OpenPGP pour XMPP avec XEP-0373/0374."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:165
+msgid "No OpenPGP send key is active for this account."
+msgstr "Aucune clé d’envoi OpenPGP n’est active pour ce compte."
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:229
+msgid "Manage Keys"
+msgstr "Gérer les clés"
+
+#: plugins/openpgp/src/encryption_preferences_entry.vala:230
+msgid "Generate, import, export, or delete keys"
+msgstr "Générer, importer, exporter ou supprimer des clés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:171
+msgid "OpenPGP Key Management"
+msgstr "Gestion des clés OpenPGP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:197
+msgid "Actions"
+msgstr "Actions"
+
+#: plugins/openpgp/src/key_management_dialog.vala:199
+#, c-format
+msgid "Keys and server backups for %s"
+msgstr "Clés et sauvegardes serveur pour %s"
+
+#: plugins/openpgp/src/key_management_dialog.vala:204
+msgid "Generate New Key"
+msgstr "Générer une nouvelle clé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:205
+msgid "Create a new OpenPGP key pair"
+msgstr "Créer une nouvelle paire de clés OpenPGP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:222
+msgid "Import Key"
+msgstr "Importer une clé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:223
+msgid ""
+"Import a private key for this account or a public key from a contact. "
+"Importing does not activate a key."
+msgstr ""
+"Importez une clé privée pour ce compte ou la clé publique d’un contact. "
+"L’importation n’active pas la clé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:240
+#: plugins/openpgp/src/key_management_dialog.vala:1655
+msgid "Delete Server Backup"
+msgstr "Supprimer la sauvegarde du serveur"
+
+#: plugins/openpgp/src/key_management_dialog.vala:241
+msgid ""
+"Remove this account's encrypted private-key backup. Local keys and public-"
+"key publications are kept."
+msgstr ""
+"Retirer la sauvegarde chiffrée de la clé privée de ce compte. Les clés "
+"locales et les publications de clés publiques sont conservées."
+
+#: plugins/openpgp/src/key_management_dialog.vala:247
+msgid "Fetch Key from Server (Sync)"
+msgstr "Récupérer la clé depuis le serveur (synchroniser)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:248
+msgid "Import your secret key backup from your server"
+msgstr "Importer la sauvegarde de votre clé privée depuis votre serveur"
+
+#: plugins/openpgp/src/key_management_dialog.vala:290
+msgid "Your Keys"
+msgstr "Vos clés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:291
+msgid "Private keys available for signing and decryption"
+msgstr "Clés privées disponibles pour la signature et le déchiffrement"
+
+#: plugins/openpgp/src/key_management_dialog.vala:386
+#: plugins/openpgp/src/key_management_dialog.vala:400
+#: plugins/openpgp/src/key_management_dialog.vala:456
+msgid "GnuPG did not respond."
+msgstr "GnuPG n’a pas répondu."
+
+#: plugins/openpgp/src/key_management_dialog.vala:412
+msgid "Server Backup Cleanup Pending"
+msgstr "Suppression de la sauvegarde serveur en attente"
+
+#: plugins/openpgp/src/key_management_dialog.vala:413
+msgid ""
+"The key was kept locally. DinoX will retry removing its matching backup when"
+" this account reconnects. Then retry revoking the key."
+msgstr ""
+"La clé a été conservée localement. DinoX réessaiera de supprimer sa "
+"sauvegarde correspondante à la reconnexion de ce compte. Réessayez ensuite "
+"de révoquer la clé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:455
+msgid "Could not load OpenPGP keys"
+msgstr "Impossible de charger les clés OpenPGP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:470
+msgid "No private keys found"
+msgstr "Aucune clé privée trouvée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:471
+msgid "Generate or import a key to get started"
+msgstr "Générez ou importez une clé pour commencer"
+
+#: plugins/openpgp/src/key_management_dialog.vala:646
+msgid "Published to keyserver"
+msgstr "Publiée sur le serveur de clés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:652
+msgid "Active legacy and XMPP account key"
+msgstr "Clé active du compte pour les modes historique et XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:653
+msgid "Active legacy XEP-0027 account key"
+msgstr "Clé active du compte pour le mode historique XEP-0027"
+
+#: plugins/openpgp/src/key_management_dialog.vala:653
+msgid "Active XMPP account key"
+msgstr "Clé XMPP active du compte"
+
+#: plugins/openpgp/src/key_management_dialog.vala:659
+msgid "Fingerprint"
+msgstr "Empreinte"
+
+#: plugins/openpgp/src/key_management_dialog.vala:672
+msgid "Remove Assignment to This Account"
+msgstr "Retirer l’attribution à ce compte"
+
+#: plugins/openpgp/src/key_management_dialog.vala:673
+msgid ""
+"Keep the key in DinoX's keyring and remove only its manual assignment to "
+"this account."
+msgstr ""
+"Conserver la clé dans le trousseau de DinoX et retirer uniquement son "
+"attribution manuelle à ce compte."
+
+#: plugins/openpgp/src/key_management_dialog.vala:684
+msgid "OpenPGP for XMPP (XEP-0373/0374)"
+msgstr "OpenPGP pour XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:686
+msgid ""
+"Active for this account. DinoX publishes this key through XMPP for OpenPGP-"
+"capable clients."
+msgstr ""
+"Active pour ce compte. DinoX publie cette clé via XMPP pour les clients "
+"compatibles OpenPGP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:688
+msgid ""
+"Stored for OpenPGP for XMPP, but not active while legacy XEP-0027/keyserver "
+"mode is selected."
+msgstr ""
+"Enregistrée pour OpenPGP pour XMPP, mais inactive tant que le mode "
+"historique XEP-0027/serveur de clés est sélectionné."
+
+#: plugins/openpgp/src/key_management_dialog.vala:690
+msgid ""
+"Inactive. This key is currently selected for legacy XEP-0027/keyserver use."
+msgstr ""
+"Inactive. Cette clé est actuellement sélectionnée pour le mode historique "
+"XEP-0027/serveur de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:692
+msgid ""
+"Not available for this account. OpenPGP for XMPP keys must contain an xmpp: "
+"user ID for this XMPP address."
+msgstr ""
+"Indisponible pour ce compte. Les clés OpenPGP pour XMPP doivent contenir une"
+" identité utilisateur xmpp: pour cette adresse XMPP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:694
+msgid ""
+"Not active for this account. Select it below to publish it through XMPP."
+msgstr ""
+"Inactive pour ce compte. Sélectionnez-la ci-dessous pour la publier via "
+"XMPP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:702
+msgid "Selected for OpenPGP for XMPP"
+msgstr "Sélectionnée pour OpenPGP pour XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:703
+msgid "Use for OpenPGP for XMPP"
+msgstr "Utiliser pour OpenPGP pour XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:705
+msgid ""
+"DinoX uses this key for XEP-0373/0374 messages and publishes it through "
+"XMPP."
+msgstr ""
+"DinoX utilise cette clé pour les messages XEP-0373/0374 et la publie via "
+"XMPP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:708
+msgid ""
+"Selects this key for XEP-0373/0374 messages and publishes it through XMPP."
+msgstr ""
+"Sélectionne cette clé pour les messages XEP-0373/0374 et la publie via XMPP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:715
+msgid "OpenPGP for XMPP Key Selected"
+msgstr "Clé OpenPGP pour XMPP sélectionnée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:715
+msgid ""
+"DinoX will use this key for OpenPGP for XMPP and publish it through XMPP for"
+" this account."
+msgstr ""
+"DinoX utilisera cette clé pour OpenPGP pour XMPP et la publiera via XMPP "
+"pour ce compte."
+
+#: plugins/openpgp/src/key_management_dialog.vala:723
+#: plugins/openpgp/src/key_management_dialog.vala:2237
+msgid "Backup Secret Key to Server"
+msgstr "Sauvegarder la clé privée sur le serveur"
+
+#: plugins/openpgp/src/key_management_dialog.vala:724
+msgid ""
+"Securely encrypt this key and store it on the server to sync across your "
+"devices."
+msgstr ""
+"Chiffrer cette clé de manière sécurisée et la conserver sur le serveur pour "
+"la synchroniser entre vos appareils."
+
+#: plugins/openpgp/src/key_management_dialog.vala:735
+msgid "Disable OpenPGP for XMPP for this account"
+msgstr "Désactiver OpenPGP pour XMPP pour ce compte"
+
+#: plugins/openpgp/src/key_management_dialog.vala:736
+msgid ""
+"Removes the XMPP PubSub publication and keeps the secret key locally. Legacy"
+" XEP-0027/keyserver state is not changed."
+msgstr ""
+"Retire la publication XMPP PubSub et conserve la clé privée localement. "
+"L’état du mode historique XEP-0027/serveur de clés reste inchangé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:747
+msgid "Legacy keyserver publication"
+msgstr "Publication historique sur serveur de clés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:749
+msgid ""
+"This key is revoked, expired, or not usable for signing and encryption."
+msgstr ""
+"Cette clé est révoquée, expirée ou inutilisable pour la signature et le "
+"chiffrement."
+
+#: plugins/openpgp/src/key_management_dialog.vala:751
+msgid ""
+"Stored for legacy XEP-0027/keyserver, but this key has no email user ID for "
+"new keyserver publishing."
+msgstr ""
+"Enregistrée pour le mode historique XEP-0027/serveur de clés, mais sans "
+"identité utilisateur avec adresse e-mail permettant une nouvelle publication"
+" sur un serveur de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:753
+msgid ""
+"Active for legacy XEP-0027. The email address on the key must still be "
+"verified on the keyserver."
+msgstr ""
+"Active pour le mode historique XEP-0027. L’adresse e-mail de la clé doit "
+"encore être vérifiée sur le serveur de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:755
+msgid ""
+"Stored for legacy XEP-0027/keyserver, but not active while OpenPGP for XMPP "
+"mode is selected."
+msgstr ""
+"Enregistrée pour le mode historique XEP-0027/serveur de clés, mais inactive "
+"tant que le mode OpenPGP pour XMPP est sélectionné."
+
+#: plugins/openpgp/src/key_management_dialog.vala:757
+msgid ""
+"Uploaded for legacy OpenPGP clients. The email address on the key must still"
+" be verified on the keyserver."
+msgstr ""
+"Envoyée pour les anciens clients OpenPGP. L’adresse e-mail de la clé doit "
+"encore être vérifiée sur le serveur de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:759
+msgid ""
+"Not uploaded. Legacy OpenPGP clients may not find this key unless you "
+"publish it to a keyserver."
+msgstr ""
+"Non envoyée. Les anciens clients OpenPGP risquent de ne pas trouver cette "
+"clé si vous ne la publiez pas sur un serveur de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:768
+msgid "Selected for legacy XEP-0027/keyserver"
+msgstr "Sélectionnée pour le mode historique XEP-0027/serveur de clés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:769
+msgid "Use for legacy XEP-0027/keyserver"
+msgstr "Utiliser pour le mode historique XEP-0027/serveur de clés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:771
+msgid ""
+"DinoX uses this key for legacy OpenPGP messages and keyserver-based "
+"contacts."
+msgstr ""
+"DinoX utilise cette clé pour les messages OpenPGP historiques et les "
+"contacts utilisant un serveur de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:773
+msgid ""
+"Selects this key for legacy OpenPGP messages. The keyserver entry still "
+"needs a verified email address."
+msgstr ""
+"Sélectionne cette clé pour les messages OpenPGP historiques. L’entrée sur le"
+" serveur de clés nécessite toujours une adresse e-mail vérifiée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:780
+#: plugins/openpgp/src/key_management_dialog.vala:790
+msgid "Legacy OpenPGP Key Selected"
+msgstr "Clé OpenPGP historique sélectionnée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:780
+msgid "DinoX will use this key for XEP-0027/keyserver OpenPGP."
+msgstr "DinoX utilisera cette clé pour OpenPGP XEP-0027/serveur de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:783
+msgid ""
+"Not published to a keyserver. You can select it, but other legacy clients "
+"may not find it automatically."
+msgstr ""
+"Non publiée sur un serveur de clés. Vous pouvez la sélectionner, mais les "
+"autres anciens clients risquent de ne pas la trouver automatiquement."
+
+#: plugins/openpgp/src/key_management_dialog.vala:790
+msgid ""
+"DinoX will use this key for XEP-0027. Publish it to a keyserver if legacy "
+"clients should find it automatically."
+msgstr ""
+"DinoX utilisera cette clé pour XEP-0027. Publiez-la sur un serveur de clés "
+"pour que les anciens clients la trouvent automatiquement."
+
+#: plugins/openpgp/src/key_management_dialog.vala:802
+msgid "Stop using for legacy XEP-0027/keyserver"
+msgstr "Cesser d’utiliser pour le mode historique XEP-0027/serveur de clés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:803
+msgid "Remove stored legacy XEP-0027/keyserver selection"
+msgstr "Retirer la sélection historique XEP-0027/serveur de clés enregistrée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:805
+msgid ""
+"Keeps the key locally and on the keyserver. DinoX stops announcing it in "
+"signed presence."
+msgstr ""
+"Conserve la clé localement et sur le serveur de clés. DinoX cesse de "
+"l’annoncer dans la présence signée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:806
+msgid ""
+"Keeps the key locally and on the keyserver. DinoX removes this inactive "
+"legacy account selection."
+msgstr ""
+"Conserve la clé localement et sur le serveur de clés. DinoX retire cette "
+"sélection historique inactive du compte."
+
+#: plugins/openpgp/src/key_management_dialog.vala:813
+msgid "Legacy OpenPGP Disabled"
+msgstr "OpenPGP historique désactivé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:813
+msgid ""
+"DinoX will no longer use or announce this key for XEP-0027/keyserver "
+"OpenPGP. The key remains in your keyring and on the keyserver if it was "
+"published."
+msgstr ""
+"DinoX n’utilisera et n’annoncera plus cette clé pour OpenPGP "
+"XEP-0027/serveur de clés. La clé reste dans votre trousseau et sur le "
+"serveur de clés si elle y a été publiée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:821
+msgid "Publish public key to keyserver for legacy discovery"
+msgstr ""
+"Publier la clé publique sur un serveur de clés pour la découverte par les "
+"anciens clients"
+
+#: plugins/openpgp/src/key_management_dialog.vala:822
+msgid "Requires a real email address you can verify."
+msgstr "Nécessite une véritable adresse e-mail que vous pouvez vérifier."
+
+#: plugins/openpgp/src/key_management_dialog.vala:831
+#: plugins/openpgp/src/key_management_dialog.vala:1333
+msgid "Export Public Key"
+msgstr "Exporter la clé publique"
+
+#: plugins/openpgp/src/key_management_dialog.vala:839
+#: plugins/openpgp/src/key_management_dialog.vala:1330
+msgid "Export Secret Key (Backup)"
+msgstr "Exporter la clé privée (sauvegarde)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:840
+msgid "Required for restoring your key"
+msgstr "Nécessaire pour restaurer votre clé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:849
+msgid "Revoke Key"
+msgstr "Révoquer la clé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:850
+msgid "Invalidate key, keep locally for old messages"
+msgstr "Invalider la clé, la conserver localement pour les anciens messages"
+
+#: plugins/openpgp/src/key_management_dialog.vala:859
+msgid "Revoke &amp; Delete Key"
+msgstr "Révoquer et supprimer la clé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:860
+msgid "Invalidate and remove key completely"
+msgstr "Invalider et retirer complètement la clé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:870
+msgid "Delete Key"
+msgstr "Supprimer la clé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:871
+msgid ""
+"Remove locally without revocation; active XMPP publication is removed first"
+msgstr ""
+"Retirer localement sans révocation ; la publication XMPP active est retirée "
+"d’abord"
+
+#: plugins/openpgp/src/key_management_dialog.vala:895
+msgid "Revoked"
+msgstr "Révoquée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:898
+msgid "Active OpenPGP XMPP (XEP-0373/0374)"
+msgstr "OpenPGP XMPP actif (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:900
+msgid "Stored OpenPGP XMPP (XEP-0373/0374)"
+msgstr "OpenPGP XMPP enregistré (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:902
+msgid "OpenPGP XMPP key (XEP-0373/0374)"
+msgstr "Clé OpenPGP XMPP (XEP-0373/0374)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:906
+msgid "Active legacy XEP-0027/keyserver"
+msgstr "Mode historique XEP-0027/serveur de clés actif"
+
+#: plugins/openpgp/src/key_management_dialog.vala:908
+msgid "Stored legacy XEP-0027/keyserver"
+msgstr "Mode historique XEP-0027/serveur de clés enregistré"
+
+#: plugins/openpgp/src/key_management_dialog.vala:910
+msgid "Legacy-capable key"
+msgstr "Clé compatible avec le mode historique"
+
+#: plugins/openpgp/src/key_management_dialog.vala:914
+msgid "Keyserver uploaded"
+msgstr "Envoyée au serveur de clés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:935
+msgid "Generate New OpenPGP Key"
+msgstr "Générer une nouvelle clé OpenPGP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:936
+msgid "Enter your details to create a new key pair."
+msgstr "Saisissez vos informations pour créer une nouvelle paire de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:944
+msgid "Name"
+msgstr "Nom"
+
+#: plugins/openpgp/src/key_management_dialog.vala:949
+msgid "Your Name"
+msgstr "Votre nom"
+
+#: plugins/openpgp/src/key_management_dialog.vala:952
+msgid "Key usage"
+msgstr "Utilisation de la clé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:960
+msgid "DinoX / OpenPGP for XMPP"
+msgstr "DinoX / OpenPGP pour XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:963
+msgid ""
+"Uses your XMPP address and publishes the selected account key through XMPP. "
+"No email verification is needed."
+msgstr ""
+"Utilise votre adresse XMPP et publie la clé sélectionnée pour le compte via "
+"XMPP. Aucune vérification d’adresse e-mail n’est nécessaire."
+
+#: plugins/openpgp/src/key_management_dialog.vala:976
+msgid "Legacy keyserver / XEP-0027"
+msgstr "Serveur de clés historique / XEP-0027"
+
+#: plugins/openpgp/src/key_management_dialog.vala:979
+msgid ""
+"Uses a real email address and uploads the key for older OpenPGP clients. The"
+" email address must be verified."
+msgstr ""
+"Utilise une véritable adresse e-mail et envoie la clé pour les anciens "
+"clients OpenPGP. L’adresse e-mail doit être vérifiée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:989
+#: plugins/openpgp/src/key_management_dialog.vala:1024
+msgid "XMPP address"
+msgstr "Adresse XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:995
+#: plugins/openpgp/src/key_management_dialog.vala:1025
+msgid "xmpp@example.com"
+msgstr "xmpp@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1001
+#: plugins/openpgp/src/key_management_dialog.vala:1029
+msgid ""
+"This key will be selected for this DinoX account and published through XMPP "
+"for OpenPGP-for-XMPP capable clients."
+msgstr ""
+"Cette clé sera sélectionnée pour ce compte DinoX et publiée via XMPP pour "
+"les clients compatibles OpenPGP pour XMPP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1009
+msgid "Passphrase (optional)"
+msgstr "Phrase de passe (facultative)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1020
+msgid "Email address"
+msgstr "Adresse e-mail"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1021
+msgid "name@example.com"
+msgstr "name@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1022
+msgid ""
+"Use a mailbox you can access. keys.openpgp.org requires email verification "
+"before older XEP-0027 clients can find this key."
+msgstr ""
+"Utilisez une adresse e-mail à laquelle vous avez accès. keys.openpgp.org "
+"exige sa vérification avant que les anciens clients XEP-0027 puissent "
+"trouver cette clé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1038
+msgid "4096-bit RSA key, valid for 2 years."
+msgstr "Clé RSA de 4096 bits, valable 2 ans."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1046
+msgid "Generate"
+msgstr "Générer"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1059
+#: plugins/openpgp/src/key_management_dialog.vala:1064
+#: plugins/openpgp/src/key_management_dialog.vala:1071
+#: plugins/openpgp/src/key_management_dialog.vala:1076
+#: plugins/openpgp/src/key_management_dialog.vala:1080
+#: plugins/openpgp/src/key_management_dialog.vala:1195
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+#: plugins/openpgp/src/key_management_dialog.vala:1318
+#: plugins/openpgp/src/key_management_dialog.vala:1390
+#: plugins/openpgp/src/key_management_dialog.vala:1394
+#: plugins/openpgp/src/key_management_dialog.vala:1398
+#: plugins/openpgp/src/key_management_dialog.vala:1512
+#: plugins/openpgp/src/key_management_dialog.vala:1730
+#: plugins/openpgp/src/key_management_dialog.vala:1737
+#: plugins/openpgp/src/key_management_dialog.vala:1779
+#: plugins/openpgp/src/key_management_dialog.vala:1837
+#: plugins/openpgp/src/key_management_dialog.vala:1844
+#: plugins/openpgp/src/key_management_dialog.vala:1914
+#: plugins/openpgp/src/key_management_dialog.vala:1975
+#: plugins/openpgp/src/key_management_dialog.vala:1982
+#: plugins/openpgp/src/key_management_dialog.vala:2033
+#: plugins/openpgp/src/key_management_dialog.vala:2085
+#: plugins/openpgp/src/key_management_dialog.vala:2139
+msgid "Error"
+msgstr "Erreur"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1059
+msgid "Name must be at least 2 characters"
+msgstr "Le nom doit comporter au moins 2 caractères"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1064
+msgid "Please enter a valid email address"
+msgstr "Saisissez une adresse e-mail valide"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1071
+msgid "Please enter a bare XMPP address, for example name@example.com"
+msgstr ""
+"Saisissez une adresse XMPP sans ressource, par exemple nom@example.com"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1076
+msgid "OpenPGP for XMPP keys must use this account's XMPP address."
+msgstr ""
+"Les clés OpenPGP pour XMPP doivent utiliser l’adresse XMPP de ce compte."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1080
+msgid "Please enter a valid XMPP address"
+msgstr "Saisissez une adresse XMPP valide"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1101
+msgid "Generating Key..."
+msgstr "Génération de la clé…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1102
+msgid "Please wait while your key is being generated. This may take a moment."
+msgstr ""
+"Veuillez patienter pendant la génération de votre clé. Cela peut prendre un "
+"moment."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1161
+#: plugins/openpgp/src/key_management_dialog.vala:1182
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+#: plugins/openpgp/src/key_management_dialog.vala:1386
+#: plugins/openpgp/src/key_management_dialog.vala:1772
+#: plugins/openpgp/src/key_management_dialog.vala:1908
+#: plugins/openpgp/src/key_management_dialog.vala:2079
+#: plugins/openpgp/src/key_management_dialog.vala:2137
+msgid "Success"
+msgstr "Succès"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1161
+msgid ""
+"Key generated and uploaded to the keyserver. Check your email to verify it "
+"before XEP-0027 clients can reliably find it."
+msgstr ""
+"La clé a été générée et envoyée au serveur de clés. Consultez vos e-mails "
+"pour la vérifier afin que les clients XEP-0027 puissent la trouver de "
+"manière fiable."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1163
+#: plugins/openpgp/src/key_management_dialog.vala:1174
+msgid "Partial Success"
+msgstr "Réussite partielle"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1163
+msgid ""
+"Key generated locally, but keyserver upload failed. It is not published for "
+"legacy XEP-0027 clients yet. You can retry from Key Management."
+msgstr ""
+"La clé a été générée localement, mais son envoi au serveur de clés a échoué."
+" Elle n’est pas encore publiée pour les anciens clients XEP-0027. Vous "
+"pouvez réessayer dans la gestion des clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1174
+msgid ""
+"Key generated locally, but it was not selected because it does not contain "
+"the required xmpp: user ID for this account."
+msgstr ""
+"La clé a été générée localement, mais elle n’a pas été sélectionnée, car "
+"elle ne contient pas l’identité utilisateur xmpp: requise pour ce compte."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1182
+msgid ""
+"Key generated and selected for OpenPGP for XMPP. DinoX will publish it "
+"through XMPP for this account."
+msgstr ""
+"La clé a été générée et sélectionnée pour OpenPGP pour XMPP. DinoX la "
+"publiera via XMPP pour ce compte."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1195
+msgid "Failed to generate key."
+msgstr "Échec de la génération de la clé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1219
+msgid "Import OpenPGP Key"
+msgstr "Importer une clé OpenPGP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1224
+msgid "OpenPGP Keys (*.asc, *.gpg)"
+msgstr "Clés OpenPGP (*.asc, *.gpg)"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1231
+msgid "All Files"
+msgstr "Tous les fichiers"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1259
+msgid "Importing Key..."
+msgstr "Importation de la clé…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1259
+msgid ""
+"Checking and importing the selected key into DinoX's private keyring..."
+msgstr ""
+"Vérification et importation de la clé sélectionnée dans le trousseau privé "
+"de DinoX…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1272
+msgid "The key file is too large. Choose an OpenPGP key file up to 16 MiB."
+msgstr ""
+"Le fichier de clé est trop volumineux. Choisissez un fichier de clé OpenPGP "
+"de 16 Mio maximum."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1308
+msgid "Key Imported"
+msgstr "Clé importée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1309
+msgid ""
+"The key is available below. Select it to use it for this account; the "
+"current encryption mode has not changed."
+msgstr ""
+"La clé est disponible ci-dessous. Sélectionnez-la pour l’utiliser avec ce "
+"compte ; le mode de chiffrement actuel n’a pas changé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1310
+msgid ""
+"The public key was imported into DinoX's keyring. Your account's encryption "
+"mode and key selection have not changed."
+msgstr ""
+"La clé publique a été importée dans le trousseau de DinoX. Le mode de "
+"chiffrement et la clé sélectionnée pour votre compte n’ont pas changé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+msgid "Import failed: "
+msgstr "L'importation a échoué : "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1313
+msgid "The file does not contain an importable OpenPGP key."
+msgstr "Le fichier ne contient aucune clé OpenPGP pouvant être importée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+msgid "Secret key exported to: "
+msgstr "Clé privée exportée vers : "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1384
+msgid ""
+"Keep this file safe! Anyone with this file can read your encrypted messages."
+msgstr ""
+"Conservez ce fichier en lieu sûr ! Toute personne qui le possède peut lire "
+"vos messages chiffrés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1386
+msgid "Key exported to: "
+msgstr "Clé exportée vers : "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1394
+msgid "Export failed."
+msgstr "L'exportation a échoué."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1483
+msgid "Disable OpenPGP for XMPP?"
+msgstr "Désactiver OpenPGP pour XMPP ?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1484
+msgid ""
+"This removes the XMPP PubSub publication and stops using this key for "
+"XEP-0373/0374 on this account. The secret key stays local and legacy "
+"XEP-0027/keyserver state is not changed."
+msgstr ""
+"Cette opération supprime la publication XMPP PubSub et cesse d’utiliser "
+"cette clé pour XEP-0373/0374 sur ce compte. La clé privée reste sur cet "
+"appareil et l’état du mode historique XEP-0027/serveur de clés ne change "
+"pas."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1487
+msgid "Disable XMPP Publishing"
+msgstr "Désactiver la publication XMPP"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1495
+msgid "Disabling OpenPGP for XMPP..."
+msgstr "Désactivation d’OpenPGP pour XMPP…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1495
+msgid "Removing the XMPP PubSub publication..."
+msgstr "Suppression de la publication XMPP PubSub…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1510
+msgid "OpenPGP for XMPP Disabled"
+msgstr "OpenPGP pour XMPP désactivé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1510
+msgid ""
+"DinoX no longer publishes this key through XMPP PubSub for this account. The"
+" secret key stays local and legacy XEP-0027/keyserver state was not changed."
+msgstr ""
+"DinoX ne publie plus cette clé via XMPP PubSub pour ce compte. La clé privée"
+" reste sur cet appareil et l’état du mode historique XEP-0027/serveur de "
+"clés n’a pas changé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1512
+msgid ""
+"Could not remove the XMPP publication. OpenPGP for XMPP was not disabled."
+msgstr ""
+"Impossible de supprimer la publication XMPP. OpenPGP pour XMPP n’a pas été "
+"désactivé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1609
+msgid "Key Assigned to Another Account"
+msgstr "Clé attribuée à un autre compte"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1610
+msgid ""
+"This key is also assigned to another DinoX account. Revoking or deleting it "
+"would affect that account too. Remove its key selections and manual "
+"assignment there first, or keep the key locally."
+msgstr ""
+"Cette clé est également attribuée à un autre compte DinoX. La révoquer ou la"
+" supprimer affecterait aussi ce compte. Retirez d’abord la clé des "
+"sélections et des attributions manuelles de cet autre compte, ou conservez-"
+"la localement."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1616
+#: plugins/openpgp/src/key_management_dialog.vala:1643
+msgid "Server Backup Not Checked"
+msgstr "Sauvegarde sur le serveur non vérifiée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1617
+#: plugins/openpgp/src/key_management_dialog.vala:1644
+msgid ""
+"The server backup could not be checked. The key was not revoked or deleted. "
+"Connect this account and try again."
+msgstr ""
+"La sauvegarde sur le serveur n’a pas pu être vérifiée. La clé n’a été ni "
+"révoquée ni supprimée. Connectez ce compte et réessayez."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1629
+msgid "Server Backup Not Identified"
+msgstr "Sauvegarde sur le serveur non identifiée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1630
+msgid ""
+"DinoX cannot safely identify the keys in this account's current server "
+"backup. Restore it using its backup code to identify it, or use Delete "
+"Server Backup to remove the whole backup explicitly. The key was not revoked"
+" or deleted."
+msgstr ""
+"DinoX ne peut pas identifier avec certitude les clés contenues dans la "
+"sauvegarde actuelle de ce compte sur le serveur. Restaurez-la à l’aide de "
+"son code de sauvegarde pour l’identifier, ou utilisez « Supprimer la "
+"sauvegarde du serveur » pour supprimer explicitement toute la sauvegarde. La"
+" clé n’a été ni révoquée ni supprimée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1633
+msgid "Server Backup Contains Other Keys"
+msgstr "La sauvegarde sur le serveur contient d’autres clés"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1634
+msgid ""
+"This backup also contains other private keys and cannot be removed for just "
+"this key. Save a local copy of all keys you need, then use Delete Server "
+"Backup and create a new backup for the keys you want to keep. The key was "
+"not revoked or deleted."
+msgstr ""
+"Cette sauvegarde contient également d’autres clés privées et ne peut pas "
+"être supprimée pour cette seule clé. Enregistrez une copie locale de toutes "
+"les clés dont vous avez besoin, puis utilisez « Supprimer la sauvegarde du "
+"serveur » et créez une nouvelle sauvegarde des clés à conserver. La clé n’a "
+"été ni révoquée ni supprimée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1638
+#: plugins/openpgp/src/key_management_dialog.vala:1680
+#: plugins/openpgp/src/key_management_dialog.vala:1683
+msgid "Server Backup Cleanup Failed"
+msgstr "Échec de la suppression de la sauvegarde sur le serveur"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1639
+msgid ""
+"The matching server backup could not be removed. The key was not revoked or "
+"deleted. DinoX will retry the cleanup when this account reconnects; then "
+"retry revoking the key."
+msgstr ""
+"La sauvegarde correspondante sur le serveur n’a pas pu être supprimée. La "
+"clé n’a été ni révoquée ni supprimée. DinoX réessaiera de supprimer la "
+"sauvegarde lors de la reconnexion de ce compte ; vous pourrez ensuite "
+"réessayer de révoquer la clé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1652
+msgid "Delete This Account's Server Backup?"
+msgstr "Supprimer la sauvegarde de ce compte sur le serveur ?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1653
+#, c-format
+msgid ""
+"This removes the entire encrypted private-key backup for %s from the server,"
+" including every key it contains. Other devices will no longer be able to "
+"restore it. Local keys and public-key publications are kept."
+msgstr ""
+"Cette opération supprime du serveur l’intégralité de la sauvegarde chiffrée "
+"des clés privées de %s, y compris toutes les clés qu’elle contient. Les "
+"autres appareils ne pourront plus la restaurer. Les clés locales et les "
+"publications de clés publiques sont conservées."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1667
+msgid "Deleting Server Backup..."
+msgstr "Suppression de la sauvegarde sur le serveur…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1667
+msgid "Checking and removing this account's server backup..."
+msgstr ""
+"Vérification et suppression de la sauvegarde de ce compte sur le serveur…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1678
+msgid "Server Backup Removed"
+msgstr "Sauvegarde supprimée du serveur"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1678
+msgid ""
+"This account has no server backup now. Local keys and public-key "
+"publications were kept."
+msgstr ""
+"Ce compte ne possède plus de sauvegarde sur le serveur. Les clés locales et "
+"les publications de clés publiques ont été conservées."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1680
+#: plugins/openpgp/src/key_management_dialog.vala:1684
+msgid ""
+"The backup was not removed. The server may be unavailable or another device "
+"may have replaced the backup. Try again."
+msgstr ""
+"La sauvegarde n’a pas été supprimée. Le serveur est peut-être indisponible "
+"ou un autre appareil a peut-être remplacé la sauvegarde. Réessayez."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1691
+msgid "Delete Key?"
+msgstr "Supprimer la clé ?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1692
+#, c-format
+msgid ""
+"Delete this key?\n"
+"\n"
+"%s\n"
+"\n"
+"Warning: The key will be removed locally without revocation. If it is currently published for OpenPGP for XMPP, DinoX must remove the XMPP publication before deleting it.\n"
+"\n"
+"Consider using 'Revoke and Delete' instead.\n"
+"\n"
+"This cannot be undone!"
+msgstr ""
+"Supprimer cette clé ?\n"
+"\n"
+"%s\n"
+"\n"
+"Attention : la clé sera supprimée localement sans être révoquée. Si elle est actuellement publiée pour OpenPGP pour XMPP, DinoX doit supprimer sa publication XMPP avant de la supprimer localement.\n"
+"\n"
+"Envisagez plutôt l’option « Révoquer et supprimer ».\n"
+"\n"
+"Cette opération est irréversible !"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1695
+msgid "Delete"
+msgstr "Supprimer"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1713
+msgid "Deleting..."
+msgstr "Suppression…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1713
+msgid "Deleting key from the local OpenPGP keyring..."
+msgstr "Suppression de la clé du trousseau OpenPGP local…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1730
+#: plugins/openpgp/src/key_management_dialog.vala:1737
+msgid "Could not remove the XMPP publication. The key was not deleted."
+msgstr ""
+"Impossible de supprimer la publication XMPP. La clé n’a pas été supprimée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1772
+msgid "Key deleted."
+msgstr "Clé supprimée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1775
+msgid "Delete failed: "
+msgstr "La suppression a échoué : "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1775
+#: plugins/openpgp/src/key_management_dialog.vala:1910
+#: plugins/openpgp/src/key_management_dialog.vala:2081
+msgid "Unknown error"
+msgstr "Erreur inconnue"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1777
+#: plugins/openpgp/src/key_management_dialog.vala:1912
+#: plugins/openpgp/src/key_management_dialog.vala:2083
+msgid "The XMPP publication was already removed; the key was kept locally."
+msgstr ""
+"La publication XMPP a déjà été supprimée ; la clé a été conservée "
+"localement."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1786
+msgid "Revoke Key?"
+msgstr "Révoquer la clé ?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1787
+#, c-format
+msgid ""
+"Revoke this key?\n"
+"\n"
+"%s\n"
+"\n"
+"The key will be permanently marked as invalid. This cannot be undone!\n"
+"\n"
+"DinoX will update only the publications that apply to this key: XMPP publication for OpenPGP-for-XMPP keys, and keyserver revocation upload for legacy keys that were uploaded to a keyserver."
+msgstr ""
+"Révoquer cette clé ?\n"
+"\n"
+"%s\n"
+"\n"
+"La clé sera définitivement déclarée invalide. Cette opération est irréversible !\n"
+"\n"
+"DinoX ne mettra à jour que les publications concernant cette clé : la publication XMPP pour les clés OpenPGP pour XMPP, et l’envoi de la révocation au serveur de clés pour les clés du mode historique qui y ont été publiées."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1790
+msgid "Revoke"
+msgstr "Révoquer"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1809
+msgid "Revoking..."
+msgstr "Révocation…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1809
+msgid "Revoking key and updating applicable publications..."
+msgstr "Révocation de la clé et mise à jour des publications concernées…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1837
+#: plugins/openpgp/src/key_management_dialog.vala:1844
+msgid "Could not remove the XMPP publication. The key was not revoked."
+msgstr ""
+"Impossible de supprimer la publication XMPP. La clé n’a pas été révoquée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1901
+msgid "Key revoked successfully."
+msgstr "Clé révoquée avec succès."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1903
+msgid "Revocation published to keyserver."
+msgstr "Révocation publiée sur le serveur de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1906
+msgid "Key removed from XMPP server."
+msgstr "Clé supprimée du serveur XMPP."
+
+#: plugins/openpgp/src/key_management_dialog.vala:1910
+#: plugins/openpgp/src/key_management_dialog.vala:2081
+msgid "Revocation failed: "
+msgstr "Échec de la révocation : "
+
+#: plugins/openpgp/src/key_management_dialog.vala:1921
+msgid "Revoke and Delete Key?"
+msgstr "Révoquer et supprimer la clé ?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1922
+#, c-format
+msgid ""
+"Revoke and delete this key?\n"
+"\n"
+"%s\n"
+"\n"
+"The key will be permanently invalidated and then removed. DinoX will update only the publications that apply to this key: XMPP publication for OpenPGP-for-XMPP keys, and keyserver revocation upload for legacy keys that were uploaded to a keyserver.\n"
+"\n"
+"You will no longer be able to decrypt old messages encrypted with this key.\n"
+"\n"
+"This cannot be undone!"
+msgstr ""
+"Révoquer et supprimer cette clé ?\n"
+"\n"
+"%s\n"
+"\n"
+"La clé sera définitivement invalidée, puis supprimée. DinoX ne mettra à jour que les publications concernant cette clé : la publication XMPP pour les clés OpenPGP pour XMPP, et l’envoi de la révocation au serveur de clés pour les clés du mode historique qui y ont été publiées.\n"
+"\n"
+"Vous ne pourrez plus déchiffrer les anciens messages chiffrés avec cette clé.\n"
+"\n"
+"Cette opération est irréversible !"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1925
+msgid "Revoke and Delete"
+msgstr "Révoquer et supprimer"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1944
+msgid "Revoking & Deleting..."
+msgstr "Révocation et suppression…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1944
+msgid "Revoking key, updating applicable publications, and deleting..."
+msgstr ""
+"Révocation de la clé, mise à jour des publications concernées et "
+"suppression…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:1975
+#: plugins/openpgp/src/key_management_dialog.vala:1982
+msgid ""
+"Could not remove the XMPP publication. The key was not revoked or deleted."
+msgstr ""
+"Impossible de supprimer la publication XMPP. La clé n’a été ni révoquée ni "
+"supprimée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2033
+msgid ""
+"The key was revoked locally, but the revocation could not be uploaded to the"
+" keyserver. The key was kept locally so you can retry publishing the "
+"revocation."
+msgstr ""
+"La clé a été révoquée localement, mais la révocation n’a pas pu être envoyée"
+" au serveur de clés. La clé a été conservée localement pour vous permettre "
+"de réessayer de publier sa révocation."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2068
+msgid "Key revoked"
+msgstr "Clé révoquée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2070
+msgid "keyserver notified"
+msgstr "serveur de clés informé"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2073
+msgid "XMPP server updated"
+msgstr "serveur XMPP mis à jour"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2076
+msgid "key deleted"
+msgstr "clé supprimée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2091
+#: plugins/openpgp/src/key_management_dialog.vala:2592
+#: plugins/openpgp/src/key_management_dialog.vala:2959
+#: plugins/openpgp/src/key_management_dialog.vala:2981
+#: plugins/openpgp/src/key_management_dialog.vala:3384
+msgid "OK"
+msgstr "OK"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2099
+msgid "Not Available"
+msgstr "Indisponible"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2099
+msgid ""
+"This key has no email user ID for legacy keyserver publishing. Create a "
+"legacy key with a real email address for XEP-0027/keyserver use."
+msgstr ""
+"Cette clé ne possède pas d’identité utilisateur avec une adresse e-mail pour"
+" la publication sur un serveur de clés en mode historique. Créez une clé du "
+"mode historique avec une véritable adresse e-mail pour l’utiliser avec "
+"XEP-0027/un serveur de clés."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2105
+msgid "Publish Key?"
+msgstr "Publier la clé ?"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2106
+msgid ""
+"This uploads your public key to keys.openpgp.org. You must verify the email "
+"address on the key before XEP-0027 clients can reliably find it."
+msgstr ""
+"Votre clé publique sera envoyée à keys.openpgp.org. Vous devez vérifier "
+"l’adresse e-mail associée à la clé pour que les clients XEP-0027 puissent la"
+" trouver de manière fiable."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2109
+msgid "Publish"
+msgstr "Publier"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2117
+msgid "Publishing..."
+msgstr "Publication…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2117
+msgid "Uploading key to keyserver..."
+msgstr "Envoi de la clé au serveur de clés…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2137
+msgid ""
+"Key uploaded to the OpenPGP keyserver. Check your email to verify it before "
+"XEP-0027 clients can reliably find it. The active OpenPGP mode for this "
+"account was not changed."
+msgstr ""
+"La clé a été envoyée au serveur de clés OpenPGP. Consultez vos e-mails pour "
+"la vérifier afin que les clients XEP-0027 puissent la trouver de manière "
+"fiable. Le mode OpenPGP actif pour ce compte n’a pas changé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2139
+msgid "Failed to publish key. Check your internet connection."
+msgstr "Échec de la publication de la clé. Vérifiez votre connexion Internet."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2232
+#: plugins/openpgp/src/key_management_dialog.vala:2362
+#: plugins/openpgp/src/key_management_dialog.vala:2414
+#: plugins/openpgp/src/key_management_dialog.vala:2434
+#: plugins/openpgp/src/key_management_dialog.vala:2460
+msgid "Backup Failed"
+msgstr "Échec de la sauvegarde"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2232
+msgid "Failed to generate a secure backup code."
+msgstr "Impossible de générer un code de sauvegarde sécurisé."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2238
+msgid ""
+"Save this backup code before uploading the key. You will need exactly this "
+"code to restore the key on another device."
+msgstr ""
+"Conservez ce code de sauvegarde avant d’envoyer la clé. Vous aurez besoin de"
+" ce code exact pour restaurer la clé sur un autre appareil."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2247
+#: plugins/openpgp/src/key_management_dialog.vala:3199
+msgid "Backup Code"
+msgstr "Code de sauvegarde"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2259
+msgid "Copy Backup Code"
+msgstr "Copier le code de sauvegarde"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2263
+msgid "Backup Code Copied"
+msgstr "Code de sauvegarde copié"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2271
+msgid "Backup to Server"
+msgstr "Sauvegarder sur le serveur"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2330
+msgid "Backing up..."
+msgstr "Sauvegarde…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2330
+msgid "Encrypting and uploading key..."
+msgstr "Chiffrement et envoi de la clé…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2362
+msgid "GnuPG or the server did not respond while backing up the secret key."
+msgstr ""
+"GnuPG ou le serveur n’a pas répondu pendant la sauvegarde de la clé privée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2406
+msgid "Encryption Error"
+msgstr "Erreur de chiffrement"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2414
+msgid "Failed to prepare the encrypted secret key backup."
+msgstr "Impossible de préparer la sauvegarde chiffrée de la clé privée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2434
+#: plugins/openpgp/src/key_management_dialog.vala:2460
+msgid "Failed to publish the backup to the server."
+msgstr "Impossible de publier la sauvegarde sur le serveur."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2458
+msgid "Backup Successful"
+msgstr "Sauvegarde réussie"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2458
+msgid "Your encrypted secret key has been securely stored on the server."
+msgstr ""
+"Votre clé privée chiffrée a été stockée en toute sécurité sur le serveur."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2858
+msgid "Checking Server..."
+msgstr "Vérification du serveur…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2858
+msgid "Looking for a secret key backup..."
+msgstr "Recherche d’une sauvegarde de clé privée…"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2898
+#: plugins/openpgp/src/key_management_dialog.vala:2957
+#: plugins/openpgp/src/key_management_dialog.vala:3003
+#: plugins/openpgp/src/key_management_dialog.vala:3322
+#: plugins/openpgp/src/key_management_dialog.vala:3354
+#: plugins/openpgp/src/key_management_dialog.vala:3360
+msgid "Import Failed"
+msgstr "Échec de l’importation"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2898
+msgid "The server did not respond while fetching the secret key backup."
+msgstr ""
+"Le serveur n’a pas répondu pendant la récupération de la sauvegarde de la "
+"clé privée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2958
+msgid ""
+"Could not retrieve this account's server backup. Check the account "
+"connection and try again."
+msgstr ""
+"Impossible de récupérer la sauvegarde de ce compte sur le serveur. Vérifiez "
+"la connexion du compte et réessayez."
+
+#: plugins/openpgp/src/key_management_dialog.vala:2979
+#: plugins/openpgp/src/key_management_dialog.vala:3048
+msgid "No Backup Found"
+msgstr "Aucune sauvegarde trouvée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:2980
+#: plugins/openpgp/src/key_management_dialog.vala:3049
+msgid "There is no secret key backup stored on the server for this account."
+msgstr ""
+"Aucune sauvegarde de clé privée n’est stockée sur le serveur pour ce compte."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3003
+msgid "GnuPG did not respond while checking the server key data."
+msgstr ""
+"GnuPG n’a pas répondu pendant la vérification des données de clé du serveur."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3087
+#: plugins/openpgp/src/key_management_dialog.vala:3092
+#: plugins/openpgp/src/key_management_dialog.vala:3116
+msgid "No Secret Key Backup"
+msgstr "Aucune sauvegarde de clé privée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3088
+msgid ""
+"The public XMPP key is published on the server and the matching private key "
+"is already available locally, but no secret key backup was found on the "
+"server."
+msgstr ""
+"La clé XMPP publique est publiée sur le serveur et la clé privée "
+"correspondante est déjà disponible localement, mais aucune sauvegarde de clé"
+" privée n’a été trouvée sur le serveur."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3093
+msgid ""
+"The public XMPP key is published on the server, but no private key backup "
+"was found for this account."
+msgstr ""
+"La clé XMPP publique est publiée sur le serveur, mais aucune sauvegarde de "
+"clé privée n’a été trouvée pour ce compte."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3111
+#: plugins/openpgp/src/key_management_dialog.vala:3134
+#: plugins/openpgp/src/key_management_dialog.vala:3356
+msgid "Key Already Present"
+msgstr "Clé déjà présente"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3112
+msgid ""
+"The key from the server is already available for this account. No import was"
+" needed."
+msgstr ""
+"La clé du serveur est déjà disponible pour ce compte. Aucune importation "
+"n’était nécessaire."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3117
+msgid ""
+"The server contains public OpenPGP key data, but no private key backup for "
+"this account."
+msgstr ""
+"Le serveur contient des données de clé publique OpenPGP, mais aucune "
+"sauvegarde de clé privée pour ce compte."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3135
+#: plugins/openpgp/src/key_management_dialog.vala:3356
+msgid ""
+"The secret key from the server is already available for this account. No "
+"import was needed."
+msgstr ""
+"La clé privée du serveur est déjà disponible pour ce compte. Aucune "
+"importation n’était nécessaire."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3150
+msgid "Unsupported Backup Format"
+msgstr "Format de sauvegarde non pris en charge"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3151
+msgid ""
+"The server contains unencrypted secret key data. DinoX now expects an "
+"encrypted XEP-0373 secret key backup. Create a new server backup to replace "
+"it."
+msgstr ""
+"Le serveur contient des données de clé privée non chiffrées. DinoX attend "
+"désormais une sauvegarde de clé privée XEP-0373 chiffrée. Créez une nouvelle"
+" sauvegarde sur le serveur pour les remplacer."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3194
+msgid "Import Secret Key"
+msgstr "Importer la clé privée"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3195
+msgid ""
+"A secret key backup was found on the server. Enter your backup code to "
+"decrypt and import it."
+msgstr ""
+"Une sauvegarde de clé privée a été trouvée sur le serveur. Saisissez votre "
+"code de sauvegarde pour la déchiffrer et l’importer."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3216
+#: plugins/openpgp/src/key_management_dialog.vala:3218
+msgid "Import"
+msgstr "Importer"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3322
+msgid "GnuPG did not respond while importing the secret key backup."
+msgstr ""
+"GnuPG n’a pas répondu pendant l’importation de la sauvegarde de la clé "
+"privée."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3358
+msgid "Import Successful"
+msgstr "Importation réussie"
+
+#: plugins/openpgp/src/key_management_dialog.vala:3358
+msgid "The secret key was successfully imported from the server."
+msgstr "La clé privée a été importée avec succès depuis le serveur."
+
+#: plugins/openpgp/src/key_management_dialog.vala:3360
+msgid ""
+"The backup code was incorrect or the secret key backup could not be "
+"imported."
+msgstr ""
+"Le code de sauvegarde était incorrect ou la sauvegarde de la clé privée n’a "
+"pas pu être importée."
+
+#: plugins/openpgp/src/manager.vala:377
+msgid ""
+"The selected OpenPGP-for-XMPP account key does not contain the required "
+"xmpp: user ID for this account."
+msgstr ""
+"La clé OpenPGP pour XMPP sélectionnée pour ce compte ne contient pas "
+"l’identité utilisateur xmpp: requise pour ce compte."
+
+#: plugins/openpgp/src/manager.vala:381
+msgid ""
+"The selected legacy OpenPGP/XEP-0027 account key has no email user ID for "
+"keyserver use."
+msgstr ""
+"La clé OpenPGP historique/XEP-0027 sélectionnée pour ce compte ne possède "
+"pas d’identité utilisateur avec une adresse e-mail pour l’utilisation d’un "
+"serveur de clés."
+
+#: plugins/openpgp/src/manager.vala:385
+#, c-format
+msgid "OpenPGP account key validation failed: %s"
+msgstr "Échec de la validation de la clé OpenPGP du compte : %s"
+
+#: plugins/openpgp/src/manager.vala:398
+msgid "No legacy OpenPGP/XEP-0027 account key is active."
+msgstr "Aucune clé OpenPGP historique/XEP-0027 n’est active pour le compte."
+
+#: plugins/openpgp/src/manager.vala:399
+msgid "No OpenPGP-for-XMPP account key is active."
+msgstr "Aucune clé OpenPGP pour XMPP n’est active pour le compte."
+
+#: plugins/openpgp/src/manager.vala:410
+msgid "This contact has no OpenPGP-for-XMPP key."
+msgstr "Ce contact n’a pas de clé OpenPGP pour XMPP."
+
+#: plugins/openpgp/src/manager.vala:420
+msgid "The contact's OpenPGP-for-XMPP key has not been refreshed yet."
+msgstr "La clé OpenPGP pour XMPP de ce contact n’a pas encore été actualisée."
+
+#: plugins/openpgp/src/manager.vala:425
+msgid "This contact has no legacy OpenPGP/XEP-0027 key."
+msgstr "Ce contact n’a pas de clé OpenPGP historique/XEP-0027."
+
+#: plugins/openpgp/src/manager.vala:438
+#, c-format
+msgid "OpenPGP key lookup failed: %s"
+msgstr "Échec de la recherche de clé OpenPGP : %s"
+
+#: plugins/openpgp/src/manager.vala:442
+msgid "No OpenPGP keys are available for the group members."
+msgstr "Aucune clé OpenPGP n’est disponible pour les membres du groupe."
+
+#: plugins/openpgp/src/plugin.vala:432
+msgid "OpenPGP Passphrase Required"
+msgstr "Phrase de passe OpenPGP requise"
+
+#: plugins/openpgp/src/plugin.vala:433
+msgid "Enter the passphrase for your OpenPGP key to continue."
+msgstr "Saisissez la phrase de passe de votre clé OpenPGP pour continuer."
+
+#: plugins/openpgp/src/plugin.vala:449
+msgid "Passphrase"
+msgstr "Phrase de passe"
+
+#: plugins/openpgp/src/plugin.vala:454
+msgid "Unlock"
+msgstr "Déverrouiller"
+
+#~ msgid "Key not in keychain"
+#~ msgstr "La clé n’est pas dans le trousseau"
+
+#~ msgid "Announce key"
+#~ msgstr "Annoncer la clé"
+
+#~ msgid "Disabled"
+#~ msgstr "Désactivé"
+
+#~ msgid "Select OpenPGP Key"
+#~ msgstr "Sélectionner une clé OpenPGP"
+
+#~ msgid "Choose a key to announce to your contacts."
+#~ msgstr "Choisissez une clé à annoncer à vos contacts."
+
+#~ msgid "Enter GPG passphrase to confirm:"
+#~ msgstr "Entrez la phrase de passe GPG pour confirmer :"
+
+#~ msgid "Wrong passphrase"
+#~ msgstr "Mauvaise phrase de passe"
+
+#~ msgid "Import a key from file (.asc, .gpg)"
+#~ msgstr "Importer une clé depuis un fichier (.asc, .gpg)"
+
+#~ msgid "Email"
+#~ msgstr "E-mail"
+
+#~ msgid "you@example.com"
+#~ msgstr "vous@exemple.com"
+
+#~ msgid "Key generated successfully!"
+#~ msgstr "Clé générée avec succès !"
+
+#~ msgid "Key imported! Re-open Key Management to see it."
+#~ msgstr "Clé importée ! Rouvrez la gestion des clés pour la voir."
+
+#, c-format
+#~ msgid ""
+#~ "Delete this key?\n"
+#~ "\n"
+#~ "%s\n"
+#~ "\n"
+#~ "This cannot be undone!"
+#~ msgstr ""
+#~ "Supprimer cette clé ?\n"
+#~ "\n"
+#~ "%s\n"
+#~ "\n"
+#~ "Cette action est irréversible !"
+
+#~ msgid "Querying GnuPG"
+#~ msgstr "Interrogation de GnuPG"
+
+#~ msgid "Encryption"
+#~ msgstr "Chiffrement"
+
+#~ msgid "Key publishing disabled"
+#~ msgstr "La publication des clés est désactivée"
+
+#~ msgid "Loading…"
+#~ msgstr "Chargement…"
+
+#~ msgid "Fetching contact's OpenPGP key via PubSub..."
+#~ msgstr "Récupération de la clé OpenPGP du contact via PubSub..."
+
+#, c-format
+#~ msgid "This contact does not support %s encryption."
+#~ msgstr "Ce contact ne prend pas en charge le chiffrement %s."
+
+#~ msgid "This contact has not published an OpenPGP key."
+#~ msgstr "Ce contact n'a pas publié de clé OpenPGP."

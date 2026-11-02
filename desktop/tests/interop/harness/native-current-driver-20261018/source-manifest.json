@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "SOURCE_ONLY_NOT_BUILT_OR_DEPLOYED",
+  "files": {
+    "README.md": {
+      "sha256": "fdb7acf492dfe85edbea07f282f01b3e3a321d06cb80a965c7b82822785a4ca7",
+      "bytes": 4262
+    },
+    "server_compile.py": {
+      "sha256": "8613975e320ed981a67c80add58d701e9b62f9641eff25a10fb2be14cd82fc00",
+      "bytes": 10949
+    },
+    "server_run.py": {
+      "sha256": "7943552f5b1385d4f0c000a1a73da70863fff8b1049d91995795b6418c9a4519",
+      "bytes": 8565
+    },
+    "input-manifest.json": {
+      "sha256": "0e561ea789e456709fb725bd312ea9a8c8c9ed70e099779dc23d89db7393f8d3",
+      "bytes": 39376
+    },
+    "derivation.diff": {
+      "sha256": "05ca7c0129e1ead44e9a0e6e176071fd3e4d8b7241201d3aebf383fdf398ee9f",
+      "bytes": 31447
+    },
+    "source-consistency.json": {
+      "sha256": "d4e2cb5cc81d03ae3f3afe30e882163b44777375256839d0d6096b375131e3bd",
+      "bytes": 9148
+    }
+  },
+  "input_manifest_sha256": "0e561ea789e456709fb725bd312ea9a8c8c9ed70e099779dc23d89db7393f8d3",
+  "independent_review": "REQUIRED"
+}

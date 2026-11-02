@@ -1,0 +1,51 @@
+/* DinoX website palette. Semantic success/warning/error colors remain native. */
+@define-color window_bg_color #111c18;
+@define-color window_fg_color #ecf1e9;
+@define-color view_bg_color #111c18;
+@define-color view_fg_color #ecf1e9;
+@define-color headerbar_bg_color #1a2922;
+@define-color headerbar_fg_color #ecf1e9;
+@define-color headerbar_border_color #ecf1e9;
+@define-color headerbar_backdrop_color #1a2922;
+@define-color headerbar_shade_color rgba(0,0,0,0.24);
+@define-color sidebar_bg_color #17261e;
+@define-color sidebar_fg_color #ecf1e9;
+@define-color sidebar_backdrop_color #17261e;
+@define-color secondary_sidebar_bg_color #23362a;
+@define-color secondary_sidebar_fg_color #ecf1e9;
+@define-color secondary_sidebar_backdrop_color #23362a;
+@define-color card_bg_color #1a2922;
+@define-color card_fg_color #ecf1e9;
+@define-color card_shade_color rgba(0,0,0,0.24);
+@define-color dialog_bg_color #111c18;
+@define-color dialog_fg_color #ecf1e9;
+@define-color popover_bg_color #1a2922;
+@define-color popover_fg_color #ecf1e9;
+@define-color accent_color #bcd8c3;
+@define-color accent_bg_color #bcd8c3;
+@define-color accent_fg_color #11251b;
+@define-color borders #33443a;
+
+/* GTK aliases used by DinoX's existing chat and sidebar widgets. */
+@define-color theme_bg_color @window_bg_color;
+@define-color theme_fg_color @window_fg_color;
+@define-color theme_base_color @view_bg_color;
+@define-color theme_text_color @view_fg_color;
+@define-color theme_unfocused_bg_color @window_bg_color;
+@define-color theme_unfocused_fg_color @window_fg_color;
+@define-color theme_unfocused_base_color @view_bg_color;
+@define-color theme_unfocused_text_color @view_fg_color;
+@define-color insensitive_bg_color @sidebar_bg_color;
+@define-color insensitive_fg_color alpha(@window_fg_color, 0.5);
+@define-color theme_selected_bg_color @accent_bg_color;
+@define-color theme_selected_fg_color @accent_fg_color;
+@define-color theme_unfocused_selected_bg_color @accent_bg_color;
+@define-color theme_unfocused_selected_fg_color @accent_fg_color;
+
+/* Use the website's readable secondary text instead of reducing opacity. */
+@define-color dinox_muted_color #b3c2b8;
+row .subtitle:not(.error):not(.warning):not(.success),
+headerbar .subtitle:not(.error):not(.warning):not(.success) {
+    color: @dinox_muted_color;
+    opacity: 1;
+}

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability
+    url: https://git.dinox.im/dinoxim/dinox/src/branch/master/SECURITY.md
+    about: Please report security vulnerabilities through our security policy — do NOT open a public issue.
+  - name: XMPP Chat (MUC)
+    url: xmpp:dinox@conference.dinox.im?join
+    about: Join the DinoX group chat for real-time help and chat.
+  - name: Project Page
+    url: https://git.dinox.im/dinoxim/dinox
+    about: Visit the DinoX project page for documentation and downloads.

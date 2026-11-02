@@ -1,0 +1,151 @@
+name: Flatpak Builder Image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/flatpak-builder-image.yml'
+      - 'ci/images/flatpak-builder-dinox/**'
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: 'Image in die Forgejo Registry pushen'
+        type: boolean
+        default: true
+      image_tag:
+        description: 'Image tag'
+        type: string
+        default: 'gnome-50'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  CI: true
+  DINOX_CI: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  DOCKER_CLI_VERSION: 27.5.1
+  REGISTRY: git.dinox.im
+  IMAGE_NAME: git.dinox.im/dinoxim/flatpak-builder-dinox
+
+jobs:
+  build-flatpak-builder-image:
+    name: "Build Flatpak Builder Image"
+    runs-on: docker
+    timeout-minutes: 180
+    container:
+      image: catthehacker/ubuntu:act-24.04
+    env:
+      DOCKER_HOST: unix:///var/run/docker.sock
+    steps:
+      - name: "Checkout sources"
+        uses: https://git.dinox.im/dinoxim/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: "Install Docker CLI"
+        run: |
+          set -eu
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl tar
+          curl --fail --show-error --location \
+            --retry 3 --connect-timeout 20 --max-time 180 \
+            "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_CLI_VERSION}.tgz" \
+            --output /tmp/docker.tgz
+          tar -xzf /tmp/docker.tgz -C /tmp
+          install -m 0755 /tmp/docker/docker /usr/local/bin/docker
+          docker --version
+
+      - name: "Connect to Docker daemon"
+        run: |
+          set -eu
+          for host in \
+            unix:///var/run/docker.sock \
+            tcp://127.0.0.1:2375 \
+            tcp://localhost:2375 \
+            tcp://docker:2375
+          do
+            echo "Trying DOCKER_HOST=$host"
+            export DOCKER_HOST="$host"
+            for i in $(seq 1 5); do
+              if timeout 5 docker info >/dev/null 2>&1; then
+                echo "DOCKER_HOST=$host" >> "$GITHUB_ENV"
+                docker version
+                exit 0
+              fi
+              sleep 2
+            done
+          done
+          echo "ERROR: no Docker daemon reachable from this Forgejo runner job." >&2
+          echo "Checked /var/run/docker.sock, 127.0.0.1:2375, localhost:2375 and docker:2375." >&2
+          for host in unix:///var/run/docker.sock tcp://127.0.0.1:2375 tcp://localhost:2375 tcp://docker:2375
+          do
+            export DOCKER_HOST="$host"
+            if timeout 5 docker info; then
+              true
+            fi
+          done
+          exit 1
+
+      - name: "Build image"
+        run: |
+          set -eu
+          image_tag="${{ inputs.image_tag }}"
+          image_tag="${image_tag:-gnome-50}"
+          short_sha="$(printf '%.12s' "${GITHUB_SHA:-manual}")"
+          tar -cf - \
+            ci/images/flatpak-builder-dinox/Dockerfile \
+          | docker build \
+            --pull \
+            --progress=plain \
+            --tag "$IMAGE_NAME:$image_tag" \
+            --tag "$IMAGE_NAME:$image_tag-$short_sha" \
+            --file ci/images/flatpak-builder-dinox/Dockerfile \
+            -
+          docker image inspect "$IMAGE_NAME:$image_tag"
+
+      - name: "Verify image contents"
+        run: |
+          image_tag="${{ inputs.image_tag }}"
+          image_tag="${image_tag:-gnome-50}"
+          docker run --rm "$IMAGE_NAME:$image_tag" sh -lc '
+            set -eu
+            flatpak-builder --version
+            node --version
+            python3 --version
+            for ref in \
+              runtime/org.gnome.Platform/x86_64/50 \
+              runtime/org.gnome.Sdk/x86_64/50 \
+              runtime/org.gnome.Sdk.Locale/x86_64/50 \
+              runtime/org.freedesktop.Platform.GL.default/x86_64/25.08 \
+              runtime/org.freedesktop.Platform.GL.default/x86_64/25.08-extra \
+              runtime/org.freedesktop.Platform.codecs-extra/x86_64/25.08-extra \
+              runtime/org.freedesktop.Sdk.Extension.golang/x86_64/25.08
+            do
+              flatpak info --system "$ref" >/dev/null
+              echo "OK $ref"
+            done
+          '
+
+      - name: "Login to Forgejo registry"
+        if: github.event_name == 'push' || inputs.push_image == true || inputs.push_image == 'true'
+        env:
+          DINOX_REGISTRY_TOKEN: ${{ secrets.DINOX_REGISTRY_TOKEN }}
+        run: |
+          token="${DINOX_REGISTRY_TOKEN:-${FORGEJO_TOKEN:-${GITHUB_TOKEN:-}}}"
+          if [ -z "$token" ]; then
+            echo "ERROR: DINOX_REGISTRY_TOKEN, FORGEJO_TOKEN or GITHUB_TOKEN is required to push the image." >&2
+            exit 1
+          fi
+          printf '%s' "$token" | docker login "$REGISTRY" -u "${GITHUB_ACTOR:-forgejo}" --password-stdin
+
+      - name: "Push image"
+        if: github.event_name == 'push' || inputs.push_image == true || inputs.push_image == 'true'
+        run: |
+          image_tag="${{ inputs.image_tag }}"
+          image_tag="${image_tag:-gnome-50}"
+          short_sha="$(printf '%.12s' "${GITHUB_SHA:-manual}")"
+          docker push "$IMAGE_NAME:$image_tag"
+          docker push "$IMAGE_NAME:$image_tag-$short_sha"

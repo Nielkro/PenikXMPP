@@ -1,0 +1,166 @@
+build/
+build_linux/
+build*.toolchain/
+.vendor-deps/
+dist/
+*.o
+messages.mo
+.vscode/
+logs/
+*.log
+
+# Flatpak build cache and output
+.flatpak-builder/
+flatpak-build/
+local-dino-repo/
+
+# Local package build output
+.appimage-tools/
+AppDir/
+build-appimage-package/
+.appimage-runtime-gate/
+pkg_dinox/
+*.AppImage
+*.AppImage.sha256
+*.AppImage.zsync
+*.AppImage.sources.tar.xz
+*.AppImage.sources.tar.xz.sha256
+*.deb
+*.deb.sha256
+*.flatpak
+*.flatpak.sha256
+*windows-x86_64.zip
+*windows-x86_64.zip.sha256
+*.tar.gz
+*.tar.gz.tmp
+*.tar.gz.sha256
+*.sha256.tmp
+RELEASE_BODY.md
+dll.log
+test_omemo_deser
+test_omemo_deser.c
+kaidan_issue_toakafa.md
+docs/internal/KAIDAN_OMEMO_FIX.md
+
+# BFG cleanup reports
+..bfg-report/
+.bfg-report/
+
+# Icon backup (personal backup, not project-relevant)
+icon_backup/
+
+# Archived website (offline)
+docs/archive/
+
+# Internal docs (not for public release)
+ejabberd*.yml
+ejabberd*.yaml
+docs/internal/*ejabberd*
+docs/internal/*EJABBERD*
+docs/internal/ejabberd.yaml
+docs/internal/CODING_STANDARDS.md
+docs/internal/SIGNPATH_SETUP.md
+docs/internal/CRASH_ANALYSIS*.md
+docs/internal/DEVELOPMENT_PLAN_UI_SECURITY.md
+docs/internal/DEVELOPMENT_PLAN_WINDOWS.md
+docs/internal/OPENPGP_PORTING_GUIDE.md
+docs/internal/OMEMO2_IMPLEMENTATION_PLAN.md
+docs/internal/AUDIO_VIDEO_COMPLETE_ANALYSIS.md
+docs/internal/AUDIO_VIDEO_CALL_STACK_ROADMAP.md
+docs/internal/BRIDGE_STRATEGY.md
+docs/internal/OMEMO_BUG_FIX.md
+docs/internal/OMEMO_DEVICE_UI_IMPROVEMENTS.md
+docs/internal/TOR_IMPLEMENTATION.md
+docs/internal/DEVELOPMENT_PLAN_BOTFATHER.md
+docs/internal/SIP_DTMF_ANALYSIS.md
+docs/internal/Audit.md
+docs/internal/chatwindow-audit-2026-03-14.md
+docs/internal/AV_BUG_REVIEW_2026-03-18.md
+docs/internal/SOCKS5_TOR_BUG_REVIEW_2026-03-18.md
+docs/internal/GIT_WORKFLOW.md
+docs/internal/TESTING_GAPS.md
+docs/internal/MUJI_GROUP_CALLS_PLAN.md
+docs/internal/MEDIA_MESSAGE_RECORDING_PLAN.md
+docs/internal/MQTT_UI_PLAN.md
+docs/internal/DOMAIN_MIGRATION.md
+docs/internal/VIDEO_PLAYER_IMPLEMENTATION.md
+docs/internal/VIDEO_STOP_BUTTON_BUG.md
+docs/internal/PIPEWIRE_MIGRATION_PLAN.md
+docs/accessibility-pruefprotokoll.md
+SECURITY_AUDIT.md
+docs/security-audit.html
+
+# Text/log files (except build-system configs)
+build_log.txt
+windowsbuild.txt
+windows.txt
+cross_file.txt
+/check_translations.py
+
+# Auto-generated website sync scripts (local tooling, not for GitHub)
+scripts/sync_security_audit_html.py
+
+# Debug/test files
+test_*.py
+/test_*.vala
+debug*.log
+
+# Sensitive/private key material - NEVER commit
+key/
+*.asc
+*.gpg
+*.kbx
+pubring.*
+trustdb.*
+
+# GnuPG home directories (may contain private keys)
+**/gnupg/
+
+# Windows thumbnail cache
+Thumbs.db
+Thumbs.db:encryptable
+
+# Editor backup files
+*~
+*.bak
+*.backup
+*.swp
+
+# Voice message notes (local only)
+Voice\ Message\ System\ --\ Ist-Zustand.txt
+docs/internal/monal_session_terminate_reply.md
+docs/internal/message_to_jacquescomeaux.md
+MQTT_UI_PLAN.md
+build_warnings.txt
+RAM_ANALYSE.md
+
+# Python virtual environment
+.venv/
+__pycache__/
+**/__pycache__/
+debug_instructions.md
+MQTT/Node Red Examples/kaputt.png
+AUDIO_VIDEO_SETTINGS_PLAN.md
+SOUND_NOTIFICATION_PLAN.md
+main/data/gresource.gresource
+videomesseageopensuse.txt
+thread_backtrace.txt
+agent_conversation_log.md
+.codex
+
+# Local server/Forgejo runner configuration - may contain secrets
+app.ini
+docker-compose.yml
+runner-config.yml
+
+# Local Codex/AI runtime UI smoke tooling and artifacts
+scripts/run-botmanager-ui-smoke.sh
+package-lock.json
+
+omemo_dinox_devicelist_publish_analysis.md
+STARTUP_DIALOG_REGRESSION_AUDIT_PLAN.local.md
+OMEMO_V1_DEVICE_PUBLISH_PLAN.local.md
+MUC_MEMBERLIST_AUDIT_PLAN.local.md
+SETTINGS_CONTACTS_ROSTER_ACCOUNT_FILTER_PLAN.local.md
+LARGE_MUC_UI_RESPONSIVENESS_PLAN.local.md
+LOCAL_STORAGE_PROTECTION_PLAN.local.md

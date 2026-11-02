@@ -1,0 +1,996 @@
+/*
+ * MqttAlertManager — Threshold alerts, topic history, and notification
+ *                     priority for MQTT messages.
+ *
+ * Alert rules are stored as JSON in the DinoX settings DB.
+ * Topic history is kept in memory (last N values per topic).
+ *
+ * Priority levels:
+ *   SILENT   — no badge, no notification (auto-mark-read)
+ *   NORMAL   — standard badge + notification (default)
+ *   ALERT    — badge + notification + [⚠] prefix
+ *   CRITICAL — badge + notification + sound + [🔴] prefix
+ *
+ * Copyright (C) 2026 Ralf Peter <dinox@handwerker.jetzt>
+ */
+
+using Gee;
+using Dino.Entities;
+
+namespace Dino.Plugins.Mqtt {
+
+/**
+ * Notification priority for a topic or alert.
+ */
+public enum MqttPriority {
+    SILENT,
+    NORMAL,
+    ALERT,
+    CRITICAL;
+
+    public string to_string_key() {
+        switch (this) {
+            case SILENT:   return "silent";
+            case NORMAL:   return "normal";
+            case ALERT:    return "alert";
+            case CRITICAL: return "critical";
+            default:       return "normal";
+        }
+    }
+
+    public string to_label() {
+        switch (this) {
+            case SILENT:   return _("Silent (no notification)");
+            case NORMAL:   return _("Normal (badge)");
+            case ALERT:    return _("Alert (badge + notification)");
+            case CRITICAL: return _("Critical (badge + notification + sound)");
+            default:       return _("Normal");
+        }
+    }
+
+    public string to_icon() {
+        switch (this) {
+            case ALERT:    return "⚠";
+            case CRITICAL: return "🔴";
+            default:       return "";
+        }
+    }
+
+    public static MqttPriority from_string(string s) {
+        switch (s.ascii_down()) {
+            case "silent":   return SILENT;
+            case "alert":    return ALERT;
+            case "critical": return CRITICAL;
+            default:         return NORMAL;
+        }
+    }
+}
+
+/**
+ * Comparison operator for threshold alerts.
+ */
+public enum AlertOperator {
+    GT,    /* >  */
+    LT,    /* <  */
+    GTE,   /* >= */
+    LTE,   /* <= */
+    EQ,    /* == */
+    NEQ,   /* != */
+    CONTAINS;
+
+    public string to_symbol() {
+        switch (this) {
+            case GT:       return ">";
+            case LT:       return "<";
+            case GTE:      return ">=";
+            case LTE:      return "<=";
+            case EQ:       return "==";
+            case NEQ:      return "!=";
+            case CONTAINS: return "contains";
+            default:       return "?";
+        }
+    }
+
+    public static AlertOperator? from_string(string s) {
+        switch (s) {
+            case ">":        return GT;
+            case "<":        return LT;
+            case ">=":       return GTE;
+            case "<=":       return LTE;
+            case "==":       return EQ;
+            case "=":        return EQ;
+            case "!=":       return NEQ;
+            case "contains": return CONTAINS;
+            default:         return null;
+        }
+    }
+}
+
+/**
+ * A single alert rule.
+ */
+public class AlertRule : Object {
+    public string id;            /* UUID */
+    public string? connection_id; /* null = legacy/global rule */
+    public string topic;         /* MQTT topic pattern (exact or wildcard) */
+    public string? field;        /* JSON field name (null = whole payload) */
+    public AlertOperator op;     /* Comparison operator */
+    public string threshold;     /* Threshold value (numeric or string) */
+    public MqttPriority priority; /* Priority when triggered */
+    public bool enabled;
+    public int64 last_triggered; /* Unix timestamp, 0 = never */
+    public int64 cooldown_secs;  /* Min seconds between triggers (default 60) */
+
+    public AlertRule() {
+        id = Xmpp.random_uuid();
+        enabled = true;
+        priority = MqttPriority.ALERT;
+        last_triggered = 0;
+        cooldown_secs = 60;
+    }
+
+    /**
+     * Check if the rule matches a topic.
+     * Supports exact match and simple MQTT wildcard patterns.
+     */
+    public bool matches_topic(string incoming_topic) {
+        return MqttUtils.topic_matches(topic, incoming_topic);
+    }
+
+    /**
+     * Evaluate the rule against a payload value.
+     * Returns true if the alert condition is met.
+     */
+    public bool evaluate(string value) {
+        /* Check cooldown */
+        if (last_triggered > 0 && cooldown_secs > 0) {
+            int64 now = MqttUtils.now_unix();
+            if (now - last_triggered < cooldown_secs) {
+                return false;
+            }
+        }
+
+        switch (op) {
+            case AlertOperator.CONTAINS:
+                return value.down().contains(threshold.down());
+
+            case AlertOperator.EQ:
+                /* Try numeric first, then string */
+                double? val_num = try_parse_double(value);
+                double? thr_num = try_parse_double(threshold);
+                if (val_num != null && thr_num != null) {
+                    return Math.fabs(val_num - thr_num) < 0.001;
+                }
+                return value.strip() == threshold.strip();
+
+            case AlertOperator.NEQ:
+                double? val_n = try_parse_double(value);
+                double? thr_n = try_parse_double(threshold);
+                if (val_n != null && thr_n != null) {
+                    return Math.fabs(val_n - thr_n) >= 0.001;
+                }
+                return value.strip() != threshold.strip();
+
+            default:
+                /* Numeric comparisons */
+                double? val_d = try_parse_double(value);
+                double? thr_d = try_parse_double(threshold);
+                if (val_d == null || thr_d == null) return false;
+
+                switch (op) {
+                    case AlertOperator.GT:  return val_d > thr_d;
+                    case AlertOperator.LT:  return val_d < thr_d;
+                    case AlertOperator.GTE: return val_d >= thr_d;
+                    case AlertOperator.LTE: return val_d <= thr_d;
+                    default: return false;
+                }
+        }
+    }
+
+    /**
+     * Serialize to JSON object.
+     */
+    public Json.Object to_json() {
+        var obj = new Json.Object();
+        obj.set_string_member("id", id);
+        if (connection_id != null) obj.set_string_member("connection_id", connection_id);
+        obj.set_string_member("topic", topic);
+        if (field != null) obj.set_string_member("field", field);
+        obj.set_string_member("op", op.to_symbol());
+        obj.set_string_member("threshold", threshold);
+        obj.set_string_member("priority", priority.to_string_key());
+        obj.set_boolean_member("enabled", enabled);
+        obj.set_int_member("cooldown", cooldown_secs);
+        return obj;
+    }
+
+    /**
+     * Deserialize from JSON object.
+     */
+    public static AlertRule? from_json(Json.Object obj) {
+        var rule = new AlertRule();
+
+        if (!obj.has_member("topic") || !obj.has_member("op") ||
+            !obj.has_member("threshold")) return null;
+
+        if (obj.has_member("id"))
+            rule.id = obj.get_string_member("id");
+        if (obj.has_member("connection_id"))
+            rule.connection_id = obj.get_string_member("connection_id");
+        rule.topic = obj.get_string_member("topic");
+        if (obj.has_member("field"))
+            rule.field = obj.get_string_member("field");
+
+        AlertOperator? parsed_op = AlertOperator.from_string(
+            obj.get_string_member("op"));
+        if (parsed_op == null) return null;
+        rule.op = parsed_op;
+
+        rule.threshold = obj.get_string_member("threshold");
+
+        if (obj.has_member("priority"))
+            rule.priority = MqttPriority.from_string(
+                obj.get_string_member("priority"));
+        if (obj.has_member("enabled"))
+            rule.enabled = obj.get_boolean_member("enabled");
+        if (obj.has_member("cooldown"))
+            rule.cooldown_secs = obj.get_int_member("cooldown");
+
+        return rule;
+    }
+
+    private static double? try_parse_double(string s) {
+        string trimmed = s.strip();
+        if (trimmed == "") return null;
+        double val;
+        if (double.try_parse(trimmed, out val)) {
+            return val;
+        }
+        return null;
+    }
+}
+
+/**
+ * A single history entry for a topic.
+ */
+public class TopicHistoryEntry {
+    public string topic;
+    public string payload;
+    public DateTime timestamp;
+    public MqttPriority triggered_priority;
+
+    public TopicHistoryEntry(string topic, string payload) {
+        this.topic = topic;
+        this.payload = payload;
+        this.timestamp = new DateTime.from_unix_utc(MqttUtils.now_unix());
+        this.triggered_priority = MqttPriority.NORMAL;
+    }
+}
+
+/**
+ * Result of evaluating alert rules against an incoming message.
+ */
+public class AlertEvalResult {
+    public MqttPriority priority;
+    public ArrayList<AlertRule> triggered_rules;
+    public string? topic_priority;  /* per-topic fixed priority */
+
+    public AlertEvalResult() {
+        priority = MqttPriority.NORMAL;
+        triggered_rules = new ArrayList<AlertRule>();
+        topic_priority = null;
+    }
+}
+
+
+/**
+ * Manages alert rules, topic history, and per-topic priority settings.
+ */
+public class MqttAlertManager : Object {
+
+    /* DB key for alert rules JSON */
+    internal const string KEY_ALERTS = "mqtt_alerts";
+
+    /* DB key for per-topic priority JSON */
+    internal const string KEY_TOPIC_PRIORITIES = "mqtt_topic_priorities";
+
+    /* DB key for per-topic QoS JSON */
+    internal const string KEY_TOPIC_QOS = "mqtt_topic_qos";
+
+    /* Max history entries per topic */
+    private const int MAX_HISTORY_PER_TOPIC = 50;
+
+    /* Back-references */
+    private Plugin plugin;
+
+    /* Alert rules (loaded from DB) */
+    private ArrayList<AlertRule> rules = new ArrayList<AlertRule>();
+
+    /* Per-topic priority settings (topic → priority) */
+    private HashMap<string, MqttPriority> topic_priorities =
+        new HashMap<string, MqttPriority>();
+
+    /* Per-topic QoS settings (topic → 0/1/2) */
+    private HashMap<string, int> topic_qos =
+        new HashMap<string, int>();
+
+    /* Topic history (topic → list of entries, most recent last) */
+    private HashMap<string, ArrayList<TopicHistoryEntry>> history =
+        new HashMap<string, ArrayList<TopicHistoryEntry>>();
+
+    /* Pause state: when true, messages are still recorded in history
+     * but not displayed as chat bubbles */
+    private bool _paused = false;
+    public bool paused {
+        get { return _paused; }
+        set { _paused = value; }
+    }
+
+    /* ── Construction ────────────────────────────────────────────── */
+
+    public MqttAlertManager(Plugin plugin) {
+        this.plugin = plugin;
+        load_rules();
+        load_topic_priorities();
+        load_topic_qos();
+    }
+
+    /* ── Alert Rule Management ───────────────────────────────────── */
+
+    /**
+     * Add a new alert rule.
+     */
+    public void add_rule(AlertRule rule) {
+        rules.add(rule);
+        save_rules();
+    }
+
+    public AlertRule? get_rule(string id) {
+        foreach (var rule in rules) {
+            if (rule.id == id) return rule;
+        }
+        return null;
+    }
+
+    public bool update_rule(string id, string topic, string? field,
+                            AlertOperator op, string threshold,
+                            MqttPriority priority, string? connection_id) {
+        AlertRule? rule = get_rule(id);
+        if (rule == null) return false;
+
+        rule.connection_id = connection_id;
+        rule.topic = topic;
+        rule.field = (field != null && field.strip() != "") ? field.strip() : null;
+        rule.op = op;
+        rule.threshold = threshold;
+        rule.priority = priority;
+        save_rules();
+        return true;
+    }
+
+    /**
+     * Remove an alert rule by ID.
+     */
+    public bool remove_rule(string id) {
+        AlertRule? target = null;
+        foreach (var rule in rules) {
+            if (rule.id == id) {
+                target = rule;
+                break;
+            }
+        }
+        if (target != null) {
+            rules.remove(target);
+            save_rules();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Remove an alert rule by index (1-based).
+     */
+    public bool remove_rule_by_index(int index, string? connection_id = null) {
+        if (index < 1) return false;
+        if (connection_id == null) {
+            if (index > rules.size) return false;
+            rules.remove_at(index - 1);
+            save_rules();
+            return true;
+        }
+
+        int visible = 0;
+        AlertRule? target = null;
+        foreach (var rule in rules) {
+            if (rule.connection_id == null || rule.connection_id == connection_id) {
+                visible++;
+                if (visible == index) {
+                    target = rule;
+                    break;
+                }
+            }
+        }
+        if (target == null) return false;
+        rules.remove(target);
+        save_rules();
+        return true;
+    }
+
+    /**
+     * Get all alert rules.
+     */
+    public ArrayList<AlertRule> get_rules() {
+        return rules;
+    }
+
+    public ArrayList<AlertRule> get_rules_for_connection(string connection_id) {
+        var filtered = new ArrayList<AlertRule>();
+        foreach (var rule in rules) {
+            if (rule.connection_id == null || rule.connection_id == connection_id) {
+                filtered.add(rule);
+            }
+        }
+        return filtered;
+    }
+
+    /**
+     * Toggle an alert rule's enabled state by index (1-based).
+     */
+    public bool toggle_rule(int index) {
+        if (index < 1 || index > rules.size) return false;
+        rules[index - 1].enabled = !rules[index - 1].enabled;
+        save_rules();
+        return true;
+    }
+
+    /**
+     * Toggle an alert rule's enabled state by ID.
+     */
+    public bool toggle_rule_by_id(string id) {
+        foreach (var rule in rules) {
+            if (rule.id == id) {
+                rule.enabled = !rule.enabled;
+                save_rules();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* ── Per-Topic Priority ──────────────────────────────────────── */
+
+    /**
+     * Set the notification priority for a specific topic.
+     */
+    public void set_topic_priority(string topic, MqttPriority priority) {
+        if (priority == MqttPriority.NORMAL) {
+            /* NORMAL is default — remove the override */
+            topic_priorities.unset(topic);
+        } else {
+            topic_priorities[topic] = priority;
+        }
+        save_topic_priorities();
+    }
+
+    /**
+     * Get the notification priority for a topic (default: NORMAL).
+     */
+    public MqttPriority get_topic_priority(string topic) {
+        if (topic_priorities.has_key(topic)) {
+            return topic_priorities[topic];
+        }
+
+        /* Check wildcard patterns in topic_priorities */
+        foreach (var entry in topic_priorities.entries) {
+            if (MqttUtils.topic_matches(entry.key, topic)) {
+                return entry.value;
+            }
+        }
+
+        return MqttPriority.NORMAL;
+    }
+
+    /**
+     * Get all per-topic priority overrides.
+     */
+    public HashMap<string, MqttPriority> get_all_topic_priorities() {
+        return topic_priorities;
+    }
+
+    /* ── Per-Topic QoS ───────────────────────────────────────────── */
+
+    /**
+     * Set QoS level for a specific topic (0, 1, or 2).
+     */
+    public void set_topic_qos(string topic, int qos) {
+        if (qos < 0 || qos > 2) return;
+        if (qos == 0) {
+            /* 0 is default — remove the override */
+            topic_qos.unset(topic);
+        } else {
+            topic_qos[topic] = qos;
+        }
+        save_topic_qos();
+    }
+
+    /**
+     * Get QoS level for a topic (default: 0).
+     */
+    public int get_topic_qos(string topic) {
+        if (topic_qos.has_key(topic)) {
+            return topic_qos[topic];
+        }
+
+        /* Check wildcard patterns */
+        foreach (var entry in topic_qos.entries) {
+            if (MqttUtils.topic_matches(entry.key, topic)) {
+                return entry.value;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Get all per-topic QoS overrides.
+     */
+    public HashMap<string, int> get_all_topic_qos() {
+        return topic_qos;
+    }
+
+    /* ── Sparkline Generation ────────────────────────────────────── */
+
+    /* SPARK_CHARS removed — use MqttUtils.SPARK_CHARS */
+
+    /**
+     * Generate a sparkline chart from topic history.
+     *
+     * @param topic   The topic to chart
+     * @param count   Max number of data points (default: 20)
+     * @return Formatted chart string, or null if no numeric data
+     */
+    public string? generate_sparkline(string topic, int count = 20) {
+        var entries = get_history(topic);
+        if (entries == null || entries.size == 0) return null;
+
+        /* Extract numeric values into a double[] for MqttUtils */
+        var val_list = new ArrayList<double?>();
+        var timestamps = new ArrayList<string>();
+
+        int start = (entries.size > count) ? entries.size - count : 0;
+        for (int i = start; i < entries.size; i++) {
+            double? val = try_extract_numeric(entries[i].payload);
+            if (val != null) {
+                val_list.add(val);
+                timestamps.add(entries[i].timestamp.format("%H:%M"));
+            }
+        }
+
+        if (val_list.size < 2) return null;
+
+        /* Convert to double[] for MqttUtils */
+        double[] values = new double[val_list.size];
+        for (int i = 0; i < val_list.size; i++) {
+            values[i] = (double) val_list[i];
+        }
+
+        /* Statistics via MqttUtils */
+        double min_val, max_val, avg;
+        MqttUtils.sparkline_stats(values, out min_val, out max_val, out avg);
+
+        /* Build sparkline via MqttUtils */
+        string? sparkline = MqttUtils.build_sparkline(values);
+        if (sparkline == null) return null;
+
+        /* Format output */
+        var out_sb = new StringBuilder();
+        out_sb.append("📊 %s\n".printf(topic));
+        out_sb.append("────────");
+        for (int j = 0; j < int.min((int) topic.length, 30); j++) out_sb.append("─");
+        out_sb.append("\n");
+        out_sb.append("%s\n\n".printf(sparkline));
+        out_sb.append("Min: %.2f  Max: %.2f  Avg: %.2f\n".printf(
+            min_val, max_val, avg));
+        out_sb.append("Points: %d  Period: %s → %s".printf(
+            values.length,
+            timestamps.size > 0 ? timestamps[0] : "?",
+            timestamps.size > 0 ? timestamps[timestamps.size - 1] : "?"));
+
+        return out_sb.str;
+    }
+
+    /**
+     * Try to extract a numeric value from a payload.
+     * Delegates to MqttUtils.try_extract_numeric().
+     */
+    private double? try_extract_numeric(string payload) {
+        return MqttUtils.try_extract_numeric(payload);
+    }
+
+    /* ── Topic History ───────────────────────────────────────────── */
+
+    /**
+     * Record a value in the topic history.
+     */
+    public void record_history(string topic, string payload,
+                                MqttPriority priority) {
+        if (!history.has_key(topic)) {
+            history[topic] = new ArrayList<TopicHistoryEntry>();
+        }
+
+        var entry = new TopicHistoryEntry(topic, payload);
+        entry.triggered_priority = priority;
+        history[topic].add(entry);
+
+        /* Trim to max size */
+        while (history[topic].size > MAX_HISTORY_PER_TOPIC) {
+            history[topic].remove_at(0);
+        }
+    }
+
+    /**
+     * Get history for a topic (most recent last).
+     */
+    public ArrayList<TopicHistoryEntry>? get_history(string topic) {
+        if (history.has_key(topic)) {
+            return history[topic];
+        }
+
+        /* Try wildcard match */
+        var result = new ArrayList<TopicHistoryEntry>();
+        foreach (var entry in history.entries) {
+            if (MqttUtils.topic_matches(topic, entry.key)) {
+                result.add_all(entry.value);
+            }
+        }
+
+        if (result.size > 0) {
+            /* Sort by timestamp */
+            result.sort((a, b) => {
+                return a.timestamp.compare(b.timestamp);
+            });
+            return result;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get a list of all topics that have history entries.
+     */
+    public ArrayList<string> get_history_topics() {
+        var topics = new ArrayList<string>();
+        topics.add_all(history.keys);
+        topics.sort();
+        return topics;
+    }
+
+    /* ── Alert Evaluation ────────────────────────────────────────── */
+
+    /**
+     * Evaluate an incoming MQTT message against all alert rules
+     * and per-topic priority settings.
+     *
+     * Returns the effective priority and list of triggered rules.
+     */
+    public AlertEvalResult evaluate(string connection_id, MqttConnectionConfig cfg,
+                                    string topic, string payload) {
+        var result = new AlertEvalResult();
+
+        /* 1. Check per-topic priority */
+        MqttPriority topic_prio = MqttPriority.from_string(
+            cfg.get_topic_priority_key(topic));
+        result.priority = topic_prio;
+
+        /* 2. Evaluate alert rules (can escalate priority) */
+        foreach (var rule in rules) {
+            if (!rule.enabled) continue;
+            if (rule.connection_id != null && rule.connection_id != connection_id) continue;
+            if (!rule.matches_topic(topic)) continue;
+
+            /* Extract value to test */
+            string test_value;
+            if (rule.field != null && rule.field != "") {
+                test_value = extract_json_field(payload, rule.field);
+            } else {
+                test_value = payload.strip();
+            }
+
+            if (rule.evaluate(test_value)) {
+                result.triggered_rules.add(rule);
+
+                /* Alert rule priority can escalate but not de-escalate */
+                if (rule.priority > result.priority) {
+                    result.priority = rule.priority;
+                }
+
+                /* Update trigger timestamp */
+                rule.last_triggered = MqttUtils.now_unix();
+            }
+        }
+
+        /* BUG-10 fix: Only update last_triggered in the DB
+         * rather than doing a full DELETE ALL + INSERT ALL cycle.
+         * This avoids an expensive save_rules() call on every alert.
+         *
+         * Uses Qlite ORM instead of raw exec() to avoid SQL injection
+         * and ensure the correct table name (mqtt_alert_rules). */
+        if (result.triggered_rules.size > 0 && plugin.mqtt_db != null) {
+            long ts = (long) MqttUtils.now_unix();
+            foreach (var triggered_rule in result.triggered_rules) {
+                plugin.mqtt_db.alert_rules.update()
+                    .with(plugin.mqtt_db.alert_rules.id, "=", triggered_rule.id)
+                    .set(plugin.mqtt_db.alert_rules.last_triggered, ts)
+                    .perform();
+            }
+        }
+
+        /* Record in history */
+        record_history(topic, payload, result.priority);
+
+        return result;
+    }
+
+    /* ── JSON Field Extraction ───────────────────────────────────── */
+
+    /**
+     * Extract a field value from a JSON payload.
+     * Returns the string representation of the value.
+     */
+    private string extract_json_field(string payload, string field) {
+        try {
+            var parser = new Json.Parser();
+            parser.load_from_data(payload, -1);
+            var root = parser.get_root();
+            if (root == null || root.get_node_type() != Json.NodeType.OBJECT) {
+                return payload.strip();
+            }
+
+            var obj = root.get_object();
+            if (!obj.has_member(field)) return "";
+
+            var node = obj.get_member(field);
+            if (node.get_node_type() == Json.NodeType.VALUE) {
+                var val_type = node.get_value_type();
+                if (val_type == typeof(string)) {
+                    return node.get_string();
+                } else if (val_type == typeof(int64)) {
+                    return node.get_int().to_string();
+                } else if (val_type == typeof(double)) {
+                    // Keep the JSON value round-trippable and independent of LC_NUMERIC.
+                    return node.get_double().to_string();
+                } else if (val_type == typeof(bool)) {
+                    return node.get_boolean() ? "true" : "false";
+                }
+            }
+
+            /* Nested: return raw JSON */
+            var gen = new Json.Generator();
+            gen.set_root(node);
+            return gen.to_data(null);
+        } catch (GLib.Error e) {
+            return payload.strip();
+        }
+    }
+
+    /* topic_matches_pattern() removed — use MqttUtils.topic_matches() */
+
+    /* ── Persistence ─────────────────────────────────────────────── */
+
+    private void load_rules() {
+        /* Phase 1c: Try loading from mqtt.db first */
+        if (plugin.mqtt_db != null) {
+            var iter = plugin.mqtt_db.alert_rules.select()
+                .order_by(plugin.mqtt_db.alert_rules.created_at, "ASC")
+                .iterator();
+            while (iter.next()) {
+                var row = iter.get();
+                var rule = new AlertRule();
+                rule.id = plugin.mqtt_db.alert_rules.id[row];
+                rule.connection_id = plugin.mqtt_db.alert_rules.connection_id[row];
+                rule.topic = plugin.mqtt_db.alert_rules.topic[row];
+                rule.field = plugin.mqtt_db.alert_rules.field[row];
+                string op_str = plugin.mqtt_db.alert_rules.operator[row];
+                AlertOperator? parsed_op = AlertOperator.from_string(op_str);
+                if (parsed_op == null) continue;
+                rule.op = parsed_op;
+                rule.threshold = plugin.mqtt_db.alert_rules.threshold[row];
+                rule.priority = MqttPriority.from_string(
+                    plugin.mqtt_db.alert_rules.priority[row]);
+                rule.enabled = plugin.mqtt_db.alert_rules.enabled[row];
+                rule.cooldown_secs = (int64) plugin.mqtt_db.alert_rules.cooldown_secs[row];
+                rule.last_triggered = (int64) plugin.mqtt_db.alert_rules.last_triggered[row];
+                rules.add(rule);
+            }
+
+            if (rules.size > 0) {
+                debug("MQTT AlertManager: Loaded %d alert rules from mqtt.db", rules.size);
+                return;
+            }
+        }
+
+        /* Fallback: load from JSON in settings (legacy) */
+        string? json_str = get_db_setting(KEY_ALERTS);
+        if (json_str == null || json_str.strip() == "") return;
+
+        try {
+            var parser = new Json.Parser();
+            parser.load_from_data(json_str, -1);
+            var root = parser.get_root();
+            if (root == null || root.get_node_type() != Json.NodeType.ARRAY)
+                return;
+
+            var array = root.get_array();
+            for (uint i = 0; i < array.get_length(); i++) {
+                var node = array.get_element(i);
+                if (node.get_node_type() != Json.NodeType.OBJECT) continue;
+                AlertRule? rule = AlertRule.from_json(node.get_object());
+                if (rule != null) {
+                    rules.add(rule);
+                }
+            }
+
+            debug("MQTT AlertManager: Loaded %d alert rules from JSON (legacy)", rules.size);
+
+            /* One-time migration: write rules to mqtt.db */
+            if (rules.size > 0 && plugin.mqtt_db != null) {
+                save_rules();
+                debug("MQTT AlertManager: Migrated %d rules from JSON → mqtt.db", rules.size);
+            }
+        } catch (GLib.Error e) {
+            warning("MQTT AlertManager: Failed to load rules: %s", e.message);
+        }
+    }
+
+    private void save_rules() {
+        /* Phase 1c: Save to mqtt.db */
+        if (plugin.mqtt_db != null) {
+            /* Wrap DELETE ALL + INSERT ALL in a transaction for atomicity.
+             * On any error, ROLLBACK to preserve existing data (BUG-2 fix). */
+            try {
+                plugin.mqtt_db.exec("BEGIN TRANSACTION");
+
+                /* Delete all existing rules and re-insert */
+                plugin.mqtt_db.alert_rules.delete().perform();
+
+                long now = (long) MqttUtils.now_unix();
+                foreach (var rule in rules) {
+                    plugin.mqtt_db.alert_rules.insert()
+                        .value(plugin.mqtt_db.alert_rules.id, rule.id)
+                        .value(plugin.mqtt_db.alert_rules.connection_id, rule.connection_id)
+                        .value(plugin.mqtt_db.alert_rules.topic, rule.topic)
+                        .value(plugin.mqtt_db.alert_rules.field, rule.field)
+                        .value(plugin.mqtt_db.alert_rules.operator, rule.op.to_symbol())
+                        .value(plugin.mqtt_db.alert_rules.threshold, rule.threshold)
+                        .value(plugin.mqtt_db.alert_rules.priority, rule.priority.to_string_key())
+                        .value(plugin.mqtt_db.alert_rules.enabled, rule.enabled)
+                        .value(plugin.mqtt_db.alert_rules.cooldown_secs, (long) rule.cooldown_secs)
+                        .value(plugin.mqtt_db.alert_rules.last_triggered, (long) rule.last_triggered)
+                        .value(plugin.mqtt_db.alert_rules.created_at, now)
+                        .perform();
+                }
+
+                plugin.mqtt_db.exec("COMMIT");
+            } catch (Error e) {
+                warning("MQTT AlertManager: save_rules failed, rolling back: %s", e.message);
+                try { plugin.mqtt_db.exec("ROLLBACK"); } catch (Error e2) {
+                    warning("MQTT AlertManager: ROLLBACK also failed: %s", e2.message);
+                }
+            }
+            return;
+        }
+
+        /* Fallback: save as JSON in settings (legacy) */
+        var array = new Json.Array();
+        foreach (var rule in rules) {
+            var node = new Json.Node(Json.NodeType.OBJECT);
+            node.set_object(rule.to_json());
+            array.add_element(node);
+        }
+
+        var root = new Json.Node(Json.NodeType.ARRAY);
+        root.set_array(array);
+
+        var gen = new Json.Generator();
+        gen.set_root(root);
+        string json_str = gen.to_data(null);
+
+        set_db_setting(KEY_ALERTS, json_str);
+    }
+
+    private void load_topic_priorities() {
+        string? json_str = get_db_setting(KEY_TOPIC_PRIORITIES);
+        if (json_str == null || json_str.strip() == "") return;
+
+        try {
+            var parser = new Json.Parser();
+            parser.load_from_data(json_str, -1);
+            var root = parser.get_root();
+            if (root == null || root.get_node_type() != Json.NodeType.OBJECT)
+                return;
+
+            var obj = root.get_object();
+            foreach (string member in obj.get_members()) {
+                string prio_str = obj.get_string_member(member);
+                topic_priorities[member] = MqttPriority.from_string(prio_str);
+            }
+
+            debug("MQTT AlertManager: Loaded %d topic priorities",
+                    topic_priorities.size);
+        } catch (GLib.Error e) {
+            warning("MQTT AlertManager: Failed to load priorities: %s",
+                    e.message);
+        }
+    }
+
+    private void save_topic_priorities() {
+        var obj = new Json.Object();
+        foreach (var entry in topic_priorities.entries) {
+            obj.set_string_member(entry.key, entry.value.to_string_key());
+        }
+
+        var root = new Json.Node(Json.NodeType.OBJECT);
+        root.set_object(obj);
+
+        var gen = new Json.Generator();
+        gen.set_root(root);
+        string json_str = gen.to_data(null);
+
+        set_db_setting(KEY_TOPIC_PRIORITIES, json_str);
+    }
+
+    private void load_topic_qos() {
+        string? json_str = get_db_setting(KEY_TOPIC_QOS);
+        if (json_str == null || json_str.strip() == "") return;
+
+        try {
+            var parser = new Json.Parser();
+            parser.load_from_data(json_str, -1);
+            var root = parser.get_root();
+            if (root == null || root.get_node_type() != Json.NodeType.OBJECT)
+                return;
+
+            var obj = root.get_object();
+            foreach (string member in obj.get_members()) {
+                int qos_val = (int) obj.get_int_member(member);
+                if (qos_val >= 0 && qos_val <= 2) {
+                    topic_qos[member] = qos_val;
+                }
+            }
+
+            debug("MQTT AlertManager: Loaded %d topic QoS settings",
+                    topic_qos.size);
+        } catch (GLib.Error e) {
+            warning("MQTT AlertManager: Failed to load QoS settings: %s",
+                    e.message);
+        }
+    }
+
+    private void save_topic_qos() {
+        var obj = new Json.Object();
+        foreach (var entry in topic_qos.entries) {
+            obj.set_int_member(entry.key, entry.value);
+        }
+
+        var root = new Json.Node(Json.NodeType.OBJECT);
+        root.set_object(obj);
+
+        var gen = new Json.Generator();
+        gen.set_root(root);
+        string json_str = gen.to_data(null);
+
+        set_db_setting(KEY_TOPIC_QOS, json_str);
+    }
+
+    /* ── DB helpers (delegated to Plugin) ─────────────────────────── */
+
+    private string? get_db_setting(string key) {
+        return plugin.get_app_db_setting(key);
+    }
+
+    private void set_db_setting(string key, string val) {
+        plugin.set_app_db_setting(key, val);
+    }
+}
+
+}
