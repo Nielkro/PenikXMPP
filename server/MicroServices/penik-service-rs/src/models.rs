@@ -23,6 +23,7 @@ pub struct Sticker {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[allow(dead_code)]
 pub struct UserStickerPack {
     pub user_jid: String,
     pub pack_id: String,

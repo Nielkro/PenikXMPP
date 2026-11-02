@@ -42,6 +42,7 @@ impl IntoResponse for AuthError {
     }
 }
 
+#[allow(dead_code)]
 pub fn generate_token(jid: &str, expires_at: i64, shared_secret: &str) -> String {
     let payload = format!("{}:{}", jid, expires_at);
     let mut mac = HmacSha256::new_from_slice(shared_secret.as_bytes())
