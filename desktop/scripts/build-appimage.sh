@@ -650,26 +650,28 @@ step "Schritt 2: Meson konfigurieren & kompilieren"
 MESON_COMMON=()
 # Ein AppImage-Build darf niemals Meson-Zustand aus einem Entwickler- oder
 # früheren Paketbuild übernehmen.
-rm -rf "$BUILD_DIR"
-MESON_COMMON=(
-    --prefix=/usr
-    --buildtype=debugoptimized
-    -Dplugin-mqtt=enabled
-    -Ddnssec=enabled
-    -Dplugin-rtp=disabled
-    -Dplugin-google-webrtc=enabled
-    -Dgoogle-libwebrtc-wrapper=enabled
-    -Dgoogle-libwebrtc-test-oracle=false
-    -Dgoogle-libwebrtc-tests=false
-    "-Dgoogle-libwebrtc-runtime-root=$DINOX_LIBWEBRTC_RUNTIME_ROOT"
-    -Dlocation-sharing=enabled
-    -Dplugin-http-files=enabled
-    -Dplugin-ice=enabled
-    -Dplugin-omemo=enabled
-    -Dplugin-openpgp=enabled
-    -Dplugin-notification-sound=enabled
-)
-meson setup "$BUILD_DIR" "$PROJECT_ROOT" "${MESON_COMMON[@]}" $MESON_ARGS
+if [ "${DINOX_CLEAN_BUILD:-0}" = "1" ] || [ ! -f "$BUILD_DIR/build.ninja" ]; then
+    rm -rf "$BUILD_DIR"
+    MESON_COMMON=(
+        --prefix=/usr
+        --buildtype=debugoptimized
+        -Dplugin-mqtt=enabled
+        -Ddnssec=enabled
+        -Dplugin-rtp=disabled
+        -Dplugin-google-webrtc=enabled
+        -Dgoogle-libwebrtc-wrapper=enabled
+        -Dgoogle-libwebrtc-test-oracle=false
+        -Dgoogle-libwebrtc-tests=false
+        "-Dgoogle-libwebrtc-runtime-root=$DINOX_LIBWEBRTC_RUNTIME_ROOT"
+        -Dlocation-sharing=enabled
+        -Dplugin-http-files=enabled
+        -Dplugin-ice=enabled
+        -Dplugin-omemo=enabled
+        -Dplugin-openpgp=enabled
+        -Dplugin-notification-sound=enabled
+    )
+    meson setup "$BUILD_DIR" "$PROJECT_ROOT" "${MESON_COMMON[@]}" $MESON_ARGS
+fi
 
 if [ "${#NINJA_ARGS[@]}" -gt 0 ]; then
     echo "  Build-Jobs: ${NINJA_ARGS[1]}"

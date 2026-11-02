@@ -98,6 +98,8 @@ CONTAINER_ENV=(
     -e LD_LIBRARY_PATH="/opt/dinox-deps/lib"
     -e PATH="/opt/dinox-deps/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     -e DINOX_LIBWEBRTC_RUNTIME_ROOT="/workspace/.vendor-deps/libwebrtc-m152-linux-x86_64-runtime"
+    -e DINOX_BUILD_JOBS="$(nproc 2>/dev/null || echo 4)"
+    -e DINOX_CLEAN_BUILD="$RECONFIGURE"
 )
 
 # Use host network namespace so that localhost proxies (e.g. 127.0.0.1:2080) on the host remain directly accessible inside container
