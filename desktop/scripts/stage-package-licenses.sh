@@ -193,17 +193,28 @@ run_ubuntu_snapshot_apt_cache() {
 
 update_ubuntu_snapshot_apt_index() {
     local snapshot_id="$UBUNTU_SNAPSHOT_APT_ID"
-    local update_status
+    local update_status=0
+    local max_retries=1
+    if [ -z "${DINOX_LICENSE_TEST_MODE:-}" ]; then
+        max_retries=10
+    fi
 
     # APT normally tolerates unavailable indexes and exits successfully with
     # partial lists. Error-Mode=any makes that state an initialization failure.
-    if run_ubuntu_snapshot_apt_get update >/dev/null; then
-        UBUNTU_SNAPSHOT_APT_INITIALIZED=1
-    else
+    for ((attempt=1; attempt<=max_retries; attempt++)); do
+        if run_ubuntu_snapshot_apt_get update >/dev/null; then
+            UBUNTU_SNAPSHOT_APT_INITIALIZED=1
+            return 0
+        fi
         update_status=$?
-        cleanup_ubuntu_snapshot_apt_root
-        fail "could not initialize complete exact Ubuntu snapshot source index: $snapshot_id (APT exit $update_status)"
-    fi
+        if [ "$attempt" -lt "$max_retries" ]; then
+            echo "warning: Ubuntu snapshot update failed (status $update_status), retrying in 5s ($attempt/$max_retries)..." >&2
+            sleep 5
+        fi
+    done
+
+    cleanup_ubuntu_snapshot_apt_root
+    fail "could not initialize complete exact Ubuntu snapshot source index: $snapshot_id (APT exit $update_status)"
 }
 
 initialize_ubuntu_snapshot_apt() {
@@ -245,8 +256,23 @@ stage_distribution_source_from_ubuntu_snapshot() {
         | awk -v expected="$source_version" \
             '$1 == "Version:" && $2 == expected { found = 1 } END { exit(found ? 0 : 1) }' \
         || fail "exact Ubuntu snapshot source index is missing: $source_package=$source_version"
-    if ! (cd "$source_root" && run_ubuntu_snapshot_apt_get source \
-            --download-only --only-source "$selector" >/dev/null); then
+    local max_retries=1
+    if [ -z "${DINOX_LICENSE_TEST_MODE:-}" ]; then
+        max_retries=10
+    fi
+    local downloaded=0
+    for ((attempt=1; attempt<=max_retries; attempt++)); do
+        if (cd "$source_root" && run_ubuntu_snapshot_apt_get source \
+                --download-only --only-source "$selector" >/dev/null); then
+            downloaded=1
+            break
+        fi
+        if [ "$attempt" -lt "$max_retries" ]; then
+            echo "warning: download $source_package failed, retrying in 5s ($attempt/$max_retries)..." >&2
+            sleep 5
+        fi
+    done
+    if [ "$downloaded" -eq 0 ]; then
         fail "exact Ubuntu snapshot source unavailable: $source_package=$source_version"
     fi
 }
@@ -537,6 +563,10 @@ stage_distribution_source_pair() {
     validate_distribution_source_tree "$source_root" "$source_package" "$source_version"
     install -d -m 0755 "$destination_root/$source_package"
     cp -a "$source_root/." "$destination_root/$source_package/"
+    if [ -d "$DISTRIBUTION_SOURCE_ROOT" ] && [ -w "$DISTRIBUTION_SOURCE_ROOT" ]; then
+        install -d -m 0755 "$DISTRIBUTION_SOURCE_ROOT/$source_package"
+        cp -a "$source_root/." "$DISTRIBUTION_SOURCE_ROOT/$source_package/" 2>/dev/null || true
+    fi
     rm -rf "$work_root"
 }
 

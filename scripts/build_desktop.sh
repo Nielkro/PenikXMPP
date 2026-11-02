@@ -76,6 +76,7 @@ done
 
 # 2. Check / download Google/libwebrtc runtime
 VENDOR_DEPS="$DESKTOP_DIR/.vendor-deps"
+mkdir -p "$VENDOR_DEPS/distribution-sources"
 WEBRTC_DIR="$VENDOR_DEPS/libwebrtc-m152-linux-x86_64-runtime"
 if [[ ! -d "$WEBRTC_DIR" ]]; then
     log_info "Google/libwebrtc M152 runtime not found in $VENDOR_DEPS. Downloading..."
@@ -142,6 +143,7 @@ if [[ $BUILD_APPIMAGE -eq 1 ]]; then
     $CONTAINER_ENGINE run --rm \
         "${CONTAINER_RUN_ARGS[@]}" \
         -v "$DESKTOP_DIR:/workspace:Z" \
+        -v "$VENDOR_DEPS/distribution-sources:/opt/dinox-deps/share/dinox/distribution-sources:Z" \
         -w /workspace \
         "${CONTAINER_ENV[@]}" \
         "$BUILD_CONTAINER_IMAGE" \
