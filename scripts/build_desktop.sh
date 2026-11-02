@@ -35,6 +35,10 @@ fi
 log_info "Using container engine: $CONTAINER_ENGINE"
 
 BUILD_CONTAINER_IMAGE="git.dinox.im/dinoxim/linux-package-builder-dinox@sha256:5804b93b0bb1ca900470873e1de128f4e4e6ec634d5768f90399e3f756509230"
+if $CONTAINER_ENGINE image exists penik-desktop-builder:latest 2>/dev/null; then
+    BUILD_CONTAINER_IMAGE="penik-desktop-builder:latest"
+fi
+
 WEBRTC_ARCHIVE_URL="https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/libwebrtc-m152-linux-x86_64-runtime-abi40-ipc10-sha256-2479cdb9ab7e.tar.gz"
 WEBRTC_SHA256="2479cdb9ab7eace826e28d519a9dd33478329e34c303ed716c196005d9cec46f"
 
@@ -42,6 +46,7 @@ WEBRTC_SHA256="2479cdb9ab7eace826e28d519a9dd33478329e34c303ed716c196005d9cec46f"
 RECONFIGURE=0
 CLEAN=0
 BUILD_APPIMAGE=0
+BUILD_DEB=0
 RUN_APP=0
 
 for arg in "$@"; do
@@ -49,6 +54,7 @@ for arg in "$@"; do
         --reconfigure) RECONFIGURE=1 ;;
         --clean) CLEAN=1 ;;
         --appimage) BUILD_APPIMAGE=1 ;;
+        --deb) BUILD_DEB=1 ;;
         --run) RUN_APP=1 ;;
         -h|--help)
             echo "Usage: $0 [options]"
@@ -56,6 +62,7 @@ for arg in "$@"; do
             echo "  --reconfigure  Wipe build directory and re-run meson setup"
             echo "  --clean        Clean build targets before compiling"
             echo "  --appimage     Build self-contained AppImage bundle"
+            echo "  --deb          Build Debian/Ubuntu .deb package"
             echo "  --run          Launch the compiled binary inside container with GUI forwarding"
             echo "  -h, --help     Show this help"
             exit 0
@@ -90,11 +97,16 @@ CONTAINER_ENV=(
     -e PKG_CONFIG_PATH="/opt/dinox-deps/lib/pkgconfig"
     -e LD_LIBRARY_PATH="/opt/dinox-deps/lib"
     -e PATH="/opt/dinox-deps/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    -e DINOX_LIBWEBRTC_RUNTIME_ROOT="/workspace/.vendor-deps/libwebrtc-m152-linux-x86_64-runtime"
 )
+
+# Use host network namespace so that localhost proxies (e.g. 127.0.0.1:2080) on the host remain directly accessible inside container
+CONTAINER_RUN_ARGS=(--net=host)
 
 if [[ ! -f "$BUILD_DIR/build.ninja" ]]; then
     log_info "Configuring Meson build..."
     $CONTAINER_ENGINE run --rm \
+        "${CONTAINER_RUN_ARGS[@]}" \
         -v "$DESKTOP_DIR:/workspace:Z" \
         -w /workspace \
         "${CONTAINER_ENV[@]}" \
@@ -115,6 +127,7 @@ fi
 if [[ $CLEAN -eq 1 ]]; then
     log_info "Cleaning previous build..."
     $CONTAINER_ENGINE run --rm \
+        "${CONTAINER_RUN_ARGS[@]}" \
         -v "$DESKTOP_DIR:/workspace:Z" \
         -w /workspace \
         "${CONTAINER_ENV[@]}" \
@@ -125,15 +138,27 @@ fi
 if [[ $BUILD_APPIMAGE -eq 1 ]]; then
     log_info "Building standalone AppImage..."
     $CONTAINER_ENGINE run --rm \
+        "${CONTAINER_RUN_ARGS[@]}" \
         -v "$DESKTOP_DIR:/workspace:Z" \
         -w /workspace \
         "${CONTAINER_ENV[@]}" \
         "$BUILD_CONTAINER_IMAGE" \
         bash scripts/build-appimage.sh
     log_ok "AppImage created in $DESKTOP_DIR"
+elif [[ $BUILD_DEB -eq 1 ]]; then
+    log_info "Building Debian (.deb) package..."
+    $CONTAINER_ENGINE run --rm \
+        "${CONTAINER_RUN_ARGS[@]}" \
+        -v "$DESKTOP_DIR:/workspace:Z" \
+        -w /workspace \
+        "${CONTAINER_ENV[@]}" \
+        "$BUILD_CONTAINER_IMAGE" \
+        bash scripts/build-deb.sh
+    log_ok ".deb package created in $DESKTOP_DIR"
 else
     log_info "Compiling desktop binary..."
     $CONTAINER_ENGINE run --rm \
+        "${CONTAINER_RUN_ARGS[@]}" \
         -v "$DESKTOP_DIR:/workspace:Z" \
         -w /workspace \
         "${CONTAINER_ENV[@]}" \
@@ -146,6 +171,7 @@ fi
 if [[ $RUN_APP -eq 1 ]]; then
     log_info "Launching client with X11 forwarding..."
     $CONTAINER_ENGINE run --rm -it \
+        "${CONTAINER_RUN_ARGS[@]}" \
         -v "$DESKTOP_DIR:/workspace:Z" \
         -w /workspace \
         -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
