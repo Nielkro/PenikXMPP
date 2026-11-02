@@ -221,6 +221,7 @@ class PenikSwipeBackLayout @JvmOverloads constructor(
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
                     isAnimating = false
+                    resetUnderlyingParallax()
                     XmppFragment.skipNextFragmentAnimations(2)
                     try {
                         onDismissed?.run()

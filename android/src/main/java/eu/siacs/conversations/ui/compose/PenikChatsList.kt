@@ -39,6 +39,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
@@ -317,10 +318,12 @@ fun PenikMainScreen(
     val mainContent = @Composable {
         Scaffold(
             containerColor = background,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             topBar = {
                 when (tab) {
                     PenikTab.CHATS -> {
                         TopAppBar(
+                            windowInsets = WindowInsets(0, 0, 0, 0),
                             title = {
                                 if (isSearchActive) {
                                     OutlinedTextField(
@@ -430,6 +433,7 @@ fun PenikMainScreen(
                 }
                 PenikTab.CALLS -> {
                     TopAppBar(
+                        windowInsets = WindowInsets(0, 0, 0, 0),
                         title = {
                             Text(
                                 text = "Звонки",
@@ -460,6 +464,7 @@ fun PenikMainScreen(
                 PenikTab.PROFILE -> {
                     if (isDrawerMode) {
                         TopAppBar(
+                            windowInsets = WindowInsets(0, 0, 0, 0),
                             title = {
                                 Text(
                                     text = "Профиль",

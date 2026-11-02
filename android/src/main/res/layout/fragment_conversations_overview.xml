@@ -1,77 +1,9 @@
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/compose_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/penik_background">
-
-        <com.google.android.material.appbar.AppBarLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:elevation="0dp"
-            app:liftOnScroll="false">
-
-
-            <com.google.android.material.search.SearchBar
-                android:id="@+id/search_bar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/search_in_chats"
-                app:layout_scrollFlags="snap" />
-
-        </com.google.android.material.appbar.AppBarLayout>
-
-
-        <androidx.compose.ui.platform.ComposeView
-            android:id="@+id/compose_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
-
-        <RelativeLayout
-            android:id="@+id/empty_chat_hint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginHorizontal="48dp"
-            android:visibility="gone">
-
-            <ImageView
-                android:id="@+id/empty_chat_hint_image"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:importantForAccessibility="no"
-                android:src="@drawable/ic_forum_thin_48dp"
-                app:tint="?colorPrimaryFixedDim" />
-
-            <TextView
-                android:id="@+id/empty_chat_hint_text"
-                style="?textAppearanceBodyMedium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/empty_chat_hint_image"
-                android:gravity="center"
-                android:text="@string/empty_conversations_list_hint" />
-        </RelativeLayout>
-
-        <com.google.android.material.search.SearchView
-            android:id="@+id/search_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:hint="@string/search_in_chats"
-            app:layout_anchor="@id/search_bar">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/search_suggestion_list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scrollbars="vertical"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_search_suggestion" />
-
-        </com.google.android.material.search.SearchView>
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+        android:background="@color/penik_background" />
 </layout>
