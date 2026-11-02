@@ -62,6 +62,7 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
+import eu.siacs.conversations.ui.util.PenikPredictiveBackHelper;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
@@ -120,6 +121,7 @@ import eu.siacs.conversations.entities.Sticker;
 import eu.siacs.conversations.stickers.PenikServiceTokenProvider;
 import eu.siacs.conversations.stickers.StickerManager;
 import eu.siacs.conversations.entities.ReadByMarker;
+import eu.siacs.conversations.entities.RtpSessionStatus;
 import eu.siacs.conversations.ui.compose.PenikBotCommandsBridge;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import eu.siacs.conversations.entities.Transferable;
@@ -311,12 +313,16 @@ public class ConversationFragment extends XmppFragment
     private String lastMessageUuid = null;
     private Conversation conversation;
     private FragmentConversationBinding binding;
+    private PenikPredictiveBackHelper predictiveBackHelper;
     private final FragmentManager.OnBackStackChangedListener backStackListener =
             new FragmentManager.OnBackStackChangedListener() {
                 @Override
                 public void onBackStackChanged() {
                     final var up =
                             isAdded() && getParentFragmentManager().getBackStackEntryCount() > 0;
+                    if (predictiveBackHelper != null) {
+                        predictiveBackHelper.getCallback().setEnabled(up);
+                    }
                     if (up) {
                         binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_back_24dp);
                         binding.toolbar.setNavigationOnClickListener(
@@ -1483,10 +1489,29 @@ public class ConversationFragment extends XmppFragment
 
     @Override
     public void onViewCreated(@NonNull final View view, final Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         if (savedInstanceState != null) {
             Log.d(Config.LOGTAG, "processing instant state");
             this.processSavedInstanceState(savedInstanceState);
         }
+        this.predictiveBackHelper = new PenikPredictiveBackHelper(
+                this,
+                this.binding.getRoot(),
+                () -> {
+                    hideSoftKeyboard(binding != null ? binding.textInput : null);
+                    if (isAdded()) {
+                        if (!getParentFragmentManager().isStateSaved()) {
+                            getParentFragmentManager().popBackStackImmediate();
+                        } else {
+                            getParentFragmentManager().popBackStack();
+                        }
+                    }
+                });
+        final boolean isUp = isAdded() && getParentFragmentManager().getBackStackEntryCount() > 0;
+        this.predictiveBackHelper.getCallback().setEnabled(isUp);
+        requireActivity()
+                .getOnBackPressedDispatcher()
+                .addCallback(getViewLifecycleOwner(), this.predictiveBackHelper.getCallback());
     }
 
     @Override
@@ -1665,7 +1690,29 @@ public class ConversationFragment extends XmppFragment
 
         this.binding.textInput.setCustomInsertionActionModeCallback(
                 new EditMessageActionModeCallback(this.binding.textInput));
-        return binding.getRoot();
+
+        final eu.siacs.conversations.ui.widget.PenikSwipeBackLayout swipeBackLayout =
+                new eu.siacs.conversations.ui.widget.PenikSwipeBackLayout(requireContext());
+        swipeBackLayout.setLayoutParams(
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+        swipeBackLayout.setFragment(this);
+        swipeBackLayout.setOnSwipeStarted(
+                () -> hideSoftKeyboard(this.binding != null ? this.binding.textInput : null));
+        swipeBackLayout.setOnDismissed(
+                () -> {
+                    hideSoftKeyboard(this.binding != null ? this.binding.textInput : null);
+                    if (isAdded()) {
+                        if (!getParentFragmentManager().isStateSaved()) {
+                            getParentFragmentManager().popBackStackImmediate();
+                        } else {
+                            getParentFragmentManager().popBackStack();
+                        }
+                    }
+                });
+        swipeBackLayout.addView(this.binding.getRoot());
+        return swipeBackLayout;
     }
 
     private void onPenikBotButtonClick(final Message message, final BotMarkup.Button button) {
@@ -1895,6 +1942,9 @@ public class ConversationFragment extends XmppFragment
         getParentFragmentManager().removeOnBackStackChangedListener(backStackListener);
         messageListAdapter.setOnContactPictureClicked(null);
         messageListAdapter.setOnContactPictureLongClicked(null);
+        if (getActivity() instanceof ConversationsActivity ca) {
+            ca.onConversationsListItemUpdated();
+        }
     }
 
     private void quoteText(String text) {
@@ -4001,23 +4051,39 @@ public class ConversationFragment extends XmppFragment
             case PenikChatActions.SAVE_FILE -> saveFile(message);
             case PenikChatActions.RESEND -> resendMessage(message, false);
             case PenikChatActions.DELETE -> {
-                if (message.isFileOrImage() && message.getFileParams() != null) {
-                    deleteFileDialog(message, false);
-                } else {
-                    final var builder = new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireActivity());
-                    builder.setTitle(R.string.delete_message);
-                    builder.setMessage(R.string.delete_file_dialog_confirm);
-                    builder.setNegativeButton(R.string.cancel, null);
-                    builder.setPositiveButton(
-                            R.string.delete,
-                            (dialog, which) -> {
-                                DatabaseBackend.getInstance(requireContext())
-                                        .deleteMessage(message.getUuid());
-                                requireConversationsActivity().onConversationsListItemUpdated();
-                                refresh();
-                            });
-                    builder.create().show();
-                }
+                final var builder = new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireActivity());
+                builder.setTitle(R.string.delete_message);
+                builder.setMessage(R.string.delete_message_dialog_confirm);
+                builder.setNegativeButton(R.string.cancel, null);
+                builder.setPositiveButton(
+                        R.string.delete,
+                        (dialog, which) -> {
+                            if (message.isFileOrImage()) {
+                                try {
+                                    final var xmppService = requireXmppActivity().xmppConnectionService;
+                                    if (xmppService != null) {
+                                        xmppService.getFileBackend().deleteFile(message);
+                                        xmppService.evictPreview(message.getUuid());
+                                    }
+                                } catch (final Exception e) {
+                                    Log.w(Config.LOGTAG, "could not delete file for message", e);
+                                }
+                            }
+                            DatabaseBackend.getInstance(requireContext())
+                                    .deleteMessage(message.getUuid());
+                            if (this.conversation != null) {
+                                this.conversation.remove(message);
+                            }
+                            synchronized (this.messageList) {
+                                this.messageList.remove(message);
+                            }
+                            if (requireXmppActivity().xmppConnectionService != null) {
+                                requireXmppActivity().xmppConnectionService.getNotificationService().clear(message);
+                            }
+                            requireConversationsActivity().onConversationsListItemUpdated();
+                            refresh();
+                        });
+                builder.create().show();
             }
             case PenikChatActions.OPEN -> {
                 if (message.isGeoUri()) {

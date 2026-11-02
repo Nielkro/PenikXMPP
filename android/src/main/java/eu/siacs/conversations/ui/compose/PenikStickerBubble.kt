@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -145,8 +146,8 @@ fun PenikStickerBubble(
     Box(
         modifier = Modifier
             .padding(horizontal = 12.dp, vertical = 2.dp)
-            .widthIn(min = 120.dp, max = 200.dp)
-            .heightIn(min = 120.dp, max = 200.dp)
+            .widthIn(min = 160.dp, max = 300.dp)
+            .heightIn(min = 160.dp, max = 300.dp)
             .aspectRatio(aspectRatio)
             .combinedClickable(
                 onClick = onClick,
@@ -193,21 +194,49 @@ fun PenikStickerBubble(
                     )
                     if (isSentByMe) {
                         val accent = colorResource(R.color.penik_accent)
+                        val danger = colorResource(R.color.penik_danger)
                         val status = message.status
-                        if (status == Message.STATUS_SEND_DISPLAYED || status == Message.STATUS_SEND_RECEIVED) {
-                            Icon(
-                                imageVector = Icons.Default.DoneAll,
-                                contentDescription = null,
-                                tint = if (status == Message.STATUS_SEND_DISPLAYED) accent else Color.White.copy(alpha = 0.85f),
-                                modifier = Modifier.padding(start = 3.dp).size(15.dp)
-                            )
-                        } else if (status == Message.STATUS_SEND) {
-                            Icon(
-                                imageVector = Icons.Default.Done,
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.85f),
-                                modifier = Modifier.padding(start = 3.dp).size(13.dp)
-                            )
+                        when (status) {
+                            Message.STATUS_WAITING, Message.STATUS_UNSEND -> {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_schedule_24dp),
+                                    contentDescription = "Ожидание отправки",
+                                    tint = Color.White.copy(alpha = 0.85f),
+                                    modifier = Modifier.padding(start = 3.dp).size(12.dp)
+                                )
+                            }
+                            Message.STATUS_SEND_FAILED -> {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_error_24dp),
+                                    contentDescription = "Не удалось отправить",
+                                    tint = danger,
+                                    modifier = Modifier.padding(start = 3.dp).size(13.dp)
+                                )
+                            }
+                            Message.STATUS_SEND_DISPLAYED -> {
+                                Icon(
+                                    imageVector = Icons.Default.DoneAll,
+                                    contentDescription = "Прочитано",
+                                    tint = accent,
+                                    modifier = Modifier.padding(start = 3.dp).size(15.dp)
+                                )
+                            }
+                            Message.STATUS_SEND_RECEIVED -> {
+                                Icon(
+                                    imageVector = Icons.Default.DoneAll,
+                                    contentDescription = "Доставлено",
+                                    tint = Color.White.copy(alpha = 0.85f),
+                                    modifier = Modifier.padding(start = 3.dp).size(15.dp)
+                                )
+                            }
+                            Message.STATUS_SEND -> {
+                                Icon(
+                                    imageVector = Icons.Default.Done,
+                                    contentDescription = "Отправлено",
+                                    tint = Color.White.copy(alpha = 0.85f),
+                                    modifier = Modifier.padding(start = 3.dp).size(13.dp)
+                                )
+                            }
                         }
                     }
                 }

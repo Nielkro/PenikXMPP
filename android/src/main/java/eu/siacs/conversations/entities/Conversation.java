@@ -1005,7 +1005,19 @@ public class Conversation extends AbstractEntity
 
     public void addAll(int index, List<Message> messages) {
         synchronized (this.messages) {
-            this.messages.addAll(index, messages);
+            final java.util.HashSet<String> existingUuids = new java.util.HashSet<>();
+            for (Message m : this.messages) {
+                if (m.getUuid() != null) {
+                    existingUuids.add(m.getUuid());
+                }
+            }
+            final java.util.ArrayList<Message> deduplicated = new java.util.ArrayList<>();
+            for (Message m : messages) {
+                if (m.getUuid() == null || existingUuids.add(m.getUuid())) {
+                    deduplicated.add(m);
+                }
+            }
+            this.messages.addAll(Math.min(index, this.messages.size()), deduplicated);
         }
         account.getPgpDecryptionService().decrypt(messages);
     }
