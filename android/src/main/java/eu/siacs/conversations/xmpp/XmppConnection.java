@@ -575,6 +575,9 @@ public class XmppConnection implements Runnable {
                         account.getJid().asBareJid() + ": incompatible implementations",
                         e);
             }
+            if (this.streamId != null && !this.inSmacksSession) {
+                resetStreamId();
+            }
             this.changeState(e.state);
         } catch (final UnknownHostException
                 | ConnectException
@@ -595,13 +598,22 @@ public class XmppConnection implements Runnable {
                     Config.LOGTAG,
                     account.getJid().asBareJid()
                             + ": elements in XML stream reached maximum depth");
+            if (this.streamId != null && !this.inSmacksSession) {
+                resetStreamId();
+            }
             this.changeState(Account.State.INCOMPATIBLE_SERVER);
         } catch (final EndOfStreamException e) {
             Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": received stream close");
+            if (this.streamId != null && !this.inSmacksSession) {
+                resetStreamId();
+            }
             this.changeState(Account.State.OFFLINE);
             this.attempt = Math.max(0, this.attempt - 1);
         } catch (final IOException | XmlPullParserException e) {
             Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": error reading XML stream", e);
+            if (this.streamId != null && !this.inSmacksSession) {
+                resetStreamId();
+            }
             this.changeState(Account.State.OFFLINE);
             this.attempt = Math.max(0, this.attempt - 1);
         } finally {
@@ -694,16 +706,6 @@ public class XmppConnection implements Runnable {
         final byte[] header = FunTokens.createDirectStreamHeader(FunTokens.DICTIONARY_HASH, account.getServer(), canResume);
         final java.io.OutputStream out = sslSocket.getOutputStream();
         out.write(header);
-
-        if (canResume) {
-            final String sId = this.streamId.id;
-            final Resume resume = new Resume(sId, stanzasReceived);
-            prepareForResume(sId);
-            this.isFunXmppResuming = true;
-            final byte[] resumeFrame = FunWriter.encodeNode(
-                    resume, eu.siacs.conversations.xml.Namespace.JABBER_CLIENT, FunTokens.LTS_V1_HASH);
-            out.write(resumeFrame);
-        }
         out.flush();
 
         final String activeDict = FunTokens.readServerStreamHeader(sslSocket.getInputStream());
@@ -2923,6 +2925,7 @@ public class XmppConnection implements Runnable {
 
     private void forceCloseSocket() {
         this.isDirectPxmpp = false;
+        this.isFunXmppResuming = false;
         FileBackend.close(this.socket);
         FileBackend.close(this.tagReader);
     }
@@ -2999,11 +3002,11 @@ public class XmppConnection implements Runnable {
     public int getTimeToNextAttempt(final boolean aggressive) {
         final int interval;
         if (aggressive) {
-            interval = Math.min((int) (3 * Math.pow(1.3, attempt)), 60);
+            interval = Math.min((int) (2 * Math.pow(1.3, attempt)), 30);
         } else {
             final int additionalTime =
                     account.getLastErrorStatus() == Account.State.POLICY_VIOLATION ? 3 : 0;
-            interval = Math.min((int) (25 * Math.pow(1.3, (additionalTime + attempt))), 300);
+            interval = Math.min((int) (3 * Math.pow(1.4, (additionalTime + attempt))), 60);
         }
         final var connectionDuration = Ints.saturatedCast(getConnectionDuration() / 1000);
         return interval - connectionDuration;

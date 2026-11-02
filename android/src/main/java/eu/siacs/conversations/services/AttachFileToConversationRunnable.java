@@ -14,15 +14,18 @@ import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.persistance.DatabaseBackend;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.utils.MimeUtils;
 import eu.siacs.conversations.utils.TranscoderStrategies;
 import java.io.FileNotFoundException;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class AttachFileToConversationRunnable implements Runnable, TranscoderListener {
+public class AttachFileToConversationRunnable
+        implements Runnable, TranscoderListener, Transferable {
 
     private final XmppConnectionService mXmppConnectionService;
     private final AppSettings appSettings;
@@ -33,6 +36,8 @@ public class AttachFileToConversationRunnable implements Runnable, TranscoderLis
     private final boolean isVideoMessage;
     private final long originalFileSize;
     private int currentProgress = -1;
+    private volatile boolean mCancelled = false;
+    private Future<Void> mTranscoderFuture = null;
 
     AttachFileToConversationRunnable(
             final XmppConnectionService xmppConnectionService,
@@ -53,6 +58,52 @@ public class AttachFileToConversationRunnable implements Runnable, TranscoderLis
                 (mimeType != null && mimeType.startsWith("video/"))
                         && originalFileSize > autoAcceptFileSize
                         && appSettings.isCompressVideo();
+    }
+
+    void prepareOptimisticVideoMessage() {
+        mXmppConnectionService.getFileBackend().prepareOptimisticVideoParams(message, uri);
+        message.setTransferable(this);
+    }
+
+    @Override
+    public boolean start() {
+        return true;
+    }
+
+    @Override
+    public int getStatus() {
+        return this.mCancelled ? Transferable.STATUS_CANCELLED : Transferable.STATUS_TRANSCODING;
+    }
+
+    @Override
+    public Long getFileSize() {
+        return this.originalFileSize;
+    }
+
+    @Override
+    public int getProgress() {
+        return Math.max(0, this.currentProgress);
+    }
+
+    @Override
+    public Long getTransferred() {
+        return 0L;
+    }
+
+    @Override
+    public void cancel() {
+        this.mCancelled = true;
+        if (this.mTranscoderFuture != null) {
+            this.mTranscoderFuture.cancel(true);
+        }
+        mXmppConnectionService.stopOngoingVideoTranscodingForegroundNotification();
+        final var file = mXmppConnectionService.getFileBackend().getFile(message);
+        if (file.exists()) {
+            file.delete();
+        }
+        message.setTransferable(null);
+        mXmppConnectionService.markMessage(
+                message, Message.STATUS_SEND_FAILED, Message.ERROR_MESSAGE_CANCELLED);
     }
 
     boolean isVideoMessage() {
@@ -110,9 +161,8 @@ public class AttachFileToConversationRunnable implements Runnable, TranscoderLis
                 break;
         }
 
-        final Future<Void> transcoderFuture;
         try {
-            transcoderFuture =
+            this.mTranscoderFuture =
                     Transcoder.into(file.getAbsolutePath())
                             .addDataSource(mXmppConnectionService, uri)
                             .setVideoTrackStrategy(selectedVideoTranscoderStrategy)
@@ -122,17 +172,30 @@ public class AttachFileToConversationRunnable implements Runnable, TranscoderLis
         } catch (final RuntimeException e) {
             // transcode can already throw if there is an invalid file format or a platform bug
             mXmppConnectionService.stopOngoingVideoTranscodingForegroundNotification();
+            if (this.mCancelled) {
+                this.callbackHandler.set(null);
+                return;
+            }
             this.callbackHandler.setFuture(fallbackToProcessAsFile());
             return;
         }
+        if (this.mCancelled) {
+            if (this.mTranscoderFuture != null) {
+                this.mTranscoderFuture.cancel(true);
+            }
+            return;
+        }
         try {
-            transcoderFuture.get();
-        } catch (final InterruptedException e) {
-            throw new AssertionError(e);
+            this.mTranscoderFuture.get();
+        } catch (final InterruptedException | CancellationException e) {
+            Log.d(Config.LOGTAG, "video transcoding was cancelled or interrupted");
+            return;
         } catch (final ExecutionException e) {
             if (e.getCause() instanceof Error) {
                 mXmppConnectionService.stopOngoingVideoTranscodingForegroundNotification();
-                this.callbackHandler.setFuture(fallbackToProcessAsFile());
+                if (!this.mCancelled) {
+                    this.callbackHandler.setFuture(fallbackToProcessAsFile());
+                }
             } else {
                 Log.d(Config.LOGTAG, "ignoring execution exception. Handled by onTranscodeFiled()");
             }
@@ -141,17 +204,31 @@ public class AttachFileToConversationRunnable implements Runnable, TranscoderLis
 
     @Override
     public void onTranscodeProgress(double progress) {
+        if (this.mCancelled) {
+            return;
+        }
         final int p = (int) Math.round(progress * 100);
         if (p > currentProgress) {
             currentProgress = p;
             mXmppConnectionService
                     .getNotificationService()
                     .updateFileAddingNotification(p, message);
+            if (p % 2 == 0 || p == 100) {
+                mXmppConnectionService.updateConversationUi();
+            }
         }
     }
 
     @Override
     public void onTranscodeCompleted(int successCode) {
+        if (this.mCancelled) {
+            final var file = mXmppConnectionService.getFileBackend().getFile(message);
+            if (file.exists()) {
+                file.delete();
+            }
+            return;
+        }
+        this.currentProgress = 100;
         mXmppConnectionService.stopOngoingVideoTranscodingForegroundNotification();
         final var file = mXmppConnectionService.getFileBackend().getFile(message);
         final long convertedFileSize =
@@ -177,18 +254,33 @@ public class AttachFileToConversationRunnable implements Runnable, TranscoderLis
     @Override
     public void onTranscodeCanceled() {
         mXmppConnectionService.stopOngoingVideoTranscodingForegroundNotification();
+        if (this.mCancelled) {
+            Log.d(Config.LOGTAG, "video transcoding was cancelled by user");
+            final var file = mXmppConnectionService.getFileBackend().getFile(message);
+            if (file.exists()) {
+                file.delete();
+            }
+            this.callbackHandler.set(null);
+            return;
+        }
         this.callbackHandler.setFuture(fallbackToProcessAsFile());
     }
 
     @Override
     public void onTranscodeFailed(@NonNull final Throwable exception) {
         mXmppConnectionService.stopOngoingVideoTranscodingForegroundNotification();
+        if (this.mCancelled) {
+            return;
+        }
         Log.d(Config.LOGTAG, "video transcoding failed", exception);
         this.callbackHandler.setFuture(fallbackToProcessAsFile());
     }
 
     @Override
     public void run() {
+        if (this.mCancelled) {
+            return;
+        }
         final var messageUuid = FileBackend.getMessageUuid(mXmppConnectionService, uri);
         if (messageUuid.isPresent()) {
             final var m =

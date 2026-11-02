@@ -133,8 +133,8 @@ android {
 
     defaultConfig {
         minSdk = 26
-        versionCode = 42181
-        versionName = '2.20.4'
+        versionCode = 42500
+        versionName = '2.0.2'
         applicationId = 'ru.penik.xmpp'
         resValue('string', 'applicationId', applicationId)
         def appName = "Penik"

@@ -113,7 +113,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
     private final List<Conversation> conversations = new ArrayList<>();
     private final PendingItem<Conversation> swipedConversation = new PendingItem<>();
     private FragmentConversationsOverviewBinding binding;
-    private SearchSuggestionAdapter searchSuggestionAdapter;
     private static final int REQUEST_SYNC_CONTACTS = 0x28cf;
     private static final int REQUEST_CHOOSE_PHONEBOOK_CONTACT = 0x28d0;
     private final PendingActionHelper pendingActionHelper = new PendingActionHelper();
@@ -194,13 +193,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     }
                 }
             };
-    private final OnBackPressedCallback searchViewOnBackPressedCallback =
-            new OnBackPressedCallback(false) {
-                @Override
-                public void handleOnBackPressed() {
-                    binding.searchView.hide();
-                }
-            };
 
     private void openPrivacyPolicy() {
         if (BuildConfig.PRIVACY_POLICY == null) {
@@ -217,6 +209,12 @@ public class ConversationsOverviewFragment extends XmppFragment {
                             Toast.LENGTH_SHORT)
                     .show();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refresh();
     }
 
     @Override
@@ -308,7 +306,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
     public void onDestroyView() {
         super.onDestroyView();
         this.binding = null;
-        this.searchSuggestionAdapter = null;
     }
 
     @Override
@@ -320,9 +317,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requireActivity()
-                .getOnBackPressedDispatcher()
-                .addCallback(this, this.searchViewOnBackPressedCallback);
     }
 
     @Override
@@ -333,38 +327,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
         this.binding =
                 DataBindingUtil.inflate(
                         inflater, R.layout.fragment_conversations_overview, container, false);
-        this.binding.searchBar.addMenuProvider(
-                menuProvider, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
-        this.binding.searchBar.addMenuProvider(
-                globalMenuProvider, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
-        this.binding
-                .searchView
-                .getEditText()
-                .setOnEditorActionListener(
-                        (v, actionId, event) -> {
-                            startSearch(CharSequences.nullToEmpty(v.getText()));
-                            this.binding.searchView.hide();
-                            return true;
-                        });
-        this.binding
-                .searchView
-                .getEditText()
-                .addTextChangedListener(new TextChangeListener(this::submitSearchSuggestion));
-        this.binding.searchView.addTransitionListener(
-                (searchView, oldState, newState) -> {
-                    final boolean isShowing =
-                            Arrays.asList(
-                                            SearchView.TransitionState.SHOWING,
-                                            SearchView.TransitionState.SHOWN)
-                                    .contains(newState);
-                    searchViewOnBackPressedCallback.setEnabled(isShowing);
-                });
-        this.binding.searchBar.setVisibility(View.GONE);
-        this.binding.searchView.setVisibility(View.GONE);
-
-        this.searchSuggestionAdapter = new SearchSuggestionAdapter();
-        this.binding.searchSuggestionList.setAdapter(this.searchSuggestionAdapter);
-        this.searchSuggestionAdapter.setOnSearchSuggestionClicked(this::executeSuggestion);
         PenikChatsBridge.render(
                 this.binding.composeList,
                 this.penikChatsState,
@@ -470,56 +432,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
     }
 
     private void submitSearchSuggestion(final String raw) {
-        final var search = raw.trim();
-        if (Strings.isNullOrEmpty(search)) {
-            this.searchSuggestionAdapter.submitList(Collections.emptyList());
-            return;
-        }
-        final var builder = new ImmutableList.Builder<SearchSuggestion>();
-        builder.add(new SearchSuggestion.Text(search));
-        if (Patterns.URI_GENERIC.matcher(search).matches()) {
-            final var xmppUri = MiniUri.getXmppUriOrNull(search);
-            if (xmppUri != null && xmppUri.isAddress()) {
-                builder.add(new SearchSuggestion.Uri(xmppUri));
-            }
-        }
-        final var service = requireXmppActivity().xmppConnectionService;
-        final List<SearchSuggestion.Sortable> suggestions;
-        final boolean noteToSelf;
-        if (service != null) {
-            final var accounts = service.getAccounts();
-            final var matchInAccount =
-                    Iterables.any(
-                            accounts,
-                            a ->
-                                    a != null
-                                            && a.isEnabled()
-                                            && CharSequences.containsAll(
-                                                    a.getJid().asBareJid().toString(), search));
-            noteToSelf =
-                    matchInAccount
-                            || CharSequences.containsAll(getString(R.string.note_to_self), search);
-            final var provider = new SearchSuggestionProvider(accounts);
-            suggestions = provider.suggest(search);
-        } else {
-            noteToSelf = false;
-            suggestions = Collections.emptyList();
-        }
-        // we do not want to spam the list with tens of results of searching for individual letters
-        if (suggestions.size() <= 8 || search.length() >= 3) {
-            if (noteToSelf) {
-                builder.add(new SearchSuggestion.Note());
-            }
-            builder.addAll(
-                    new Ordering<SearchSuggestion.Sortable>() {
-                        @Override
-                        public int compare(
-                                SearchSuggestion.Sortable left, SearchSuggestion.Sortable right) {
-                            return left.address().compareTo(right.address());
-                        }
-                    }.sortedCopy(suggestions));
-        }
-        this.searchSuggestionAdapter.submitList(builder.build());
+        // no-op: Penik uses Jetpack Compose search in PenikChatsList
     }
 
     private void executeSuggestion(final SearchSuggestion suggestion) {
@@ -582,13 +495,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
     }
 
     private void hideSearchView() {
-        if (ConversationsActivity.isTabletView(requireActivity())) {
-            this.binding.searchView.hide();
-        } else {
-            this.binding.searchView.hide();
-            this.binding.searchView.setVisible(false);
-            this.binding.searchView.clearFocus();
-        }
     }
 
     @Override
@@ -665,7 +571,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
             requireActivity().finish();
             return;
         }
-        this.binding.searchBar.invalidateMenu();
         service.populateWithOrderedConversations(this.conversations);
         Conversation removed = this.swipedConversation.peek();
         if (removed != null) {
@@ -687,10 +592,9 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 final var contact = c.getContact();
                 final boolean isSelfChat =
                         c.getMode() == Conversation.MODE_SINGLE
-                                && contact != null
-                                && contact.isSelf();
+                                && ((contact != null && contact.isSelf()) || c.isSelf());
                 if (isSelfChat) {
-                    if (self == null) {
+                    if (self == null || (self.countMessages() == 0 && c.countMessages() > 0)) {
                         self = c;
                     }
                     continue;
@@ -713,6 +617,18 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 }
             }
         }
+        if (self == null && firstEnabled != null) {
+            final var selfContact = firstEnabled.getSelfContact();
+            if (selfContact != null) {
+                self = service.find(firstEnabled, selfContact.getAddress());
+            }
+        }
+        if (self != null && self.countMessages() == 0 && service.databaseBackend != null) {
+            final var msgs = service.databaseBackend.getMessages(self, Config.PAGE_SIZE);
+            if (!msgs.isEmpty()) {
+                self.addAll(0, msgs);
+            }
+        }
         this.penikChatsState.setConversations(ImmutableList.copyOf(main));
         this.penikChatsState.setArchived(ImmutableList.copyOf(archived));
         this.penikChatsState.bumpRevision();
@@ -722,8 +638,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
                         : connecting ? PenikConnectionState.CONNECTING : PenikConnectionState.OFFLINE);
         this.penikChatsState.setSelfChat(self);
         this.penikChatsState.setAccount(firstEnabled);
-        this.binding.emptyChatHint.setVisibility(View.GONE);
-        this.binding.composeList.setVisibility(View.VISIBLE);
     }
 
     public void onUnarchiveConversation(final Conversation c) {

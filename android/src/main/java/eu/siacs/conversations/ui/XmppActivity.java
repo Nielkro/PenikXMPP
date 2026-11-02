@@ -1193,7 +1193,7 @@ public abstract class XmppActivity extends ActionBarActivity {
     }
 
     public AvatarService avatarService() {
-        return xmppConnectionService.getAvatarService();
+        return xmppConnectionService != null ? xmppConnectionService.getAvatarService() : null;
     }
 
     public void loadBitmap(Message message, ImageView imageView) {
