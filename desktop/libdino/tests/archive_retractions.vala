@@ -30,7 +30,12 @@ class ArchiveRetractionTest : Gee.TestCase {
             MessageDeletion.start(context.stream_interactor, context.db);
         } catch (Error e) { fail_if_reached(e.message); }
     }
-    public override void tear_down() { context.close(); }
+    public override void tear_down() {
+        if (context != null) {
+            context.close();
+            context = null;
+        }
+    }
     private Message incoming(string id, string? body = "text", Jid? sender = null, int occupant = -1) {
         var message = context.create_message(body ?? "", false, id, context.time, null, sender, occupant);
         message.body = body;
