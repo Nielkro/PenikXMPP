@@ -34,9 +34,12 @@ fi
 
 log_info "Using container engine: $CONTAINER_ENGINE"
 
-BUILD_CONTAINER_IMAGE="git.dinox.im/dinoxim/linux-package-builder-dinox@sha256:5804b93b0bb1ca900470873e1de128f4e4e6ec634d5768f90399e3f756509230"
-if $CONTAINER_ENGINE image exists penik-desktop-builder:latest 2>/dev/null; then
-    BUILD_CONTAINER_IMAGE="penik-desktop-builder:latest"
+BUILD_CONTAINER_IMAGE="penik-desktop-builder:latest"
+if ! $CONTAINER_ENGINE image exists "$BUILD_CONTAINER_IMAGE" 2>/dev/null; then
+    log_info "Building required desktop builder container ($BUILD_CONTAINER_IMAGE)..."
+    env -u http_proxy -u https_proxy -u all_proxy -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY \
+        $CONTAINER_ENGINE build -t "$BUILD_CONTAINER_IMAGE" -f "$DESKTOP_DIR/Containerfile.builder" "$DESKTOP_DIR"
+    log_ok "Desktop builder image built successfully."
 fi
 
 WEBRTC_ARCHIVE_URL="https://git.dinox.im/dinoxim/dinox/releases/download/vendor-deps/libwebrtc-m152-linux-x86_64-runtime-abi40-ipc10-sha256-2479cdb9ab7e.tar.gz"
