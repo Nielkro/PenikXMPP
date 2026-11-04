@@ -1,0 +1,177 @@
+name: Build Desktop (Windows)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/**'
+      - 'fix/**'
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/desktop-windows.yml'
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/desktop-windows.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows:
+    name: Build & Package Windows x86_64
+    runs-on: windows-latest
+
+    env:
+      DINOX_ALLOW_ADMIN: "1"
+      DINOX_BUILD_JOBS: "2"
+      CMAKE_BUILD_PARALLEL_LEVEL: "2"
+      GOMAXPROCS: "2"
+
+    steps:
+      - name: Configure Git Line Endings & Safety
+        run: |
+          git config --global core.autocrlf false
+          git config --global --add safe.directory "*"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            curl
+            tar
+            unzip
+            base-devel
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-vala
+            mingw-w64-x86_64-meson
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-gtk4
+            mingw-w64-x86_64-python-dnspython
+            mingw-w64-x86_64-python-cryptography
+            mingw-w64-x86_64-python-h2
+            mingw-w64-x86_64-libadwaita
+            mingw-w64-x86_64-glib2
+            mingw-w64-x86_64-glib-networking
+            mingw-w64-x86_64-gdk-pixbuf2
+            mingw-w64-x86_64-libgee
+            mingw-w64-x86_64-libsoup3
+            mingw-w64-x86_64-json-glib
+            mingw-w64-x86_64-sqlcipher
+            mingw-w64-x86_64-icu
+            mingw-w64-x86_64-libgcrypt
+            mingw-w64-x86_64-gnupg
+            mingw-w64-x86_64-gpgme
+            mingw-w64-x86_64-pinentry
+            mingw-w64-x86_64-gnutls
+            mingw-w64-x86_64-qrencode
+            mingw-w64-x86_64-libsecret
+            mingw-w64-x86_64-libyaml
+            mingw-w64-x86_64-libsrtp
+            mingw-w64-x86_64-libnice
+            mingw-w64-x86_64-gstreamer
+            mingw-w64-x86_64-gst-plugins-base
+            mingw-w64-x86_64-gst-plugins-good
+            mingw-w64-x86_64-gst-plugins-bad
+            mingw-w64-x86_64-gst-plugins-ugly
+            mingw-w64-x86_64-gst-libav
+            mingw-w64-x86_64-opus
+            mingw-w64-x86_64-openh264
+            mingw-w64-x86_64-libvpx
+            mingw-w64-x86_64-protobuf-c
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-libarchive
+            mingw-w64-x86_64-librsvg
+            mingw-w64-x86_64-hicolor-icon-theme
+            mingw-w64-x86_64-adwaita-icon-theme
+            mingw-w64-x86_64-cantarell-fonts
+            mingw-w64-x86_64-mosquitto
+            mingw-w64-x86_64-unbound
+            mingw-w64-x86_64-go
+
+      - name: Cache Vendor Downloads
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}\vendor-deps\downloads
+          key: windows-vendor-deps-${{ hashFiles('desktop/scripts/prepare-windows-build-deps.sh') }}
+          restore-keys: |
+            windows-vendor-deps-
+
+      - name: Prepare Windows Build Dependencies
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "*"
+          git config --global core.autocrlf false
+
+          export DINOX_WINDOWS_VENDOR_ROOT="$(cygpath -u "$RUNNER_TEMP")/vendor-deps"
+          export DINOX_WINDOWS_LOG_DIR="$(cygpath -u "$RUNNER_TEMP")/dinox-build-logs"
+          mkdir -p "$DINOX_WINDOWS_VENDOR_ROOT" "$DINOX_WINDOWS_LOG_DIR"
+
+          cd desktop
+          bash scripts/prepare-windows-build-deps.sh
+
+      - name: Build Windows Distribution
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          export DINOX_WINDOWS_VENDOR_ROOT="$(cygpath -u "$RUNNER_TEMP")/vendor-deps"
+          export DINOX_WINDOWS_LOG_DIR="$(cygpath -u "$RUNNER_TEMP")/dinox-build-logs"
+
+          cd desktop
+          bash scripts/build-windows-dist.sh
+
+      - name: Package Windows ZIP Distribution
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          output_dir="$(cygpath -u "$RUNNER_TEMP")/artifacts"
+          mkdir -p "$output_dir"
+
+          cd desktop
+          bash scripts/package-windows-dist.sh "$PWD/dist" "$output_dir"
+          cp dist/build-info.txt "$output_dir/build-info.txt"
+
+      - name: Upload Windows Distribution Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dinox-windows-x86_64
+          path: ${{ runner.temp }}/artifacts/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ runner.temp }}/artifacts/*.zip
+            ${{ runner.temp }}/artifacts/*.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Build Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dinox-windows-build-logs
+          path: |
+            ${{ runner.temp }}/dinox-build-logs/*
+            desktop/build/meson-logs/*
+          retention-days: 14

@@ -76,6 +76,9 @@ fail() {
 }
 
 require_standard_windows_user() {
+    if [ "${DINOX_ALLOW_ADMIN:-0}" = "1" ]; then
+        return 0
+    fi
     local status=0
     command -v powershell.exe >/dev/null 2>&1 \
         || fail "PowerShell is required to check Windows privileges before deleting build/ or dist/."
