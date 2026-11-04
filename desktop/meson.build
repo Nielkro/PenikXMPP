@@ -134,6 +134,17 @@ endif
 
 dep_geoclue = dependency('libgeoclue-2.0', required: get_option('location-sharing'))
 
+prog_bash = find_program('bash')
+if host_machine.system() == 'windows' and prog_bash.full_path().to_lower().contains('system32')
+    foreach candidate : ['/usr/bin/bash', 'C:/msys64/usr/bin/bash.exe']
+        candidate_prog = find_program(candidate, required: false)
+        if candidate_prog.found()
+            prog_bash = candidate_prog
+            break
+        endif
+    endforeach
+endif
+
 google_libwebrtc_artifact_root = get_option('google-libwebrtc-artifact-root')
 google_libwebrtc_runtime_root = get_option('google-libwebrtc-runtime-root')
 google_vision_runtime_base = get_option('google-vision-runtime-root')
@@ -153,6 +164,7 @@ if google_libwebrtc_runtime_root != ''
     google_vision_runtime_base = google_libwebrtc_runtime_root / (host_machine.system() == 'windows' ? 'bin' : 'lib')
     runtime_check_script = host_machine.system() == 'windows' ? 'scripts/check-libwebrtc-windows-runtime.sh' : 'scripts/check-libwebrtc-linux-runtime.sh'
     google_libwebrtc_check = run_command(
+        prog_bash,
         meson.current_source_dir() / runtime_check_script,
         google_libwebrtc_runtime_root,
         check: false,
@@ -253,6 +265,7 @@ if google_libwebrtc_artifact_root != ''
     google_libwebrtc_windows_import = google_libwebrtc_artifact_root / 'lib/libdinox-google-webrtc.dll.a'
 
     google_libwebrtc_check = run_command(
+      prog_bash,
       meson.current_source_dir() / 'scripts/check-libwebrtc-windows-runtime.sh',
       google_libwebrtc_artifact_root,
       check: false,
@@ -368,6 +381,7 @@ if google_libwebrtc_artifact_root != ''
     endforeach
 
     google_libwebrtc_check = run_command(
+        prog_bash,
         meson.current_source_dir() / 'scripts/check-libwebrtc-artifact.sh',
         google_libwebrtc_artifact_root,
         check: false,

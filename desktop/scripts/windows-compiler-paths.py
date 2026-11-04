@@ -62,6 +62,14 @@ def write_native_file(output: Path) -> None:
         # double backslashes before parsing, so backslash-escaped quotes fail.
         quoted = ["'''" + value + "'''" for value in command]
         lines.append(language + " = [" + ", ".join(quoted) + "]")
+    bash_path = shutil.which("bash")
+    if bash_path and "system32" in bash_path.lower():
+        for candidate in ("/usr/bin/bash.exe", "/bin/bash.exe", "C:/msys64/usr/bin/bash.exe"):
+            if os.path.exists(candidate):
+                bash_path = candidate
+                break
+    if bash_path:
+        lines.append(f"bash = '{Path(bash_path).resolve().as_posix()}'")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
