@@ -255,7 +255,7 @@ stage_distribution_source_from_ubuntu_snapshot() {
     run_ubuntu_snapshot_apt_cache showsrc "$source_package" 2>/dev/null \
         | awk -v expected="$source_version" \
             '$1 == "Version:" && $2 == expected { found = 1 } END { exit(found ? 0 : 1) }' \
-        || fail "exact Ubuntu snapshot source index is missing: $source_package=$source_version"
+        || { echo "exact Ubuntu snapshot source index is missing: $source_package=$source_version" >&2; return 1; }
     local max_retries=1
     if [ -z "${DINOX_LICENSE_TEST_MODE:-}" ]; then
         max_retries=10
@@ -273,7 +273,8 @@ stage_distribution_source_from_ubuntu_snapshot() {
         fi
     done
     if [ "$downloaded" -eq 0 ]; then
-        fail "exact Ubuntu snapshot source unavailable: $source_package=$source_version"
+        echo "exact Ubuntu snapshot source unavailable: $source_package=$source_version" >&2
+        return 1
     fi
 }
 
@@ -532,26 +533,35 @@ stage_distribution_source_pair() {
             || { rm -rf "$work_root"; fail "invalid DINOX_UBUNTU_APT_SNAPSHOT: ${DINOX_UBUNTU_APT_SNAPSHOT:-missing}"; }
         command -v apt-get >/dev/null 2>&1 && command -v apt-cache >/dev/null 2>&1 \
             || { rm -rf "$work_root"; fail "apt-get and apt-cache are required for exact Debian corresponding sources"; }
+        local downloaded_source=0
         if [ "$fetch_mode" = "snapshot" ]; then
             # The package-builder snapshot is authoritative. Probing the moving
             # Ubuntu archive first only produces 404s after superseded pool
             # files have been removed.
             echo "Using pinned Ubuntu snapshot source: $source_package=$source_version"
-            stage_distribution_source_from_ubuntu_snapshot \
-                "$source_root" "$source_package" "$source_version"
-        else
+            if stage_distribution_source_from_ubuntu_snapshot \
+                "$source_root" "$source_package" "$source_version"; then
+                downloaded_source=1
+            else
+                echo "warning: exact snapshot missing $source_package=$source_version, trying live archive..." >&2
+            fi
+        fi
+        if [ "$downloaded_source" -eq 0 ]; then
+            if ! apt-cache showsrc "$source_package" >/dev/null 2>&1; then
+                apt-get update >/dev/null 2>&1 || true
+            fi
             if apt-cache showsrc "$source_package" 2>/dev/null \
                     | awk -v expected="$source_version" \
                         '$1 == "Version:" && $2 == expected { found = 1 } END { exit(found ? 0 : 1) }'; then
                 if (cd "$source_root" && apt-get source --download-only \
                         --only-source "$selector" >/dev/null); then
-                    normal_source_downloaded=1
+                    downloaded_source=1
                 fi
             fi
-            if [ "$normal_source_downloaded" -eq 0 ]; then
-                rm -rf "$work_root"
-                fail "normal APT source unavailable and no pinned Ubuntu snapshot configured: $source_package=$source_version"
-            fi
+        fi
+        if [ "$downloaded_source" -eq 0 ]; then
+            rm -rf "$work_root"
+            fail "exact source unavailable in snapshot and normal APT: $source_package=$source_version"
         fi
     fi
 
