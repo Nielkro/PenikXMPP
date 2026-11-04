@@ -74,8 +74,9 @@ ARCHIVED_PACKAGES=(
   "mingw-w64-x86_64-sqlcipher-4.6.1-2-any.pkg.tar.zst"
   "mingw-w64-x86_64-gpgme-1.23.2-17-any.pkg.tar.zst"
   "mingw-w64-x86_64-gst-plugins-bad-libs-1.26.0-1-any.pkg.tar.zst"
-  "mingw-w64-x86_64-gtk4-4.24.1-1-any.pkg.tar.zst"
-  "mingw-w64-x86_64-libadwaita-1.10.0-2-any.pkg.tar.zst"
+  "mingw-w64-x86_64-appstream-1.0.6-3-any.pkg.tar.zst"
+  "mingw-w64-x86_64-gtk4-4.18.6-4-any.pkg.tar.zst"
+  "mingw-w64-x86_64-libadwaita-1.7.8-1-any.pkg.tar.zst"
   "mingw-w64-x86_64-gst-plugins-good-1.26.0-1-any.pkg.tar.zst"
   "mingw-w64-x86_64-gst-plugins-bad-1.26.0-1-any.pkg.tar.zst"
   "mingw-w64-x86_64-gst-plugins-ugly-1.26.0-1-any.pkg.tar.zst"
@@ -98,7 +99,7 @@ done
 echo "==> Installing archived MinGW64 packages via pacman -U..."
 (
   cd "$DOWNLOAD_DIR"
-  pacman -U --noconfirm --needed *.pkg.tar.zst
+  pacman -U --noconfirm --needed "${ARCHIVED_PACKAGES[@]}"
 )
 
 echo "==> Verifying toolchain and key packages..."
