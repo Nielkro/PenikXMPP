@@ -667,6 +667,66 @@ public class Dino.Ui.Application : Adw.Application, Dino.Application {
         return !FileUtils.test (db_path, FileTest.EXISTS);
     }
 
+    private static string get_auto_db_key_path () {
+        return Path.build_filename (Dino.Application.get_storage_dir (), ".db_key");
+    }
+
+    private static string? try_read_auto_db_key () {
+        string key_path = get_auto_db_key_path ();
+        if (!FileUtils.test (key_path, FileTest.IS_REGULAR)) {
+            return null;
+        }
+        string? key_data = null;
+        try {
+            FileUtils.get_contents (key_path, out key_data);
+        } catch (Error e) {
+            warning ("Could not read auto db key from %s: %s", key_path, e.message);
+            return null;
+        }
+        if (key_data == null) return null;
+        string key = key_data.strip ();
+        return key.length > 0 ? key : null;
+    }
+
+    private static string generate_and_save_auto_db_key () throws Error {
+        string key_path = get_auto_db_key_path ();
+        uint8[] key_bytes = new uint8[32];
+        Crypto.randomize (key_bytes);
+
+        var sb = new StringBuilder ();
+        foreach (uint8 b in key_bytes) {
+            sb.append_printf ("%02x", b);
+        }
+        string key = sb.str;
+
+        string storage_dir = Dino.Application.get_storage_dir ();
+        if (DirUtils.create_with_parents (storage_dir, 0700) == -1) {
+            throw new Error (-1, 0, "Could not create storage dir \"%s\"", storage_dir);
+        }
+
+        FileUtils.set_contents (key_path, key);
+#if !WINDOWS
+        FileUtils.chmod (key_path, 0600);
+#endif
+        return key;
+    }
+
+    private static void save_auto_db_key (string password) {
+        string key_path = get_auto_db_key_path ();
+        try {
+            string storage_dir = Dino.Application.get_storage_dir ();
+            if (DirUtils.create_with_parents (storage_dir, 0700) == -1) {
+                warning ("Could not create storage dir \"%s\"", storage_dir);
+            }
+            FileUtils.set_contents (key_path, password);
+#if !WINDOWS
+            FileUtils.chmod (key_path, 0600);
+#endif
+        } catch (Error e) {
+            warning ("Could not persist auto db key: %s", e.message);
+        }
+    }
+
     // Panic marker path: placed in the PARENT of the storage dir so it
     // survives the recursive wipe of ~/.local/share/dinox/
     private static string get_panic_marker_path() {
@@ -1285,11 +1345,6 @@ public class Dino.Ui.Application : Adw.Application, Dino.Application {
     private void prompt_unlock () {
         if (core_ready) return;
 
-        if (is_first_run_no_db ()) {
-            prompt_set_password ();
-            return;
-        }
-
         // Detect whether this startup follows a backup restore.
         // If so, the DB on disk is encrypted with the backup's original
         // password, which may differ from whatever the user set most recently
@@ -1303,6 +1358,50 @@ public class Dino.Ui.Application : Adw.Application, Dino.Application {
             is_maintenance = ProfileMaintenance.has_pending (((!) profile_lock).profile_dir);
         } catch (Error err) {
             show_profile_startup_error (err.message);
+            return;
+        }
+
+        // Automatic unlock without asking user for password:
+        // 1. If an existing auto-key is present, attempt unlocking with it.
+        // 2. If this is a fresh profile (no database exists yet), generate an auto-key immediately.
+        if (!is_restore && !is_maintenance && unlock_failures == 0) {
+            string? auto_key = try_read_auto_db_key ();
+            if (auto_key != null) {
+                try {
+                    this.db_key = auto_key;
+                    ((Dino.Application) this).init ();
+                    if (FileUtils.test (restore_marker, FileTest.EXISTS)) FileUtils.unlink (restore_marker);
+                    if (plugin_loader != null) {
+                        try { plugin_loader.load_all (); }
+                        catch (Error plugin_err) { warning ("Plugin loading error (non-fatal): %s", plugin_err.message); }
+                    }
+                    finish_post_unlock ();
+                    check_panic_marker ();
+                    return;
+                } catch (Error err) {
+                    warning ("Auto-unlock with saved key failed: %s; falling back to prompt", err.message);
+                    this.db_key = null;
+                }
+            } else if (is_first_run_no_db ()) {
+                try {
+                    string new_key = generate_and_save_auto_db_key ();
+                    this.db_key = new_key;
+                    ((Dino.Application) this).init ();
+                    if (plugin_loader != null) {
+                        try { plugin_loader.load_all (); }
+                        catch (Error plugin_err) { warning ("Plugin loading error (non-fatal): %s", plugin_err.message); }
+                    }
+                    finish_post_unlock ();
+                    return;
+                } catch (Error err) {
+                    warning ("Failed to create auto db key: %s; falling back to prompt", err.message);
+                    this.db_key = null;
+                }
+            }
+        }
+
+        if (is_first_run_no_db ()) {
+            prompt_set_password ();
             return;
         }
 
@@ -1408,6 +1507,7 @@ public class Dino.Ui.Application : Adw.Application, Dino.Application {
         try {
             this.db_key = password;
             ((Dino.Application) this).init ();
+            save_auto_db_key (password);
             if (FileUtils.test (restore_marker, FileTest.EXISTS)) FileUtils.unlink (restore_marker);
             if (plugin_loader != null) {
                 try { plugin_loader.load_all (); }
@@ -1466,6 +1566,7 @@ public class Dino.Ui.Application : Adw.Application, Dino.Application {
                 try {
                     this.db_key = password;
                     ((Dino.Application)this).init ();
+                    save_auto_db_key (password);
 
                     if (plugin_loader != null) {
                         plugin_loader.load_all ();
