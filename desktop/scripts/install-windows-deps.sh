@@ -99,7 +99,7 @@ done
 echo "==> Installing archived MinGW64 packages via pacman -U..."
 (
   cd "$DOWNLOAD_DIR"
-  pacman -U --noconfirm --needed "${ARCHIVED_PACKAGES[@]}"
+  pacman -U --noconfirm --needed --nodeps --nodeps "${ARCHIVED_PACKAGES[@]}"
 )
 
 echo "==> Verifying toolchain and key packages..."
@@ -110,4 +110,15 @@ pkg-config --modversion gee-0.8
 vala --version
 ninja --version
 meson --version
+
+echo "==> Verifying GStreamer plugins..."
+test -f /mingw64/lib/gstreamer-1.0/libgstisomp4.dll || {
+  echo "ERROR: Required GStreamer plugin libgstisomp4.dll (qtdemux) was not installed!" >&2
+  exit 1
+}
+test -f /mingw64/lib/gstreamer-1.0/libgstvideoparsersbad.dll || {
+  echo "ERROR: Required GStreamer plugin libgstvideoparsersbad.dll (h264parse) was not installed!" >&2
+  exit 1
+}
+
 echo "All Windows dependencies installed successfully."
