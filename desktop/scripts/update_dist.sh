@@ -791,12 +791,14 @@ SYSTEM_DLLS=(
     
     # SQLCipher (if using encrypted DB instead of plain sqlite)
     "libsqlcipher-0.dll"
+
+    # GStreamer media helper DLLs (libgstrtp is required by isomp4/qtdemux for MP4/M4A message playback)
+    "libgstrtp-1.0-0.dll"
+    "libgstsdp-1.0-0.dll"
 )
 
 if [ "$GOOGLE_WEBRTC_RELEASE" = false ]; then
     SYSTEM_DLLS+=(
-        "libgstsdp-1.0-0.dll"
-        "libgstrtp-1.0-0.dll"
         "libgstwebrtc-1.0-0.dll"
     )
 fi
@@ -1038,9 +1040,8 @@ while true; do
     FOUND_NEW=false
     
     # Collect all DLL imports from everything in dist/ including subdirs
-    ALL_DEPS=$(objdump -p dist/*.dll dist/*.exe dist/plugins/*.dll \
-        dist/lib/gstreamer-1.0/*.dll dist/lib/gio/modules/*.dll \
-        dist/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.dll 2>/dev/null \
+    ALL_DEPS=$(find dist -type f \( -iname '*.exe' -o -iname '*.dll' \) -print0 \
+        | xargs -0 -r objdump -p 2>/dev/null \
         | grep "DLL Name:" | awk '{print $3}' | sort -u || true)
     
     for dep_name in $ALL_DEPS; do
@@ -1508,6 +1509,7 @@ find dist/share/icons -name 'icon-theme.cache' -delete 2>/dev/null || true
 # ============================================
 echo "[6b/8] Pre-generating GStreamer registry cache..."
 DIST_ABS="$(cd dist && pwd -W 2>/dev/null || pwd)"
+DIST_POSIX="$(cd dist && pwd)"
 GST_DIR="$DIST_ABS/lib/gstreamer-1.0"
 GST_REG="$GST_DIR/registry.bin"
 GST_INSPECT_TIMEOUT_SECONDS=90
@@ -1518,7 +1520,7 @@ if command -v timeout >/dev/null 2>&1 && timeout --version >/dev/null 2>&1; then
     GST_INSPECT_TIMEOUT_AVAILABLE=true
 fi
 if [ -d "dist/lib/gstreamer-1.0" ] && command -v gst-inspect-1.0 >/dev/null 2>&1; then
-    if ! PATH="$DIST_ABS:$PATH" \
+    if ! PATH="$DIST_POSIX:$PATH" \
         GST_PLUGIN_PATH="$GST_DIR" \
         GST_PLUGIN_SYSTEM_PATH="" \
         GST_REGISTRY="$GST_REG" \
@@ -1579,18 +1581,20 @@ if [ "$GOOGLE_WEBRTC_RELEASE" = true ]; then
             playbin qtdemux h264parse avdec_h264 videoconvert fakesink \
             avdec_aac audioconvert audioresample appsink; do
         inspect_status=0
-        PATH="$DIST_ABS:$PATH" \
-        GST_PLUGIN_PATH="$GST_DIR" \
+        inspect_output=""
+        inspect_output="$(PATH="$DIST_POSIX:$PATH" \
+            GST_PLUGIN_PATH="$GST_DIR" \
             GST_PLUGIN_SYSTEM_PATH="" \
             GST_REGISTRY="$GST_REG" \
             GST_REGISTRY_FORK=no \
-            "${GST_INSPECT_CMD[@]}" "$playback_element" >/dev/null 2>&1 \
+            "${GST_INSPECT_CMD[@]}" "$playback_element" 2>&1)" \
             || inspect_status=$?
         if [ "$inspect_status" -ne 0 ]; then
             if [ "$inspect_status" -eq 124 ] || [ "$inspect_status" -eq 137 ]; then
                 echo "  [ERROR] Timed out after ${GST_INSPECT_TIMEOUT_SECONDS}s while inspecting packaged media-message element: $playback_element" >&2
             else
                 echo "  [ERROR] Packaged media-message playback element missing or failed inspection: $playback_element (gst-inspect exit $inspect_status)" >&2
+                [ -n "$inspect_output" ] && echo "$inspect_output" >&2
             fi
             exit 1
         fi
