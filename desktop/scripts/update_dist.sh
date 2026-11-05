@@ -1518,7 +1518,8 @@ if command -v timeout >/dev/null 2>&1 && timeout --version >/dev/null 2>&1; then
     GST_INSPECT_TIMEOUT_AVAILABLE=true
 fi
 if [ -d "dist/lib/gstreamer-1.0" ] && command -v gst-inspect-1.0 >/dev/null 2>&1; then
-    if ! GST_PLUGIN_PATH="$GST_DIR" \
+    if ! PATH="$DIST_ABS:$PATH" \
+        GST_PLUGIN_PATH="$GST_DIR" \
         GST_PLUGIN_SYSTEM_PATH="" \
         GST_REGISTRY="$GST_REG" \
         GST_REGISTRY_FORK=no \
@@ -1578,6 +1579,7 @@ if [ "$GOOGLE_WEBRTC_RELEASE" = true ]; then
             playbin qtdemux h264parse avdec_h264 videoconvert fakesink \
             avdec_aac audioconvert audioresample appsink; do
         inspect_status=0
+        PATH="$DIST_ABS:$PATH" \
         GST_PLUGIN_PATH="$GST_DIR" \
             GST_PLUGIN_SYSTEM_PATH="" \
             GST_REGISTRY="$GST_REG" \
