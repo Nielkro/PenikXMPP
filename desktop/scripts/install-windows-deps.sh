@@ -44,6 +44,7 @@ pacman -S --needed --noconfirm \
   mingw-w64-x86_64-ffmpeg \
   mingw-w64-x86_64-flac \
   mingw-w64-x86_64-mpg123 \
+  mingw-w64-x86_64-openh264 \
   mingw-w64-x86_64-libvpx \
   mingw-w64-x86_64-protobuf-c \
   mingw-w64-x86_64-openssl \
@@ -76,7 +77,6 @@ ARCHIVED_PACKAGES=(
   "mingw-w64-x86_64-sqlcipher-4.6.1-2-any.pkg.tar.zst"
   "mingw-w64-x86_64-gpgme-1.23.2-17-any.pkg.tar.zst"
   "mingw-w64-x86_64-gst-plugins-bad-libs-1.28.8-1-any.pkg.tar.zst"
-  "mingw-w64-x86_64-openh264-2.6.0-2-any.pkg.tar.zst"
   "mingw-w64-x86_64-libxmlb-0.3.24-2-any.pkg.tar.zst"
   "mingw-w64-x86_64-appstream-1.0.6-3-any.pkg.tar.zst"
   "mingw-w64-x86_64-gtk4-4.18.6-4-any.pkg.tar.zst"
@@ -106,6 +106,11 @@ echo "==> Installing archived MinGW64 packages via pacman -U..."
   pacman -U --noconfirm --needed --nodeps --nodeps "${ARCHIVED_PACKAGES[@]}"
 )
 
+echo "==> Installing the OpenH264 compatibility DLL for archived GStreamer..."
+OPENH264_COMPAT="mingw-w64-x86_64-openh264-2.6.0-2-any.pkg.tar.zst"
+curl -sSL -f -o "$DOWNLOAD_DIR/$OPENH264_COMPAT" "$REPO_BASE/$OPENH264_COMPAT"
+tar -xOf "$DOWNLOAD_DIR/$OPENH264_COMPAT" mingw64/bin/libopenh264-7.dll > /mingw64/bin/libopenh264-7.dll
+
 echo "==> Verifying toolchain and key packages..."
 pkg-config --modversion gtk4
 pkg-config --modversion libadwaita-1
@@ -113,6 +118,14 @@ pkg-config --modversion sqlcipher
 pkg-config --modversion gee-0.8
 test -s /mingw64/bin/libxmlb-2.dll || {
   echo "ERROR: AppStream runtime dependency libxmlb-2.dll was not installed!" >&2
+  exit 1
+}
+test -s /mingw64/bin/libopenh264-8.dll || {
+  echo "ERROR: libheif runtime dependency libopenh264-8.dll was not installed!" >&2
+  exit 1
+}
+/mingw64/bin/gdk-pixbuf-query-loaders.exe /mingw64/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-heif.dll | grep -q '"heif"' || {
+  echo "ERROR: HEIF pixbuf loader failed to load!" >&2
   exit 1
 }
 vala --version
