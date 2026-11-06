@@ -1641,6 +1641,23 @@ def stage(args: argparse.Namespace) -> None:
             if not matches.get("private-gio"):
                 fail("GIO TLS module does not match the private Unicode-safe runtime")
             component = custom_components["glib-networking-dinox"]
+        elif relative.casefold() == "libopenh264-7.dll":
+            expected_dll = "f6be16f2ad0a557433d60b4c444a27c36cc4e853609f4e1ea520f51711b01dd0"
+            license_source = mingw_root / "share/licenses/openh264-compat/LICENSE"
+            if checksum != expected_dll or not license_source.is_file() or sha256_file(license_source) != "dd5c1c9668512530fa5a96e4c29ac4033d70a7eeb0eed7a42fddb6dd794ebdbb":
+                fail("OpenH264 compatibility DLL or license does not match the pinned package")
+            notice = license_root / "custom/openh264-compat"
+            notice.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(license_source, notice / "LICENSE")
+            component = Component(
+                origin="msys2-archive",
+                name="openh264-compat",
+                version="2.6.0-2",
+                declared_license="BSD-2-Clause",
+                source_reference="https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-openh264-2.6.0-2-any.pkg.tar.zst",
+                notice_path="share/licenses/dinox/custom/openh264-compat",
+            )
+            record_components.append(component)
         elif artifact.name.casefold() == "dinox-vision-worker.exe":
             if relative != "dinox-vision-worker.exe" or vision_worker is None or not matches.get("webrtc"):
                 fail("Windows vision worker has no exact matched runtime producer source")
