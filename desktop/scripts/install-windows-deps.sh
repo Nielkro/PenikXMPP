@@ -74,6 +74,7 @@ ARCHIVED_PACKAGES=(
   "mingw-w64-x86_64-sqlcipher-4.6.1-2-any.pkg.tar.zst"
   "mingw-w64-x86_64-gpgme-1.23.2-17-any.pkg.tar.zst"
   "mingw-w64-x86_64-gst-plugins-bad-libs-1.28.8-1-any.pkg.tar.zst"
+  "mingw-w64-x86_64-libxmlb-0.3.24-2-any.pkg.tar.zst"
   "mingw-w64-x86_64-appstream-1.0.6-3-any.pkg.tar.zst"
   "mingw-w64-x86_64-gtk4-4.18.6-4-any.pkg.tar.zst"
   "mingw-w64-x86_64-libadwaita-1.7.8-1-any.pkg.tar.zst"
@@ -107,6 +108,10 @@ pkg-config --modversion gtk4
 pkg-config --modversion libadwaita-1
 pkg-config --modversion sqlcipher
 pkg-config --modversion gee-0.8
+test -s /mingw64/bin/libxmlb-2.dll || {
+  echo "ERROR: AppStream runtime dependency libxmlb-2.dll was not installed!" >&2
+  exit 1
+}
 vala --version
 ninja --version
 meson --version
