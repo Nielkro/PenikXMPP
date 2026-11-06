@@ -109,7 +109,7 @@ echo "==> Installing archived MinGW64 packages via pacman -U..."
 echo "==> Installing the OpenH264 compatibility DLL for archived GStreamer..."
 OPENH264_COMPAT="mingw-w64-x86_64-openh264-2.6.0-2-any.pkg.tar.zst"
 curl -sSL -f -o "$DOWNLOAD_DIR/$OPENH264_COMPAT" "$REPO_BASE/$OPENH264_COMPAT"
-tar -xOf "$DOWNLOAD_DIR/$OPENH264_COMPAT" mingw64/bin/libopenh264-7.dll > /mingw64/bin/libopenh264-7.dll
+tar --zstd -xOf - mingw64/bin/libopenh264-7.dll < "$DOWNLOAD_DIR/$OPENH264_COMPAT" > /mingw64/bin/libopenh264-7.dll
 
 echo "==> Verifying toolchain and key packages..."
 pkg-config --modversion gtk4
