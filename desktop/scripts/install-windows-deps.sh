@@ -41,7 +41,9 @@ pacman -S --needed --noconfirm \
   mingw-w64-x86_64-gstreamer \
   mingw-w64-x86_64-gst-plugins-base \
   mingw-w64-x86_64-opus \
-  mingw-w64-x86_64-openh264 \
+  mingw-w64-x86_64-ffmpeg \
+  mingw-w64-x86_64-flac \
+  mingw-w64-x86_64-mpg123 \
   mingw-w64-x86_64-libvpx \
   mingw-w64-x86_64-protobuf-c \
   mingw-w64-x86_64-openssl \
@@ -74,6 +76,7 @@ ARCHIVED_PACKAGES=(
   "mingw-w64-x86_64-sqlcipher-4.6.1-2-any.pkg.tar.zst"
   "mingw-w64-x86_64-gpgme-1.23.2-17-any.pkg.tar.zst"
   "mingw-w64-x86_64-gst-plugins-bad-libs-1.28.8-1-any.pkg.tar.zst"
+  "mingw-w64-x86_64-openh264-2.6.0-2-any.pkg.tar.zst"
   "mingw-w64-x86_64-libxmlb-0.3.24-2-any.pkg.tar.zst"
   "mingw-w64-x86_64-appstream-1.0.6-3-any.pkg.tar.zst"
   "mingw-w64-x86_64-gtk4-4.18.6-4-any.pkg.tar.zst"
@@ -125,5 +128,11 @@ test -f /mingw64/lib/gstreamer-1.0/libgstvideoparsersbad.dll || {
   echo "ERROR: Required GStreamer plugin libgstvideoparsersbad.dll (h264parse) was not installed!" >&2
   exit 1
 }
+for element in avdec_h264 openh264dec flacdec mpg123audiodec; do
+  gst-inspect-1.0 "$element" >/dev/null || {
+    echo "ERROR: Required GStreamer element $element failed to load!" >&2
+    exit 1
+  }
+done
 
 echo "All Windows dependencies installed successfully."
