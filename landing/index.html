@@ -3,101 +3,100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Penik Messenger — свой мессенджер без лишнего</title>
-<meta name="description" content="Penik Messenger — простой и быстрый мессенджер: лички и группы, мультидевайсинг, звонки и бинарный протокол PXMPP. Без сквозного шифрования — сервер хранит историю открыто.">
-<link rel="icon" href="logo_fixed.webp">
+<title>Penik Messenger — переписка живёт на сервере</title>
+<meta name="description" content="Penik Messenger — чат для Android: история на сервере, группы и звонки, один аккаунт на всех устройствах. Без сквозного шифрования: сервер видит сообщения, и мы говорим об этом прямо.">
+<link rel="icon" href="logo_flat.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0b0f16;
-  --bg2:#0f1520;
-  --card:rgba(255,255,255,.045);
-  --card2:rgba(255,255,255,.06);
-  --border:rgba(255,255,255,.1);
-  --border-soft:rgba(255,255,255,.07);
-  --text:#e9edf4;
-  --muted:#8b94a7;
-  --acc:#34d399;
-  --acc2:#22d3ee;
-  --warn:#f87171;
-  --grad:linear-gradient(135deg,#34d399,#22d3ee);
-  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;
-  --serif:Georgia,'Times New Roman',serif;
+  --paper:#f7f4ee;
+  --paper-2:#f1ece2;
+  --card:#fdfbf7;
+  --raised:#efe9df;
+  --ink:#1f1b16;
+  --ink-2:#5e554a;
+  --ink-3:#7b7266;
+  --hair:rgba(31,27,22,.12);
+  --hair-soft:rgba(31,27,22,.07);
+  --accent:#1f6b4f;
+  --accent-soft:rgba(31,107,79,.08);
+  --minus:#a2432f;
+  --minus-soft:rgba(162,67,47,.08);
+  --meh:#8a6a2f;
+  --term:#17140f;
+  --term-2:#1c1813;
+  --term-line:rgba(239,233,222,.12);
+  --term-text:#c9c1b4;
+  --term-muted:#a39c90;
+  --term-accent:#8fceb0;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
   line-height:1.6;
+  -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
 }
-h1,h2{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-weight:800;letter-spacing:-.8px}
-::selection{background:rgba(52,211,153,.35)}
+::selection{background:rgba(31,107,79,.16)}
 img{display:block}
 a{color:inherit;text-decoration:none}
-.container{max-width:1180px;margin:0 auto;padding:0 24px}
-section{scroll-margin-top:90px}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.container{max-width:1200px;margin:0 auto;padding:0 32px}
+section{scroll-margin-top:88px}
 
 /* ---------- NAV ---------- */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;transition:.3s;border-bottom:1px solid transparent}
-nav.scrolled{background:rgba(6,8,13,.82);backdrop-filter:blur(14px);border-bottom-color:var(--border)}
-.nav-inner{display:flex;align-items:center;gap:28px;height:70px}
-.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:18px;letter-spacing:-.3px}
-.brand img{width:30px;height:30px;border-radius:8px}
-.brand em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;margin-top:22px}
-.nav-links{display:flex;gap:26px;margin-left:14px}
-.nav-links a{color:var(--muted);font-size:14.5px;font-weight:600;transition:.2s}
-.nav-links a:hover{color:var(--acc)}
-.nav-cta{margin-left:auto;display:flex;gap:10px}
-.burger{display:none;margin-left:auto;background:none;border:1px solid var(--border);border-radius:10px;width:42px;height:42px;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer}
-.burger span{display:block;width:18px;height:2px;background:var(--text);border-radius:2px;transition:.3s}
-body.menu-open .burger span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:transparent;border-bottom:1px solid transparent;transition:background-color .18s var(--ease),border-color .18s var(--ease)}
+nav.scrolled{background:rgba(247,244,238,.92);backdrop-filter:blur(12px);border-bottom-color:var(--hair)}
+.nav-inner{display:flex;align-items:center;gap:32px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:500;font-size:17px;letter-spacing:-.01em}
+.brand img{width:28px;height:28px;border-radius:7px}
+.brand-sub{font:400 11px var(--mono);color:var(--ink-3);letter-spacing:.02em;margin-top:2px}
+.nav-links{display:flex;gap:24px;margin-left:8px}
+.nav-links a{color:var(--ink-2);font-size:14px;font-weight:400;transition:color .16s var(--ease)}
+.nav-links a:hover{color:var(--ink)}
+.nav-cta{margin-left:auto;display:flex;gap:12px}
+.burger{display:none;margin-left:auto;background:none;border:1px solid var(--hair);border-radius:8px;width:38px;height:38px;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.burger span{display:block;width:16px;height:1.5px;background:var(--ink);border-radius:2px;transition:transform .18s var(--ease),opacity .18s var(--ease)}
+body.menu-open .burger span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
 body.menu-open .burger span:nth-child(2){opacity:0}
-body.menu-open .burger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+body.menu-open .burger span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
 
 /* ---------- BUTTONS ---------- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:11px 20px;border-radius:12px;font-weight:700;font-size:14.5px;font-family:inherit;transition:.25s;cursor:pointer;border:1px solid transparent;white-space:nowrap}
-.btn-primary{background:var(--grad);color:#04121b;box-shadow:0 8px 26px -8px rgba(52,211,153,.55)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 34px -8px rgba(34,211,238,.6)}
-.btn-outline{border-color:var(--border);color:var(--text);background:rgba(255,255,255,.03)}
-.btn-outline:hover{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.07);transform:translateY(-2px)}
-.btn-disabled{background:rgba(255,255,255,.05);color:var(--muted);border-color:var(--border);cursor:not-allowed;box-shadow:none}
-.btn-disabled:hover{transform:none;box-shadow:none;background:rgba(255,255,255,.05)}
-.btn-lg{padding:15px 28px;font-size:16px;border-radius:14px}
-.btn-sm{padding:9px 16px;font-size:13.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;height:40px;border-radius:9px;font-weight:500;font-size:14px;font-family:inherit;transition:background-color .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease);cursor:pointer;border:1px solid transparent;white-space:nowrap}
+.btn-primary{background:var(--ink);color:var(--paper)}
+.btn-primary:hover{background:#332c24}
+.btn-outline{border-color:var(--hair);color:var(--ink);background:transparent}
+.btn-outline:hover{background:var(--raised)}
+.btn-disabled{background:var(--raised);color:var(--ink-3);border-color:var(--hair);cursor:not-allowed}
+.btn-lg{height:48px;padding:0 22px;font-size:15px;border-radius:10px}
+.btn-sm{height:34px;padding:0 14px;font-size:13px}
 
 /* ---------- HERO ---------- */
-.hero{position:relative;padding:140px 0 70px;overflow:hidden}
-.hero-bg{position:absolute;inset:0;pointer-events:none;background:
-  radial-gradient(640px 420px at 82% 8%,rgba(34,211,238,.13),transparent 62%),
-  radial-gradient(560px 420px at 8% 92%,rgba(52,211,153,.11),transparent 62%)}
-.hero-bg::before{content:'';position:absolute;inset:0;
-  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
-  background-size:46px 46px;
-  -webkit-mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%);
-  mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%)}
-.hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
-.badge{display:inline-flex;align-items:center;gap:8px;font:600 12.5px var(--mono);color:var(--acc);background:rgba(52,211,153,.09);border:1px solid rgba(52,211,153,.4);padding:8px 15px;border-radius:99px;margin-bottom:22px;box-shadow:0 0 26px -6px rgba(52,211,153,.55);animation:badgeFloat 4s ease-in-out infinite}
-.badge .pulse{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:pulse 1.6s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}50%{box-shadow:0 0 0 7px rgba(52,211,153,0)}}
-@keyframes badgeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-h1{font-size:clamp(38px,5.4vw,62px);font-weight:800;line-height:1.06;letter-spacing:-1.5px;margin-bottom:22px}
-.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero-kicker{font:500 13px var(--mono);color:var(--muted);margin-bottom:14px}
-.hero-kicker b{color:var(--text);font-weight:600}
-.hand-note{display:inline-block;margin-top:14px;padding:8px 12px;border:1px dashed var(--border);border-radius:8px;font:500 12.5px var(--mono);color:var(--muted);transform:none}
-.hero-text p{color:var(--muted);font-size:17.5px;max-width:520px;margin-bottom:32px}
-.hero-text p b{color:var(--text)}
-.hero-btns{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
-.hero-meta{font:500 13px var(--mono);color:var(--muted)}
+.hero{position:relative;padding:120px 0 56px}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:64px;align-items:center}
+.hero-kicker{font:400 12px var(--mono);color:var(--ink-3);margin-bottom:20px}
+.hero-kicker .arrow{color:var(--accent)}
+h1{font-size:clamp(40px,5.2vw,64px);font-weight:500;line-height:1.04;letter-spacing:-.03em;margin-bottom:24px}
+.hero-text p{color:var(--ink-2);font-size:18px;line-height:1.6;max-width:530px;margin-bottom:20px}
+.hero-text p b{color:var(--ink);font-weight:500}
+.hand-note{display:inline-flex;align-items:center;gap:8px;font:400 12px var(--mono);color:var(--ink-3);margin-bottom:28px}
+.minus-mark{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--minus-soft);color:var(--minus);font-size:13px;line-height:1}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+.hero-meta{font:400 12px var(--mono);color:var(--ink-3)}
 
-/* ---------- PHONE ---------- */
-.hero-demo{position:relative;display:flex;justify-content:center}
-.phone{width:292px;aspect-ratio:9/18.6;background:#0c111e;border-radius:38px;border:1px solid var(--border);padding:10px;
-  box-shadow:0 30px 60px -20px rgba(0,0,0,.8);
-  transform:none}
+/* phone */
+.hero-demo{position:relative;display:flex;justify-content:center;padding:24px 0}
+.phone{position:relative;z-index:2;width:292px;aspect-ratio:9/18.6;background:#0c111e;border-radius:38px;border:1px solid rgba(31,27,22,.18);padding:10px;box-shadow:0 30px 60px -20px rgba(31,27,22,.45)}
 .phone-notch{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:96px;height:22px;background:#0c111e;border-radius:12px;z-index:3}
 .screen{background:#0d0d12;border-radius:37px;height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .chat-head{display:flex;align-items:center;gap:10px;padding:34px 14px 12px;border-bottom:1px solid #252535;background:#13131a}
@@ -117,216 +116,198 @@ h1{font-size:clamp(38px,5.4vw,62px);font-weight:800;line-height:1.06;letter-spac
 .msg.out .bubble{background:#2b2d6b;color:#c8cdff;border-radius:14px 14px 2px 14px}
 .bubble .meta{display:flex;align-items:center;justify-content:flex-end;gap:4px;font:500 9px var(--mono);color:#7b7b9b;margin-top:3px}
 .bubble .meta .ticks{color:#5b6ef5;font-weight:bold;margin-right:2px}
-.msg.failed .bubble{background:rgba(239,83,80,.15);color:#ef5350;border:1px solid rgba(239,83,80,.25);border-radius:14px 14px 14px 2px}
-.msg.failed .bubble .txt{color:#ef5350;font-weight:500}
-.msg.failed .bubble .meta{color:#ef5350;opacity:0.8}
-.msg.failed .bubble .failed-action{color:#5b6ef5;font-size:10px;font-weight:700;margin-top:2px;cursor:pointer;display:inline-block}
 .chat-input{display:flex;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid #252535;background:#13131a}
 .chat-input span{flex:1;font-size:12px;color:#7b7b9b;background:#1e1e2a;border:1px solid #252535;border-radius:14px;padding:8px 14px}
-.chat-input b{width:34px;height:34px;border-radius:50%;background:#5b6ef5;color:#eeeef5;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer}
-.chip{position:absolute;font:500 12px var(--mono);background:#0e131b;border:1px solid var(--border);padding:8px 12px;border-radius:8px;z-index:4}
-.chip1{top:8%;left:-8%;transform:none}
-.chip2{bottom:22%;right:-12%;transform:none}
-.chip3{top:42%;right:-16%;transform:none}
+.chat-input b{width:34px;height:34px;border-radius:50%;background:#5b6ef5;color:#eeeef5;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex:none}
+
 
 /* ---------- STATS ---------- */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
-.stat{padding:24px 18px;border-radius:18px;background:var(--card);border:1px solid var(--border);text-align:center;transition:.25s}
-.stat:hover{border-color:rgba(52,211,153,.4);transform:translateY(-3px)}
-.stat b{display:block;font-size:34px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
-.stat.minus b{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--warn)}
-.stat span{font-size:13px;color:var(--muted);line-height:1.5;display:block}
-.stats-note{text-align:center;color:var(--muted);font:500 12.5px var(--mono);margin-top:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--hair);margin-top:56px}
+.stat{padding:24px 24px 0;border-left:1px solid var(--hair-soft)}
+.stat:first-child{border-left:0;padding-left:0}
+.stat b{display:block;font-size:30px;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-bottom:6px;line-height:1.15}
+.stat.minus b{color:var(--minus);font-size:22px;line-height:1.3;letter-spacing:-.01em}
+.stat span{font-size:13px;color:var(--ink-2);line-height:1.5;display:block;max-width:220px}
 
-/* ---------- MARQUEE ---------- */
-.marquee{overflow:hidden;border-block:1px solid var(--border);background:var(--bg2);margin-top:64px}
-.marquee-track{display:flex;gap:36px;width:max-content;animation:mqScroll 60s linear infinite;padding:12px 0}
-.marquee-track span{font:500 12.5px var(--mono);color:var(--muted);letter-spacing:.3px;white-space:nowrap}
-.marquee-track span i{font-style:normal;color:var(--border);margin-right:36px}
-@keyframes mqScroll{to{transform:translateX(-50%)}}
+/* ---------- PROTOCOL STRIP ---------- */
+.strip{border-block:1px solid var(--hair);background:var(--paper-2);margin-top:56px}
+.strip-inner{display:flex;flex-wrap:wrap;align-items:center;padding:12px 0;font:400 12px var(--mono);color:var(--ink-3)}
+.strip-inner span:not(:last-child)::after{content:"·";margin:0 12px;color:var(--ink-3)}
 
 /* ---------- SECTIONS ---------- */
-.section{padding:100px 0}
-.sec-head{max-width:760px;margin:0 0 36px;text-align:left}
-.sec-head.center{margin:0 auto 36px;text-align:center}
-.tag{display:inline-block;font:600 11.5px var(--mono);letter-spacing:2.5px;text-transform:uppercase;color:var(--acc);background:rgba(52,211,153,.09);border:1px solid rgba(52,211,153,.28);padding:7px 15px;border-radius:99px;margin-bottom:18px}
-h2{font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-.8px;line-height:1.15;margin-bottom:14px}
-.sec-head p{color:var(--muted);font-size:16.5px;max-width:600px;line-height:1.65}
+.section{padding:96px 0}
+.sec-head{max-width:680px;margin-bottom:40px}
+.tag{display:inline-block;font:400 12px var(--mono);color:var(--accent);margin-bottom:14px}
+.tag::before{content:"→ ";color:var(--ink-3)}
+h2{font-size:clamp(28px,3.6vw,42px);font-weight:500;letter-spacing:-.025em;line-height:1.12;margin-bottom:12px}
+.sec-head p{color:var(--ink-2);font-size:16px;line-height:1.65;max-width:620px}
 
 /* ---------- FEATURES ---------- */
-.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.feat{padding:24px 22px;border-radius:12px;background:var(--card);border:1px solid var(--border);transition:none;position:relative;overflow:hidden}
-.feat:nth-child(2){transform:translateY(8px)}
-.feat:nth-child(5){transform:translateY(8px)}
-.feat:hover{transform:none;border-color:var(--border);background:var(--card2)}
-.feat:nth-child(2):hover,.feat:nth-child(5):hover{transform:translateY(8px)}
-.feat.minus{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.04)}
-.feat .ico{width:34px;height:34px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:9px;background:var(--bg2);color:var(--acc)}
-.feat .ico svg{width:18px;height:18px}
-.feat.minus .ico{color:var(--warn);border-color:rgba(248,113,113,.35)}
-.feat h3{font-size:17px;font-weight:650;margin-bottom:8px;letter-spacing:-.2px;font-family:system-ui,sans-serif}
-.feat p{color:var(--muted);font-size:15px;margin-bottom:14px;line-height:1.65}
-.feat-tags{display:flex;flex-wrap:wrap;gap:6px}
-.feat-tags span{font:600 11px var(--mono);color:var(--acc2);background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.22);padding:4px 10px;border-radius:7px}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feat{padding:24px;border-radius:14px;background:var(--card);border:1px solid var(--hair);transition:background-color .16s var(--ease),border-color .16s var(--ease)}
+.feat:hover{background:#fffdf9;border-color:rgba(31,27,22,.2)}
+.feat.minus{background:#fbf4f1;border-color:rgba(162,67,47,.24)}
+.feat .ico{width:18px;height:18px;display:block;margin-bottom:16px;color:var(--ink-3)}
+.feat .ico svg{width:18px;height:18px;display:block}
+.feat.minus .ico{color:var(--minus)}
+.feat h3{font-size:16.5px;font-weight:500;letter-spacing:-.01em;margin-bottom:8px}
+.feat p{color:var(--ink-2);font-size:14.5px;margin-bottom:14px;line-height:1.65}
+.feat-tags{font:400 11.5px var(--mono);color:var(--ink-3)}
+.feat-tags span + span::before{content:"·";margin:0 6px}
 
 /* ---------- SECURITY / STEPS ---------- */
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.step{padding:22px 20px;border-radius:12px;background:var(--card);border:1px solid var(--border);position:relative}
-.step:nth-child(2){border-color:rgba(248,113,113,.35)}
-.step-num{font:500 12px var(--mono);color:var(--muted);letter-spacing:1px;display:block;margin-bottom:10px}
-.step h3{font-size:16px;font-weight:650;margin-bottom:8px;font-family:system-ui,sans-serif}
-.step p{color:var(--muted);font-size:15px;line-height:1.65}
-.step code{font:500 12px var(--mono);color:var(--text);background:rgba(255,255,255,.06);border:1px solid var(--border);padding:2px 6px;border-radius:6px}
-.server-panel{margin-top:44px;border-radius:18px;border:1px solid var(--border);background:#070a12;overflow:hidden;box-shadow:0 34px 70px -34px rgba(0,0,0,.85)}
-.term-head{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border);font:600 12.5px var(--mono);color:var(--muted);background:rgba(255,255,255,.02)}
-.tdot{width:11px;height:11px;border-radius:50%}
-.tdot.r{background:#f87171}.tdot.y{background:#fbbf24}.tdot.g{background:#34d399}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.step{padding:24px;border-radius:14px;background:var(--card);border:1px solid var(--hair)}
+.step.minus{border-color:rgba(162,67,47,.24);background:#fbf4f1}
+.step-num{display:block;font:400 12px var(--mono);color:var(--ink-3);margin-bottom:10px}
+.step.minus .step-num{color:var(--minus)}
+.step h3{font-size:16.5px;font-weight:500;letter-spacing:-.01em;margin-bottom:8px}
+.step p{color:var(--ink-2);font-size:14.5px;line-height:1.65}
+.step code{font:400 11.5px var(--mono);color:var(--ink);background:var(--raised);border:1px solid var(--hair-soft);padding:1px 5px;border-radius:4px}
+.server-panel{margin-top:40px;border-radius:16px;border:1px solid #2a251f;background:var(--term);overflow:hidden;box-shadow:0 24px 48px -30px rgba(31,27,22,.5)}
+.term-head{display:flex;align-items:center;gap:6px;padding:12px 16px;border-bottom:1px solid var(--term-line);font:400 12px var(--mono);color:var(--term-muted);background:var(--term-2)}
+.tdot{width:8px;height:8px;border-radius:50%}
+.tdot.r{background:#a24a3f}.tdot.y{background:#b08a3e}.tdot.g{background:#4f8a6a}
 .term-title{margin-left:8px}
-.term-body{padding:16px 18px;height:238px;overflow:hidden;font:400 12.5px/2 var(--mono)}
-.tline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:tFade .35s both}
-@keyframes tFade{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
-.tdir{color:var(--acc2)}
-.thex{color:#5b6577}
-.tok{color:var(--acc)}
-.tfail{color:#f87171}
-.term-caption{padding:13px 18px;border-top:1px solid var(--border);color:var(--muted);font-size:13.5px;text-align:center}
-.term-caption b{color:var(--acc)}
+.term-body{padding:16px;height:238px;overflow:hidden;font:400 12.5px/2 var(--mono);color:var(--term-text)}
+.tline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:tFade .3s var(--ease) both}
+@keyframes tFade{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+.tdir{color:var(--term-accent)}
+.thex{color:var(--term-muted)}
+.tok{color:var(--term-accent)}
+.tfail{color:#d98b7d}
+.term-caption{padding:12px 16px;border-top:1px solid var(--term-line);color:var(--term-muted);font-size:13px}
+.term-caption b{color:#efe9de;font-weight:500}
 
 /* ---------- COMPARE ---------- */
-.table-wrap{overflow-x:auto;border-radius:20px;border:1px solid var(--border);background:var(--card)}
-.cmp-table{width:100%;border-collapse:collapse;min-width:640px}
-.cmp-table th,.cmp-table td{padding:16px 18px;text-align:center;border-bottom:1px solid var(--border);font-size:14.5px}
+.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--hair);background:var(--card)}
+.cmp-table{width:100%;border-collapse:collapse;min-width:660px}
+.cmp-table th,.cmp-table td{padding:14px 18px;text-align:center;border-bottom:1px solid var(--hair-soft);font-size:14px}
 .cmp-table tr:last-child td{border-bottom:none}
-.cmp-table th{font-size:15px;font-weight:800;padding-top:22px}
-.cmp-table td:first-child,.cmp-table th:first-child{text-align:left;color:var(--muted);font-weight:600}
-.cmp-table th:first-child{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:1.5px}
-.cmp-table thead th:first-child{color:var(--muted)}
-.penik-col{background:rgba(216,243,78,.05);border-left:1px solid var(--border);border-right:1px solid var(--border)}
-th.penik-col{color:var(--text)!important}
-.yes{color:var(--acc2);font-weight:700}
-.no{color:var(--warn);font-weight:700}
-.meh{color:#e8c872;font-weight:600;font-size:13px}
-.cmp-note{text-align:center;color:var(--muted);font-size:13px;margin-top:16px;font-family:var(--mono)}
+.cmp-table th{font-size:14.5px;font-weight:500;padding-top:18px;padding-bottom:16px}
+.cmp-table td:first-child,.cmp-table th:first-child{text-align:left;color:var(--ink-2);font-weight:400}
+.cmp-table th:first-child{font-size:12px;color:var(--ink-3);font-family:var(--mono)}
+.penik-col{background:var(--accent-soft);border-left:1px solid var(--hair);border-right:1px solid var(--hair)}
+th.penik-col{color:var(--ink)}
+.mark{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap}
+.mark svg{width:15px;height:15px;flex:none}
+.mark.ok{color:var(--accent)}
+.mark.no{color:var(--minus)}
+.mark.meh{color:var(--meh)}
+.cmp-note{color:var(--ink-3);font:400 12px var(--mono);margin-top:16px}
+
+/* ---------- ECOSYSTEM ---------- */
+.eco{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;max-width:780px;padding:28px;border-radius:16px;background:var(--card);border:1px solid var(--hair)}
+.eco h3{font-size:20px;font-weight:500;letter-spacing:-.01em;margin-bottom:8px}
+.eco-desc{color:var(--ink-2);font-size:14.5px;line-height:1.6;margin-bottom:16px}
+.eco-tags{font:400 11.5px var(--mono);color:var(--ink-3);margin-bottom:22px}
+.eco-tags span + span::before{content:"·";margin:0 6px}
+.eco-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.eco-note{color:var(--ink-3);font-size:12.5px;line-height:1.5;max-width:360px;margin-top:16px}
+.eco-icon{width:88px;height:88px;border-radius:50%;overflow:hidden;background:var(--raised);display:flex;align-items:center;justify-content:center;color:var(--ink-3)}
+.eco-icon img{width:100%;height:100%;object-fit:cover}
+.eco-icon svg{width:40px;height:40px}
 
 /* ---------- DOWNLOAD ---------- */
-.dl-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:900px;margin:0 auto}
-.dl-card{padding:30px 28px;border-radius:12px;background:var(--card);border:1px solid var(--border);text-align:left;position:relative;overflow:hidden;transition:none}
-.dl-card:hover{transform:none;border-color:var(--border)}
-.dl-card::before,.dl-card.web::before{content:none}
-.dl-icon{margin-bottom:14px;color:var(--muted);font-size:inherit}
-.dl-card h3{font-size:23px;font-weight:800;margin-bottom:8px;letter-spacing:-.4px}
-.dl-card .dl-desc{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.6}
+.dl-card{max-width:780px;padding:28px;border-radius:16px;background:var(--card);border:1px solid var(--hair)}
+.dl-head{display:flex;align-items:center;gap:16px;margin-bottom:12px}
+.dl-icon{width:44px;height:44px;border-radius:10px;background:var(--raised);display:flex;align-items:center;justify-content:center;color:var(--ink-2);flex:none}
+.dl-icon svg{width:20px;height:20px}
+.dl-card h3{font-size:19px;font-weight:500;letter-spacing:-.01em}
+.dl-desc{color:var(--ink-2);font-size:14.5px;line-height:1.65;margin-bottom:20px;max-width:560px}
+
+/* ---------- VERSIONS ---------- */
+.versions{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.vcard{padding:24px;border-radius:14px;background:var(--card);border:1px solid var(--hair)}
+.vcard.current{border-color:rgba(31,107,79,.3)}
+.vhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
+.vhead h3{font-size:17px;font-weight:500;letter-spacing:-.01em}
+.vstate{font:400 11px var(--mono);color:var(--ink-3);white-space:nowrap}
+.vcard.current .vstate{color:var(--accent)}
+.vcard p{color:var(--ink-2);font-size:14.5px;line-height:1.65;margin-bottom:14px}
 
 /* ---------- FAQ ---------- */
-.faq-wrap{max-width:760px;margin:0 auto}
-.faq-item{border:1px solid var(--border);border-radius:12px;background:var(--card);margin-bottom:10px;overflow:hidden;transition:none}
-.faq-item.open{border-color:var(--muted)}
-.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:17px 20px;background:none;border:0;color:var(--text);font:600 15px system-ui,sans-serif;cursor:pointer;text-align:left}
-.faq-q .plus{font-size:22px;font-weight:400;color:var(--acc);transition:.3s;flex-shrink:0}
-.faq-item.open .plus{transform:rotate(45deg)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .38s ease}
-.faq-a p{padding:0 22px 20px;color:var(--muted);font-size:15px;line-height:1.65}
-.faq-a b{color:var(--text)}
+.faq-wrap{max-width:780px}
+.faq-item{border:1px solid var(--hair);border-radius:12px;background:var(--card);margin-bottom:8px;overflow:hidden}
+.faq-item.open{border-color:rgba(31,27,22,.2)}
+.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 20px;background:none;border:0;color:var(--ink);font:500 15px var(--sans);cursor:pointer;text-align:left}
+.faq-q .plus{width:18px;height:18px;color:var(--ink-3);transition:transform .18s var(--ease);flex-shrink:0}
+.faq-item.open .plus{transform:rotate(45deg);color:var(--accent)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s var(--ease)}
+.faq-a p{padding:0 20px 18px;color:var(--ink-2);font-size:14.5px;line-height:1.65}
+.faq-a b{color:var(--ink);font-weight:500}
 
 /* ---------- FOOTER ---------- */
-footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--bg2)}
-.foot-grid{display:flex;justify-content:space-between;gap:36px;flex-wrap:wrap;margin-bottom:36px}
-.foot-brand{max-width:320px}
+footer{border-top:1px solid var(--hair);padding:56px 0 32px;background:var(--paper-2)}
+.foot-grid{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;margin-bottom:40px}
+.foot-brand{max-width:340px}
 .foot-brand .brand{margin-bottom:14px}
-.foot-brand p{color:var(--muted);font-size:14px}
-.foot-col h4{font-size:13px;text-transform:uppercase;letter-spacing:1.8px;color:var(--muted);margin-bottom:16px;font-weight:700}
-.foot-col a{display:block;color:var(--text);font-size:14.5px;margin-bottom:11px;opacity:.85;transition:.2s}
-.foot-col a:hover{color:var(--acc);opacity:1}
-.foot-bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:13px}
-.foot-bottom code{font-family:var(--mono);color:var(--acc)}
+.foot-brand p{color:var(--ink-2);font-size:13.5px;line-height:1.6}
+.foot-col h4{font:400 12px var(--mono);color:var(--ink-3);margin-bottom:14px}
+.foot-col a{display:block;color:var(--ink-2);font-size:14px;margin-bottom:10px;transition:color .16s var(--ease)}
+.foot-col a:hover{color:var(--ink)}
+.foot-bottom{border-top:1px solid var(--hair);padding-top:20px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;color:var(--ink-3);font:400 12px var(--mono)}
 
 /* ---------- REVEAL ---------- */
-.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease;transition-delay:var(--d,0s)}
+.reveal{opacity:0;transform:translateY(8px);transition:opacity .45s var(--ease),transform .45s var(--ease);transition-delay:var(--d,0s)}
 .reveal.visible{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .reveal{opacity:1;transform:none}
+}
 
 /* ---------- RESPONSIVE ---------- */
 @media(max-width:1020px){
-  .hero-grid{grid-template-columns:1fr;gap:50px;text-align:center}
-  .hero-text p{margin-inline:auto}
-  .hero-btns,.hero-meta{justify-content:center}
-  .chip3{display:none}
+  .hero-grid{grid-template-columns:1fr;gap:40px}
+  .hero-text p{max-width:600px}
+  .hero-demo{justify-content:center;padding:0;margin-top:8px}
+  .trace{display:none}
   .feat-grid,.steps{grid-template-columns:repeat(2,1fr)}
   .stats{grid-template-columns:repeat(2,1fr)}
+  .stat:nth-child(3){border-left:0;padding-left:0}
+  .stat:nth-child(n+3){margin-top:8px}
 }
 @media(max-width:860px){
-  .nav-links{position:fixed;top:70px;left:0;right:0;background:rgba(6,9,14,.97);backdrop-filter:blur(14px);flex-direction:column;padding:26px;gap:20px;border-bottom:1px solid var(--border);transform:translateY(-130%);transition:.35s;z-index:90}
+  .nav-links{position:fixed;top:64px;left:0;right:0;background:rgba(247,244,238,.98);backdrop-filter:blur(12px);flex-direction:column;padding:24px 32px;gap:18px;border-bottom:1px solid var(--hair);transform:translateY(-130%);transition:transform .25s var(--ease);z-index:90}
   body.menu-open .nav-links{transform:none}
   .nav-cta{display:none}
   .burger{display:flex}
+  .eco{grid-template-columns:1fr}
+  .eco-icon{order:-1;width:72px;height:72px}
+  .versions{grid-template-columns:1fr}
 }
 @media(max-width:640px){
-  .hero{padding-top:130px}
-  .feat-grid,.steps,.dl-wrap{grid-template-columns:1fr}
-  .chip1{left:-2%}
-  .chip2{right:-2%}
-  .section{padding:76px 0}
-  .btn-lg{width:100%}
+  .container{padding:0 20px}
+  .hero{padding-top:104px}
+  .hero-text p{font-size:16px}
+  .hero-btns{flex-direction:column;align-items:stretch}
   .hero-btns .btn{width:100%}
-  .dl-wrap{gap:14px}
-  .dl-card{padding:28px 20px}
-  .dl-card h3{font-size:19px}
-  .faq-q{font-size:15px;padding:16px 18px}
-  .faq-a p{font-size:14px}
-  .cmp-table{min-width:520px}
-  .cmp-table th,.cmp-table td{padding:12px 10px;font-size:13px}
-  .stats{gap:10px}
-  .stat{padding:18px 12px}
+  .stats{grid-template-columns:1fr 1fr;margin-top:40px}
+  .stat{padding:20px 16px 0}
+  .stat:nth-child(3){padding-left:16px;border-left:1px solid var(--hair-soft)}
   .stat b{font-size:26px}
-  .stat span{font-size:11.5px}
-  .hero-meta{font-size:12px}
+  .stat.minus b{font-size:19px}
+  .stat span{font-size:12px}
+  .section{padding:72px 0}
+  .feat-grid,.steps{grid-template-columns:1fr}
+  .cmp-table{min-width:560px}
+  .cmp-table th,.cmp-table td{padding:12px 12px;font-size:13px}
+  .faq-q{font-size:14.5px;padding:14px 16px}
+  .faq-a p{font-size:14px;padding:0 16px 16px}
+  .dl-card,.eco{padding:22px}
+  .foot-grid{flex-direction:column;gap:28px}
+  .foot-bottom{flex-direction:column;gap:8px}
 }
 @media(max-width:380px){
-  .hero{padding-top:110px}
-  .hero-demo{transform:scale(.85);transform-origin:top center;margin-bottom:-40px}
-  h1{font-size:30px;letter-spacing:-1px}
-  .hero-text p{font-size:15px}
-  .badge{font-size:11px;padding:6px 12px}
-  .phone{width:220px;border-radius:34px;padding:8px}
-  .phone-notch{width:72px;height:18px;top:14px}
-  .screen{border-radius:28px}
-  .chat-head{padding:28px 10px 10px}
-  .chat-ava{width:28px;height:28px}
-  .chat-head b{font-size:12px}
-  .chat-lock{font-size:9px;padding:3px 5px}
-  .bubble{font-size:11.5px;padding:7px 10px 5px}
   .container{padding:0 16px}
-  .nav-inner{height:60px}
-  .brand{font-size:16px}
-  .brand img{width:26px;height:26px}
-  .burger{width:36px;height:36px}
-  .burger span{width:16px}
-  .section{padding:60px 0}
-  .sec-head h2{font-size:24px}
-  .sec-head p{font-size:14.5px}
-  .feat{padding:22px 18px}
-  .feat h3{font-size:16px}
-  .feat p{font-size:13.5px}
-  .step{padding:22px 18px}
-  .step h3{font-size:15.5px}
-  .step p{font-size:13.5px}
-  .dl-card{padding:24px 16px}
-  .dl-icon{font-size:38px}
-  .dl-card h3{font-size:17px}
-  .dl-card .dl-desc{font-size:13.5px;margin-bottom:20px}
-  .foot-grid{flex-direction:column;gap:24px}
-  .foot-bottom{flex-direction:column;text-align:center;gap:8px}
-  .marquee-track{gap:30px}
-  .marquee-track span{font-size:12px}
-}
-.mitm-link {
-  color: var(--acc);
-  border-bottom: 1px dashed var(--acc);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.mitm-link:hover {
-  color: var(--acc2);
-  border-bottom-color: var(--acc2);
+  .hero{padding-top:96px}
+  h1{font-size:34px}
+  .phone{width:250px}
+  .stat{padding:18px 12px 0}
+  .stat:nth-child(3){padding-left:12px}
+  .stat b{font-size:23px}
 }
 </style>
 </head>
@@ -336,8 +317,9 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <nav id="nav">
   <div class="container nav-inner">
     <a class="brand" href="#top">
-      <img src="logo_fixed.webp" alt="Penik Messenger">
-      <span>Penik&nbsp;<em>Messenger</em></span>
+      <img src="logo_flat.svg" alt="" width="28" height="28">
+      <span class="brand-name">Penik</span>
+      <span class="brand-sub">messenger</span>
     </a>
     <div class="nav-links" id="navLinks">
       <a href="#features">Возможности</a>
@@ -345,34 +327,31 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
       <a href="#compare">Сравнение</a>
       <a href="#download">Скачать</a>
       <a href="#versions">Версии</a>
-      <a href="#faq">FAQ</a>
+      <a href="#faq">Вопросы</a>
     </div>
     <div class="nav-cta">
       <span class="btn btn-disabled btn-sm">Скачать APK</span>
     </div>
-    <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button>
+    <button class="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
 </nav>
 
 <!-- ================= HERO ================= -->
 <header class="hero" id="top">
-  <div class="hero-bg"></div>
   <div class="container hero-grid">
     <div class="hero-text">
-      <div class="badge"><span class="pulse"></span> без E2EE · история хранится на сервере</div>
-      <h1>Свой мессенджер<br><span class="grad">без лишнего.</span></h1>
-      <p><b>Penik</b> — простой и быстрый чат: лички, группы, звонки. Сообщения лежат на сервере открыто, без сквозного шифрования. Зато всё летает и ничего не слетает.</p>
-      <span class="hand-note">честно про минус — ниже, в разделе «как устроено»</span>
+      <div class="hero-kicker"><span class="arrow">→</span> Чат для Android</div>
+      <h1>Переписка живёт<br>на сервере</h1>
+      <p><b>Penik</b> — чат для Android. Переписка хранится на сервере, поэтому открывается на любом устройстве. Сквозного шифрования нет: сервер видит сообщения. Это минус, и мы его не прячем.</p>
+      <span class="hand-note"><span class="minus-mark">−</span> про минус — в разделе «Как устроено»</span>
       <div class="hero-btns">
         <span class="btn btn-disabled btn-lg">Скачать APK</span>
+        <a class="btn btn-outline btn-lg" href="#security">Как это устроено</a>
       </div>
       <div class="hero-meta">Android 8.0+ · v1.3.7 · бесплатно и без рекламы</div>
     </div>
 
     <div class="hero-demo">
-      <div class="chip chip1">⚡ PXMPP</div>
-      <div class="chip chip2">📱 мультидевайс</div>
-      <div class="chip chip3">💬 группы + звонки</div>
       <div class="phone">
         <div class="phone-notch"></div>
         <div class="screen">
@@ -394,101 +373,100 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 
   <div class="container">
     <div class="stats">
-      <div class="stat minus reveal" style="--d:.05s"><b>без E2EE</b><span>сервер хранит историю открыто — это минус</span></div>
-      <div class="stat reveal" style="--d:.12s"><b>1</b><span>аккаунт на всех устройствах сразу</span></div>
-      <div class="stat reveal" style="--d:.19s"><b>∞</b><span>устройств на один аккаунт</span></div>
-      <div class="stat reveal" style="--d:.26s"><b>0</b><span>слетевших ключей и несверенных кодов</span></div>
+      <div class="stat minus reveal" style="--d:.04s"><b>открыто</b><span>сервер хранит переписку и видит сообщения — это минус</span></div>
+      <div class="stat reveal" style="--d:.08s"><b>1</b><span>аккаунт на всех устройствах сразу</span></div>
+      <div class="stat reveal" style="--d:.12s"><b>∞</b><span>устройств на один аккаунт</span></div>
+      <div class="stat reveal" style="--d:.16s"><b>0</b><span>возни с ключами и кодами</span></div>
     </div>
   </div>
 </header>
 
-<!-- ================= MARQUEE ================= -->
-<div class="marquee" aria-hidden="true">
-  <div class="marquee-track" id="mqTrack">
-    <span><i>◆</i>PXMPP</span><span><i>◆</i>Direct TLS</span><span><i>◆</i>Мультидевайсинг</span><span><i>◆</i>Группы</span><span><i>◆</i>Звонки</span><span><i>◆</i>Стикеры</span><span><i>◆</i>Без E2EE</span><span><i>◆</i>Открытый сервер</span>
-    <span><i>◆</i>PXMPP</span><span><i>◆</i>Direct TLS</span><span><i>◆</i>Мультидевайсинг</span><span><i>◆</i>Группы</span><span><i>◆</i>Звонки</span><span><i>◆</i>Стикеры</span><span><i>◆</i>Без E2EE</span><span><i>◆</i>Открытый сервер</span>
+<!-- ================= PROTOCOL STRIP ================= -->
+<div class="strip" aria-hidden="true">
+  <div class="container strip-inner">
+    <span>Чаты</span><span>Группы</span><span>Звонки</span><span>Файлы</span><span>История на сервере</span><span>Любое число устройств</span><span>Без сквозного шифрования</span><span>Свой сервер</span>
   </div>
 </div>
 
 <!-- ================= FEATURES ================= -->
 <section class="section" id="features">
   <div class="container">
-    <div class="sec-head center reveal">
+    <div class="sec-head reveal">
       <span class="tag">Возможности</span>
       <h2>Что умеет Penik</h2>
-      <p>Ничего лишнего. Только то, что должен уметь нормальный мессенджер в 2026 году — и то, чего не умеют остальные.</p>
+      <p>Ничего лишнего. Только то, что нужно для чатов, групп и звонков.</p>
     </div>
     <div class="feat-grid">
-      <div class="feat minus reveal" style="--d:.05s">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span>
+      <div class="feat minus reveal" style="--d:.04s">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span>
         <h3>Без сквозного шифрования</h3>
-        <p>Главный минус: E2EE здесь нет. Сообщения и файлы хранятся на сервере в открытом виде, оператор сервера может всё прочитать.</p>
-        <div class="feat-tags"><span>Без E2EE</span><span>Минус</span></div>
+        <p>Главный минус: переписку видит сервер. Сообщения и файлы хранятся там открыто, оператор сервера может всё прочитать.</p>
+        <div class="feat-tags"><span>Минус</span><span>Сервер видит всё</span></div>
+      </div>
+      <div class="feat reveal" style="--d:.08s">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <h3>Групповые чаты</h3>
+        <p>Общие группы: состав, история и файлы лежат на сервере. Удобно синхронизировать, но приватности от сервера нет.</p>
+        <div class="feat-tags"><span>Группы</span><span>История в облаке</span></div>
       </div>
       <div class="feat reveal" style="--d:.12s">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-        <h3>Группы в облаке</h3>
-        <p>Обычные облачные группы: состав, история и файлы лежат на сервере. Удобно синхронизируется, но приватности от сервера нет.</p>
-        <div class="feat-tags"><span>Группы</span><span>Облачная история</span></div>
-      </div>
-      <div class="feat reveal" style="--d:.19s">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="14" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M22 7h-4v4h4V7z"/></svg></span>
-        <h3>Мультидевайсинг</h3>
-        <p>Телефон, планшет, комп на работе — заходите с любого количества устройств. История подтягивается с сервера сама.</p>
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg></span>
+        <h3>Аккаунт на всех устройствах</h3>
+        <p>Телефон, планшет, компьютер — заходите с любого числа устройств. История подтягивается с сервера сама.</p>
         <div class="feat-tags"><span>∞ устройств</span><span>Синхронизация</span></div>
       </div>
-      <div class="feat reveal" style="--d:.05s">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span>
-        <h3>Открытый протокол XMPP (v2)</h3>
-        <p>Транспорт нового поколения: открытый стандарт XMPP с готовыми XEP-расширениями. Чаты, звонки и совместимость с другими клиентами из коробки. Потянет даже на интернете как у Кирилла.</p>
-        <div class="feat-tags"><span>XMPP</span><span>XEP</span><span>v2</span></div>
+      <div class="feat reveal" style="--d:.04s">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span>
+        <h3>Открытый стандарт XMPP</h3>
+        <p>Связь работает по открытому стандарту XMPP: готовые расширения, чаты и совместимость с другими клиентами из коробки.</p>
+        <div class="feat-tags"><span>XMPP</span><span>Совместимость</span></div>
+      </div>
+      <div class="feat reveal" style="--d:.08s">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+        <h3>Аудио и видеозвонки</h3>
+        <p>Звонки один на один прямо в приложении, без отдельных сервисов и настроек.</p>
+        <div class="feat-tags"><span>Звонки</span><span>1:1</span></div>
       </div>
       <div class="feat reveal" style="--d:.12s">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-        <h3>Аудио и видеозвонки (v2)</h3>
-        <p>Вызовы 1:1 через XMPP Jingle — штатный механизм XMPP, без отдельных сервисов и костылей.</p>
-        <div class="feat-tags"><span>Jingle</span><span>1:1</span><span>v2</span></div>
-      </div>
-      <div class="feat reveal" style="--d:.19s">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
-        <h3>Облачная история</h3>
-        <p>Вся переписка лежит на сервере, поэтому новое устройство не просит паролей и seed-фраз — просто вошли и читаете.</p>
-        <div class="feat-tags"><span>Облако</span><span>Без бэкапов ключей</span></div>
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
+        <h3>История в облаке</h3>
+        <p>Вся переписка лежит на сервере, поэтому новое устройство не просит паролей и секретных фраз — просто вошли и читаете.</p>
+        <div class="feat-tags"><span>Облако</span><span>Без ключей</span></div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ================= SECURITY ================= -->
-<section class="section" id="security" style="background:var(--bg2);border-block:1px solid var(--border)">
+<section class="section" id="security" style="background:var(--paper-2);border-block:1px solid var(--hair)">
   <div class="container">
-    <div class="sec-head center reveal">
+    <div class="sec-head reveal">
       <span class="tag">Как устроено</span>
-      <h2>Как это работает — честно</h2>
-      <p>Без магии. Сообщения идут на XMPP-сервер (Prosody) и лежат в его внутреннем хранилище открыто. Защита только по пути — TLS.</p>
+      <h2>Как это работает</h2>
+      <p>Сообщения приходят на сервер Penik и остаются в его хранилище открыто. По пути они защищены, но на сервере их можно прочитать.</p>
     </div>
     <div class="steps">
-      <div class="step reveal" style="--d:.05s">
-        <span class="step-num">ШАГ 01</span>
+      <div class="step reveal" style="--d:.04s">
+        <span class="step-num">01</span>
         <h3>Отправка</h3>
-        <p>Клиент отправляет сообщение на XMPP-сервер (Prosody) обычной <code>message</code>-станзой по TLS. Никаких ключей сверять не нужно.</p>
+        <p>Приложение отправляет сообщение на сервер по защищённому соединению. Сверять ключи и коды не нужно.</p>
+      </div>
+      <div class="step minus reveal" style="--d:.08s">
+        <span class="step-num">02 · минус</span>
+        <h3>Хранение</h3>
+        <p>Сервер записывает историю в своё хранилище. Любой, у кого есть доступ к серверу, видит переписку.</p>
       </div>
       <div class="step reveal" style="--d:.12s">
-        <span class="step-num">ШАГ 02</span>
-        <h3>Хранение — минус</h3>
-        <p>Prosody складывает историю во <code>internal storage</code> (архив <code>MAM, XEP-0313</code>). Это и есть главный минус: любой, у кого есть доступ к серверу, видит переписку.</p>
-      </div>
-      <div class="step reveal" style="--d:.19s">
-        <span class="step-num">ШАГ 03</span>
+        <span class="step-num">03</span>
         <h3>Доставка</h3>
-        <p>Сервер рассылает сообщение на все устройства аккаунта (<code>carbons, XEP-0280</code>), пропущенное подтягивается из архива (<code>MAM</code>). Зашёл с нового телефона — история уже там.</p>
+        <p>Сервер отправляет сообщение на все устройства аккаунта. Пропущенное подтягивается из истории — зашли с нового телефона, и она уже там.</p>
       </div>
     </div>
 
     <div class="server-panel reveal">
       <div class="term-head">
         <span class="tdot r"></span><span class="tdot y"></span><span class="tdot g"></span>
-        <span class="term-title">prosody — что видит сервер</span>
+        <span class="term-title">сервер — что он видит</span>
       </div>
       <div class="term-body" id="termBody"></div>
       <div class="term-caption">Сервер видит текст сообщений. <b>Это осознанный минус, а не баг.</b></div>
@@ -496,14 +474,13 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
   </div>
 </section>
 
-
-
 <!-- ================= COMPARE ================= -->
 <section class="section" id="compare">
   <div class="container">
-    <div class="sec-head center reveal">
-      <span class="tag">Честное сравнение</span>
+    <div class="sec-head reveal">
+      <span class="tag">Сравнение</span>
       <h2>Penik vs Signal vs Telegram vs МАКС</h2>
+      <p>Где Penik проигрывает, а где выигрывает — без звёздочек.</p>
     </div>
     <div class="table-wrap reveal">
       <table class="cmp-table">
@@ -518,106 +495,109 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
         </thead>
         <tbody>
           <tr>
-            <td>E2EE в переписке</td>
-            <td class="penik-col no">❌ нет</td>
-            <td class="yes">✅ да</td>
-            <td class="meh">⚠️ секретные чаты</td>
-            <td class="no">❌ нет</td>
+            <td>Сквозное шифрование</td>
+            <td class="penik-col"><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>нет</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark meh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>секретные чаты</span></td>
+            <td><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>нет</span></td>
           </tr>
           <tr>
-            <td>Может ли читать</td>
-            <td class="penik-col no">❌ да</td>
-            <td class="yes">✅ нет</td>
-            <td class="no">❌ да</td>
-            <td class="no">❌ да</td>
+            <td>Сервер читает сообщения</td>
+            <td class="penik-col"><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>да</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>нет</span></td>
+            <td><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>да</span></td>
+            <td><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>да</span></td>
           </tr>
           <tr>
             <td>Приватные группы</td>
-            <td class="penik-col no">❌ нет</td>
-            <td class="yes">✅ да</td>
-            <td class="no">❌ нет</td>
-            <td class="no">❌ нет</td>
+            <td class="penik-col"><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>нет</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>нет</span></td>
+            <td><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>нет</span></td>
           </tr>
           <tr>
-            <td>Коды безопасности</td>
-            <td class="penik-col yes">✅ да</td>
-            <td class="yes">✅ да</td>
-            <td class="meh">⚠️ частично</td>
-            <td class="no">❌ нет</td>
+            <td>Проверка кодов</td>
+            <td class="penik-col"><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>нет</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark meh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>частично</span></td>
+            <td><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>нет</span></td>
           </tr>
           <tr>
             <td>Шифрование звонков</td>
-            <td class="penik-col yes">✅ да</td>
-            <td class="yes">✅ да</td>
-            <td class="yes">✅ да</td>
-            <td class="no">❌ нет</td>
+            <td class="penik-col"><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>нет</span></td>
           </tr>
           <tr>
-            <td>Сохраненки</td>
-            <td class="penik-col meh">⚠️ без шифрования</td>
-            <td class="yes">✅ да</td>
-            <td class="meh">⚠️ да, без шифрования</td>
-            <td class="meh">⚠️ да, без шифрования</td>
+            <td>Сохранённые сообщения</td>
+            <td class="penik-col"><span class="mark meh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>без шифрования</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark meh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>да, без шифрования</span></td>
+            <td><span class="mark meh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>да, без шифрования</span></td>
           </tr>
           <tr>
-            <td>Бинарный протокол</td>
-            <td class="penik-col yes">✅ PXMPP</td>
-            <td class="yes">✅ Protobuf</td>
-            <td class="yes">✅ MTProto</td>
-            <td class="yes">✅ MessagePack</td>
+            <td>Быстрая передача данных</td>
+            <td class="penik-col"><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
           </tr>
           <tr>
-            <td>Мультидевайсинг</td>
-            <td class="penik-col yes">✅ без ограничений</td>
-            <td class="meh">⚠️ нужен телефон</td>
-            <td class="yes">✅ да</td>
-            <td class="yes">✅ да</td>
+            <td>Несколько устройств</td>
+            <td class="penik-col"><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>без ограничений</span></td>
+            <td><span class="mark meh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>нужен телефон</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
+            <td><span class="mark ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>да</span></td>
           </tr>
         </tbody>
       </table>
     </div>
-    <p class="cmp-note">// отсутствие E2EE у Penik — честный минус. зато нет возни с ключами.</p>
+    <p class="cmp-note">// без сквозного шифрования Penik проигрывает в приватности. Зато не нужно возиться с ключами.</p>
   </div>
 </section>
 
 <!-- ================= ECOSYSTEM ================= -->
 <section class="section" id="ecosystem">
   <div class="container">
-    <div class="sec-head center reveal">
+    <div class="sec-head reveal">
       <span class="tag">Экосистема Penik</span>
-      <h2>Мессенджер — только начало. Есть еще VPN</h2>
-      <p>Мессенджер — для общения и звонков. А PenikVPN защищает соединение: VLESS Reality, пересобранный MTProxy и обход ТСПУ. Вместе — удобная связь и скрытый от провайдера трафик.</p>
+      <h2>Кроме мессенджера — PenikVPN</h2>
+      <p>Мессенджер — для общения и звонков. PenikVPN скрывает ваш интернет-трафик от провайдера и помогает открывать заблокированные сайты.</p>
     </div>
-    <div class="dl-wrap reveal" style="grid-template-columns:1fr;max-width:640px">
-      <div class="dl-card" style="text-align:center">
-        <div class="dl-icon"><img src="https://vpn.penik.ru/penikvpn-icon-round-192.webp" alt="PenikVPN" width="72" height="72" style="display:block;border-radius:50%;margin:0 auto" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none;margin:0 auto"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+    <div class="eco reveal">
+      <div>
         <h3>PenikVPN</h3>
-        <p class="dl-desc">Быстрый VPN без логов: VLESS Reality, ShadowTLS, Split Tunneling для банков и всего 50 ₽ в месяц.</p>
-        <div class="feat-tags" style="justify-content:center;margin-bottom:26px"><span>VLESS Reality</span><span>MTProxy</span><span>0 логов</span><span>50 ₽/мес</span></div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-          <a class="btn btn-primary btn-lg" href="https://vpn.penik.ru" target="_blank" rel="noopener">Перейти на PenikVPN&nbsp;→</a>
+        <p class="eco-desc">Быстрый VPN без логов. Банковские приложения можно пустить напрямую, мимо VPN, — и всё это за 50 ₽ в месяц.</p>
+        <div class="eco-tags"><span>Без логов</span><span>Обход блокировок</span><span>50 ₽/мес</span></div>
+        <div class="eco-actions">
+          <a class="btn btn-primary btn-lg" href="https://vpn.penik.ru" target="_blank" rel="noopener">Перейти на PenikVPN →</a>
         </div>
-        <div style="margin-top:14px;font-size:13px;color:var(--muted);">Совет: включайте PenikVPN вместе с мессенджером — тогда провайдер не видит ни ваш трафик, ни сам факт подключения к серверу</div>
+        <p class="eco-note">Совет: включайте PenikVPN вместе с мессенджером — тогда провайдер не видит ни ваш трафик, ни сам факт подключения к серверу.</p>
+      </div>
+      <div class="eco-icon">
+        <img src="https://vpn.penik.ru/penikvpn-icon-round-192.webp" alt="PenikVPN" width="88" height="88" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ================= DOWNLOAD ================= -->
-<section class="section" id="download" style="background:var(--bg2);border-block:1px solid var(--border)">
+<section class="section" id="download" style="background:var(--paper-2);border-block:1px solid var(--hair)">
   <div class="container">
-    <div class="sec-head center reveal">
+    <div class="sec-head reveal">
       <span class="tag">Установка</span>
-      <h2>Попробуй сам</h2>
+      <h2>Попробовать</h2>
       <p>Единственный способ попасть в Penik — поставить APK на Android.</p>
     </div>
-    <div class="dl-wrap" style="grid-template-columns:1fr;max-width:640px">
-      <div class="dl-card reveal" style="--d:.05s">
-        <div class="dl-icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg></div>
+    <div class="dl-card reveal">
+      <div class="dl-head">
+        <span class="dl-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg></span>
         <h3>Android · APK</h3>
-        <p class="dl-desc">Полноценный клиент: фоновые уведомления, облачная история, работа на любом интернете.</p>
-        <span class="btn btn-disabled btn-lg" style="width:100%">Скачать APK</span>
       </div>
+      <p class="dl-desc">Полноценный клиент: фоновые уведомления, история на сервере, работа на любом интернете.</p>
+      <span class="btn btn-disabled btn-lg">Скачать APK</span>
     </div>
   </div>
 </section>
@@ -625,21 +605,21 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <!-- ================= VERSIONS ================= -->
 <section class="section" id="versions">
   <div class="container">
-    <div class="sec-head center reveal">
+    <div class="sec-head reveal">
       <span class="tag">Версии</span>
       <h2>Две версии Penik: v1 и v2</h2>
-      <p>Старая версия v1 на своём протоколе заброшена — вся разработка идёт в новом поколении v2 на открытом стандарте XMPP.</p>
+      <p>Старая версия v1 на своём формате связи заброшена — вся разработка идёт в новом поколении v2 на открытом стандарте XMPP.</p>
     </div>
-    <div class="dl-wrap">
-      <div class="dl-card reveal" style="--d:.05s">
-        <h3>v1 — на своём протоколе (заброшен)</h3>
-        <p class="dl-desc">Первое поколение: собственный бинарный протокол (MessagePack поверх WebSocket). Проект заброшен и работал нестабильно; новые функции добавлялись медленно — каждую фичу приходилось пилить с нуля.</p>
-        <div class="feat-tags"><span>Свой протокол</span><span>Заброшен</span><span>Фичи медленно</span></div>
+    <div class="versions">
+      <div class="vcard reveal" style="--d:.04s">
+        <div class="vhead"><h3>v1 — на своём формате</h3><span class="vstate">архив</span></div>
+        <p>Первое поколение: собственный формат передачи данных. Проект заброшен и работал нестабильно; новые функции добавлялись медленно — каждую приходилось делать с нуля.</p>
+        <div class="feat-tags"><span>Свой формат</span><span>Заброшен</span><span>Медленно</span></div>
       </div>
-      <div class="dl-card reveal" style="--d:.14s">
-        <h3>v2 — на основе XMPP</h3>
-        <p class="dl-desc">Новое поколение на открытом стандарте XMPP: готовые XEP-расширения, звонки и совместимость с другими клиентами. Функции выходят быстрее — не изобретаем велосипед.</p>
-        <div class="feat-tags"><span>XMPP</span><span>Открытый стандарт</span><span>Фичи быстрее</span></div>
+      <div class="vcard current reveal" style="--d:.08s">
+        <div class="vhead"><h3>v2 — на основе XMPP</h3><span class="vstate">актуальная</span></div>
+        <p>Новое поколение на открытом стандарте XMPP: готовые расширения, звонки и совместимость с другими клиентами. Функции выходят быстрее.</p>
+        <div class="feat-tags"><span>XMPP</span><span>Открытый стандарт</span><span>Быстрее</span></div>
       </div>
     </div>
   </div>
@@ -648,34 +628,34 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 <!-- ================= FAQ ================= -->
 <section class="section" id="faq">
   <div class="container">
-    <div class="sec-head center reveal">
-      <span class="tag">FAQ</span>
-      <h2>Вопросы, которые нам задают</h2>
-      <p>Отвечаем честно, как умеем.</p>
+    <div class="sec-head reveal">
+      <span class="tag">Вопросы</span>
+      <h2>Частые вопросы</h2>
+      <p>О версиях, истории и устройствах.</p>
     </div>
     <div class="faq-wrap">
-      <div class="faq-item reveal" style="--d:.05s">
-        <button class="faq-q" type="button">Чем v1 отличается от v2? <span class="plus">+</span></button>
-        <div class="faq-a"><p><b>v1</b> — старое поколение на собственном протоколе (MessagePack поверх WebSocket). Проект был нестабилен, а новые функции добавлялись медленно. <b>v2</b> — новое поколение на основе открытого стандарта <b>XMPP</b> с собственным бинарным расширением <b>PXMPP</b>: поддержка аудио/видео звонков, стикерпаков Telegram, быстрого обмена файлами и максимальной стабильности.</p></div>
+      <div class="faq-item reveal" style="--d:.04s">
+        <button class="faq-q" type="button">Чем v1 отличается от v2? <svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <div class="faq-a"><p><b>v1</b> — старое поколение на собственном формате передачи данных. Проект был нестабилен, а новые функции добавлялись медленно. <b>v2</b> — новое поколение на основе открытого стандарта <b>XMPP</b> с собственной упаковкой данных <b>PXMPP</b>: звонки, стикеры Telegram, быстрый обмен файлами и стабильная работа.</p></div>
+      </div>
+      <div class="faq-item reveal" style="--d:.06s">
+        <button class="faq-q" type="button">Что такое PXMPP? <svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <div class="faq-a"><p><b>PXMPP</b> — способ упаковки данных Penik. Сообщения передаются не длинным текстом, а короткими байтами, поэтому трафика уходит меньше, батарея тратится медленнее, а сообщения быстрее доходят на слабом интернете.</p></div>
+      </div>
+      <div class="faq-item reveal" style="--d:.08s">
+        <button class="faq-q" type="button">Как работает синхронизация? <svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <div class="faq-a"><p>Все ваши устройства входят в один аккаунт на сервере. Вошли с нового телефона — вся переписка и контакты сразу подтягиваются из облака.</p></div>
       </div>
       <div class="faq-item reveal" style="--d:.1s">
-        <button class="faq-q" type="button">Что такое протокол PXMPP? <span class="plus">+</span></button>
-        <div class="faq-a"><p><b>PXMPP (PenikXMPP)</b> — это бинарная токенизация поверх протокола XMPP. Вместо громоздких XML-строк данные передаются в виде компактных байтовых токенов с локальным кэшированием словарей. Это снижает сетевой оверхед на 70%, экономит заряд батареи и обеспечивает мгновенную доставку сообщений даже при слабом мобильном интернете.</p></div>
+        <button class="faq-q" type="button">Где хранятся сообщения? <svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <div class="faq-a"><p>На сервере Penik и в локальной базе на телефоне. Поэтому переписка доступна без интернета, а между устройствами синхронизируется сама.</p></div>
       </div>
-      <div class="faq-item reveal" style="--d:.15s">
-        <button class="faq-q" type="button">Как работает мультидевайсинг? <span class="plus">+</span></button>
-        <div class="faq-a"><p>Все ваши устройства синхронизируются через личный аккаунт на сервере. Вошли с нового телефона — вся переписка и контакты мгновенно подтягиваются из облака.</p></div>
-      </div>
-      <div class="faq-item reveal" style="--d:.2s">
-        <button class="faq-q" type="button">Где хранятся сообщения? <span class="plus">+</span></button>
-        <div class="faq-a"><p>Сообщения синхронизируются через ваш сервер Prosody и кэшируются в локальной базе данных на телефоне. Благодаря этому переписка доступна в офлайне, а синхронизация между устройствами происходит моментально.</p></div>
-      </div>
-      <div class="faq-item reveal" style="--d:.25s">
-        <button class="faq-q" type="button">Что будет, если я потеряю устройство? <span class="plus">+</span></button>
+      <div class="faq-item reveal" style="--d:.12s">
+        <button class="faq-q" type="button">Что будет, если я потеряю устройство? <svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
         <div class="faq-a"><p>Просто установите Penik на новый телефон и войдите под своим логином и паролем — вся история чатов и звонков автоматически восстановится с сервера.</p></div>
       </div>
-      <div class="faq-item reveal" style="--d:.3s">
-        <button class="faq-q" type="button">А iOS будет? <span class="plus">+</span></button>
+      <div class="faq-item reveal" style="--d:.14s">
+        <button class="faq-q" type="button">А iOS будет? <svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
         <div class="faq-a"><p>Нативного приложения для iOS пока нет — Penik разрабатывается и оптимизируется в первую очередь для Android.</p></div>
       </div>
     </div>
@@ -688,10 +668,11 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
     <div class="foot-grid">
       <div class="foot-brand">
         <a class="brand" href="#top">
-          <img src="logo_fixed.webp" alt="Penik Messenger">
-          <span>Penik&nbsp;<em>Messenger</em></span>
+          <img src="logo_flat.svg" alt="" width="28" height="28">
+          <span class="brand-name">Penik</span>
+          <span class="brand-sub">messenger</span>
         </a>
-        <p>Свой мессенджер со своими правилами. Быстрый и лёгкий протокол PXMPP, звонки и облачный мультидевайсинг.</p>
+        <p>Чат для Android с историей на сервере, звонками и синхронизацией между устройствами.</p>
       </div>
       <div class="foot-col">
         <h4>Продукт</h4>
@@ -699,21 +680,21 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
         <a href="https://github.com/Nielkro/PenikXMPP" target="_blank" rel="noopener">GitHub</a>
       </div>
       <div class="foot-col">
-        <h4>Технологии</h4>
-        <a href="#security">Бинарный протокол PXMPP</a>
-        <a href="#security">Direct TLS (XEP-0368)</a>
-        <a href="#security">SQLite + WebRTC</a>
+        <h4>Как устроено</h4>
+        <a href="#security">Что видит сервер</a>
+        <a href="#security">Где хранится история</a>
+        <a href="#download">Звонки и устройства</a>
       </div>
       <div class="foot-col">
         <h4>Разделы</h4>
         <a href="#compare">Сравнение</a>
         <a href="#download">Установка</a>
-        <a href="#faq">FAQ</a>
+        <a href="#faq">Вопросы</a>
       </div>
     </div>
     <div class="foot-bottom">
-      <span>© Niel kro, in 2026</span>
-      <span>работает даже на интернете Кирилла · <code>protocol = PXMPP</code></span>
+      <span>© Niel kro, 2026</span>
+      <span>XMPP · PXMPP · без сквозного шифрования</span>
     </div>
   </div>
 </footer>
@@ -722,12 +703,18 @@ footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--b
 /* ---------- NAV ---------- */
 const navEl = document.getElementById('nav');
 window.addEventListener('scroll', () => {
-  navEl.classList.toggle('scrolled', window.scrollY > 20);
+  navEl.classList.toggle('scrolled', window.scrollY > 12);
 });
 const burgerBtn = document.getElementById('burger');
-burgerBtn.addEventListener('click', () => document.body.classList.toggle('menu-open'));
+burgerBtn.addEventListener('click', () => {
+  const open = document.body.classList.toggle('menu-open');
+  burgerBtn.setAttribute('aria-expanded', String(open));
+});
 document.querySelectorAll('.nav-links a').forEach(link => {
-  link.addEventListener('click', () => document.body.classList.remove('menu-open'));
+  link.addEventListener('click', () => {
+    document.body.classList.remove('menu-open');
+    burgerBtn.setAttribute('aria-expanded', 'false');
+  });
 });
 
 /* ---------- REVEAL ON SCROLL ---------- */
@@ -741,14 +728,14 @@ const revealIO = new IntersectionObserver(entries => {
 }, { threshold: 0.12 });
 document.querySelectorAll('.reveal').forEach(el => revealIO.observe(el));
 
-/* ---------- CHAT DEMO (sequential, plain text) ---------- */
+/* ---------- CHAT DEMO ---------- */
 const chatBody = document.getElementById('chatBody');
 const chatScript = [
   { dir: 'out', text: 'Привет! Это Penik 👋' },
   { dir: 'in',  text: 'О, свой мессенджер? А там есть шифрование?' },
-  { dir: 'out', text: 'Честно — нет. Всё лежит на сервере открыто' },
+  { dir: 'out', text: 'Нет. Всё лежит на сервере открыто' },
   { dir: 'in',  text: 'Понятно. А группы есть?' },
-  { dir: 'out', text: 'Есть. И мультидевайс есть' },
+  { dir: 'out', text: 'Есть. И на всех устройствах сразу' },
   { dir: 'in',  text: 'У меня интернет как у Кирилла, потянет?' },
   { dir: 'out', text: 'PXMPP. Потянет даже у Кирилла 😎' },
   { dir: 'in',  text: 'Главный минус — сервер всё видит, да?' },
@@ -782,13 +769,13 @@ const termBody = document.getElementById('termBody');
 function addTermLine(dir, name, fields) {
   const lineEl = document.createElement('div');
   lineEl.className = 'tline';
-  const opColor = dir === '→' ? 'var(--acc2)' : 'var(--acc)';
+  const opColor = dir === '→' ? 'var(--term-accent)' : 'var(--term-text)';
   const dirArrow = dir === '→' ? '►' : '◄';
 
   lineEl.innerHTML =
-    `<span style="color:var(--muted)">${dirArrow}</span> ` +
-    `<span style="color:${opColor};font-weight:600">${name}</span> ` +
-    `<span style="color:var(--muted);font-size:11px">${fields}</span>`;
+    `<span class="tdir">${dirArrow}</span> ` +
+    `<span style="color:${opColor};font-weight:500">${name}</span> ` +
+    `<span class="thex">${fields}</span>`;
 
   termBody.appendChild(lineEl);
   while (termBody.children.length > 11) termBody.removeChild(termBody.firstChild);
@@ -796,18 +783,18 @@ function addTermLine(dir, name, fields) {
 }
 
 const termScript = [
-  { delay: 500,  dir: '→', name: '<message>',       f: 'to=kiril@penik.ru type=chat id=q7x2' },
-  { delay: 350,  dir: '←', name: '<message>',       f: 'from=kiril@penik.ru body="привет!"' },
-  { delay: 300,  dir: '→', name: '<iq/> mam',       f: 'query archive max=20 (XEP-0313)' },
-  { delay: 350,  dir: '←', name: '<iq/> mam',       f: '20 msgs from internal storage' },
-  { delay: 400,  dir: '→', name: '<presence>',      f: 'show=chat status="в сети"' },
-  { delay: 300,  dir: '←', name: '<iq/> roster',    f: 'push subscription=both' },
-  { delay: 350,  dir: '→', name: '<iq/> carbons',   f: 'enable (XEP-0280)' },
-  { delay: 300,  dir: '←', name: '<message>',       f: 'carbon copy from second device' },
-  { delay: 350,  dir: '→', name: '<iq/> upload',    f: 'slot request photo.jpg (XEP-0363)' },
-  { delay: 300,  dir: '←', name: '<iq/> upload',    f: 'slot put https://...' },
-  { delay: 350,  dir: '→', name: '<iq/> ping',      f: 'xmpp ping (XEP-0199)' },
-  { delay: 250,  dir: '←', name: '<iq/> pong',      f: 'still alive' },
+  { delay: 500,  dir: '→', name: 'Новое сообщение',  f: 'для Кирилла' },
+  { delay: 350,  dir: '←', name: 'Ответ',           f: '«привет!»' },
+  { delay: 300,  dir: '→', name: 'Запрос истории',  f: 'последние 20 сообщений' },
+  { delay: 350,  dir: '←', name: 'История',         f: '20 сообщений из хранилища' },
+  { delay: 400,  dir: '→', name: 'Статус',          f: '«в сети»' },
+  { delay: 300,  dir: '←', name: 'Контакты',        f: 'список обновлён' },
+  { delay: 350,  dir: '→', name: 'Второе устройство', f: 'подключено' },
+  { delay: 300,  dir: '←', name: 'Копия сообщения', f: 'на второе устройство' },
+  { delay: 350,  dir: '→', name: 'Файл',            f: 'photo.jpg загружается' },
+  { delay: 300,  dir: '←', name: 'Файл',            f: 'ссылка готова' },
+  { delay: 350,  dir: '→', name: 'Проверка связи',  f: '' },
+  { delay: 250,  dir: '←', name: 'Связь',           f: 'есть' }
 ];
 
 let scriptIdx = 0;
@@ -865,7 +852,6 @@ function handleHashFAQ() {
 }
 window.addEventListener('hashchange', handleHashFAQ);
 window.addEventListener('load', () => setTimeout(handleHashFAQ, 300));
-
 </script>
 </body>
 </html>
