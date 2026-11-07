@@ -794,11 +794,11 @@ SYSTEM_DLLS=(
 
     # GStreamer media helper DLLs (libgstrtp is required by isomp4/qtdemux for MP4/M4A message playback)
     "libgstrtp-1.0-0.dll"
-    "libgstsdp-1.0-0.dll"
 )
 
 if [ "$GOOGLE_WEBRTC_RELEASE" = false ]; then
     SYSTEM_DLLS+=(
+        "libgstsdp-1.0-0.dll"
         "libgstwebrtc-1.0-0.dll"
     )
 fi
