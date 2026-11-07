@@ -7455,6 +7455,7 @@ DROP TABLE message_history_post57_fixture;
                     ConversationManager.IDENTITY);
             Conversation stale_bare_chat = conversation_manager.create_conversation(
                 room_conversation.counterpart, account, Conversation.Type.CHAT);
+            stale_bare_chat.encryption = Encryption.OMEMO;
             Conversation private_conversation = conversation_manager.create_conversation(
                 occupant, account, Conversation.Type.GROUPCHAT_PM);
 

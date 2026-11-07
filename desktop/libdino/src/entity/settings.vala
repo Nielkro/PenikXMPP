@@ -498,7 +498,7 @@ public class Settings : Object {
         if (setting != null) {
             return (Encryption) int.parse(setting);
         }
-        return Encryption.OMEMO;
+        return Encryption.NONE;
     }
 
     public void set_default_encryption(Account account, Encryption encryption) {

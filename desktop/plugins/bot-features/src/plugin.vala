@@ -299,11 +299,11 @@ public class Plugin : RootInterface, AccountRemovalProvider, Object {
             message("Botmother: Set roster name '%s' for bot JID %s (account %s)",
                 bot.name, bot.jid, target_account.bare_jid.to_string());
 
-            // Create/get conversation with bot JID and set encryption to OMEMO
+            // Create/get conversation with bot JID and set encryption to NONE
             var cm = app.stream_interactor.get_module<ConversationManager>(ConversationManager.IDENTITY);
             Conversation conversation = cm.create_conversation(bot_jid, target_account, Conversation.Type.CHAT);
-            conversation.encryption = Entities.Encryption.OMEMO;
-            message("Botmother: Set encryption=OMEMO for bot conversation %s", bot.jid);
+            conversation.encryption = Entities.Encryption.NONE;
+            message("Botmother: Set encryption=NONE for bot conversation %s", bot.jid);
 
             // Approve any pending subscription FROM the bot + send our subscription TO the bot
             presence_mgr.approve_subscription(target_account, bot_jid);
@@ -360,9 +360,9 @@ public class Plugin : RootInterface, AccountRemovalProvider, Object {
 
                 // Check if conversation exists and fix encryption
                 Conversation? conv = cm.get_conversation(bot_jid, target_account, Conversation.Type.CHAT);
-                if (conv != null && conv.encryption != Entities.Encryption.OMEMO) {
-                    conv.encryption = Entities.Encryption.OMEMO;
-                    message("Botmother: Fixed encryption=OMEMO for bot conversation %s", bot.jid);
+                if (conv != null && conv.encryption != Entities.Encryption.NONE) {
+                    conv.encryption = Entities.Encryption.NONE;
+                    message("Botmother: Fixed encryption=NONE for bot conversation %s", bot.jid);
                 }
 
                 // Auto-approve any pending subscription from the bot
