@@ -15,7 +15,7 @@ public class MessageDiagnostics : Object {
         if (is_local_decryption_failure(message)) {
             // Manual archive reloads summarize their failures separately.
             // Live and automatic catch-up failures remain visible per message.
-            return _("This OMEMO message could not be decrypted on this device.");
+            return _("This message could not be decrypted on this device.");
         }
         return message.body;
     }

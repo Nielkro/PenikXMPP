@@ -211,7 +211,7 @@
                     <child>
                       <object class="AdwPreferencesGroup" id="dns_security_group">
                         <property name="title" translatable="yes">Connection security</property>
-                        <property name="description" translatable="yes">DNSSEC and DANE authenticate this account's server connection. They do not change OMEMO or OpenPGP message encryption.</property>
+                        <property name="description" translatable="yes">DNSSEC and DANE authenticate this account's server connection.</property>
                         <child>
                           <object class="AdwComboRow" id="dns_security_mode">
                             <property name="title" translatable="yes">DNSSEC and DANE</property>

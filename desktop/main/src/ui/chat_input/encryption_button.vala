@@ -470,6 +470,10 @@ public class EncryptionButton : Object {
             menu_button.visible = true;
             return;
         }
+        if (registry.encryption_list_entries.size == 0) {
+            menu_button.visible = false;
+            return;
+        }
         switch (conversation.type_) {
             case Conversation.Type.CHAT:
                 menu_button.visible = true;

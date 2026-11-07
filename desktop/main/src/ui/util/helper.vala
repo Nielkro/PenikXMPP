@@ -857,7 +857,7 @@ public static void show_clear_history_dialog(Conversation conversation, StreamIn
     var dialog = new Adw.AlertDialog(
         _("Delete all message history?"),
         supports_global_deletion
-            ? _("Local deletion removes the saved messages from this device. Unencrypted messages can be loaded again while they remain in the server archive. OMEMO messages already decrypted on this device cannot be restored from the archive alone after local deletion. Deleting for everyone also sends removal requests for your own sent messages.")
+            ? _("Local deletion removes the saved messages from this device. Messages can be loaded again while they remain in the server archive. Deleting for everyone also sends removal requests for your own sent messages.")
             : _("This will permanently delete all messages in this conversation. This action cannot be undone.")
     );
 

@@ -283,7 +283,7 @@
         <child>
           <object class="AdwActionRow" id="reset_database_row">
             <property name="title" translatable="yes">Reset Database</property>
-            <property name="subtitle" translatable="yes">Delete all messages, files and OMEMO keys. Your accounts will remain.</property>
+            <property name="subtitle" translatable="yes">Delete all messages and files. Your accounts will remain.</property>
             <property name="activatable">True</property>
             <child>
               <object class="GtkImage">

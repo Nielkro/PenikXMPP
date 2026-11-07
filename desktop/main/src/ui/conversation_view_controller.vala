@@ -417,7 +417,7 @@ public class ConversationViewController : Object {
     private void show_history_load_result(Conversation target, HistorySync.FetchResult result) {
         switch (result) {
             case HistorySync.FetchResult.SUCCESS_WITH_OMEMO_FAILURES:
-                show_history_load_notice(_("The archive query has finished. Some OMEMO messages could not be restored. OMEMO messages already decrypted on this device cannot be restored from the archive alone after local deletion."));
+                show_history_load_notice(_("The archive query has finished. Some messages could not be restored."));
                 break;
             case HistorySync.FetchResult.SUCCESS:
                 // A completed MAM query may contain only control stanzas or
@@ -427,7 +427,7 @@ public class ConversationViewController : Object {
                     ContentItemStore.IDENTITY).get_n_latest(target, 1).is_empty;
                 show_history_load_notice(has_content
                     ? _("The server archive query has finished.")
-                    : _("No messages could be restored from the server archive. OMEMO messages already decrypted on this device cannot be restored from the archive alone after local deletion."));
+                    : _("No messages could be restored from the server archive."));
                 break;
             case HistorySync.FetchResult.ERROR:
                 show_history_load_notice(_("Could not load message history. Please try again."));

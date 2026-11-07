@@ -3066,7 +3066,7 @@ public class Dino.Ui.Application : Adw.Application, Dino.Application {
         if (!profile_operation_available ()) return;
         var dialog = new Adw.AlertDialog (
             _("Reset Database"),
-            _("This will delete all messages, files and OMEMO encryption keys for all accounts.\n\n<b>Your accounts will remain, but you will lose all chat history and need to re-verify encryption with your contacts.</b>\n\nDinoX will restart. Enter your current database password after restarting to complete the reset. This action cannot be undone!")
+            _("This will delete all messages and files for all accounts.\n\n<b>Your accounts will remain, but you will lose all chat history.</b>\n\nDinoX will restart. Enter your current database password after restarting to complete the reset. This action cannot be undone!")
 );
         dialog.body_use_markup = true;
 

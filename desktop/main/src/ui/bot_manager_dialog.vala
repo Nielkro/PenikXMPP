@@ -1132,7 +1132,7 @@ public class BotManagerDialog : Adw.Dialog {
             string omemo_status = runtime.has_member("omemo_status") ? runtime.get_string_member("omemo_status") : "";
             string label = !runtime_enabled ? _("Runtime disabled") : (connected ? _("Runtime connected") : _("Runtime disconnected"));
             if (runtime_enabled && connected) {
-                label = "%s · %s".printf(label, omemo_ready ? _("OMEMO ready") : _("OMEMO %s").printf(get_cloud_omemo_status_label(omemo_status)));
+                label = "%s · %s".printf(label, _("Ready"));
             }
             status_row.subtitle = "%s · %s".printf(status_row.subtitle, label);
         } catch (Error e) {

@@ -119,11 +119,6 @@ public class SubscriptionNotification : Object {
         });
         header.append(close);
         box.append(header);
-        if (!model.receives_presence || !model.shares_presence) {
-            box.append(new Label(_("Some servers require contact approval before sharing OMEMO keys.")) {
-                wrap = true, xalign = 0
-            });
-        }
         if (!model.connected) {
             box.append(new Label(_("Connect this account to manage contact permissions.")) { wrap = true, xalign = 0 });
         }

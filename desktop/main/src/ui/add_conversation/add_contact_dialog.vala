@@ -249,11 +249,11 @@ protected class AddContactDialog : Adw.Dialog {
                 // An unfinished JID has no pending request to approve.
             }
             if (pending) {
-                permission_hint.label = _("Accept this contact's pending request to see your online status. Some servers require this permission to share OMEMO keys.");
+                permission_hint.label = _("Accept this contact's pending request to see your online status.");
             } else if (presence.supports_subscription_preapproval((!) account)) {
-                permission_hint.label = _("Allow this contact to see your online status. Some servers require this permission to share OMEMO keys.");
+                permission_hint.label = _("Allow this contact to see your online status.");
             } else {
-                permission_hint.label = _("When your contact requests your online status, you will need to accept separately. Some servers require this permission to share OMEMO keys.");
+                permission_hint.label = _("When your contact requests your online status, you will need to accept separately.");
             }
         } else {
             permission_hint.label = _("Ask to receive this contact's online status. Your own status stays private until you approve their request.");

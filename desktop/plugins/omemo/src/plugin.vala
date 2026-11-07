@@ -107,12 +107,13 @@ public class Plugin : RootInterface, Object {
         this.trust_manager.device_trust_state_changed.connect (on_device_trust_state_changed);
         this.device_notification_populator = new DeviceNotificationPopulator (this, this.app.stream_interactor);
 
-        this.app.plugin_registry.register_encryption_list_entry (list_entry);
-        this.app.plugin_registry.register_encryption_preferences_entry (new OmemoPreferencesEntry (this));
-        this.app.plugin_registry.register_contact_details_entry (contact_details_provider);
-        this.app.plugin_registry.register_notification_populator (device_notification_populator);
-        this.app.plugin_registry.register_conversation_addition_populator (new BadMessagesPopulator (this.app.stream_interactor, this));
-        this.app.plugin_registry.register_call_entryption_entry (DtlsSrtpVerificationDraft.NS_URI, new CallEncryptionEntry (db));
+        // In Penik, OMEMO UI elements are hidden from the user interface
+        // this.app.plugin_registry.register_encryption_list_entry (list_entry);
+        // this.app.plugin_registry.register_encryption_preferences_entry (new OmemoPreferencesEntry (this));
+        // this.app.plugin_registry.register_contact_details_entry (contact_details_provider);
+        // this.app.plugin_registry.register_notification_populator (device_notification_populator);
+        // this.app.plugin_registry.register_conversation_addition_populator (new BadMessagesPopulator (this.app.stream_interactor, this));
+        // this.app.plugin_registry.register_call_entryption_entry (DtlsSrtpVerificationDraft.NS_URI, new CallEncryptionEntry (db));
 
         this.app.stream_interactor.module_manager.initialize_account_modules.connect ((account, list) => {
             // Account stores must remain fail-closed until Manager has loaded

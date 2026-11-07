@@ -486,7 +486,7 @@ public class ConversationItemSkeleton : Plugins.ConversationItemWidgetInterface,
             case Encryption.PGP:
                 return _("OpenPGP encrypted");
             case Encryption.OMEMO:
-                return _("OMEMO encrypted");
+                return _("Encrypted");
             case Encryption.DTLS_SRTP:
                 return _("DTLS-SRTP encrypted");
             case Encryption.SRTP:
