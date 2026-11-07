@@ -94,31 +94,79 @@ h1{font-size:clamp(40px,5.2vw,64px);font-weight:500;line-height:1.04;letter-spac
 .hero-btns{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
 .hero-meta{font:400 12px var(--mono);color:var(--ink-3)}
 
-/* phone */
-.hero-demo{position:relative;display:flex;justify-content:center;padding:24px 0}
-.phone{position:relative;z-index:2;width:292px;aspect-ratio:9/18.6;background:#0c111e;border-radius:38px;border:1px solid rgba(31,27,22,.18);padding:10px;box-shadow:0 30px 60px -20px rgba(31,27,22,.45)}
-.phone-notch{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:96px;height:22px;background:#0c111e;border-radius:12px;z-index:3}
-.screen{background:#0d0d12;border-radius:37px;height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.chat-head{display:flex;align-items:center;gap:10px;padding:34px 14px 12px;border-bottom:1px solid #252535;background:#13131a}
-.chat-back{color:#eeeef5;font-size:15px;font-weight:600;margin-right:2px;cursor:pointer}
-.chat-ava{width:34px;height:34px;border-radius:50%;border:1px solid #252535}
-.chat-head b{font-size:13.5px;display:block;color:#eeeef5}
-.chat-status{font-size:10.5px;color:#7b7b9b;display:flex;align-items:center;gap:5px}
+/* ================= REAL ANDROID PHONE MOCKUP ================= */
+.hero-demo{position:relative;display:flex;justify-content:center;padding:16px 0 24px}
+.phone{position:relative;z-index:2;width:304px;height:618px;background:#0e111a;border-radius:44px;padding:9px;box-shadow:0 25px 65px -15px rgba(10,12,22,.65),0 0 0 1px rgba(255,255,255,.09),inset 0 0 0 1px rgba(255,255,255,.05)}
+.phone::before{content:"";position:absolute;top:130px;right:-3px;width:3px;height:48px;background:#252836;border-radius:0 2px 2px 0}
+.phone::after{content:"";position:absolute;top:110px;left:-3px;width:3px;height:72px;background:#252836;border-radius:2px 0 0 2px}
+.phone-speaker{position:absolute;top:4px;left:50%;transform:translateX(-50%);width:44px;height:3px;background:#1e2230;border-radius:2px;z-index:4}
+.screen{background:#0d0d12;border-radius:36px;height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* Android Status Bar */
+.status-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px 4px;background:#13131a;color:#8e90a5;font-size:11.5px;font-weight:600;letter-spacing:-.01em;user-select:none;z-index:3}
+.status-left{display:inline-flex;align-items:center;gap:6px;color:#eeeef5;font-variant-numeric:tabular-nums}
+.status-app-icon{width:11px;height:11px;opacity:.9;display:block}
+.camera-punch{width:10px;height:10px;border-radius:50%;background:#06080e;box-shadow:0 0 0 1.5px #1a1c26,inset 0 1px 2px rgba(255,255,255,.25)}
+.status-icons{display:inline-flex;align-items:center;gap:5px}
+.status-icons svg{width:13px;height:13px;fill:currentColor;display:block}
+
+/* Chat Toolbar */
+.chat-head{display:flex;align-items:center;gap:8px;padding:6px 10px 8px;border-bottom:1px solid #252535;background:#13131a;z-index:2}
+.chat-btn-icon{background:transparent;border:none;color:#eeeef5;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background .15s;flex:none}
+.chat-btn-icon:hover{background:rgba(255,255,255,.08)}
+.chat-btn-icon svg{width:20px;height:20px;fill:currentColor}
+.chat-ava-wrap{position:relative;width:36px;height:36px;flex:none}
+.chat-ava{width:36px;height:36px;border-radius:50%;border:1px solid #252535;object-fit:cover;background:#1a1a24;display:block}
+.chat-head-info{flex:1;min-width:0}
+.chat-head-name{font-size:13.5px;font-weight:600;color:#eeeef5;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-status{font-size:11px;color:#7b7b9b;display:flex;align-items:center;gap:4px;line-height:1.2;margin-top:1px}
 .chat-status .dot{width:6px;height:6px;border-radius:50%;background:#4ec97a;display:inline-block}
-.chat-lock{margin-left:auto;font-size:10px;color:#4ec97a;background:rgba(78,201,122,.15);padding:4px 6px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:600}
-.chat-body{flex:1;overflow-y:auto;padding:10px 4px;scrollbar-width:none;display:flex;flex-direction:column;justify-content:flex-end}
+.chat-status.typing{color:#5b6ef5}
+.typing-dots{display:inline-flex;gap:2px;align-items:center}
+.typing-dots span{width:3px;height:3px;border-radius:50%;background:#5b6ef5;animation:typingBounce 1s infinite ease-in-out}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes typingBounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-3px);opacity:1}}
+.chat-actions{display:flex;align-items:center;gap:2px;margin-left:auto}
+
+/* Chat Timeline */
+.chat-body{flex:1;overflow-y:auto;padding:8px 10px;scrollbar-width:none;display:flex;flex-direction:column;justify-content:flex-end;background:#0d0d12}
 .chat-body::-webkit-scrollbar{display:none}
-.msg{display:flex;margin:4px 10px;animation:msgPop .32s cubic-bezier(.2,.9,.3,1.2) both}
-@keyframes msgPop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
-.msg.out{justify-content:flex-end}
-.bubble{max-width:82%;padding:8px 12px 6px;font-size:12.5px;line-height:1.4}
-.msg.in .bubble{background:#1a1a24;color:#eeeef5;border-radius:14px 14px 14px 2px}
-.msg.out .bubble{background:#2b2d6b;color:#c8cdff;border-radius:14px 14px 2px 14px}
-.bubble .meta{display:flex;align-items:center;justify-content:flex-end;gap:4px;font:500 9px var(--mono);color:#7b7b9b;margin-top:3px}
-.bubble .meta .ticks{color:#5b6ef5;font-weight:bold;margin-right:2px}
-.chat-input{display:flex;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid #252535;background:#13131a}
-.chat-input span{flex:1;font-size:12px;color:#7b7b9b;background:#1e1e2a;border:1px solid #252535;border-radius:14px;padding:8px 14px}
-.chat-input b{width:34px;height:34px;border-radius:50%;background:#5b6ef5;color:#eeeef5;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex:none}
+.chat-date-header{align-self:center;background:#1a1a24;color:#eeeef5;font-size:11px;font-weight:600;padding:3px 12px;border-radius:12px;margin:4px 0 8px;box-shadow:0 1px 3px rgba(0,0,0,.2);user-select:none}
+
+/* Bubbles */
+.msg{display:flex;flex-direction:column;margin:3px 0;animation:msgPop .32s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes msgPop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+.msg.in{align-items:flex-start}
+.msg.out{align-items:flex-end}
+.bubble{max-width:84%;padding:7px 11px 6px;font-size:12.5px;line-height:1.38;position:relative;word-break:break-word}
+.msg.in .bubble{background:#1a1a24;color:#eeeef5;border-radius:16px 16px 16px 4px}
+.msg.out .bubble{background:#2b2d6b;color:#c8cdff;border-radius:16px 16px 4px 16px}
+.bubble .bubble-text{display:inline}
+.bubble .meta{display:inline-flex;align-items:center;gap:3px;float:right;margin-left:8px;margin-top:4px;font-size:10px;font-family:var(--mono);color:#7b7b9b;user-select:none}
+.msg.out .bubble .meta{color:rgba(200,205,255,.72)}
+.bubble .meta .ticks{display:inline-flex;align-items:center;color:#64b5f6;margin-left:1px}
+.bubble .meta .ticks svg{width:14px;height:14px;fill:currentColor;display:block}
+.reaction-badge{display:inline-flex;align-items:center;gap:3px;background:#1e1e2a;border:1px solid #2e2e42;border-radius:10px;padding:1px 6px;font-size:10.5px;margin-top:-3px;margin-right:6px;box-shadow:0 2px 4px rgba(0,0,0,.25);animation:reactionPop .25s cubic-bezier(.18,.89,.32,1.28) both}
+@keyframes reactionPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* Chat Input */
+.chat-input{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid #252535;background:#13131a;z-index:2}
+.chat-input-pill{flex:1;background:#1e1e2a;border:1px solid #252535;border-radius:20px;display:flex;align-items:center;padding:4px 8px;gap:6px;min-height:38px}
+.input-icon-btn{background:transparent;border:none;color:#7b7b9b;padding:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;flex:none;transition:color .15s}
+.input-icon-btn:hover{color:#eeeef5}
+.input-icon-btn svg{width:19px;height:19px;fill:currentColor;display:block}
+.input-placeholder{flex:1;font-size:12.5px;color:#7b7b9b;display:flex;align-items:center;user-select:none}
+.input-cursor{display:inline-block;width:1.5px;height:14px;background:#5b6ef5;margin-left:2px;animation:cursorBlink 1s infinite}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+.chat-send-btn{width:38px;height:38px;border-radius:50%;background:#5b6ef5;border:none;color:#eeeef5;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;box-shadow:0 2px 8px rgba(91,110,245,.4);transition:transform .12s ease,background .15s}
+.chat-send-btn:hover{background:#4a5de4;transform:scale(1.04)}
+.chat-send-btn:active{transform:scale(.95)}
+.chat-send-btn svg{width:18px;height:18px;fill:currentColor;margin-left:1px;display:block}
+
+/* Android Gesture Navigation */
+.gesture-nav{display:flex;justify-content:center;align-items:center;padding:4px 0 6px;background:#13131a;z-index:2}
+.gesture-pill{width:72px;height:3.5px;border-radius:2px;background:rgba(255,255,255,.35)}
 
 
 /* ---------- STATS ---------- */
@@ -304,7 +352,8 @@ footer{border-top:1px solid var(--hair);padding:56px 0 32px;background:var(--pap
   .container{padding:0 16px}
   .hero{padding-top:96px}
   h1{font-size:34px}
-  .phone{width:250px}
+  .phone{width:268px;height:550px;border-radius:38px;padding:7px}
+  .screen{border-radius:31px}
   .stat{padding:18px 12px 0}
   .stat:nth-child(3){padding-left:12px}
   .stat b{font-size:23px}
@@ -353,19 +402,69 @@ footer{border-top:1px solid var(--hair);padding:56px 0 32px;background:var(--pap
 
     <div class="hero-demo">
       <div class="phone">
-        <div class="phone-notch"></div>
+        <div class="phone-speaker"></div>
         <div class="screen">
-          <div class="chat-head">
-            <span class="chat-back">←</span>
-            <img class="chat-ava" src="logo_fixed.webp" alt="">
-            <div>
-              <b>Кирилл</b>
-              <span class="chat-status"><i class="dot"></i> в сети</span>
+          <!-- Android Status Bar -->
+          <div class="status-bar">
+            <div class="status-left">
+              <span id="statusTime">12:45</span>
+              <img class="status-app-icon" src="logo_flat.svg" alt="" width="11" height="11">
             </div>
-            <span class="chat-lock">online</span>
+            <div class="camera-punch"></div>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98A16.88 16.88 0 0 0 12 4zm0 3.5a13.3 13.3 0 0 1 8.8 3.3L12 19.3 3.2 10.8A13.3 13.3 0 0 1 12 7.5z"/></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 17h3v4H2v-4zm5-4h3v8H7v-8zm5-5h3v13h-3V8zm5-5h3v18h-3V3z"/></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+            </div>
           </div>
-          <div class="chat-body" id="chatBody"></div>
-          <div class="chat-input"><span>Сообщение…</span><b>➤</b></div>
+
+          <!-- Chat Top App Bar -->
+          <div class="chat-head">
+            <button class="chat-btn-icon" aria-label="Назад">
+              <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </button>
+            <div class="chat-ava-wrap">
+              <img class="chat-ava" src="logo_fixed.webp" alt="Кирилл">
+            </div>
+            <div class="chat-head-info">
+              <div class="chat-head-name">Кирилл</div>
+              <div class="chat-status" id="chatStatus"><i class="dot"></i> в сети</div>
+            </div>
+            <div class="chat-actions">
+              <button class="chat-btn-icon" aria-label="Аудиозвонок" title="Позвонить">
+                <svg viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+              </button>
+              <button class="chat-btn-icon" aria-label="Меню" title="Опции">
+                <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Messages Timeline -->
+          <div class="chat-body" id="chatBody">
+            <div class="chat-date-header">Сегодня</div>
+          </div>
+
+          <!-- Chat Input Bar -->
+          <div class="chat-input">
+            <div class="chat-input-pill">
+              <button class="input-icon-btn" aria-label="Стикеры и эмодзи" title="Стикеры">
+                <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+              </button>
+              <div class="input-placeholder">Сообщение…<span class="input-cursor"></span></div>
+              <button class="input-icon-btn" aria-label="Прикрепить файл" title="Прикрепить">
+                <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+              </button>
+            </div>
+            <button class="chat-send-btn" aria-label="Отправить сообщение" title="Отправить">
+              <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </div>
+
+          <!-- Android Gesture Pill Bar -->
+          <div class="gesture-nav">
+            <div class="gesture-pill"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -730,6 +829,21 @@ document.querySelectorAll('.reveal').forEach(el => revealIO.observe(el));
 
 /* ---------- CHAT DEMO ---------- */
 const chatBody = document.getElementById('chatBody');
+const chatStatus = document.getElementById('chatStatus');
+const statusTime = document.getElementById('statusTime');
+
+function updateClock() {
+  const now = new Date();
+  const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  if (statusTime) statusTime.textContent = timeStr;
+  return timeStr;
+}
+updateClock();
+setInterval(updateClock, 20000);
+
+const doneTickSvg = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+const doneAllTicksSvg = '<svg viewBox="0 0 24 24"><path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.41 11.93l-1.41 1.41 5.66 5.66 12-12-1.42-1.41zM.41 13.34l5.66 5.66 1.41-1.41L1.82 11.93.41 13.34z"/></svg>';
+
 const chatScript = [
   { dir: 'out', text: 'Привет! Это Penik 👋' },
   { dir: 'in',  text: 'О, свой мессенджер? А там есть шифрование?' },
@@ -737,31 +851,95 @@ const chatScript = [
   { dir: 'in',  text: 'Понятно. А группы есть?' },
   { dir: 'out', text: 'Есть. И на всех устройствах сразу' },
   { dir: 'in',  text: 'У меня интернет как у Кирилла, потянет?' },
-  { dir: 'out', text: 'PXMPP. Потянет даже у Кирилла 😎' },
+  { dir: 'out', text: 'PXMPP. Потянет даже у Кирилла 😎', reaction: '🔥 1' },
   { dir: 'in',  text: 'Главный минус — сервер всё видит, да?' },
-  { dir: 'out', text: 'Да. Зато зашёл с нового тела — и история уже там' }
+  { dir: 'out', text: 'Да. Зато зашёл с нового тела — и вся история там' }
 ];
+
 let chatIdx = 0;
-function currentTime() {
-  const now = new Date();
-  return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+function setTyping(isTyping) {
+  if (!chatStatus) return;
+  if (isTyping) {
+    chatStatus.className = 'chat-status typing';
+    chatStatus.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>печатает…';
+  } else {
+    chatStatus.className = 'chat-status';
+    chatStatus.innerHTML = '<i class="dot"></i> в сети';
+  }
 }
-function pushMessage() {
-  const item = chatScript[chatIdx % chatScript.length];
+
+function renderChatMessage(item, timeStr) {
   const msgEl = document.createElement('div');
   msgEl.className = 'msg ' + item.dir;
-  const metaHtml = item.dir === 'out'
-    ? '<span class="meta"><span class="ticks">✓✓</span><span>' + currentTime() + '</span></span>'
-    : '<span class="meta"><span>' + currentTime() + '</span></span>';
-  msgEl.innerHTML = '<div class="bubble"><span class="txt"></span>' + metaHtml + '</div>';
-  msgEl.querySelector('.txt').textContent = item.text;
+
+  const bubbleEl = document.createElement('div');
+  bubbleEl.className = 'bubble';
+
+  const textSpan = document.createElement('span');
+  textSpan.className = 'bubble-text';
+  textSpan.textContent = item.text;
+  bubbleEl.appendChild(textSpan);
+
+  const metaSpan = document.createElement('span');
+  metaSpan.className = 'meta';
+
+  if (item.dir === 'out') {
+    metaSpan.innerHTML = `<span>${timeStr}</span><span class="ticks">${doneTickSvg}</span>`;
+    bubbleEl.appendChild(metaSpan);
+    msgEl.appendChild(bubbleEl);
+
+    // Simulate XEP-0184 delivery receipt acknowledgement to double tick
+    setTimeout(() => {
+      const ticksEl = metaSpan.querySelector('.ticks');
+      if (ticksEl) ticksEl.innerHTML = doneAllTicksSvg;
+    }, 320);
+  } else {
+    metaSpan.innerHTML = `<span>${timeStr}</span>`;
+    bubbleEl.appendChild(metaSpan);
+    msgEl.appendChild(bubbleEl);
+  }
+
+  if (item.reaction) {
+    setTimeout(() => {
+      const reactionEl = document.createElement('div');
+      reactionEl.className = 'reaction-badge';
+      reactionEl.textContent = item.reaction;
+      msgEl.appendChild(reactionEl);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }, 450);
+  }
+
   chatBody.appendChild(msgEl);
-  while (chatBody.children.length > 5) chatBody.removeChild(chatBody.firstChild);
+
+  const msgs = chatBody.querySelectorAll('.msg');
+  if (msgs.length > 5) {
+    chatBody.removeChild(msgs[0]);
+  }
   chatBody.scrollTop = chatBody.scrollHeight;
-  chatIdx++;
-  setTimeout(pushMessage, 2300);
 }
-setTimeout(pushMessage, 700);
+
+function runChatCycle() {
+  const item = chatScript[chatIdx % chatScript.length];
+  const timeStr = updateClock();
+
+  if (item.dir === 'in') {
+    setTyping(true);
+    setTimeout(() => {
+      setTyping(false);
+      renderChatMessage(item, timeStr);
+      chatIdx++;
+      setTimeout(runChatCycle, 2400);
+    }, 1100);
+  } else {
+    setTyping(false);
+    renderChatMessage(item, timeStr);
+    chatIdx++;
+    setTimeout(runChatCycle, 1900);
+  }
+}
+
+setTimeout(runChatCycle, 600);
 
 /* ---------- SERVER TERMINAL ---------- */
 const termBody = document.getElementById('termBody');
