@@ -507,7 +507,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         if (transportInfo instanceof IbbTransportInfo ibbTransportInfo) {
             final String streamId = ibbTransportInfo.getTransportId();
             final Long blockSize = ibbTransportInfo.getBlockSize();
-            if (streamId == null || blockSize == null) {
+            if (streamId == null || blockSize == null || blockSize < 512) {
                 throw new IllegalStateException("ibb transport is missing sid and/or block-size");
             }
             return new InbandBytestreamsTransport(

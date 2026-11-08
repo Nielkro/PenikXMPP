@@ -2,6 +2,7 @@ package eu.siacs.conversations.xmpp.jingle.transports;
 
 import android.util.Log;
 import androidx.annotation.NonNull;
+import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.FutureCallback;
@@ -67,6 +68,7 @@ public class InbandBytestreamsTransport implements Transport {
             final boolean initiator,
             final String streamId,
             final int blockSize) {
+        Preconditions.checkArgument(blockSize >= 512, "Block size too small");
         this.xmppConnection = xmppConnection;
         this.with = with;
         this.initiator = initiator;
