@@ -308,28 +308,40 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
     private static boolean configureTransportWithPeerInfo(
             final Transport transport, final FileTransferContentMap contentMap) {
         final GenericTransportInfo transportInfo = contentMap.requireOnlyTransportInfo();
-        if (transport instanceof WebRTCDataChannelTransport webRTCDataChannelTransport
-                && transportInfo instanceof WebRTCDataChannelTransportInfo) {
-            webRTCDataChannelTransport.setResponderDescription(SessionDescription.of(contentMap));
-            return true;
-        } else if (transport instanceof SocksByteStreamsTransport socksBytestreamsTransport
-                && transportInfo
-                        instanceof SocksByteStreamsTransportInfo socksBytestreamsTransportInfo) {
-            socksBytestreamsTransport.setTheirCandidates(
-                    socksBytestreamsTransportInfo.getCandidates());
-            return true;
-        } else if (transport instanceof InbandBytestreamsTransport inbandBytestreamsTransport
-                && transportInfo instanceof IbbTransportInfo ibbTransportInfo) {
-            final var peerBlockSize = ibbTransportInfo.getBlockSize();
-            if (peerBlockSize != null) {
-                if (peerBlockSize < InbandBytestreamsTransport.MINIMUM_BLOCK_SIZE) {
+        switch (transport) {
+            case WebRTCDataChannelTransport webRTCDataChannelTransport
+                    when transportInfo instanceof WebRTCDataChannelTransportInfo -> {
+                final SessionDescription sessionDescription;
+                try {
+                    sessionDescription = SessionDescription.of(contentMap);
+                } catch (final IllegalArgumentException e) {
                     return false;
                 }
-                inbandBytestreamsTransport.setPeerBlockSize(peerBlockSize);
+                webRTCDataChannelTransport.setResponderDescription(sessionDescription);
+                return true;
             }
-            return true;
-        } else {
-            return false;
+            case SocksByteStreamsTransport socksBytestreamsTransport
+                    when transportInfo
+                            instanceof
+                            SocksByteStreamsTransportInfo socksBytestreamsTransportInfo -> {
+                socksBytestreamsTransport.setTheirCandidates(
+                        socksBytestreamsTransportInfo.getCandidates());
+                return true;
+            }
+            case InbandBytestreamsTransport inbandBytestreamsTransport
+                    when transportInfo instanceof IbbTransportInfo ibbTransportInfo -> {
+                final var peerBlockSize = ibbTransportInfo.getBlockSize();
+                if (peerBlockSize != null) {
+                    if (peerBlockSize < InbandBytestreamsTransport.MINIMUM_BLOCK_SIZE) {
+                        return false;
+                    }
+                    inbandBytestreamsTransport.setPeerBlockSize(peerBlockSize);
+                }
+                return true;
+            }
+            case null, default -> {
+                return false;
+            }
         }
     }
 
