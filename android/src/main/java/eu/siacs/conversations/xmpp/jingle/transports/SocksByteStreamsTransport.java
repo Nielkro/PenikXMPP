@@ -556,6 +556,9 @@ public class SocksByteStreamsTransport implements Transport {
                     socket.close();
                 }
                 final short methodCount = authBegin[1];
+                if (methodCount < 1) {
+                    throw new IOException("Received invalid method length");
+                }
                 final byte[] methods = new byte[methodCount];
                 ByteStreams.readFully(inputStream, methods);
                 if (SocksSocketFactory.contains((byte) 0x00, methods)) {
@@ -568,7 +571,10 @@ public class SocksByteStreamsTransport implements Transport {
                 if (connectCommand[0] == 0x05
                         && connectCommand[1] == 0x01
                         && connectCommand[3] == 0x03) {
-                    int destinationCount = inputStream.read();
+                    final int destinationCount = inputStream.read();
+                    if (destinationCount < 1) {
+                        throw new IOException("Invalid destination length");
+                    }
                     final byte[] destination = new byte[destinationCount];
                     ByteStreams.readFully(inputStream, destination);
                     final byte[] port = new byte[2];
@@ -710,7 +716,12 @@ public class SocksByteStreamsTransport implements Transport {
                 socket = SocksSocketFactory.createSocketOverTor(candidate.host, candidate.port);
             } else {
                 socket = new Socket();
-                final SocketAddress address = new InetSocketAddress(candidate.host, candidate.port);
+                final SocketAddress address;
+                try {
+                    address = new InetSocketAddress(candidate.host, candidate.port);
+                } catch (final IllegalArgumentException e) {
+                    throw new IOException(e);
+                }
                 socket.connect(address, timeout);
             }
             socket.setSoTimeout(timeout);

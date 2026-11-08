@@ -356,18 +356,27 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
             return;
         }
         final XmppAxolotlMessage.XmppAxolotlKeyTransportMessage keyTransportMessage;
-        final var contents = jingle.getJingleContents();
-        final var rawContent = contents.get(Iterables.getOnlyElement(contentMap.contents.keySet()));
-        final var security =
-                rawContent == null ? null : rawContent.getSecurity(jinglePacket.getFrom());
-        if (security != null) {
-            Log.d(Config.LOGTAG, "found security element!");
-            keyTransportMessage =
-                    id.account
-                            .getAxolotlService()
-                            .processReceivingKeyTransportMessage(security, false);
-        } else {
-            keyTransportMessage = null;
+        try {
+            final var contents = jingle.getJingleContents();
+            final var rawContent =
+                    contents.get(Iterables.getOnlyElement(contentMap.contents.keySet()));
+            final var security =
+                    rawContent == null ? null : rawContent.getSecurity(jinglePacket.getFrom());
+            if (security != null) {
+
+                keyTransportMessage =
+                        id.account
+                                .getAxolotlService()
+                                .processReceivingKeyTransportMessage(security, false);
+
+            } else {
+                keyTransportMessage = null;
+            }
+        } catch (final RuntimeException e) {
+            Log.d(Config.LOGTAG, "could not process key transport message", e);
+            respondOk(jinglePacket);
+            sendSessionTerminate(Reason.of(e), e.getMessage());
+            return;
         }
         receiveSessionInitiate(jinglePacket, contentMap, file, keyTransportMessage);
     }
@@ -457,7 +466,13 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         this.transport = transport;
         this.transport.setTransportCallback(this);
         if (this.transport instanceof WebRTCDataChannelTransport webRTCDataChannelTransport) {
-            final var sessionDescription = SessionDescription.of(contentMap);
+            final SessionDescription sessionDescription;
+            try {
+                sessionDescription = SessionDescription.of(contentMap);
+            } catch (final IllegalArgumentException e) {
+                sendSessionTerminate(Reason.of(e), e.getMessage());
+                return;
+            }
             webRTCDataChannelTransport.setInitiatorDescription(sessionDescription);
         }
         final var transportInfoFuture = transport.asTransportInfo();
