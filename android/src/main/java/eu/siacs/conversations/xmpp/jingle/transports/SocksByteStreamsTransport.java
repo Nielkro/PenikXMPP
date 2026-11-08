@@ -781,6 +781,7 @@ public class SocksByteStreamsTransport implements Transport {
                 int port,
                 int priority,
                 final CandidateType type) {
+            Preconditions.checkArgument(port > 0 && port <= 65_535, "Invalid port");
             this.cid = cid;
             this.host = host;
             this.jid = jid;

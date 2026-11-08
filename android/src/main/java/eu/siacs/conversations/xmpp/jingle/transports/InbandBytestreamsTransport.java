@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class InbandBytestreamsTransport implements Transport {
 
     private static final int DEFAULT_BLOCK_SIZE = 8192;
+    public static final int MINIMUM_BLOCK_SIZE = 512;
 
     private final PipedInputStream pipedInputStream = new PipedInputStream(DEFAULT_BLOCK_SIZE);
     private final PipedOutputStream pipedOutputStream = new PipedOutputStream();
@@ -68,7 +69,7 @@ public class InbandBytestreamsTransport implements Transport {
             final boolean initiator,
             final String streamId,
             final int blockSize) {
-        Preconditions.checkArgument(blockSize >= 512, "Block size too small");
+        Preconditions.checkArgument(blockSize >= MINIMUM_BLOCK_SIZE, "Block size too small");
         this.xmppConnection = xmppConnection;
         this.with = with;
         this.initiator = initiator;

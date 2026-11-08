@@ -322,6 +322,9 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
                 && transportInfo instanceof IbbTransportInfo ibbTransportInfo) {
             final var peerBlockSize = ibbTransportInfo.getBlockSize();
             if (peerBlockSize != null) {
+                if (peerBlockSize < InbandBytestreamsTransport.MINIMUM_BLOCK_SIZE) {
+                    return false;
+                }
                 inbandBytestreamsTransport.setPeerBlockSize(peerBlockSize);
             }
             return true;
@@ -507,7 +510,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         if (transportInfo instanceof IbbTransportInfo ibbTransportInfo) {
             final String streamId = ibbTransportInfo.getTransportId();
             final Long blockSize = ibbTransportInfo.getBlockSize();
-            if (streamId == null || blockSize == null || blockSize < 512) {
+            if (streamId == null || blockSize == null || blockSize < InbandBytestreamsTransport.MINIMUM_BLOCK_SIZE) {
                 throw new IllegalStateException("ibb transport is missing sid and/or block-size");
             }
             return new InbandBytestreamsTransport(
