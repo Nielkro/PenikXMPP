@@ -1811,8 +1811,13 @@ public class AxolotlService implements OnAdvancedStreamFeaturesLoaded {
                 final Element encrypted =
                         child.findChildEnsureSingle(
                                 XmppAxolotlMessage.CONTAINERTAG, AxolotlService.PEP_PREFIX);
-                final XmppAxolotlMessage xmppAxolotlMessage =
-                        XmppAxolotlMessage.fromElement(encrypted, from.asBareJid());
+                final XmppAxolotlMessage xmppAxolotlMessage;
+                try {
+                    xmppAxolotlMessage =
+                            XmppAxolotlMessage.fromElement(encrypted, from.asBareJid());
+                } catch (final Exception e) {
+                    throw new CryptoFailedException(e);
+                }
                 final XmppAxolotlSession session = getReceivingSession(xmppAxolotlMessage);
                 final XmppAxolotlMessage.XmppAxolotlPlaintextMessage plaintext =
                         xmppAxolotlMessage.decrypt(session, getOwnDeviceId());

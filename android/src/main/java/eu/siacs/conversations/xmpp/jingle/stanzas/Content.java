@@ -124,7 +124,11 @@ public class Content extends Element {
                         && "urn:xmpp:ciphers:aes-128-gcm-nopadding".equals(cipher)) {
                     final var encrypted = child.findChild("encrypted", AxolotlService.PEP_PREFIX);
                     if (encrypted != null) {
-                        return XmppAxolotlMessage.fromElement(encrypted, from.asBareJid());
+                        final var axolotl =
+                                XmppAxolotlMessage.fromElementOrNull(encrypted, from.asBareJid());
+                        if (axolotl != null) {
+                            return axolotl;
+                        }
                     }
                 }
             }

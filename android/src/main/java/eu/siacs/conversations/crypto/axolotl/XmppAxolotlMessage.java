@@ -45,21 +45,23 @@ public class XmppAxolotlMessage {
     private XmppAxolotlMessage(final Element axolotlMessage, final Jid from)
             throws IllegalArgumentException {
         this.from = from;
-        Element header = axolotlMessage.findChild(HEADER);
+        final var header = axolotlMessage.findChild(HEADER);
+        if (header == null) {
+            throw new IllegalArgumentException("Axolotl message missing header");
+        }
         try {
             this.sourceDeviceId = Integer.parseInt(header.getAttribute(SOURCEID));
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             throw new IllegalArgumentException("invalid source id");
         }
-        List<Element> keyElements = header.getChildren();
         this.keys = new ArrayList<>();
-        for (Element keyElement : keyElements) {
-            switch (keyElement.getName()) {
+        for (final var headerItem : header.getChildren()) {
+            switch (headerItem.getName()) {
                 case KEYTAG:
                     try {
-                        int recipientId = Integer.parseInt(keyElement.getAttribute(REMOTEID));
-                        byte[] key = Base64.decode(keyElement.getContent().trim(), Base64.DEFAULT);
-                        boolean isPreKey = keyElement.getAttributeAsBoolean("prekey");
+                        int recipientId = Integer.parseInt(headerItem.getAttribute(REMOTEID));
+                        byte[] key = Base64.decode(headerItem.getContent().trim(), Base64.DEFAULT);
+                        boolean isPreKey = headerItem.getAttributeAsBoolean("prekey");
                         this.keys.add(
                                 new XmppAxolotlSession.AxolotlKey(recipientId, key, isPreKey));
                     } catch (NumberFormatException e) {
@@ -70,12 +72,15 @@ public class XmppAxolotlMessage {
                     if (this.iv != null) {
                         throw new IllegalArgumentException("Duplicate iv entry");
                     }
-                    iv = Base64.decode(keyElement.getContent().trim(), Base64.DEFAULT);
+                    iv = Base64.decode(headerItem.getContent().trim(), Base64.DEFAULT);
                     break;
                 default:
-                    Log.w(Config.LOGTAG, "Unexpected element in header: " + keyElement);
+                    Log.w(Config.LOGTAG, "Unexpected element in header: " + headerItem);
                     break;
             }
+        }
+        if (iv == null) {
+            throw new IllegalArgumentException("Did not find IV in header");
         }
         final Element payloadElement =
                 axolotlMessage.findChildEnsureSingle(PAYLOAD, AxolotlService.PEP_PREFIX);
@@ -104,8 +109,16 @@ public class XmppAxolotlMessage {
         }
     }
 
-    public static XmppAxolotlMessage fromElement(Element element, Jid from) {
+    public static XmppAxolotlMessage fromElement(final Element element, final Jid from) {
         return new XmppAxolotlMessage(element, from);
+    }
+
+    public static XmppAxolotlMessage fromElementOrNull(final Element element, final Jid from) {
+        try {
+            return fromElement(element, from);
+        } catch (final Exception e) {
+            return null;
+        }
     }
 
     private static byte[] generateKey() {
