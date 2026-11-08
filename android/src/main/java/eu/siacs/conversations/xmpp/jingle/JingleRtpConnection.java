@@ -13,6 +13,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -63,6 +64,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -511,9 +513,22 @@ public class JingleRtpConnection extends AbstractJingleConnection
             receiveOutOfOrderAction(jinglePacket, Jingle.Action.CONTENT_MODIFY);
             return;
         }
-        final Map<String, Content.Senders> modification =
-                Maps.transformEntries(
-                        jingle.getJingleContents(), (key, value) -> value.getSenders());
+        final Map<String, Content.Senders> modification;
+        try {
+            modification =
+                    ImmutableMap.copyOf(
+                            Maps.transformEntries(
+                                    jingle.getJingleContents(),
+                                    (key, value) -> Objects.requireNonNull(value).getSenders()));
+        } catch (final RuntimeException e) {
+            Log.d(
+                    Config.LOGTAG,
+                    id.getAccount().getJid().asBareJid() + ": unable parse content-modify",
+                    e);
+            webRTCWrapper.close();
+            sendSessionTerminate(new Reason.FailedApplication(), e.getMessage());
+            return;
+        }
         final boolean isInitiator = isInitiator();
         final RtpContentMap currentOutgoing = this.outgoingContentAdd;
         final RtpContentMap remoteContentMap = this.getRemoteContentMap();
