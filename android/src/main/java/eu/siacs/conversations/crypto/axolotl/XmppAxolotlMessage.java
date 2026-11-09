@@ -82,6 +82,9 @@ public class XmppAxolotlMessage {
         if (iv == null) {
             throw new IllegalArgumentException("Did not find IV in header");
         }
+        if (iv.length != 12 && iv.length != 16) {
+            throw new IllegalArgumentException("Invalid IV length: " + iv.length);
+        }
         final Element payloadElement =
                 axolotlMessage.findChildEnsureSingle(PAYLOAD, AxolotlService.PEP_PREFIX);
         if (payloadElement != null) {

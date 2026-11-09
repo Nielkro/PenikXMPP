@@ -470,12 +470,13 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         final Transport transport;
         final SessionDescription sessionDescription;
         try {
-            transport = setupTransport(contentMap.requireOnlyTransportInfo());
-            if (transport instanceof WebRTCDataChannelTransport) {
+            final var transportInfo = contentMap.requireOnlyTransportInfo();
+            if (transportInfo instanceof WebRTCDataChannelTransportInfo) {
                 sessionDescription = SessionDescription.of(contentMap);
             } else {
                 sessionDescription = null;
             }
+            transport = setupTransport(contentMap.requireOnlyTransportInfo());
         } catch (final RuntimeException e) {
             sendSessionTerminate(Reason.of(e), e.getMessage());
             return;
@@ -534,34 +535,40 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         final var appSettings = new AppSettings(xmppConnectionService.getApplicationContext());
         final boolean useTor = id.account.isOnion() || appSettings.isUseTor();
         final boolean useRelays = appSettings.isUseRelays();
-        if (transportInfo instanceof IbbTransportInfo ibbTransportInfo) {
-            final String streamId = ibbTransportInfo.getTransportId();
-            final Long blockSize = ibbTransportInfo.getBlockSize();
-            if (streamId == null
-                    || blockSize == null
-                    || blockSize < InbandBytestreamsTransport.MINIMUM_BLOCK_SIZE) {
-                throw new IllegalStateException("ibb transport is missing sid and/or block-size");
+        switch (transportInfo) {
+            case IbbTransportInfo ibbTransportInfo -> {
+                final String streamId = ibbTransportInfo.getTransportId();
+                final Long blockSize = ibbTransportInfo.getBlockSize();
+                if (streamId == null
+                        || blockSize == null
+                        || blockSize < InbandBytestreamsTransport.MINIMUM_BLOCK_SIZE) {
+                    throw new IllegalStateException(
+                            "ibb transport is missing sid and/or block-size");
+                }
+                return new InbandBytestreamsTransport(
+                        xmppConnection,
+                        id.with,
+                        isInitiator(),
+                        streamId,
+                        Ints.saturatedCast(blockSize));
             }
-            return new InbandBytestreamsTransport(
-                    xmppConnection,
-                    id.with,
-                    isInitiator(),
-                    streamId,
-                    Ints.saturatedCast(blockSize));
-        } else if (transportInfo
-                instanceof SocksByteStreamsTransportInfo socksBytestreamsTransportInfo) {
-            final String streamId = socksBytestreamsTransportInfo.getTransportId();
-            final String destination = socksBytestreamsTransportInfo.getDestinationAddress();
-            final List<SocksByteStreamsTransport.Candidate> candidates =
-                    socksBytestreamsTransportInfo.getCandidates();
-            Log.d(Config.LOGTAG, "received socks candidates " + candidates);
-            return new SocksByteStreamsTransport(
-                    xmppConnection, id, isInitiator(), useTor, useRelays, streamId, candidates);
-        } else if (!useTor && transportInfo instanceof WebRTCDataChannelTransportInfo) {
-            return new WebRTCDataChannelTransport(
-                    xmppConnectionService.getApplicationContext(), xmppConnection, isInitiator());
-        } else {
-            throw new IllegalArgumentException("Do not know how to create transport");
+            case SocksByteStreamsTransportInfo socksBytestreamsTransportInfo -> {
+                final String streamId = socksBytestreamsTransportInfo.getTransportId();
+                final String destination = socksBytestreamsTransportInfo.getDestinationAddress();
+                final List<SocksByteStreamsTransport.Candidate> candidates =
+                        socksBytestreamsTransportInfo.getCandidates();
+                Log.d(Config.LOGTAG, "received socks candidates " + candidates);
+                return new SocksByteStreamsTransport(
+                        xmppConnection, id, isInitiator(), useTor, useRelays, streamId, candidates);
+            }
+            case WebRTCDataChannelTransportInfo webRTCDataChannelTransportInfo when !useTor -> {
+                return new WebRTCDataChannelTransport(
+                        xmppConnectionService.getApplicationContext(),
+                        xmppConnection,
+                        isInitiator());
+            }
+            case null, default ->
+                    throw new IllegalArgumentException("Do not know how to create transport");
         }
     }
 

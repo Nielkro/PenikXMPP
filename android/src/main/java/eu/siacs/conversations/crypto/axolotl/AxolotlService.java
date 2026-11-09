@@ -1763,10 +1763,10 @@ public class AxolotlService implements OnAdvancedStreamFeaturesLoaded {
                                 (OmemoVerifiedIceUdpTransportInfo) descriptionTransport.transport,
                                 from,
                                 pepVerificationFutures);
-            } catch (CryptoFailedException e) {
+                omemoVerification.setOrEnsureEqual(decryptedTransport);
+            } catch (final RuntimeException | CryptoFailedException e) {
                 return Futures.immediateFailedFuture(e);
             }
-            omemoVerification.setOrEnsureEqual(decryptedTransport);
             descriptionTransportBuilder.put(
                     content.getKey(),
                     new DescriptionTransport<>(

@@ -554,7 +554,7 @@ public class SocksByteStreamsTransport implements Transport {
                 final OutputStream outputStream = socket.getOutputStream();
                 ByteStreams.readFully(inputStream, authBegin);
                 if (authBegin[0] != 0x5) {
-                    socket.close();
+                    throw new IOException("Unsupported SOCKS version " + authBegin[0]);
                 }
                 final int methodCount = UnsignedBytes.toInt(authBegin[1]);
                 if (methodCount < 1) {
@@ -566,6 +566,8 @@ public class SocksByteStreamsTransport implements Transport {
                     outputStream.write(new byte[] {0x05, 0x00});
                 } else {
                     outputStream.write(new byte[] {0x05, (byte) 0xff});
+                    outputStream.flush();
+                    throw new IOException("No acceptable SOCKS authentication method");
                 }
                 final byte[] connectCommand = new byte[4];
                 ByteStreams.readFully(inputStream, connectCommand);
@@ -612,8 +614,10 @@ public class SocksByteStreamsTransport implements Transport {
                                 Config.LOGTAG,
                                 remoteAddress + " successfully connected to " + candidate);
                     } else {
-                        closeSocket(socket);
+                        throw new IOException("Failed to connect");
                     }
+                } else {
+                    throw new IOException("Unsupported SOCKS connect command");
                 }
             } catch (final IOException e) {
                 Log.d(Config.LOGTAG, "failed to accept client connection to " + candidate, e);

@@ -1123,13 +1123,22 @@ public class JingleRtpConnection extends AbstractJingleConnection
     private ListenableFuture<RtpContentMap> receiveRtpContentMap(
             final Jingle jinglePacket, final boolean expectVerification) {
         try {
-            return receiveRtpContentMap(RtpContentMap.of(jinglePacket), expectVerification);
+            return receiveRtpContentMapOrThrow(RtpContentMap.of(jinglePacket), expectVerification);
         } catch (final Exception e) {
             return Futures.immediateFailedFuture(e);
         }
     }
 
     private ListenableFuture<RtpContentMap> receiveRtpContentMap(
+            final RtpContentMap receivedContentMap, final boolean expectVerification) {
+        try {
+            return receiveRtpContentMapOrThrow(receivedContentMap, expectVerification);
+        } catch (final Exception e) {
+            return Futures.immediateFailedFuture(e);
+        }
+    }
+
+    private ListenableFuture<RtpContentMap> receiveRtpContentMapOrThrow(
             final RtpContentMap receivedContentMap, final boolean expectVerification) {
         Log.d(
                 Config.LOGTAG,
