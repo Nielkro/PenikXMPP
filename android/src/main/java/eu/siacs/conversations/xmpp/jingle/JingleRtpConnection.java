@@ -474,13 +474,19 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     private void receiveContentAccept(final RtpContentMap receivedContentAccept) {
-        final IceUdpTransportInfo.Setup peerDtlsSetup = getPeerDtlsSetup();
-        final RtpContentMap modifiedContentMap =
-                getRemoteContentMap().addContent(receivedContentAccept, peerDtlsSetup);
-
+        final RtpContentMap modifiedContentMap;
+        final SessionDescription answer;
+        try {
+            final IceUdpTransportInfo.Setup peerDtlsSetup = getPeerDtlsSetup();
+            modifiedContentMap =
+                    getRemoteContentMap().addContent(receivedContentAccept, peerDtlsSetup);
+            answer = SessionDescription.of(modifiedContentMap, isResponder());
+        } catch (final RuntimeException e) {
+            webRTCWrapper.close();
+            sendSessionTerminate(new Reason.FailedApplication(), e.getMessage());
+            return;
+        }
         setRemoteContentMap(modifiedContentMap);
-
-        final SessionDescription answer = SessionDescription.of(modifiedContentMap, isResponder());
 
         final org.webrtc.SessionDescription sdp =
                 new org.webrtc.SessionDescription(

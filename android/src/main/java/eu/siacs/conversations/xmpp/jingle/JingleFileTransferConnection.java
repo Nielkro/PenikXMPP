@@ -476,7 +476,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
             } else {
                 sessionDescription = null;
             }
-            transport = setupTransport(contentMap.requireOnlyTransportInfo());
+            transport = setupTransport(transportInfo);
         } catch (final RuntimeException e) {
             sendSessionTerminate(Reason.of(e), e.getMessage());
             return;
