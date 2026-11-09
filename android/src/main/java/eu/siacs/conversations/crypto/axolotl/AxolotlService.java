@@ -1920,7 +1920,7 @@ public class AxolotlService implements OnAdvancedStreamFeaturesLoaded {
             if (preKeyId != null) {
                 postPreKeyMessageHandling(session, postponePreKeyMessageHandling);
             }
-        } catch (NotEncryptedForThisDeviceException e) {
+        } catch (final NotEncryptedForThisDeviceException e) {
             if (account.getJid().asBareJid().equals(message.getFrom().asBareJid())
                     && message.getSenderDeviceId() == ownDeviceId) {
                 Log.w(Config.LOGTAG, getLogprefix(account) + "Reflected omemo message received");

@@ -314,7 +314,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
                 final SessionDescription sessionDescription;
                 try {
                     sessionDescription = SessionDescription.of(contentMap);
-                } catch (final IllegalArgumentException e) {
+                } catch (final RuntimeException e) {
                     return false;
                 }
                 webRTCDataChannelTransport.setResponderDescription(sessionDescription);
@@ -468,8 +468,14 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
     public void sendSessionAccept() {
         final FileTransferContentMap contentMap = this.initiatorFileTransferContentMap;
         final Transport transport;
+        final SessionDescription sessionDescription;
         try {
             transport = setupTransport(contentMap.requireOnlyTransportInfo());
+            if (transport instanceof WebRTCDataChannelTransport) {
+                sessionDescription = SessionDescription.of(contentMap);
+            } else {
+                sessionDescription = null;
+            }
         } catch (final RuntimeException e) {
             sendSessionTerminate(Reason.of(e), e.getMessage());
             return;
@@ -478,14 +484,8 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         this.transport = transport;
         this.transport.setTransportCallback(this);
         if (this.transport instanceof WebRTCDataChannelTransport webRTCDataChannelTransport) {
-            final SessionDescription sessionDescription;
-            try {
-                sessionDescription = SessionDescription.of(contentMap);
-            } catch (final IllegalArgumentException e) {
-                sendSessionTerminate(Reason.of(e), e.getMessage());
-                return;
-            }
-            webRTCDataChannelTransport.setInitiatorDescription(sessionDescription);
+            webRTCDataChannelTransport.setInitiatorDescription(
+                    Objects.requireNonNull(sessionDescription));
         }
         final var transportInfoFuture = transport.asTransportInfo();
         Futures.addCallback(

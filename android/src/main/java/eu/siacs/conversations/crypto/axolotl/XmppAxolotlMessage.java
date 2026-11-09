@@ -244,15 +244,15 @@ public class XmppAxolotlMessage {
         return encryptionElement;
     }
 
-    private byte[] unpackKey(XmppAxolotlSession session, Integer sourceDeviceId)
+    private byte[] unpackKey(final XmppAxolotlSession session, final Integer sourceDeviceId)
             throws CryptoFailedException {
-        ArrayList<XmppAxolotlSession.AxolotlKey> possibleKeys = new ArrayList<>();
-        for (XmppAxolotlSession.AxolotlKey key : keys) {
+        final ArrayList<XmppAxolotlSession.AxolotlKey> possibleKeys = new ArrayList<>();
+        for (final XmppAxolotlSession.AxolotlKey key : keys) {
             if (key.deviceId == sourceDeviceId) {
                 possibleKeys.add(key);
             }
         }
-        if (possibleKeys.size() == 0) {
+        if (possibleKeys.isEmpty()) {
             throw new NotEncryptedForThisDeviceException();
         }
         return session.processReceiving(possibleKeys);
@@ -264,52 +264,52 @@ public class XmppAxolotlMessage {
                 session.getFingerprint(), unpackKey(session, sourceDeviceId), getIV());
     }
 
-    public XmppAxolotlPlaintextMessage decrypt(XmppAxolotlSession session, Integer sourceDeviceId)
+    public XmppAxolotlPlaintextMessage decrypt(
+            final XmppAxolotlSession session, final Integer sourceDeviceId)
             throws CryptoFailedException {
-        XmppAxolotlPlaintextMessage plaintextMessage = null;
-        byte[] key = unpackKey(session, sourceDeviceId);
-        if (key != null) {
-            try {
-                if (key.length < 32) {
-                    throw new OutdatedSenderException(
-                            "Key did not contain auth tag. Sender needs to update their OMEMO"
-                                    + " client");
-                }
-                final int authTagLength = key.length - 16;
-                byte[] newCipherText = new byte[key.length - 16 + ciphertext.length];
-                byte[] newKey = new byte[16];
-                System.arraycopy(ciphertext, 0, newCipherText, 0, ciphertext.length);
-                System.arraycopy(key, 16, newCipherText, ciphertext.length, authTagLength);
-                System.arraycopy(key, 0, newKey, 0, newKey.length);
-                ciphertext = newCipherText;
-                key = newKey;
-
-                final Cipher cipher =
-                        Compatibility.twentyEight()
-                                ? Cipher.getInstance(CIPHERMODE)
-                                : Cipher.getInstance(CIPHERMODE, PROVIDER);
-                SecretKeySpec keySpec = new SecretKeySpec(key, KEYTYPE);
-                IvParameterSpec ivSpec = new IvParameterSpec(iv);
-
-                cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
-
-                String plaintext = new String(cipher.doFinal(ciphertext));
-                plaintextMessage =
-                        new XmppAxolotlPlaintextMessage(
-                                Config.OMEMO_PADDING ? plaintext.trim() : plaintext,
-                                session.getFingerprint());
-
-            } catch (NoSuchAlgorithmException
-                    | NoSuchPaddingException
-                    | InvalidKeyException
-                    | InvalidAlgorithmParameterException
-                    | IllegalBlockSizeException
-                    | BadPaddingException
-                    | NoSuchProviderException e) {
-                throw new CryptoFailedException(e);
-            }
+        final byte[] key = unpackKey(session, sourceDeviceId);
+        if (key == null) {
+            throw new CryptoFailedException("Could not unpack symmetric key");
         }
-        return plaintextMessage;
+        if (ciphertext == null) {
+            throw new CryptoFailedException("Trying to decrypt message without ciphertext");
+        }
+        try {
+            if (key.length < 32) {
+                throw new OutdatedSenderException(
+                        "Key did not contain auth tag. Sender needs to update their OMEMO"
+                                + " client");
+            }
+            final int authTagLength = key.length - 16;
+            byte[] newCipherText = new byte[key.length - 16 + ciphertext.length];
+            byte[] newKey = new byte[16];
+            System.arraycopy(ciphertext, 0, newCipherText, 0, ciphertext.length);
+            System.arraycopy(key, 16, newCipherText, ciphertext.length, authTagLength);
+            System.arraycopy(key, 0, newKey, 0, newKey.length);
+            ciphertext = newCipherText;
+
+            final Cipher cipher =
+                    Compatibility.twentyEight()
+                            ? Cipher.getInstance(CIPHERMODE)
+                            : Cipher.getInstance(CIPHERMODE, PROVIDER);
+            SecretKeySpec keySpec = new SecretKeySpec(newKey, KEYTYPE);
+            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
+
+            String plaintext = new String(cipher.doFinal(ciphertext));
+            return new XmppAxolotlPlaintextMessage(
+                    Config.OMEMO_PADDING ? plaintext.trim() : plaintext, session.getFingerprint());
+
+        } catch (final NoSuchAlgorithmException
+                | NoSuchPaddingException
+                | InvalidKeyException
+                | InvalidAlgorithmParameterException
+                | IllegalBlockSizeException
+                | BadPaddingException
+                | NoSuchProviderException e) {
+            throw new CryptoFailedException(e);
+        }
     }
 
     public static class XmppAxolotlPlaintextMessage {

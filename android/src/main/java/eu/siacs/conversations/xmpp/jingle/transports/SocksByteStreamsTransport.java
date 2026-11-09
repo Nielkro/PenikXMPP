@@ -14,6 +14,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
+import com.google.common.primitives.UnsignedBytes;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -555,7 +556,7 @@ public class SocksByteStreamsTransport implements Transport {
                 if (authBegin[0] != 0x5) {
                     socket.close();
                 }
-                final short methodCount = authBegin[1];
+                final int methodCount = UnsignedBytes.toInt(authBegin[1]);
                 if (methodCount < 1) {
                     throw new IOException("Received invalid method length");
                 }

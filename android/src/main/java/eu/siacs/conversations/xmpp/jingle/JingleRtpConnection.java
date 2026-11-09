@@ -1147,7 +1147,8 @@ public class JingleRtpConnection extends AbstractJingleConnection
                     future,
                     omemoVerifiedPayload -> {
                         // TODO test if an exception here triggers a correct abort
-                        omemoVerification.setOrEnsureEqual(omemoVerifiedPayload);
+                        omemoVerification.setOrEnsureEqual(
+                                Objects.requireNonNull(omemoVerifiedPayload));
                         Log.d(
                                 Config.LOGTAG,
                                 id.account.getJid().asBareJid()
