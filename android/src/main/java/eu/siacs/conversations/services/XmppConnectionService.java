@@ -2427,6 +2427,18 @@ public class XmppConnectionService extends Service {
         synchronized (this.conversations) {
             if (connection != null) {
                 connection.getManager(MessageArchiveManager.class).kill(conversation);
+                if (conversation.getAddress() != null) {
+                    try {
+                        connection
+                                .getManager(MessageArchiveManager.class)
+                                .purgeArchive(conversation.getAddress().asBareJid());
+                    } catch (final Exception e) {
+                        Log.w(
+                                Config.LOGTAG,
+                                "could not purge MAM archive for " + conversation.getAddress(),
+                                e);
+                    }
+                }
                 if (conversation.getMode() == Conversation.MODE_MULTI) {
                     try {
                         connection.getManager(BookmarkManager.class).delete(conversation.getAddress().asBareJid());

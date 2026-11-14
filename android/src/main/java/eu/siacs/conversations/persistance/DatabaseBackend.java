@@ -1981,8 +1981,61 @@ public class DatabaseBackend extends SQLiteOpenHelper {
 
     public boolean deleteConversation(final Conversation conversation) {
         final var db = this.getWritableDatabase();
-        final String[] args = {conversation.getUuid()};
-        final int rows = db.delete(Conversation.TABLENAME, Conversation.UUID + "=?", args);
+        final String accountUuid = conversation.getAccountUuid();
+        final String bareJid =
+                conversation.getAddress() != null
+                        ? conversation.getAddress().asBareJid().toString()
+                        : null;
+        int rows = 0;
+        if (accountUuid != null && bareJid != null) {
+            try {
+                db.execSQL(
+                        "DELETE FROM "
+                                + Message.TABLENAME
+                                + " WHERE "
+                                + Message.CONVERSATION
+                                + " IN (SELECT "
+                                + Conversation.UUID
+                                + " FROM "
+                                + Conversation.TABLENAME
+                                + " WHERE "
+                                + Conversation.ACCOUNT
+                                + "=? AND ("
+                                + Conversation.CONTACTJID
+                                + "=? OR "
+                                + Conversation.CONTACTJID
+                                + " LIKE ?))",
+                        new String[] {accountUuid, bareJid, bareJid + "/%"});
+            } catch (final Exception ignored) {
+            }
+            rows =
+                    db.delete(
+                            Conversation.TABLENAME,
+                            Conversation.UUID
+                                    + "=? OR ("
+                                    + Conversation.ACCOUNT
+                                    + "=? AND ("
+                                    + Conversation.CONTACTJID
+                                    + "=? OR "
+                                    + Conversation.CONTACTJID
+                                    + " LIKE ?))",
+                            new String[] {
+                                conversation.getUuid(), accountUuid, bareJid, bareJid + "/%"
+                            });
+        } else {
+            rows =
+                    db.delete(
+                            Conversation.TABLENAME,
+                            Conversation.UUID + "=?",
+                            new String[] {conversation.getUuid()});
+        }
+        try {
+            db.delete(
+                    Message.TABLENAME,
+                    Message.CONVERSATION + "=?",
+                    new String[] {conversation.getUuid()});
+        } catch (final Exception ignored) {
+        }
         return rows > 0;
     }
 

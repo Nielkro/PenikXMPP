@@ -358,6 +358,9 @@ public class MultiUserChatManager extends AbstractManager {
         unavailable(conversation);
         getManager(DiscoManager.class).clear(conversation.getAddress().asBareJid());
         resetState(conversation);
+        synchronized (this.inProgressConferenceJoins) {
+            this.inProgressConferenceJoins.remove(conversation);
+        }
     }
 
     public void handlePresence(final Presence presence) {

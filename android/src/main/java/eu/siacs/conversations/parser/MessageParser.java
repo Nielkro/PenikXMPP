@@ -27,6 +27,7 @@ import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.jingle.JingleRtpConnection;
 import eu.siacs.conversations.xmpp.manager.ActivityManager;
+import eu.siacs.conversations.xmpp.manager.BookmarkManager;
 import eu.siacs.conversations.xmpp.manager.ChatStateManager;
 import eu.siacs.conversations.xmpp.manager.DeliveryReceiptManager;
 import eu.siacs.conversations.xmpp.manager.DisplayedManager;
@@ -418,6 +419,22 @@ public class MessageParser extends AbstractParser
                             || connection
                                     .getMucServersWithholdAccount()
                                     .contains(counterpart.getDomain());
+            if (conversationIsProbablyMuc) {
+                final Jid roomJid = counterpart.asBareJid();
+                final boolean existsLocally =
+                        mXmppConnectionService.find(account, roomJid) != null
+                                || mXmppConnectionService.databaseBackend.findConversation(account, roomJid) != null;
+                final boolean hasBookmark =
+                        connection.getManager(BookmarkManager.class).getBookmark(roomJid) != null;
+                if (!existsLocally && !hasBookmark) {
+                    Log.d(
+                            Config.LOGTAG,
+                            account.getJid().asBareJid()
+                                    + ": ignoring incoming message for unbookmarked/deleted MUC "
+                                    + roomJid);
+                    return;
+                }
+            }
             final Conversation conversation =
                     mXmppConnectionService.findOrCreateConversation(
                             account,
