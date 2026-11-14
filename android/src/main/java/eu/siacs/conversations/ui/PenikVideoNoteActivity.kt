@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -22,11 +24,6 @@ import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,12 +44,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,6 +62,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,7 +74,7 @@ import java.util.Locale
 /**
  * Telegram-style Video Note ("Кружочки") recording overlay.
  * Opens transparently over the chat, immediately begins recording,
- * and exits instantly when tapping Send or Cancel.
+ * and exits smoothly when tapping Send or Cancel.
  */
 class PenikVideoNoteActivity : ComponentActivity() {
 
@@ -90,6 +90,8 @@ class PenikVideoNoteActivity : ComponentActivity() {
     private var isFrontCamera by mutableStateOf(true)
     private var currentRecordedFile: File? = null
     private var isRecordingStarted = false
+    private var isStopping by mutableStateOf(false)
+    private var recordingStartTime = 0L
 
     private val permissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -122,7 +124,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
     }
 
     private fun flipCamera() {
-        // If recording, we can stop and flip or flip between takes
+        if (isStopping) return
         isFrontCamera = !isFrontCamera
     }
 
@@ -148,10 +150,19 @@ class PenikVideoNoteActivity : ComponentActivity() {
             try {
                 cameraProvider?.unbindAll()
                 cameraProvider?.bindToLifecycle(this, cameraSelector, preview, videoCapture)
-                // Start recording automatically as soon as camera is bound!
-                if (!isRecordingStarted) {
-                    startRecordingInternal()
+
+                // Start recording when camera is streaming
+                previewView.previewStreamState.observe(this) { state ->
+                    if (state == PreviewView.StreamState.STREAMING && !isRecordingStarted && !isStopping) {
+                        startRecordingInternal()
+                    }
                 }
+                // Fallback in case observer already fired
+                Handler(Looper.getMainLooper()).postDelayed({
+                    if (!isRecordingStarted && !isStopping) {
+                        startRecordingInternal()
+                    }
+                }, 400)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to bind camera", e)
             }
@@ -159,6 +170,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
     }
 
     private fun startRecordingInternal() {
+        if (isRecordingStarted || isStopping) return
         val vc = videoCapture ?: return
         val rawFile = File(cacheDir, "raw_video_note_${System.currentTimeMillis()}.mp4")
         currentRecordedFile = rawFile
@@ -167,6 +179,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
 
         try {
             isRecordingStarted = true
+            recordingStartTime = System.currentTimeMillis()
             activeRecording = vc.output
                     .prepareRecording(this, outputOptions)
                     .apply {
@@ -176,10 +189,23 @@ class PenikVideoNoteActivity : ComponentActivity() {
                     }
                     .start(ContextCompat.getMainExecutor(this)) { event ->
                         when (event) {
+                            is VideoRecordEvent.Start -> {
+                                Log.i(TAG, "Video recording started")
+                            }
                             is VideoRecordEvent.Finalize -> {
-                                if (event.hasError()) {
-                                    Log.e(TAG, "Recording finalized with error: ${event.error}")
+                                Log.i(TAG, "Video recording finalized, error=${event.error}, size=${rawFile.length()}")
+                                if (!event.hasError() && rawFile.exists() && rawFile.length() > 0) {
+                                    val intent = Intent().apply {
+                                        putExtra(EXTRA_RAW_VIDEO_PATH, rawFile.absolutePath)
+                                    }
+                                    setResult(Activity.RESULT_OK, intent)
+                                } else {
+                                    Log.e(TAG, "Recording finalize error: ${event.error}")
+                                    try { rawFile.delete() } catch (ignored: Exception) {}
+                                    setResult(Activity.RESULT_CANCELED)
                                 }
+                                finish()
+                                overridePendingTransition(0, 0)
                             }
                         }
                     }
@@ -189,6 +215,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
     }
 
     private fun cancelAndExit() {
+        isStopping = true
         try {
             activeRecording?.stop()
             activeRecording = null
@@ -200,23 +227,28 @@ class PenikVideoNoteActivity : ComponentActivity() {
     }
 
     private fun finishAndSend() {
-        try {
-            activeRecording?.stop()
-            activeRecording = null
-        } catch (ignored: Exception) {}
+        if (isStopping) return
+        isStopping = true
 
-        val file = currentRecordedFile
-        if (file != null && file.exists()) {
-            val intent = Intent().apply {
-                putExtra(EXTRA_RAW_VIDEO_PATH, file.absolutePath)
-                data = Uri.fromFile(file)
-            }
-            setResult(Activity.RESULT_OK, intent)
+        val elapsedMs = System.currentTimeMillis() - recordingStartTime
+        if (elapsedMs < 1000) {
+            // Ensure at least 1 second is recorded so CameraX has valid keyframes
+            Handler(Looper.getMainLooper()).postDelayed({
+                try {
+                    activeRecording?.stop()
+                    activeRecording = null
+                } catch (e: Exception) {
+                    finish()
+                }
+            }, 1000 - elapsedMs)
         } else {
-            setResult(Activity.RESULT_CANCELED)
+            try {
+                activeRecording?.stop()
+                activeRecording = null
+            } catch (e: Exception) {
+                finish()
+            }
         }
-        finish()
-        overridePendingTransition(0, 0)
     }
 
     override fun onDestroy() {
@@ -232,7 +264,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
             onSend: () -> Unit,
             bindCamera: (PreviewView) -> Unit
     ) {
-        var recordedDurationSec by remember { mutableStateOf(0f) }
+        var recordedDurationSec by remember { mutableFloatStateOf(0f) }
         var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
 
         LaunchedEffect(previewViewRef, isFrontCamera) {
@@ -240,14 +272,16 @@ class PenikVideoNoteActivity : ComponentActivity() {
         }
 
         // Live timer loop up to MAX_RECORD_SECONDS
-        LaunchedEffect(Unit) {
-            val start = System.currentTimeMillis()
-            while (recordedDurationSec < MAX_RECORD_SECONDS) {
-                kotlinx.coroutines.delay(100)
-                recordedDurationSec = (System.currentTimeMillis() - start) / 1000f
-                if (recordedDurationSec >= MAX_RECORD_SECONDS) {
-                    onSend()
-                    break
+        LaunchedEffect(isRecordingStarted) {
+            if (isRecordingStarted) {
+                val start = System.currentTimeMillis()
+                while (recordedDurationSec < MAX_RECORD_SECONDS && !isStopping) {
+                    kotlinx.coroutines.delay(100)
+                    recordedDurationSec = (System.currentTimeMillis() - start) / 1000f
+                    if (recordedDurationSec >= MAX_RECORD_SECONDS) {
+                        onSend()
+                        break
+                    }
                 }
             }
         }
@@ -303,10 +337,26 @@ class PenikVideoNoteActivity : ComponentActivity() {
                                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                         )
                     }
+
+                    if (isStopping) {
+                        Box(
+                                modifier = Modifier
+                                        .size(268.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.Black.copy(alpha = 0.5f)),
+                                contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                    color = Color.White,
+                                    strokeWidth = 3.dp,
+                                    modifier = Modifier.size(40.dp)
+                            )
+                        }
+                    }
                 }
             }
 
-            // Bottom Bar: Flip, Timer, "ОТМЕНА", Send (Exact layout from Image 2!)
+            // Bottom Bar: Flip, Timer, "ОТМЕНА", Send (Exact layout from Telegram!)
             Box(
                     modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -322,6 +372,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
                     // Left: Flip camera button
                     IconButton(
                             onClick = onFlipCamera,
+                            enabled = !isStopping,
                             modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
@@ -353,7 +404,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
                                 color = Color.White,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                fontFamily = FontFamily.Monospace
                         )
                     }
 
@@ -361,7 +412,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
                     Box(
                             modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .clickable { onCancel() }
+                                    .clickable(enabled = !isStopping) { onCancel() }
                                     .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Text(
@@ -376,6 +427,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
                     // Right: Send button (Telegram accent blue circle with send arrow)
                     IconButton(
                             onClick = onSend,
+                            enabled = !isStopping,
                             modifier = Modifier
                                     .size(54.dp)
                                     .clip(CircleShape)

@@ -1321,25 +1321,25 @@ public class ConversationFragment extends XmppFragment
             case ATTACHMENT_CHOICE_RECORD_VIDEO:
                 if (data != null) {
                     final String rawPath = data.getStringExtra(PenikVideoNoteActivity.EXTRA_RAW_VIDEO_PATH);
-                    final File rawFile = rawPath != null ? new File(rawPath) : (data.getData() != null && data.getData().getPath() != null ? new File(data.getData().getPath()) : null);
-                    if (rawFile != null && rawFile.exists()) {
+                    final File rawFile = rawPath != null ? new File(rawPath) : null;
+                    if (rawFile != null && rawFile.exists() && rawFile.length() > 0) {
                         final File cacheDir = requireContext().getCacheDir();
                         final File outputFile = new File(cacheDir, "penik_video_note_" + System.currentTimeMillis() + ".mp4");
                         new Thread(() -> {
                             final File finalFile = PenikVideoNoteTranscoder.INSTANCE.transcode(rawFile, outputFile);
                             try { rawFile.delete(); } catch (Exception ignored) {}
                             runOnUiThreadQuiet(() -> {
-                                final List<Attachment> videoNotes =
-                                        Attachment.of(requireContext(), Uri.fromFile(finalFile), Attachment.Type.FILE);
-                                commitAttachments(videoNotes);
+                                try {
+                                    final Uri contentUri = FileBackend.getUriForFile(requireContext(), finalFile);
+                                    final List<Attachment> videoNotes =
+                                            Attachment.of(requireContext(), contentUri, Attachment.Type.FILE);
+                                    commitAttachments(videoNotes);
+                                } catch (Exception e) {
+                                    Log.e(Config.LOGTAG, "Failed to commit video note attachment", e);
+                                }
                             });
                         }).start();
                         break;
-                    }
-                    if (data.getData() != null) {
-                        final List<Attachment> videoNotes =
-                                Attachment.of(requireContext(), data.getData(), Attachment.Type.FILE);
-                        commitAttachments(videoNotes);
                     }
                 }
                 break;
