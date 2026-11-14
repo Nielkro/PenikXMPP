@@ -643,6 +643,12 @@ public class AvatarService {
                 .bitmap;
     }
 
+    public static Bitmap getPlaceholder(
+            final String name, @ColorInt final int background, final int size) {
+        final Character ch = getFirstLetter(name == null ? "" : name.trim());
+        return getImpl(ch, background, Surface.REGULAR, Math.max(size, 1)).bitmap;
+    }
+
     private static AvatarWithSurface getImpl(
             final Character character,
             @ColorInt final int background,

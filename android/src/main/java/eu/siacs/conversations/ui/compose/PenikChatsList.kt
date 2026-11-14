@@ -88,6 +88,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
@@ -1549,11 +1550,8 @@ fun hasCustomAvatar(conversation: Conversation): Boolean {
 
 @Composable
 fun penikAvatarBitmap(conversation: Conversation, activity: XmppActivity): Bitmap? {
-    if (!hasCustomAvatar(conversation)) {
-        return null
-    }
     val density = LocalDensity.current
-    val avatarService = activity.avatarService()
+    val avatarService = activity.avatarService() ?: return null
     val contactAvatar = runCatching { conversation.contact?.avatar }.getOrNull()
     val contactPhoto = runCatching { conversation.contact?.profilePhoto }.getOrNull()
     val mucAvatar = runCatching { conversation.mucOptions?.avatar }.getOrNull()
@@ -1563,16 +1561,13 @@ fun penikAvatarBitmap(conversation: Conversation, activity: XmppActivity): Bitma
     val sizePx = with(density) { 48.dp.roundToPx() }
     val cachedBitmap = remember(avatarKey) {
         try {
-            avatarService?.get(conversation, sizePx, true)
+            avatarService.get(conversation, sizePx, true) ?: avatarService.get(conversation, sizePx, false)
         } catch (e: Exception) {
             null
         }
     }
     var bitmap by remember(avatarKey) { mutableStateOf(cachedBitmap) }
     LaunchedEffect(avatarKey) {
-        if (avatarService == null) {
-            return@LaunchedEffect
-        }
         val loaded = withContext(Dispatchers.IO) {
             try {
                 avatarService.get(conversation, sizePx, false)
@@ -1595,33 +1590,21 @@ fun PenikAvatarImage(
         size: androidx.compose.ui.unit.Dp = 48.dp,
         modifier: Modifier = Modifier
 ) {
-    if (bitmap != null) {
-        androidx.compose.foundation.Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = null,
-                modifier = modifier.size(size).clip(CircleShape)
-        )
-    } else {
-        val panelSecondary = colorResource(R.color.penik_panel_secondary)
-        val cleanName = name.trim()
-        val tint = backgroundColor ?: if (cleanName.isEmpty()) panelSecondary else penikInitialsColor(cleanName)
-        val initial = cleanName.firstOrNull { it.isLetterOrDigit() }?.uppercase()
-                ?: cleanName.firstOrNull()?.uppercase()
-                ?: "?"
-        val fontSize = (size.value * 0.70f).sp
-        Box(
-                modifier = modifier.size(size).clip(CircleShape).background(tint),
-                contentAlignment = Alignment.Center
-        ) {
-            Text(
-                    text = initial,
-                    color = Color.White,
-                    fontSize = fontSize,
-                    fontWeight = FontWeight.Light,
-                    fontFamily = FontFamily.SansSerif
-            )
+    val density = LocalDensity.current
+    val sizePx = with(density) { size.roundToPx() }
+    val displayBitmap = remember(bitmap, name, backgroundColor, sizePx) {
+        if (bitmap != null) {
+            bitmap
+        } else {
+            val bgInt = backgroundColor?.toArgb() ?: UIHelper.getColorForName(name)
+            AvatarService.getPlaceholder(name, bgInt, sizePx)
         }
     }
+    androidx.compose.foundation.Image(
+            bitmap = displayBitmap.asImageBitmap(),
+            contentDescription = null,
+            modifier = modifier.size(size).clip(CircleShape)
+    )
 }
 
 data class PenikCallEntry(val conversation: Conversation, val message: Message)
@@ -1977,13 +1960,22 @@ fun PenikProfileTab(
 
     val density = LocalDensity.current
     val avatarService = activity.avatarService()
-    var bitmap by remember(account.uuid) { mutableStateOf<Bitmap?>(null) }
-    LaunchedEffect(account.uuid) {
+    val sizePx = with(density) { 96.dp.roundToPx() }
+    val initialSeed = if (currentDisplayName.isNotBlank()) currentDisplayName else JidHelper.displayAddress(account.jid.asBareJid())
+    val profileBitmap = remember(account.uuid, account.avatar, currentDisplayName, sizePx) {
+        try {
+            avatarService?.get(account, sizePx, false)
+                    ?: AvatarService.getPlaceholder(initialSeed, account.avatarBackgroundColor, sizePx)
+        } catch (e: Exception) {
+            AvatarService.getPlaceholder(initialSeed, account.avatarBackgroundColor, sizePx)
+        }
+    }
+    var bitmap by remember(account.uuid, account.avatar, currentDisplayName) { mutableStateOf(profileBitmap) }
+    LaunchedEffect(account.uuid, account.avatar, currentDisplayName) {
         if (avatarService == null) {
             return@LaunchedEffect
         }
-        val sizePx = with(density) { 96.dp.roundToPx() }
-        bitmap =
+        val loaded =
                 withContext(Dispatchers.IO) {
                     try {
                         avatarService.get(account, sizePx, false)
@@ -1991,6 +1983,9 @@ fun PenikProfileTab(
                         null
                     }
                 }
+        if (loaded != null) {
+            bitmap = loaded
+        }
     }
 
     Column(
@@ -2004,7 +1999,7 @@ fun PenikProfileTab(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
         Box(modifier = Modifier.size(104.dp), contentAlignment = Alignment.Center) {
-            val loaded = bitmap
+            val loaded = bitmap ?: profileBitmap
             Box(
                     modifier =
                             Modifier.size(96.dp)
@@ -2012,34 +2007,11 @@ fun PenikProfileTab(
                                     .clickable { showAvatarOptions = true },
                     contentAlignment = Alignment.Center
             ) {
-                if (loaded != null) {
-                    androidx.compose.foundation.Image(
-                            bitmap = loaded.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    val local = JidHelper.displayAddress(account.jid.asBareJid())
-                    val initialSeed = if (currentDisplayName.isNotBlank()) currentDisplayName else local
-                    val initial = initialSeed.firstOrNull { it.isLetterOrDigit() }?.uppercase()
-                            ?: initialSeed.firstOrNull()?.uppercase()
-                            ?: "?"
-                    val bg = Color(account.avatarBackgroundColor)
-                    Box(
-                            modifier =
-                                    Modifier.fillMaxSize()
-                                            .background(bg),
-                            contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                                text = initial,
-                                color = Color.White,
-                                fontSize = 68.sp,
-                                fontWeight = FontWeight.Light,
-                                fontFamily = FontFamily.SansSerif
-                        )
-                    }
-                }
+                androidx.compose.foundation.Image(
+                        bitmap = loaded.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize()
+                )
             }
             Box(
                     modifier =
@@ -2252,34 +2224,22 @@ fun PenikProfileTab(
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                        val loaded = bitmap
-                        if (loaded != null) {
-                            androidx.compose.foundation.Image(
-                                bitmap = loaded.asImageBitmap(),
-                                contentDescription = null,
-                                modifier = Modifier.size(44.dp).clip(CircleShape)
-                            )
-                        } else {
-                            val local = JidHelper.displayAddress(account.jid.asBareJid())
-                            val initialSeed = if (tempName.isNotBlank()) tempName else local
-                            val initial = initialSeed.firstOrNull { it.isLetterOrDigit() }?.uppercase()
-                                    ?: initialSeed.firstOrNull()?.uppercase()
-                                    ?: "?"
-                            val bg = Color(account.avatarBackgroundColor)
-                            Box(
-                                modifier = Modifier.fillMaxSize().clip(CircleShape).background(bg),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = initial,
-                                    color = Color.White,
-                                    fontSize = 30.sp,
-                                    fontWeight = FontWeight.Light,
-                                    fontFamily = FontFamily.SansSerif
-                                )
-                            }
+                    val editSizePx = with(density) { 44.dp.roundToPx() }
+                    val editSeed = if (tempName.isNotBlank()) tempName else JidHelper.displayAddress(account.jid.asBareJid())
+                    val editBitmap = remember(account.uuid, account.avatar, tempName, editSizePx) {
+                        try {
+                            avatarService?.get(account, editSizePx, false)
+                                    ?: AvatarService.getPlaceholder(editSeed, account.avatarBackgroundColor, editSizePx)
+                        } catch (e: Exception) {
+                            AvatarService.getPlaceholder(editSeed, account.avatarBackgroundColor, editSizePx)
                         }
+                    }
+                    Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                        androidx.compose.foundation.Image(
+                            bitmap = editBitmap.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier.size(44.dp).clip(CircleShape)
+                        )
                     }
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
