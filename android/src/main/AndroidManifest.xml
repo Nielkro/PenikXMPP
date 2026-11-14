@@ -201,7 +201,7 @@
             android:name=".ui.PenikVideoNoteActivity"
             android:configChanges="orientation|screenSize"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.Penik.FullScreen" />
+            android:theme="@style/Theme.Penik.Translucent" />
         <activity
             android:name=".ui.ShowLocationActivity"
             android:label="@string/title_activity_show_location" />

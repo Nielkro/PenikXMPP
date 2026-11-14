@@ -2188,6 +2188,7 @@ object PenikVoicePlayer {
     }
 
     fun toggle(context: android.content.Context, file: File, uuid: String, fallbackDurationMs: Int) {
+        PenikVideoNotePlayer.stop()
         if (currentUuid == uuid && player != null) {
             try {
                 if (isPlaying) {
@@ -2246,6 +2247,76 @@ object PenikVoicePlayer {
         isPlaying = false
         progressMs = 0
         durationMs = 0
+    }
+}
+
+object PenikVideoNotePlayer {
+    var activeUuid by mutableStateOf<String?>(null)
+    private var player: android.media.MediaPlayer? = null
+    var isPlaying by mutableStateOf(false)
+    var currentPosMs by mutableStateOf(0)
+    var durationMs by mutableStateOf(0)
+
+    fun position(): Int {
+        return try {
+            player?.currentPosition ?: currentPosMs
+        } catch (e: Exception) {
+            currentPosMs
+        }
+    }
+
+    fun stop() {
+        try {
+            player?.stop()
+        } catch (ignored: Exception) {}
+        try {
+            player?.release()
+        } catch (ignored: Exception) {}
+        player = null
+        activeUuid = null
+        isPlaying = false
+        currentPosMs = 0
+        durationMs = 0
+    }
+
+    fun toggle(file: File, uuid: String, surface: android.view.Surface) {
+        if (activeUuid == uuid && player != null) {
+            try {
+                if (isPlaying) {
+                    player?.pause()
+                    isPlaying = false
+                    currentPosMs = position()
+                } else {
+                    player?.start()
+                    isPlaying = true
+                }
+            } catch (e: Exception) {
+                stop()
+            }
+            return
+        }
+        PenikVoicePlayer.stop()
+        stop()
+
+        try {
+            val p = android.media.MediaPlayer()
+            p.setDataSource(file.absolutePath)
+            p.setSurface(surface)
+            p.isLooping = true
+            p.setOnPreparedListener { mp ->
+                durationMs = mp.duration
+                mp.start()
+                isPlaying = true
+            }
+            p.setOnCompletionListener {
+                stop()
+            }
+            player = p
+            activeUuid = uuid
+            p.prepareAsync()
+        } catch (e: Exception) {
+            stop()
+        }
     }
 }
 
@@ -3669,24 +3740,18 @@ fun PenikVideoNoteBubble(
     val localFile = remember(message.uuid) {
         service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
     }
-    var isPlaying by remember(message.uuid) { mutableStateOf(false) }
-    var currentPosMs by remember(message.uuid) { mutableStateOf(0) }
-    var durationMs by remember(message.uuid) { mutableStateOf(0) }
-    var mediaPlayerRef by remember(message.uuid) { mutableStateOf<android.media.MediaPlayer?>(null) }
+    val isActive = PenikVideoNotePlayer.activeUuid == message.uuid
+    val isPlaying = isActive && PenikVideoNotePlayer.isPlaying
+    val currentPosMs = if (isActive) PenikVideoNotePlayer.currentPosMs else 0
+    val durationMs = if (isActive) PenikVideoNotePlayer.durationMs else 0
     val accent = colorResource(R.color.penik_accent)
     val danger = colorResource(R.color.penik_danger)
+    var surfaceRef by remember(message.uuid) { mutableStateOf<android.view.Surface?>(null) }
 
-    // Progress updater loop
-    LaunchedEffect(isPlaying) {
-        while (isPlaying) {
-            mediaPlayerRef?.let { mp ->
-                try {
-                    currentPosMs = mp.currentPosition
-                    if (durationMs <= 0 && mp.duration > 0) {
-                        durationMs = mp.duration
-                    }
-                } catch (ignored: Exception) {}
-            }
+    // Progress updater loop only for the ONE active player
+    LaunchedEffect(isActive, isPlaying) {
+        while (isActive && isPlaying) {
+            PenikVideoNotePlayer.currentPosMs = PenikVideoNotePlayer.position()
             kotlinx.coroutines.delay(100)
         }
     }
@@ -3697,16 +3762,10 @@ fun PenikVideoNoteBubble(
                     .size(220.dp)
                     .combinedClickable(
                             onClick = {
-                                mediaPlayerRef?.let { mp ->
-                                    try {
-                                        if (mp.isPlaying) {
-                                            mp.pause()
-                                            isPlaying = false
-                                        } else {
-                                            mp.start()
-                                            isPlaying = true
-                                        }
-                                    } catch (ignored: Exception) {}
+                                if (localFile != null) {
+                                    surfaceRef?.let { s ->
+                                        PenikVideoNotePlayer.toggle(localFile, message.uuid, s)
+                                    }
                                 }
                             },
                             onLongClick = onLongClick
@@ -3714,41 +3773,25 @@ fun PenikVideoNoteBubble(
             contentAlignment = Alignment.Center
     ) {
         if (localFile != null) {
-            // Live circular video playback
+            // Live circular video view
             AndroidView(
                     factory = { ctx ->
                         android.view.TextureView(ctx).apply {
                             surfaceTextureListener = object : android.view.TextureView.SurfaceTextureListener {
-                                override fun onSurfaceTextureAvailable(surface: android.graphics.SurfaceTexture, width: Int, height: Int) {
-                                    try {
-                                        val mp = android.media.MediaPlayer().apply {
-                                            setDataSource(localFile.absolutePath)
-                                            setSurface(android.view.Surface(surface))
-                                            isLooping = true
-                                            setOnPreparedListener { player ->
-                                                durationMs = player.duration
-                                                player.start()
-                                                isPlaying = true
-                                            }
-                                            prepareAsync()
-                                        }
-                                        mediaPlayerRef = mp
-                                    } catch (e: Exception) {
-                                        android.util.Log.w("PenikVideoNote", "Failed to start media player", e)
-                                    }
+                                override fun onSurfaceTextureAvailable(st: android.graphics.SurfaceTexture, width: Int, height: Int) {
+                                    val s = android.view.Surface(st)
+                                    surfaceRef = s
                                 }
 
-                                override fun onSurfaceTextureSizeChanged(surface: android.graphics.SurfaceTexture, width: Int, height: Int) {}
-                                override fun onSurfaceTextureDestroyed(surface: android.graphics.SurfaceTexture): Boolean {
-                                    try {
-                                        mediaPlayerRef?.stop()
-                                        mediaPlayerRef?.release()
-                                    } catch (ignored: Exception) {}
-                                    mediaPlayerRef = null
-                                    isPlaying = false
+                                override fun onSurfaceTextureSizeChanged(st: android.graphics.SurfaceTexture, width: Int, height: Int) {}
+                                override fun onSurfaceTextureDestroyed(st: android.graphics.SurfaceTexture): Boolean {
+                                    if (PenikVideoNotePlayer.activeUuid == message.uuid) {
+                                        PenikVideoNotePlayer.stop()
+                                    }
+                                    surfaceRef = null
                                     return true
                                 }
-                                override fun onSurfaceTextureUpdated(surface: android.graphics.SurfaceTexture) {}
+                                override fun onSurfaceTextureUpdated(st: android.graphics.SurfaceTexture) {}
                             }
                         }
                     },
@@ -3758,28 +3801,36 @@ fun PenikVideoNoteBubble(
             )
 
             // Circular progress indicator around perimeter
-            androidx.compose.foundation.Canvas(modifier = Modifier.size(220.dp)) {
-                val strokeWidth = 3.dp.toPx()
-                val sweep = if (durationMs > 0) (currentPosMs.toFloat() / durationMs.toFloat()) * 360f else 0f
+            if (isActive && durationMs > 0) {
+                androidx.compose.foundation.Canvas(modifier = Modifier.size(220.dp)) {
+                    val strokeWidth = 3.dp.toPx()
+                    val sweep = (currentPosMs.toFloat() / durationMs.toFloat()) * 360f
 
-                // Track
-                drawCircle(
-                        color = Color.White.copy(alpha = 0.15f),
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
-                )
-                // Progress
-                if (sweep > 0f) {
-                    drawArc(
-                            color = accent,
-                            startAngle = -90f,
-                            sweepAngle = sweep,
-                            useCenter = false,
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    drawCircle(
+                            color = Color.White.copy(alpha = 0.15f),
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
                     )
+                    if (sweep > 0f) {
+                        drawArc(
+                                color = accent,
+                                startAngle = -90f,
+                                sweepAngle = sweep,
+                                useCenter = false,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                        )
+                    }
                 }
+            } else {
+                // Subtle border when idle
+                Box(
+                        modifier = Modifier
+                                .size(216.dp)
+                                .clip(CircleShape)
+                                .border(1.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+                )
             }
 
-            // Center play button overlay when paused
+            // Center play button overlay when not playing
             if (!isPlaying) {
                 Box(
                         modifier = Modifier
@@ -3807,14 +3858,18 @@ fun PenikVideoNoteBubble(
                             .padding(horizontal = 7.dp, vertical = 2.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val remainingMs = (durationMs - currentPosMs).coerceAtLeast(0)
-                    Text(
-                            text = penikFormatVoiceTime(if (remainingMs > 0) remainingMs else durationMs),
-                            fontSize = 11.sp,
-                            color = Color.White
-                    )
+                    val remainingMs = if (durationMs > 0) (durationMs - currentPosMs).coerceAtLeast(0) else 0
+                    if (remainingMs > 0) {
+                        Text(
+                                text = penikFormatVoiceTime(remainingMs),
+                                fontSize = 11.sp,
+                                color = Color.White
+                        )
+                    }
                     if (isSentByMe) {
-                        Spacer(modifier = Modifier.width(4.dp))
+                        if (remainingMs > 0) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
                         if (status == Message.STATUS_SEND_FAILED) {
                             Text(text = "!", color = danger, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         } else {

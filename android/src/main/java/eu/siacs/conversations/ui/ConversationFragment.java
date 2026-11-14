@@ -137,6 +137,7 @@ import eu.siacs.conversations.ui.compose.PenikChatBridge;
 import eu.siacs.conversations.ui.compose.PenikChatListener;
 import eu.siacs.conversations.ui.compose.PenikChatState;
 import eu.siacs.conversations.ui.PenikProfileActivity;
+import eu.siacs.conversations.ui.util.PenikVideoNoteTranscoder;
 import eu.siacs.conversations.ui.util.ActivityResult;
 import eu.siacs.conversations.ui.util.Attachment;
 import eu.siacs.conversations.ui.util.DateSeparator;
@@ -1318,15 +1319,27 @@ public class ConversationFragment extends XmppFragment
                 toggleInputMethod();
                 break;
             case ATTACHMENT_CHOICE_RECORD_VIDEO:
-                if (data != null && data.getData() != null) {
-                    final List<Attachment> videoNotes =
-                            Attachment.of(requireContext(), data.getData(), Attachment.Type.FILE);
-                    commitAttachments(videoNotes);
-                } else {
-                    final List<Attachment> vFiles =
-                            Attachment.extractAttachments(requireContext(), data, Attachment.Type.FILE);
-                    if (!vFiles.isEmpty()) {
-                        commitAttachments(vFiles);
+                if (data != null) {
+                    final String rawPath = data.getStringExtra(PenikVideoNoteActivity.EXTRA_RAW_VIDEO_PATH);
+                    final File rawFile = rawPath != null ? new File(rawPath) : (data.getData() != null && data.getData().getPath() != null ? new File(data.getData().getPath()) : null);
+                    if (rawFile != null && rawFile.exists()) {
+                        final File cacheDir = requireContext().getCacheDir();
+                        final File outputFile = new File(cacheDir, "penik_video_note_" + System.currentTimeMillis() + ".mp4");
+                        new Thread(() -> {
+                            final File finalFile = PenikVideoNoteTranscoder.INSTANCE.transcode(rawFile, outputFile);
+                            try { rawFile.delete(); } catch (Exception ignored) {}
+                            runOnUiThreadQuiet(() -> {
+                                final List<Attachment> videoNotes =
+                                        Attachment.of(requireContext(), Uri.fromFile(finalFile), Attachment.Type.FILE);
+                                commitAttachments(videoNotes);
+                            });
+                        }).start();
+                        break;
+                    }
+                    if (data.getData() != null) {
+                        final List<Attachment> videoNotes =
+                                Attachment.of(requireContext(), data.getData(), Attachment.Type.FILE);
+                        commitAttachments(videoNotes);
                     }
                 }
                 break;

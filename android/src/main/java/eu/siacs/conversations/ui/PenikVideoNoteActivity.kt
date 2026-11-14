@@ -4,17 +4,9 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color as AndroidColor
-import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import android.view.Surface
-import android.view.TextureView
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,7 +22,6 @@ import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -38,9 +29,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,28 +41,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,18 +68,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import eu.siacs.conversations.R
-import eu.siacs.conversations.ui.util.PenikVideoNoteTranscoder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
 
+/**
+ * Telegram-style Video Note ("Кружочки") recording overlay.
+ * Opens transparently over the chat, immediately begins recording,
+ * and exits instantly when tapping Send or Cancel.
+ */
 class PenikVideoNoteActivity : ComponentActivity() {
 
     companion object {
-        const val EXTRA_VIDEO_URI = "extra_video_uri"
+        const val EXTRA_RAW_VIDEO_PATH = "extra_raw_video_path"
         const val MAX_RECORD_SECONDS = 60
         private const val TAG = "PenikVideoNoteActivity"
     }
@@ -107,6 +88,8 @@ class PenikVideoNoteActivity : ComponentActivity() {
     private var videoCapture: VideoCapture<Recorder>? = null
     private var activeRecording: Recording? = null
     private var isFrontCamera by mutableStateOf(true)
+    private var currentRecordedFile: File? = null
+    private var isRecordingStarted = false
 
     private val permissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -122,7 +105,6 @@ class PenikVideoNoteActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Check permissions
         val hasCamera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         val hasAudio = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         if (!hasCamera || !hasAudio) {
@@ -130,20 +112,18 @@ class PenikVideoNoteActivity : ComponentActivity() {
         }
 
         setContent {
-            PenikVideoNoteScreen(
-                    onClose = { finish() },
+            PenikVideoNoteOverlayScreen(
+                    onCancel = { cancelAndExit() },
                     onFlipCamera = { flipCamera() },
-                    onStartRecording = { onRecordStart() },
-                    onStopRecording = { onRecordStop() },
-                    onSend = { recordedFile -> processAndSend(recordedFile) },
+                    onSend = { finishAndSend() },
                     bindCamera = { previewView -> bindCameraUseCases(previewView) }
             )
         }
     }
 
     private fun flipCamera() {
+        // If recording, we can stop and flip or flip between takes
         isFrontCamera = !isFrontCamera
-        // Camera will rebind in LaunchedEffect(isFrontCamera)
     }
 
     private fun bindCameraUseCases(previewView: PreviewView) {
@@ -168,16 +148,17 @@ class PenikVideoNoteActivity : ComponentActivity() {
             try {
                 cameraProvider?.unbindAll()
                 cameraProvider?.bindToLifecycle(this, cameraSelector, preview, videoCapture)
+                // Start recording automatically as soon as camera is bound!
+                if (!isRecordingStarted) {
+                    startRecordingInternal()
+                }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to bind camera use cases", e)
+                Log.e(TAG, "Failed to bind camera", e)
             }
         }, ContextCompat.getMainExecutor(this))
     }
 
-    private var currentRecordedFile: File? = null
-    private var onRecordCompleteCallback: ((File) -> Unit)? = null
-
-    private fun onRecordStart() {
+    private fun startRecordingInternal() {
         val vc = videoCapture ?: return
         val rawFile = File(cacheDir, "raw_video_note_${System.currentTimeMillis()}.mp4")
         currentRecordedFile = rawFile
@@ -185,6 +166,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
         val outputOptions = FileOutputOptions.Builder(rawFile).build()
 
         try {
+            isRecordingStarted = true
             activeRecording = vc.output
                     .prepareRecording(this, outputOptions)
                     .apply {
@@ -195,11 +177,8 @@ class PenikVideoNoteActivity : ComponentActivity() {
                     .start(ContextCompat.getMainExecutor(this)) { event ->
                         when (event) {
                             is VideoRecordEvent.Finalize -> {
-                                if (!event.hasError()) {
-                                    onRecordCompleteCallback?.invoke(rawFile)
-                                } else {
-                                    Log.e(TAG, "Recording error: ${event.error}")
-                                    Toast.makeText(this, "Ошибка записи видео", Toast.LENGTH_SHORT).show()
+                                if (event.hasError()) {
+                                    Log.e(TAG, "Recording finalized with error: ${event.error}")
                                 }
                             }
                         }
@@ -209,22 +188,35 @@ class PenikVideoNoteActivity : ComponentActivity() {
         }
     }
 
-    private fun onRecordStop() {
-        activeRecording?.stop()
-        activeRecording = null
+    private fun cancelAndExit() {
+        try {
+            activeRecording?.stop()
+            activeRecording = null
+            currentRecordedFile?.delete()
+        } catch (ignored: Exception) {}
+        setResult(Activity.RESULT_CANCELED)
+        finish()
+        overridePendingTransition(0, 0)
     }
 
-    private fun processAndSend(file: File) {
-        // Transcode to 480x480 square with Penik watermark in corner
-        val outputFile = File(cacheDir, "penik_video_note_${System.currentTimeMillis()}.mp4")
-        val finalFile = PenikVideoNoteTranscoder.transcode(file, outputFile)
+    private fun finishAndSend() {
+        try {
+            activeRecording?.stop()
+            activeRecording = null
+        } catch (ignored: Exception) {}
 
-        val intent = Intent().apply {
-            data = Uri.fromFile(finalFile)
-            putExtra(EXTRA_VIDEO_URI, Uri.fromFile(finalFile).toString())
+        val file = currentRecordedFile
+        if (file != null && file.exists()) {
+            val intent = Intent().apply {
+                putExtra(EXTRA_RAW_VIDEO_PATH, file.absolutePath)
+                data = Uri.fromFile(file)
+            }
+            setResult(Activity.RESULT_OK, intent)
+        } else {
+            setResult(Activity.RESULT_CANCELED)
         }
-        setResult(Activity.RESULT_OK, intent)
         finish()
+        overridePendingTransition(0, 0)
     }
 
     override fun onDestroy() {
@@ -234,367 +226,170 @@ class PenikVideoNoteActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun PenikVideoNoteScreen(
-            onClose: () -> Unit,
+    private fun PenikVideoNoteOverlayScreen(
+            onCancel: () -> Unit,
             onFlipCamera: () -> Unit,
-            onStartRecording: () -> Unit,
-            onStopRecording: () -> Unit,
-            onSend: (File) -> Unit,
+            onSend: () -> Unit,
             bindCamera: (PreviewView) -> Unit
     ) {
-        val context = LocalContext.current
-        val scope = rememberCoroutineScope()
-
-        var isRecording by remember { mutableStateOf(false) }
         var recordedDurationSec by remember { mutableStateOf(0f) }
-        var recordedFile by remember { mutableStateOf<File?>(null) }
-        var isProcessing by remember { mutableStateOf(false) }
-
-        // Live preview view reference
         var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
 
         LaunchedEffect(previewViewRef, isFrontCamera) {
             previewViewRef?.let { bindCamera(it) }
         }
 
-        // Timer effect during recording
-        LaunchedEffect(isRecording) {
-            if (isRecording) {
-                recordedDurationSec = 0f
-                val start = System.currentTimeMillis()
-                while (isRecording && recordedDurationSec < MAX_RECORD_SECONDS) {
-                    kotlinx.coroutines.delay(100)
-                    recordedDurationSec = (System.currentTimeMillis() - start) / 1000f
-                    if (recordedDurationSec >= MAX_RECORD_SECONDS) {
-                        isRecording = false
-                        onStopRecording()
-                    }
+        // Live timer loop up to MAX_RECORD_SECONDS
+        LaunchedEffect(Unit) {
+            val start = System.currentTimeMillis()
+            while (recordedDurationSec < MAX_RECORD_SECONDS) {
+                kotlinx.coroutines.delay(100)
+                recordedDurationSec = (System.currentTimeMillis() - start) / 1000f
+                if (recordedDurationSec >= MAX_RECORD_SECONDS) {
+                    onSend()
+                    break
                 }
             }
         }
 
-        onRecordCompleteCallback = { file ->
-            recordedFile = file
-        }
-
+        // Semi-transparent darkened chat background
         Box(
                 modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFF0C1017))
+                        .background(Color.Black.copy(alpha = 0.65f))
+                        .clickable(enabled = false) {}
         ) {
-            // Top Bar
-            Row(
-                    modifier = Modifier
-                            .fillMaxWidth()
-                            .statusBarsPadding()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                        onClick = onClose,
-                        modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.12f))
-                ) {
-                    Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Закрыть",
-                            tint = Color.White
-                    )
-                }
-
-                // Flip camera button (only visible when not reviewing or recording)
-                if (recordedFile == null && !isRecording) {
-                    IconButton(
-                            onClick = onFlipCamera,
-                            modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.12f))
-                    ) {
-                        Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Сменить камеру",
-                                tint = Color.White
-                        )
-                    }
-                }
-            }
-
-            // Center Viewfinder Area
+            // Center Circular Camera Viewfinder
             Column(
                     modifier = Modifier
                             .align(Alignment.Center)
-                            .padding(bottom = 60.dp),
+                            .padding(bottom = 80.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Circular viewfinder
                 Box(
                         modifier = Modifier.size(280.dp),
                         contentAlignment = Alignment.Center
                 ) {
-                    val fileToPreview = recordedFile
-                    if (fileToPreview != null) {
-                        // Review playback in circle
-                        ReviewPlayer(file = fileToPreview)
-                    } else {
-                        // Live CameraX preview in circle
-                        AndroidView(
-                                factory = { ctx ->
-                                    PreviewView(ctx).apply {
-                                        implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                                        scaleType = PreviewView.ScaleType.FILL_CENTER
-                                        previewViewRef = this
-                                    }
-                                },
-                                modifier = Modifier
-                                        .size(268.dp)
-                                        .clip(CircleShape)
-                        )
-                    }
-
-                    // Circular Progress Ring during recording
-                    if (isRecording) {
-                        Canvas(modifier = Modifier.size(280.dp)) {
-                            val strokeWidth = 4.dp.toPx()
-                            val sweepAngle = (recordedDurationSec / MAX_RECORD_SECONDS.toFloat()) * 360f
-
-                            // Track
-                            drawCircle(
-                                    color = Color.White.copy(alpha = 0.2f),
-                                    style = Stroke(width = strokeWidth)
-                            )
-                            // Progress Arc
-                            drawArc(
-                                    color = Color(0xFFE53935),
-                                    startAngle = -90f,
-                                    sweepAngle = sweepAngle,
-                                    useCenter = false,
-                                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                            )
-                        }
-                    } else if (recordedFile == null) {
-                        // Subtle decorative ring when idle
-                        Box(
-                                modifier = Modifier
-                                        .size(276.dp)
-                                        .clip(CircleShape)
-                                        .border(2.dp, Color.White.copy(alpha = 0.25f), CircleShape)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // Timer pill
-                if (isRecording) {
-                    val minutes = (recordedDurationSec / 60).toInt()
-                    val seconds = (recordedDurationSec % 60).toInt()
-                    val timeStr = String.format(Locale.ENGLISH, "%02d:%02d / 01:00", minutes, seconds)
-
-                    Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                    // Live camera preview
+                    AndroidView(
+                            factory = { ctx ->
+                                PreviewView(ctx).apply {
+                                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                                    scaleType = PreviewView.ScaleType.FILL_CENTER
+                                    previewViewRef = this
+                                }
+                            },
                             modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color.Black.copy(alpha = 0.6f))
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Box(
-                                modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFFE53935))
+                                    .size(268.dp)
+                                    .clip(CircleShape)
+                    )
+
+                    // Circular Progress Arc (white, like Telegram)
+                    Canvas(modifier = Modifier.size(280.dp)) {
+                        val strokeWidth = 4.dp.toPx()
+                        val sweepAngle = (recordedDurationSec / MAX_RECORD_SECONDS.toFloat()) * 360f
+
+                        // Track
+                        drawCircle(
+                                color = Color.White.copy(alpha = 0.2f),
+                                style = Stroke(width = strokeWidth)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                                text = timeStr,
+                        // Progress Arc
+                        drawArc(
                                 color = Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
+                                startAngle = -90f,
+                                sweepAngle = sweepAngle,
+                                useCenter = false,
+                                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                         )
                     }
-                } else if (recordedFile == null) {
-                    Text(
-                            text = "Нажмите для записи кружочка",
-                            color = Color.White.copy(alpha = 0.6f),
-                            fontSize = 13.sp
-                    )
                 }
             }
 
-            // Bottom Controls Area
+            // Bottom Bar: Flip, Timer, "ОТМЕНА", Send (Exact layout from Image 2!)
             Box(
                     modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(bottom = 32.dp),
-                    contentAlignment = Alignment.Center
+                            .padding(horizontal = 20.dp, vertical = 24.dp)
             ) {
-                val file = recordedFile
-                if (isProcessing) {
-                    Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Left: Flip camera button
+                    IconButton(
+                            onClick = onFlipCamera,
                             modifier = Modifier
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(Color.Black.copy(alpha = 0.7f))
-                                    .padding(horizontal = 20.dp, vertical = 12.dp)
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.15f))
                     ) {
-                        CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = Color(0xFF3390EC),
-                                strokeWidth = 2.5.dp
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                                text = "Обработка кружочка...",
-                                color = Color.White,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
+                        Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Сменить камеру",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
                         )
                     }
-                } else if (file != null) {
-                    // Review controls: Retake / Send
-                    Row(
-                            horizontalArrangement = Arrangement.spacedBy(48.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Retake
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            IconButton(
-                                    onClick = {
-                                        try { file.delete() } catch (ignored: Exception) {}
-                                        recordedFile = null
-                                    },
-                                    modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(CircleShape)
-                                            .background(Color.White.copy(alpha = 0.15f))
-                            ) {
-                                Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Перезаписать",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(26.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Сброс", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                        }
 
-                        // Send
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            IconButton(
-                                    onClick = {
-                                        isProcessing = true
-                                        scope.launch(Dispatchers.IO) {
-                                            onSend(file)
-                                        }
-                                    },
-                                    modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(CircleShape)
-                                            .background(Color(0xFF3390EC))
-                            ) {
-                                Icon(
-                                        imageVector = Icons.Default.Send,
-                                        contentDescription = "Отправить",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(26.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Отправить", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
+                    // Center-left: Red dot + live timer
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                                modifier = Modifier
+                                        .size(9.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFE53935))
+                        )
+                        Spacer(modifier = Modifier.width(7.dp))
+                        val minutes = (recordedDurationSec / 60).toInt()
+                        val seconds = (recordedDurationSec % 60).toInt()
+                        val tenths = ((recordedDurationSec * 10).toInt() % 10)
+                        val timeStr = String.format(Locale.ENGLISH, "%d:%02d,%d", minutes, seconds, tenths)
+                        Text(
+                                text = timeStr,
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
                     }
-                } else {
-                    // Record button (idle or recording)
+
+                    // Center: "ОТМЕНА" button
                     Box(
                             modifier = Modifier
-                                    .size(76.dp)
-                                    .clip(CircleShape)
-                                    .border(3.dp, Color.White, CircleShape)
-                                    .clickable {
-                                        if (!isRecording) {
-                                            isRecording = true
-                                            onStartRecording()
-                                        } else {
-                                            isRecording = false
-                                            onStopRecording()
-                                        }
-                                    },
-                            contentAlignment = Alignment.Center
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { onCancel() }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
-                        if (isRecording) {
-                            // Red square (Stop)
-                            Box(
-                                    modifier = Modifier
-                                            .size(26.dp)
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(Color(0xFFE53935))
-                            )
-                        } else {
-                            // Red circle (Record)
-                            Box(
-                                    modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(CircleShape)
-                                            .background(Color(0xFFE53935))
-                            )
-                        }
+                        Text(
+                                text = "ОТМЕНА",
+                                color = Color.White,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                        )
+                    }
+
+                    // Right: Send button (Telegram accent blue circle with send arrow)
+                    IconButton(
+                            onClick = onSend,
+                            modifier = Modifier
+                                    .size(54.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF3390EC))
+                    ) {
+                        Icon(
+                                imageVector = Icons.Default.Send,
+                                contentDescription = "Отправить",
+                                tint = Color.White,
+                                modifier = Modifier.size(26.dp)
+                        )
                     }
                 }
             }
         }
-    }
-
-    @Composable
-    private fun ReviewPlayer(file: File) {
-        val context = LocalContext.current
-        var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
-
-        DisposableEffect(file) {
-            val player = MediaPlayer().apply {
-                setDataSource(file.absolutePath)
-                isLooping = true
-            }
-            mediaPlayer = player
-
-            onDispose {
-                try {
-                    player.stop()
-                    player.release()
-                } catch (ignored: Exception) {}
-            }
-        }
-
-        AndroidView(
-                factory = { ctx ->
-                    TextureView(ctx).apply {
-                        surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                            override fun onSurfaceTextureAvailable(surface: android.graphics.SurfaceTexture, width: Int, height: Int) {
-                                val s = Surface(surface)
-                                mediaPlayer?.setSurface(s)
-                                mediaPlayer?.prepareAsync()
-                                mediaPlayer?.setOnPreparedListener { mp ->
-                                    mp.start()
-                                }
-                            }
-
-                            override fun onSurfaceTextureSizeChanged(surface: android.graphics.SurfaceTexture, width: Int, height: Int) {}
-                            override fun onSurfaceTextureDestroyed(surface: android.graphics.SurfaceTexture): Boolean {
-                                mediaPlayer?.setSurface(null)
-                                return true
-                            }
-                            override fun onSurfaceTextureUpdated(surface: android.graphics.SurfaceTexture) {}
-                        }
-                    }
-                },
-                modifier = Modifier
-                        .size(268.dp)
-                        .clip(CircleShape)
-        )
     }
 }

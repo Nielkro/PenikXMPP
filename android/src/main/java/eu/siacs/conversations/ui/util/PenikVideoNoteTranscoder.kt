@@ -20,8 +20,6 @@ import android.opengl.EGLSurface
 import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLUtils
-import android.opengl.Matrix
-import android.os.Build
 import android.util.Log
 import android.view.Surface
 import java.io.File
@@ -32,11 +30,11 @@ import java.nio.FloatBuffer
 /**
  * Fast hardware-accelerated transcoder for Penik Video Notes ("Кружочки").
  *
- * It crops any camera video into a clean 1:1 square (480x480), preserves original AAC audio,
- * and overlays a subtle "Penik" brand badge in the top-right corner.
- *
- * When rendered inside Penik with CircleShape clipping, the corner is cropped off and invisible.
- * When viewed in third-party XMPP clients or video players, the Penik logo is clearly visible.
+ * 1. Corrects camera sensor rotation (upright 0°).
+ * 2. Crops center into a circle (radius 1.0).
+ * 3. Fills everything outside the circle with SOLID BLACK (guaranteed zero privacy leaks).
+ * 4. Places the stylish "Penik" brand badge in the bottom-right corner on the black background.
+ * 5. Copies original AAC audio losslessly.
  */
 object PenikVideoNoteTranscoder {
 
@@ -82,15 +80,18 @@ object PenikVideoNoteTranscoder {
                 return inputFile
             }
 
-            // Read video orientation
+            // Extract metadata: rotation and dimensions
             var rotation = 0
+            var rawWidth = 640
+            var rawHeight = 480
             try {
                 val retriever = MediaMetadataRetriever().apply { setDataSource(inputFile.absolutePath) }
-                val rotStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
-                rotation = rotStr?.toIntOrNull() ?: 0
+                rotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)?.toIntOrNull() ?: 0
+                rawWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 640
+                rawHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 480
                 retriever.release()
             } catch (e: Exception) {
-                Log.w(TAG, "Could not extract video rotation", e)
+                Log.w(TAG, "Could not extract video metadata", e)
             }
 
             // Setup encoder (H.264 / AVC 480x480)
@@ -107,7 +108,7 @@ object PenikVideoNoteTranscoder {
             encoder.start()
 
             // Setup EGL & OpenGL
-            eglHelper = EglHelper(encoderSurface, rotation)
+            eglHelper = EglHelper(encoderSurface, rotation, rawWidth, rawHeight)
             eglHelper.makeCurrent()
 
             // Setup decoder to output onto EGL surface texture
@@ -117,8 +118,10 @@ object PenikVideoNoteTranscoder {
             decoder.configure(inputVideoFormat, decoderSurface, null, 0)
             decoder.start()
 
-            // Setup muxer
+            // Setup muxer with orientation 0 (already rotated in OpenGL)
             muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            muxer.setOrientationHint(0)
+
             var muxerVideoTrack = -1
             var muxerAudioTrack = -1
             var muxerStarted = false
@@ -134,7 +137,6 @@ object PenikVideoNoteTranscoder {
             val audioBuffer = ByteBuffer.allocateDirect(128 * 1024)
             val audioBufferInfo = MediaCodec.BufferInfo()
 
-            // Helper to drain encoder
             fun drainEncoder(endOfStream: Boolean) {
                 if (endOfStream) {
                     encoder.signalEndOfInputStream()
@@ -213,7 +215,7 @@ object PenikVideoNoteTranscoder {
                 drainEncoder(false)
             }
 
-            // Copy audio track to muxer if present
+            // Copy original audio track directly into muxer
             if (audioTrackIndex >= 0 && muxerAudioTrack >= 0 && muxerStarted) {
                 extractor.unselectTrack(videoTrackIndex)
                 extractor.selectTrack(audioTrackIndex)
@@ -245,7 +247,12 @@ object PenikVideoNoteTranscoder {
         }
     }
 
-    private class EglHelper(surface: Surface, private val videoRotation: Int) {
+    private class EglHelper(
+            surface: Surface,
+            private val videoRotation: Int,
+            private val rawWidth: Int,
+            private val rawHeight: Int
+    ) {
         private var eglDisplay: EGLDisplay = EGL14.EGL_NO_DISPLAY
         private var eglContext: EGLContext = EGL14.EGL_NO_CONTEXT
         private var eglSurface: EGLSurface = EGL14.EGL_NO_SURFACE
@@ -255,8 +262,9 @@ object PenikVideoNoteTranscoder {
         private var watermarkTextureId: Int = -1
 
         private var program: Int = 0
-        private var uMVPMatrixHandle: Int = 0
         private var uSTMatrixHandle: Int = 0
+        private var uRotationHandle: Int = 0
+        private var uAspectScaleHandle: Int = 0
         private var aPositionHandle: Int = 0
         private var aTextureHandle: Int = 0
 
@@ -266,7 +274,6 @@ object PenikVideoNoteTranscoder {
 
         private val triangleVertices: FloatBuffer
         private val watermarkVertices: FloatBuffer
-        private val mvpMatrix = FloatArray(16)
         private val stMatrix = FloatArray(16)
 
         @Volatile
@@ -274,7 +281,7 @@ object PenikVideoNoteTranscoder {
         private val frameSyncObject = Object()
 
         init {
-            // Full screen quad for 1:1 square rendering
+            // Full screen quad [-1, 1] x [-1, 1]
             val vertexData = floatArrayOf(
                     -1.0f, -1.0f, 0f, 0f, 0f,
                     1.0f, -1.0f, 0f, 1f, 0f,
@@ -287,14 +294,14 @@ object PenikVideoNoteTranscoder {
                         position(0)
                     }
 
-            // Watermark quad in top-right corner outside inscribed circle:
-            // x: [0.72, 0.96], y: [0.72, 0.94]
-            // At (0.72, 0.72), distance^2 = 0.5184 + 0.5184 = 1.0368 > 1.0 (outside circle!)
+            // Watermark quad in BOTTOM-RIGHT corner on the black background:
+            // x: [0.50, 0.96], y: [-0.94, -0.74]
+            // At (0.50, -0.74), distance^2 = 0.25 + 0.5476 = 0.7976 -> placed nicely in corner
             val wmVertexData = floatArrayOf(
-                    0.68f, 0.74f, 0f, 0f, 1f,
-                    0.96f, 0.74f, 0f, 1f, 1f,
-                    0.68f, 0.94f, 0f, 0f, 0f,
-                    0.96f, 0.94f, 0f, 1f, 0f
+                    0.50f, -0.94f, 0f, 0f, 1f,
+                    0.96f, -0.94f, 0f, 1f, 1f,
+                    0.50f, -0.74f, 0f, 0f, 0f,
+                    0.96f, -0.74f, 0f, 1f, 0f
             )
             watermarkVertices = ByteBuffer.allocateDirect(wmVertexData.size * 4)
                     .order(ByteOrder.nativeOrder()).asFloatBuffer().apply {
@@ -370,13 +377,21 @@ object PenikVideoNoteTranscoder {
 
             GLES20.glUseProgram(program)
 
-            Matrix.setIdentityM(mvpMatrix, 0)
-            if (videoRotation != 0) {
-                Matrix.rotateM(mvpMatrix, 0, -videoRotation.toFloat(), 0f, 0f, 1f)
-            }
-
-            GLES20.glUniformMatrix4fv(uMVPMatrixHandle, 1, false, mvpMatrix, 0)
+            // Pass ST matrix
             GLES20.glUniformMatrix4fv(uSTMatrixHandle, 1, false, stMatrix, 0)
+
+            // Pass rotation (0, 90, 180, 270)
+            GLES20.glUniform1i(uRotationHandle, videoRotation)
+
+            // Aspect ratio scaling to center-crop raw sensor buffer into square
+            val aspectScale = if (rawWidth > 0 && rawHeight > 0) {
+                val maxDim = maxOf(rawWidth, rawHeight).toFloat()
+                val minDim = minOf(rawWidth, rawHeight).toFloat()
+                maxDim / minDim
+            } else {
+                1.333f
+            }
+            GLES20.glUniform1f(uAspectScaleHandle, aspectScale)
 
             triangleVertices.position(0)
             GLES20.glVertexAttribPointer(aPositionHandle, 3, GLES20.GL_FLOAT, false, 5 * 4, triangleVertices)
@@ -390,7 +405,7 @@ object PenikVideoNoteTranscoder {
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
 
-            // Draw Penik watermark overlay in top-right corner
+            // Draw Penik watermark overlay in bottom-right corner on black background
             drawWatermark()
         }
 
@@ -444,13 +459,13 @@ object PenikVideoNoteTranscoder {
         }
 
         private fun createWatermarkTexture(): Int {
-            val width = 140
+            val width = 150
             val height = 48
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
 
             val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = 0xCC161A22.toInt()
+                color = 0xEE161A22.toInt()
                 style = Paint.Style.FILL
             }
             val cornerRadius = height / 2f
@@ -460,14 +475,14 @@ object PenikVideoNoteTranscoder {
                 color = 0xFF3390EC.toInt() // Penik accent blue
                 style = Paint.Style.FILL
             }
-            canvas.drawCircle(18f, height / 2f, 6f, dotPaint)
+            canvas.drawCircle(20f, height / 2f, 6.5f, dotPaint)
 
             val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = 0xFFFFFFFF.toInt()
-                textSize = 20f
+                textSize = 21f
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             }
-            canvas.drawText("Penik", 34f, height / 2f + 7f, textPaint)
+            canvas.drawText("Penik", 38f, height / 2f + 7.5f, textPaint)
 
             val textures = IntArray(1)
             GLES20.glGenTextures(1, textures, 0)
@@ -483,16 +498,39 @@ object PenikVideoNoteTranscoder {
         }
 
         private fun initShaders() {
-            // Video OES shader
+            // Video shader: transforms coordinates to upright, crops center, masks to circle with black background
             val vertexShader = """
-                uniform mat4 uMVPMatrix;
                 uniform mat4 uSTMatrix;
+                uniform int uRotation;
+                uniform float uAspectScale;
                 attribute vec4 aPosition;
                 attribute vec4 aTextureCoord;
                 varying vec2 vTextureCoord;
+                varying vec2 vPos;
                 void main() {
-                    gl_Position = uMVPMatrix * aPosition;
-                    vTextureCoord = (uSTMatrix * aTextureCoord).xy;
+                    gl_Position = aPosition;
+                    vPos = aPosition.xy;
+                    
+                    // Base coordinates centered at (0, 0)
+                    vec2 coord = aPosition.xy;
+                    
+                    // Rotate according to camera sensor rotation
+                    if (uRotation == 90) {
+                        coord = vec2(-coord.y, coord.x);
+                    } else if (uRotation == 180) {
+                        coord = vec2(-coord.x, -coord.y);
+                    } else if (uRotation == 270) {
+                        coord = vec2(coord.y, -coord.x);
+                    }
+                    
+                    // Center crop aspect ratio: scale longer axis so square fits central sensor area
+                    coord.x = coord.x / uAspectScale;
+                    
+                    // Map from [-1, 1] back to [0, 1]
+                    vec2 uv = coord * 0.5 + 0.5;
+                    
+                    // Apply SurfaceTexture matrix
+                    vTextureCoord = (uSTMatrix * vec4(uv, 0.0, 1.0)).xy;
                 }
             """.trimIndent()
 
@@ -500,17 +538,28 @@ object PenikVideoNoteTranscoder {
                 #extension GL_OES_EGL_image_external : require
                 precision mediump float;
                 varying vec2 vTextureCoord;
+                varying vec2 vPos;
                 uniform samplerExternalOES sTexture;
                 void main() {
-                    gl_FragColor = texture2D(sTexture, vTextureCoord);
+                    float dist = length(vPos);
+                    if (dist > 1.0) {
+                        // SOLID BLACK outside circle: zero privacy leak!
+                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                    } else {
+                        // Anti-aliased smooth circle edge
+                        float alpha = smoothstep(1.0, 0.985, dist);
+                        vec4 col = texture2D(sTexture, vTextureCoord);
+                        gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 1.0), col, alpha);
+                    }
                 }
             """.trimIndent()
 
             program = createProgram(vertexShader, fragmentShader)
             aPositionHandle = GLES20.glGetAttribLocation(program, "aPosition")
             aTextureHandle = GLES20.glGetAttribLocation(program, "aTextureCoord")
-            uMVPMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
             uSTMatrixHandle = GLES20.glGetUniformLocation(program, "uSTMatrix")
+            uRotationHandle = GLES20.glGetUniformLocation(program, "uRotation")
+            uAspectScaleHandle = GLES20.glGetUniformLocation(program, "uAspectScale")
 
             // 2D Watermark shader
             val wmVertexShader = """
