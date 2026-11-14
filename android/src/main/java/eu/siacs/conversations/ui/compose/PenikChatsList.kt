@@ -701,18 +701,7 @@ fun PenikChatsTab(
                     }
                 }
 
-                // 2. Self Chat ("Избранное")
-                item(key = "self_chat") {
-                    PenikSelfRow(
-                            selfChat = state.selfChat,
-                            activity = activity,
-                            revision = rev,
-                            onClick = { listener.onOpenSelfChat() }
-                    )
-                    HorizontalDivider(color = border, modifier = Modifier.padding(horizontal = 16.dp))
-                }
-
-                // 3. Conversation rows
+                // Conversation rows
                 if (filtered.isEmpty()) {
                     item(key = "empty_placeholder") {
                         Box(

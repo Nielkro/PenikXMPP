@@ -689,7 +689,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     if (self == null) {
                         self = c;
                     }
-                    continue;
                 }
                 main.add(c);
             }
@@ -713,6 +712,9 @@ public class ConversationsOverviewFragment extends XmppFragment {
             final var contact = firstEnabled.getSelfContact();
             if (contact != null) {
                 self = service.findOrCreateConversation(firstEnabled, contact.getAddress(), false, false);
+                if (self != null && !main.contains(self)) {
+                    main.add(self);
+                }
             }
         }
         if (self != null && !self.hasMessages()) {
@@ -721,6 +723,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 self.addAll(0, dbMessages);
             }
         }
+        Collections.sort(main);
         this.penikChatsState.setConversations(ImmutableList.copyOf(main));
         this.penikChatsState.setArchived(ImmutableList.copyOf(archived));
         this.penikChatsState.setConnectionState(
