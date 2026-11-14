@@ -22,6 +22,7 @@ import eu.siacs.conversations.xmpp.manager.ExternalServiceDiscoveryManager;
 import eu.siacs.conversations.xmpp.manager.HttpUploadManager;
 import eu.siacs.conversations.xmpp.manager.JingleManager;
 import eu.siacs.conversations.xmpp.manager.JingleMessageManager;
+import eu.siacs.conversations.xmpp.manager.LastActivityManager;
 import eu.siacs.conversations.xmpp.manager.LegacyBookmarkManager;
 import eu.siacs.conversations.xmpp.manager.MessageArchiveManager;
 import eu.siacs.conversations.xmpp.manager.MessageDisplayedSynchronizationManager;
@@ -75,6 +76,7 @@ public class Managers {
                 .put(HttpUploadManager.class, new HttpUploadManager(context, connection))
                 .put(JingleManager.class, new JingleManager(context, connection))
                 .put(JingleMessageManager.class, new JingleMessageManager(context, connection))
+                .put(LastActivityManager.class, new LastActivityManager(context, connection))
                 .put(LegacyBookmarkManager.class, new LegacyBookmarkManager(context, connection))
                 .put(MessageArchiveManager.class, new MessageArchiveManager(context, connection))
                 .put(

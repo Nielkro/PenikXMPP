@@ -84,6 +84,7 @@ public class PresenceManager extends AbstractManager {
         final var from = presence.getFrom();
         final var account = getAccount();
         final var contact = getManager(RosterManager.class).getContact(from);
+        contact.setLastActivity(null);
         final int sizeBefore = contact.getPresences().size();
 
         synchronized (this.presences) {
@@ -149,6 +150,14 @@ public class PresenceManager extends AbstractManager {
                 this.presences.removeAll(from.asBareJid());
             } else {
                 remove(this.presences, from);
+            }
+        }
+        if (contact != null && contact.getPresences().isEmpty()) {
+            final var idle = packet.getExtension(Idle.class);
+            if (idle != null && idle.getSince() != null) {
+                contact.setLastActivity(idle.getSince());
+            } else {
+                contact.setLastActivity(Instant.now());
             }
         }
         this.service.onContactStatusChanged.onContactStatusChanged(contact, false);

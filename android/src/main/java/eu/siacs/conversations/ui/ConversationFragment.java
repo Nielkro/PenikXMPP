@@ -175,6 +175,7 @@ import eu.siacs.conversations.xmpp.manager.ChatStateManager;
 import eu.siacs.conversations.xmpp.manager.EntityTimeManager;
 import eu.siacs.conversations.xmpp.manager.HttpUploadManager;
 import eu.siacs.conversations.xmpp.manager.JingleManager;
+import eu.siacs.conversations.xmpp.manager.LastActivityManager;
 import eu.siacs.conversations.xmpp.manager.MessageArchiveManager;
 import eu.siacs.conversations.xmpp.manager.ModerationManager;
 import eu.siacs.conversations.xmpp.manager.MultiUserChatManager;
@@ -4377,6 +4378,14 @@ public class ConversationFragment extends XmppFragment
                     } else {
                         this.binding.toolbar.setSubtitleTextColor(
                                 ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
+                    }
+                    if (lastSeen == null && contact.getLastActivity() == null && account != null && account.getStatus() == Account.State.ONLINE && connection != null) {
+                        connection.getManager(LastActivityManager.class).retrieveLastActivity(contact, () -> {
+                            final var activity = getActivity();
+                            if (activity != null && isAdded() && !isDetached()) {
+                                activity.runOnUiThread(this::updateToolbar);
+                            }
+                        });
                     }
                 }
             }

@@ -79,6 +79,7 @@ import eu.siacs.conversations.xmpp.OnKeyStatusUpdated;
 import eu.siacs.conversations.xmpp.OnUpdateBlocklist;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.manager.BlockingManager;
+import eu.siacs.conversations.xmpp.manager.LastActivityManager;
 import eu.siacs.conversations.xmpp.manager.PresenceManager;
 import eu.siacs.conversations.xmpp.manager.RosterManager;
 import com.google.common.util.concurrent.FutureCallback;
@@ -665,6 +666,13 @@ public class ContactDetailsActivity extends OmemoActivity
                 binding.detailsLastSeen.setText("был(а) недавно");
                 binding.detailsLastSeen.setVisibility(View.VISIBLE);
                 binding.detailsLastSeen.setTextColor(getColor(R.color.penik_text_muted));
+
+                final Account account = contact.getAccount();
+                if (account != null && account.getStatus() == Account.State.ONLINE && account.getXmppConnection() != null && contact.getLastActivity() == null) {
+                    account.getXmppConnection()
+                            .getManager(LastActivityManager.class)
+                            .retrieveLastActivity(contact, () -> runOnUiThread(this::populateView));
+                }
             }
         }
 

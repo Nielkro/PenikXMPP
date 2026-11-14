@@ -34,6 +34,7 @@ import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.idle.LastUserInteraction;
 import im.conversations.android.xmpp.model.stanza.Presence;
 import im.conversations.android.xmpp.model.stanza.Stanza;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -73,6 +74,15 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
     private String mLastPresence = null;
     private RtpCapability.Capability rtpCapability;
     private String phoneNumber;
+    private Instant lastActivity = null;
+
+    public Instant getLastActivity() {
+        return lastActivity;
+    }
+
+    public void setLastActivity(Instant lastActivity) {
+        this.lastActivity = lastActivity;
+    }
 
     public String getPhoneNumber() {
         return phoneNumber;
@@ -284,7 +294,14 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
         } else {
             interactions = Collections2.transform(dnd, Presence::getLastUserInteraction);
         }
-        return LastUserInteraction.max(interactions);
+        final var max = LastUserInteraction.max(interactions);
+        if (!(max instanceof LastUserInteraction.None)) {
+            return max;
+        }
+        if (this.lastActivity != null) {
+            return LastUserInteraction.idle(this.lastActivity);
+        }
+        return LastUserInteraction.none();
     }
 
     public List<Optional<InfoQuery>> getCapabilities() {

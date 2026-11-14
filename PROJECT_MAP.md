@@ -74,6 +74,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/xmpp/manager/PrivateStorageManager.java` — Private XML storage.
 - `android/src/main/java/eu/siacs/conversations/xmpp/manager/StreamHostManager.java` — SOCKS5 bytestream hosts.
 - `android/src/main/java/eu/siacs/conversations/xmpp/manager/EntityTimeManager.java` — Entity time (XEP-0202).
+- `android/src/main/java/eu/siacs/conversations/xmpp/manager/LastActivityManager.java` — Last activity (XEP-0012).
 - `android/src/main/java/eu/siacs/conversations/xmpp/manager/AdHocCommandsManager.java` — Ad-hoc commands.
 - `android/src/main/java/eu/siacs/conversations/xmpp/manager/ActivityManager.java` — User activity (XEP-0108).
 - `android/src/main/java/eu/siacs/conversations/xmpp/manager/OfflineMessagesManager.java` — Offline message headers.
