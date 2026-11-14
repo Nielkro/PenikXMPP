@@ -1171,6 +1171,7 @@ fun PenikMessageRow(
                 PenikAvatarImage(
                         name = UIHelper.getMessageDisplayName(message),
                         bitmap = avatarBitmap,
+                        backgroundColor = Color(message.avatarBackgroundColor),
                         size = 28.dp,
                         modifier = Modifier.clip(CircleShape).clickable { listener.onAvatarClick(message) }
                 )

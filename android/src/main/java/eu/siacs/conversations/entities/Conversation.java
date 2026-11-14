@@ -1166,6 +1166,9 @@ public class Conversation extends AbstractEntity
 
     @Override
     public int getAvatarBackgroundColor() {
+        if (mode == MODE_SINGLE && getContact() != null) {
+            return getContact().getAvatarBackgroundColor();
+        }
         return UIHelper.getColorForName(getName().toString());
     }
 

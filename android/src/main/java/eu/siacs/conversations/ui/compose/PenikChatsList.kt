@@ -173,11 +173,7 @@ private enum class PenikTab {
 }
 
 fun penikInitialsColor(name: String): Color {
-    if (name.contains("Избранное")) {
-        return Color(0xFF5FA8DF)
-    }
-    val hash = name.fold(0L) { acc, ch -> acc + ch.code } % 360
-    return Color.hsl(kotlin.math.abs(hash).toFloat(), 0.55f, 0.50f)
+    return Color(UIHelper.getColorForName(name))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -927,6 +923,7 @@ fun PenikChatsTab(
                     PenikAvatarImage(
                             name = selected.name.toString(),
                             bitmap = sheetAvatar,
+                            backgroundColor = Color(selected.avatarBackgroundColor),
                             size = 46.dp
                     )
                     Spacer(modifier = Modifier.width(14.dp))
@@ -1423,7 +1420,8 @@ fun PenikConversationRow(
         } else {
             PenikAvatarImage(
                     name = displayName,
-                    bitmap = avatarBitmap
+                    bitmap = avatarBitmap,
+                    backgroundColor = Color(conversation.avatarBackgroundColor)
             )
         }
         Spacer(modifier = Modifier.width(12.dp))
@@ -1592,6 +1590,7 @@ fun penikAvatarBitmap(conversation: Conversation, activity: XmppActivity): Bitma
 fun PenikAvatarImage(
         name: String,
         bitmap: Bitmap?,
+        backgroundColor: Color? = null,
         size: androidx.compose.ui.unit.Dp = 48.dp,
         modifier: Modifier = Modifier
 ) {
@@ -1604,9 +1603,11 @@ fun PenikAvatarImage(
     } else {
         val panelSecondary = colorResource(R.color.penik_panel_secondary)
         val cleanName = name.trim()
-        val tint = if (cleanName.isEmpty()) panelSecondary else penikInitialsColor(cleanName)
-        val initial = cleanName.firstOrNull()?.uppercase() ?: "?"
-        val fontSize = (size.value * 0.42f).sp
+        val tint = backgroundColor ?: if (cleanName.isEmpty()) panelSecondary else penikInitialsColor(cleanName)
+        val initial = cleanName.firstOrNull { it.isLetterOrDigit() }?.uppercase()
+                ?: cleanName.firstOrNull()?.uppercase()
+                ?: "?"
+        val fontSize = (size.value * 0.44f).sp
         Box(
                 modifier = modifier.size(size).clip(CircleShape).background(tint),
                 contentAlignment = Alignment.Center
@@ -1810,7 +1811,11 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
             modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
     ) {
-        PenikAvatarImage(name = conversation.name.toString(), bitmap = avatarBitmap)
+        PenikAvatarImage(
+                name = conversation.name.toString(),
+                bitmap = avatarBitmap,
+                backgroundColor = Color(conversation.avatarBackgroundColor)
+        )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -2013,16 +2018,21 @@ fun PenikProfileTab(
                     )
                 } else {
                     val local = JidHelper.displayAddress(account.jid.asBareJid())
+                    val initialSeed = if (currentDisplayName.isNotBlank()) currentDisplayName else local
+                    val initial = initialSeed.firstOrNull { it.isLetterOrDigit() }?.uppercase()
+                            ?: initialSeed.firstOrNull()?.uppercase()
+                            ?: "?"
+                    val bg = Color(account.avatarBackgroundColor)
                     Box(
                             modifier =
                                     Modifier.fillMaxSize()
-                                            .background(penikInitialsColor(local)),
+                                            .background(bg),
                             contentAlignment = Alignment.Center
                     ) {
                         Text(
-                                text = local.firstOrNull()?.uppercase() ?: "?",
+                                text = initial,
                                 color = Color.White,
-                                fontSize = 40.sp,
+                                fontSize = 42.sp,
                                 fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -2249,15 +2259,20 @@ fun PenikProfileTab(
                             )
                         } else {
                             val local = JidHelper.displayAddress(account.jid.asBareJid())
+                            val initialSeed = if (tempName.isNotBlank()) tempName else local
+                            val initial = initialSeed.firstOrNull { it.isLetterOrDigit() }?.uppercase()
+                                    ?: initialSeed.firstOrNull()?.uppercase()
+                                    ?: "?"
+                            val bg = Color(account.avatarBackgroundColor)
                             Box(
-                                modifier = Modifier.fillMaxSize().clip(CircleShape).background(penikInitialsColor(local)),
+                                modifier = Modifier.fillMaxSize().clip(CircleShape).background(bg),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = local.firstOrNull()?.uppercase() ?: "?",
+                                    text = initial,
                                     color = Color.White,
                                     fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
