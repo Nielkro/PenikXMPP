@@ -984,9 +984,23 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long
     val context = LocalContext.current
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
-    val hasRealMessages = selfChat != null && selfChat.hasMessages()
-    val latest = if (hasRealMessages) selfChat.latestMessage else null
     val service = activity.xmppConnectionService
+    val latest = remember(selfChat, revision) {
+        if (selfChat == null) {
+            null
+        } else if (selfChat.hasMessages()) {
+            selfChat.latestMessage
+        } else {
+            val dbMessages = service?.databaseBackend?.getMessages(selfChat, 1)
+            if (!dbMessages.isNullOrEmpty()) {
+                selfChat.addAll(0, dbMessages)
+                dbMessages.first()
+            } else {
+                null
+            }
+        }
+    }
+    val hasRealMessages = latest != null && latest.type != Message.TYPE_STATUS
     val rawBody = latest?.body?.trim() ?: ""
     val isAesGcm = rawBody.startsWith("aesgcm://", ignoreCase = true)
     val cleanUrl = (if (isAesGcm) rawBody.substring("aesgcm://".length) else rawBody).substringBefore("|").trim()
@@ -1162,8 +1176,21 @@ fun PenikConversationRow(
     val textMuted = colorResource(R.color.penik_text_muted)
     val accent = colorResource(R.color.penik_accent)
     val isSelfChat = conversation.isSelf
-    val hasRealMessages = conversation.hasMessages()
-    val latest = if (hasRealMessages) conversation.latestMessage else null
+    val service = activity.xmppConnectionService
+    val latest = remember(conversation, revision) {
+        if (conversation.hasMessages()) {
+            conversation.latestMessage
+        } else {
+            val dbMessages = service?.databaseBackend?.getMessages(conversation, 1)
+            if (!dbMessages.isNullOrEmpty()) {
+                conversation.addAll(0, dbMessages)
+                dbMessages.first()
+            } else {
+                null
+            }
+        }
+    }
+    val hasRealMessages = latest != null && latest.type != Message.TYPE_STATUS
     val draft = if (conversation.isRead) conversation.draft else null
     val timestamp =
             if (draft != null) {

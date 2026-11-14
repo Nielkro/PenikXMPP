@@ -715,15 +715,21 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 self = service.findOrCreateConversation(firstEnabled, contact.getAddress(), false, false);
             }
         }
+        if (self != null && !self.hasMessages()) {
+            final var dbMessages = service.databaseBackend.getMessages(self, Config.PAGE_SIZE);
+            if (!dbMessages.isEmpty()) {
+                self.addAll(0, dbMessages);
+            }
+        }
         this.penikChatsState.setConversations(ImmutableList.copyOf(main));
         this.penikChatsState.setArchived(ImmutableList.copyOf(archived));
-        this.penikChatsState.bumpRevision();
         this.penikChatsState.setConnectionState(
                 online
                         ? PenikConnectionState.ONLINE
                         : connecting ? PenikConnectionState.CONNECTING : PenikConnectionState.OFFLINE);
         this.penikChatsState.setSelfChat(self);
         this.penikChatsState.setAccount(firstEnabled);
+        this.penikChatsState.bumpRevision();
         this.binding.emptyChatHint.setVisibility(View.GONE);
         this.binding.composeList.setVisibility(View.VISIBLE);
     }
