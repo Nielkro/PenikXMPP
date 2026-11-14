@@ -275,7 +275,6 @@ object PenikVideoNoteTranscoder {
 
         private var program: Int = 0
         private var uSTMatrixHandle: Int = 0
-        private var uRotationHandle: Int = 0
         private var uAspectScaleHandle: Int = 0
         private var aPositionHandle: Int = 0
         private var aTextureHandle: Int = 0
@@ -307,13 +306,13 @@ object PenikVideoNoteTranscoder {
                     }
 
             // Watermark quad in BOTTOM-RIGHT corner on the black background:
-            // x: [0.50, 0.96], y: [-0.94, -0.74]
-            // At (0.50, -0.74), distance^2 = 0.25 + 0.5476 = 0.7976 -> placed nicely in corner
+            // x: [0.72, 0.96], y: [-0.94, -0.84]
+            // At (0.72, -0.84), dist^2 = 0.72^2 + (-0.84)^2 = 0.5184 + 0.7056 = 1.224 > 1.0 -> 100% outside the circle!
             val wmVertexData = floatArrayOf(
-                    0.50f, -0.94f, 0f, 0f, 1f,
+                    0.72f, -0.94f, 0f, 0f, 1f,
                     0.96f, -0.94f, 0f, 1f, 1f,
-                    0.50f, -0.74f, 0f, 0f, 0f,
-                    0.96f, -0.74f, 0f, 1f, 0f
+                    0.72f, -0.84f, 0f, 0f, 0f,
+                    0.96f, -0.84f, 0f, 1f, 0f
             )
             watermarkVertices = ByteBuffer.allocateDirect(wmVertexData.size * 4)
                     .order(ByteOrder.nativeOrder()).asFloatBuffer().apply {
@@ -398,16 +397,13 @@ object PenikVideoNoteTranscoder {
             // Pass ST matrix
             GLES20.glUniformMatrix4fv(uSTMatrixHandle, 1, false, stMatrix, 0)
 
-            // Pass rotation (0, 90, 180, 270)
-            GLES20.glUniform1i(uRotationHandle, videoRotation)
-
-            // Aspect ratio scaling to center-crop raw sensor buffer into square
+            // Aspect ratio scaling to center-crop portrait decoded frame into square
             val aspectScale = if (rawWidth > 0 && rawHeight > 0) {
                 val maxDim = maxOf(rawWidth, rawHeight).toFloat()
                 val minDim = minOf(rawWidth, rawHeight).toFloat()
                 maxDim / minDim
             } else {
-                1.333f
+                1.3333f
             }
             GLES20.glUniform1f(uAspectScaleHandle, aspectScale)
 
@@ -477,30 +473,19 @@ object PenikVideoNoteTranscoder {
         }
 
         private fun createWatermarkTexture(): Int {
-            val width = 150
+            val width = 120
             val height = 48
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
 
-            val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = 0xEE161A22.toInt()
-                style = Paint.Style.FILL
-            }
-            val cornerRadius = height / 2f
-            canvas.drawRoundRect(RectF(0f, 0f, width.toFloat(), height.toFloat()), cornerRadius, cornerRadius, bgPaint)
-
-            val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = 0xFF3390EC.toInt() // Penik accent blue
-                style = Paint.Style.FILL
-            }
-            canvas.drawCircle(20f, height / 2f, 6.5f, dotPaint)
-
+            // Pure clean text without background or borders
             val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = 0xFFFFFFFF.toInt()
-                textSize = 21f
-                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textSize = 34f
+                typeface = Typeface.create("sans-serif", Typeface.BOLD)
+                textAlign = Paint.Align.RIGHT
             }
-            canvas.drawText("Penik", 38f, height / 2f + 7.5f, textPaint)
+            canvas.drawText("Penik", width.toFloat() - 4f, height / 2f + 12f, textPaint)
 
             val textures = IntArray(1)
             GLES20.glGenTextures(1, textures, 0)
@@ -516,10 +501,9 @@ object PenikVideoNoteTranscoder {
         }
 
         private fun initShaders() {
-            // Video shader: transforms coordinates to upright, crops center, masks to circle with black background
+            // Video shader: crops center to square, masks to circle with black background
             val vertexShader = """
                 uniform mat4 uSTMatrix;
-                uniform int uRotation;
                 uniform float uAspectScale;
                 attribute vec4 aPosition;
                 attribute vec4 aTextureCoord;
@@ -529,25 +513,16 @@ object PenikVideoNoteTranscoder {
                     gl_Position = aPosition;
                     vPos = aPosition.xy;
                     
-                    // Base coordinates centered at (0, 0)
+                    // Coordinates in [-1, 1] range centered at (0, 0)
                     vec2 coord = aPosition.xy;
                     
-                    // Rotate according to camera sensor rotation
-                    if (uRotation == 90) {
-                        coord = vec2(-coord.y, coord.x);
-                    } else if (uRotation == 180) {
-                        coord = vec2(-coord.x, -coord.y);
-                    } else if (uRotation == 270) {
-                        coord = vec2(coord.y, -coord.x);
-                    }
+                    // Center crop: scale the taller portrait Y axis so the central square is sampled
+                    coord.y = coord.y / uAspectScale;
                     
-                    // Center crop aspect ratio: scale longer axis so square fits central sensor area
-                    coord.x = coord.x / uAspectScale;
-                    
-                    // Map from [-1, 1] back to [0, 1]
+                    // Map from [-1, 1] to [0, 1]
                     vec2 uv = coord * 0.5 + 0.5;
                     
-                    // Apply SurfaceTexture matrix
+                    // Apply SurfaceTexture transformation matrix (handles orientation & flip)
                     vTextureCoord = (uSTMatrix * vec4(uv, 0.0, 1.0)).xy;
                 }
             """.trimIndent()
@@ -576,7 +551,6 @@ object PenikVideoNoteTranscoder {
             aPositionHandle = GLES20.glGetAttribLocation(program, "aPosition")
             aTextureHandle = GLES20.glGetAttribLocation(program, "aTextureCoord")
             uSTMatrixHandle = GLES20.glGetUniformLocation(program, "uSTMatrix")
-            uRotationHandle = GLES20.glGetUniformLocation(program, "uRotation")
             uAspectScaleHandle = GLES20.glGetUniformLocation(program, "uAspectScale")
 
             // 2D Watermark shader
