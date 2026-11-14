@@ -95,36 +95,38 @@ public class BookmarkManager extends AbstractManager {
     }
 
     public void delete(final Bookmark bookmark) {
-        this.removeBookmark(bookmark);
-        final ListenableFuture<Void> future;
-        if (getManager(NativeBookmarkManager.class).hasFeature()) {
-            future =
-                    getManager(NativeBookmarkManager.class)
-                            .retract(bookmark.getAddress().asBareJid());
-        } else if (getManager(LegacyBookmarkManager.class).hasConversion()) {
-            future = getManager(LegacyBookmarkManager.class).publish(this.getBookmarks());
-        } else {
-            future = getManager(PrivateStorageManager.class).publishBookmarks(this.getBookmarks());
+        if (bookmark != null) {
+            delete(bookmark.getAddress());
         }
-        Futures.addCallback(
-                future,
-                new FutureCallback<>() {
-                    @Override
-                    public void onSuccess(Void result) {
-                        Log.d(
-                                Config.LOGTAG,
-                                getAccount().getJid().asBareJid() + ": deleted bookmark");
-                    }
+    }
 
-                    @Override
-                    public void onFailure(@NonNull Throwable t) {
-                        Log.d(
-                                Config.LOGTAG,
-                                getAccount().getJid().asBareJid() + ": could not delete bookmark",
-                                t);
-                    }
-                },
-                MoreExecutors.directExecutor());
+    public void delete(final Jid jid) {
+        if (jid == null) {
+            return;
+        }
+        final var bareJid = jid.asBareJid();
+        this.removeBookmark(bareJid);
+
+        // 1. Native PEP retract (urn:xmpp:bookmarks:1)
+        try {
+            getManager(NativeBookmarkManager.class).retract(bareJid);
+        } catch (final Exception e) {
+            Log.w(Config.LOGTAG, "could not retract native bookmark for " + bareJid, e);
+        }
+
+        // 2. Legacy PEP publish remaining (storage:bookmarks)
+        try {
+            getManager(LegacyBookmarkManager.class).publish(this.getBookmarks());
+        } catch (final Exception e) {
+            Log.w(Config.LOGTAG, "could not publish legacy bookmarks after deleting " + bareJid, e);
+        }
+
+        // 3. Private Storage publish remaining (storage:bookmarks)
+        try {
+            getManager(PrivateStorageManager.class).publishBookmarks(this.getBookmarks());
+        } catch (final Exception e) {
+            Log.w(Config.LOGTAG, "could not publish private storage bookmarks after deleting " + bareJid, e);
+        }
     }
 
     public void ensureBookmarkIsAutoJoin(final Conversation conversation) {
@@ -154,33 +156,32 @@ public class BookmarkManager extends AbstractManager {
             if (existing.getMode() != Conversation.MODE_MULTI) {
                 return;
             }
-            if (pep && !bookmark.isAutoJoin()) {
+            if (!bookmark.isAutoJoin()) {
                 Log.d(
                         Config.LOGTAG,
                         getAccount().getJid().asBareJid()
-                                + ": archiving conference ("
+                                + ": bookmark autojoin is false for ("
                                 + existing.getAddress()
-                                + ") after receiving pep");
-                service.archiveConversation(existing, false);
-            } else {
-                final MucOptions mucOptions =
-                        getManager(MultiUserChatManager.class).getOrCreateState(existing);
-                if (mucOptions.getError() == MucOptions.Error.NICK_IN_USE) {
-                    final String current = mucOptions.getActualNick();
-                    final String proposed = mucOptions.getProposedNickPure();
-                    if (current != null && !current.equals(proposed)) {
-                        Log.d(
-                                Config.LOGTAG,
-                                getAccount().getJid().asBareJid()
-                                        + ": proposed nick changed after bookmark push "
-                                        + current
-                                        + "->"
-                                        + proposed);
-                        getManager(MultiUserChatManager.class).join(existing);
-                    }
-                } else {
-                    getManager(MultiUserChatManager.class).checkMucRequiresRename(existing);
+                                + "), ignoring without archiving");
+                return;
+            }
+            final MucOptions mucOptions =
+                    getManager(MultiUserChatManager.class).getOrCreateState(existing);
+            if (mucOptions.getError() == MucOptions.Error.NICK_IN_USE) {
+                final String current = mucOptions.getActualNick();
+                final String proposed = mucOptions.getProposedNickPure();
+                if (current != null && !current.equals(proposed)) {
+                    Log.d(
+                            Config.LOGTAG,
+                            getAccount().getJid().asBareJid()
+                                    + ": proposed nick changed after bookmark push "
+                                    + current
+                                    + "->"
+                                    + proposed);
+                    getManager(MultiUserChatManager.class).join(existing);
                 }
+            } else {
+                getManager(MultiUserChatManager.class).checkMucRequiresRename(existing);
             }
         } else if (bookmark.isAutoJoin()) {
             this.service.findOrCreateConversation(
@@ -208,14 +209,20 @@ public class BookmarkManager extends AbstractManager {
     }
 
     public void removeBookmark(final Bookmark bookmark) {
-        synchronized (this.bookmarks) {
-            this.bookmarks.remove(bookmark.getAddress());
+        if (bookmark != null) {
+            removeBookmark(bookmark.getAddress());
         }
     }
 
     public void removeBookmark(Jid jid) {
+        if (jid == null) {
+            return;
+        }
+        final var bare = jid.asBareJid();
         synchronized (this.bookmarks) {
             this.bookmarks.remove(jid);
+            this.bookmarks.remove(bare);
+            this.bookmarks.entrySet().removeIf(e -> e.getKey().asBareJid().equals(bare));
         }
     }
 

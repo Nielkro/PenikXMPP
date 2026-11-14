@@ -355,9 +355,9 @@ public class MultiUserChatManager extends AbstractManager {
     }
 
     public void leave(final Conversation conversation) {
+        unavailable(conversation);
         getManager(DiscoManager.class).clear(conversation.getAddress().asBareJid());
         resetState(conversation);
-        unavailable(conversation);
     }
 
     public void handlePresence(final Presence presence) {
@@ -979,7 +979,19 @@ public class MultiUserChatManager extends AbstractManager {
 
     public void unavailable(final Conversation conversation) {
         final var mucOptions = getOrCreateState(conversation);
-        getManager(PresenceManager.class).unavailable(mucOptions.getSelf().getFullJid());
+        final Jid fullJid = mucOptions.getSelf().getFullJid();
+        if (fullJid != null) {
+            getManager(PresenceManager.class).unavailable(fullJid);
+        } else {
+            final String nick = mucOptions.getProposedNickPure();
+            if (nick != null && conversation.getAddress() != null) {
+                try {
+                    getManager(PresenceManager.class)
+                            .unavailable(conversation.getAddress().asBareJid().withResource(nick));
+                } catch (final Exception ignored) {
+                }
+            }
+        }
     }
 
     private static Extension[] combine(final Extension[] extensions, final Extension extension) {

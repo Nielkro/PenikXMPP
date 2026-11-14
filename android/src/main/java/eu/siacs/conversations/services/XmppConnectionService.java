@@ -1827,6 +1827,10 @@ public class XmppConnectionService extends Service {
         account.getXmppConnection().getManager(BookmarkManager.class).delete(bookmark);
     }
 
+    public void deleteBookmark(final Account account, final Jid jid) {
+        account.getXmppConnection().getManager(BookmarkManager.class).delete(jid);
+    }
+
     private void restoreFromDatabase() {
         synchronized (this.conversations) {
             final Map<String, Account> accountLookupTable =
@@ -2373,10 +2377,9 @@ public class XmppConnectionService extends Service {
                 // We only leave if the room was explicitly destroyed.
                 if (conversation.getMucOptions() != null
                         && conversation.getMucOptions().getError() == MucOptions.Error.DESTROYED) {
-                    if (account != null && account.getStatus() == Account.State.ONLINE) {
-                        final Bookmark existing = conversation.getBookmark();
-                        if (maySynchronizeWithBookmarks && existing != null) {
-                            deleteBookmark(account, existing);
+                    if (account != null && connection != null) {
+                        if (maySynchronizeWithBookmarks) {
+                            deleteBookmark(account, conversation.getAddress().asBareJid());
                         }
                     }
                     if (connection != null) {
@@ -2425,16 +2428,27 @@ public class XmppConnectionService extends Service {
             if (connection != null) {
                 connection.getManager(MessageArchiveManager.class).kill(conversation);
                 if (conversation.getMode() == Conversation.MODE_MULTI) {
-                    if (account.getStatus() == Account.State.ONLINE) {
-                        final Bookmark existing = conversation.getBookmark();
-                        if (existing != null) {
-                            deleteBookmark(account, existing);
-                        }
+                    try {
+                        connection.getManager(BookmarkManager.class).delete(conversation.getAddress().asBareJid());
+                    } catch (final Exception e) {
+                        Log.w(Config.LOGTAG, "could not delete bookmark for " + conversation.getAddress(), e);
                     }
-                    connection.getManager(MultiUserChatManager.class).leave(conversation);
+                    try {
+                        connection.getManager(MultiUserChatManager.class).leave(conversation);
+                    } catch (final Exception e) {
+                        Log.w(Config.LOGTAG, "could not leave MUC " + conversation.getAddress(), e);
+                    }
                 }
             }
+            final Jid bareJid = conversation.getAddress() != null ? conversation.getAddress().asBareJid() : null;
             this.conversations.remove(conversation);
+            this.conversations.removeIf(
+                    c ->
+                            c.getUuid().equals(conversation.getUuid())
+                                    || (bareJid != null
+                                            && c.getAccount() == conversation.getAccount()
+                                            && bareJid.equals(c.getAddress().asBareJid())));
+            databaseBackend.deleteConversation(conversation);
             mDatabaseWriterExecutor.execute(() -> databaseBackend.deleteConversation(conversation));
             updateConversationUi();
         }

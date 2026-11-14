@@ -258,6 +258,8 @@ public class ConversationsOverviewFragment extends XmppFragment {
         } else {
             requireXmppActivity().xmppConnectionService.deleteConversation(c);
         }
+        this.conversations.remove(c);
+        this.conversations.removeIf(conv -> conv.getUuid().equals(c.getUuid()));
         if (getActivity() instanceof OnConversationArchived callback) {
             callback.onConversationArchived(c);
         }
