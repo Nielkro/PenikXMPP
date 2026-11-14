@@ -89,7 +89,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
     private var activeRecording: Recording? = null
     private var isFrontCamera by mutableStateOf(true)
     private var currentRecordedFile: File? = null
-    private var isRecordingStarted = false
+    private var isRecordingStarted by mutableStateOf(false)
     private var isStopping by mutableStateOf(false)
     private var recordingStartTime = 0L
 
@@ -115,6 +115,8 @@ class PenikVideoNoteActivity : ComponentActivity() {
 
         setContent {
             PenikVideoNoteOverlayScreen(
+                    isRecording = isRecordingStarted,
+                    isStoppingState = isStopping,
                     onCancel = { cancelAndExit() },
                     onFlipCamera = { flipCamera() },
                     onSend = { finishAndSend() },
@@ -230,12 +232,20 @@ class PenikVideoNoteActivity : ComponentActivity() {
         if (isStopping) return
         isStopping = true
 
+        val rec = activeRecording
+        if (rec == null) {
+            setResult(Activity.RESULT_CANCELED)
+            finish()
+            overridePendingTransition(0, 0)
+            return
+        }
+
         val elapsedMs = System.currentTimeMillis() - recordingStartTime
         if (elapsedMs < 1000) {
             // Ensure at least 1 second is recorded so CameraX has valid keyframes
             Handler(Looper.getMainLooper()).postDelayed({
                 try {
-                    activeRecording?.stop()
+                    rec.stop()
                     activeRecording = null
                 } catch (e: Exception) {
                     finish()
@@ -243,7 +253,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
             }, 1000 - elapsedMs)
         } else {
             try {
-                activeRecording?.stop()
+                rec.stop()
                 activeRecording = null
             } catch (e: Exception) {
                 finish()
@@ -259,6 +269,8 @@ class PenikVideoNoteActivity : ComponentActivity() {
 
     @Composable
     private fun PenikVideoNoteOverlayScreen(
+            isRecording: Boolean,
+            isStoppingState: Boolean,
             onCancel: () -> Unit,
             onFlipCamera: () -> Unit,
             onSend: () -> Unit,
@@ -272,11 +284,11 @@ class PenikVideoNoteActivity : ComponentActivity() {
         }
 
         // Live timer loop up to MAX_RECORD_SECONDS
-        LaunchedEffect(isRecordingStarted) {
-            if (isRecordingStarted) {
+        LaunchedEffect(isRecording) {
+            if (isRecording) {
                 val start = System.currentTimeMillis()
-                while (recordedDurationSec < MAX_RECORD_SECONDS && !isStopping) {
-                    kotlinx.coroutines.delay(100)
+                while (!isStoppingState && recordedDurationSec < MAX_RECORD_SECONDS) {
+                    kotlinx.coroutines.delay(50)
                     recordedDurationSec = (System.currentTimeMillis() - start) / 1000f
                     if (recordedDurationSec >= MAX_RECORD_SECONDS) {
                         onSend()
@@ -338,7 +350,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
                         )
                     }
 
-                    if (isStopping) {
+                    if (isStoppingState) {
                         Box(
                                 modifier = Modifier
                                         .size(268.dp)
@@ -372,7 +384,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
                     // Left: Flip camera button
                     IconButton(
                             onClick = onFlipCamera,
-                            enabled = !isStopping,
+                            enabled = !isStoppingState,
                             modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
@@ -412,7 +424,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
                     Box(
                             modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .clickable(enabled = !isStopping) { onCancel() }
+                                    .clickable(enabled = !isStoppingState) { onCancel() }
                                     .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Text(
@@ -427,7 +439,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
                     // Right: Send button (Telegram accent blue circle with send arrow)
                     IconButton(
                             onClick = onSend,
-                            enabled = !isStopping,
+                            enabled = !isStoppingState,
                             modifier = Modifier
                                     .size(54.dp)
                                     .clip(CircleShape)

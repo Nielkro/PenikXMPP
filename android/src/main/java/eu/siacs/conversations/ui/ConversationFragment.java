@@ -1327,15 +1327,17 @@ public class ConversationFragment extends XmppFragment
                         final File outputFile = new File(cacheDir, "penik_video_note_" + System.currentTimeMillis() + ".mp4");
                         new Thread(() -> {
                             final File finalFile = PenikVideoNoteTranscoder.INSTANCE.transcode(rawFile, outputFile);
-                            try { rawFile.delete(); } catch (Exception ignored) {}
+                            try {
+                                if (finalFile != null && !finalFile.getAbsolutePath().equals(rawFile.getAbsolutePath())) {
+                                    rawFile.delete();
+                                }
+                            } catch (Exception ignored) {}
                             runOnUiThreadQuiet(() -> {
                                 try {
-                                    final Uri contentUri = FileBackend.getUriForFile(requireContext(), finalFile);
-                                    final List<Attachment> videoNotes =
-                                            Attachment.of(requireContext(), contentUri, Attachment.Type.FILE);
-                                    commitAttachments(videoNotes);
+                                    final Uri contentUri = FileBackend.getUriForFile(requireContext(), finalFile != null ? finalFile : rawFile);
+                                    attachFileToConversation(this.conversation, contentUri, "video/mp4");
                                 } catch (Exception e) {
-                                    Log.e(Config.LOGTAG, "Failed to commit video note attachment", e);
+                                    Log.e(Config.LOGTAG, "Failed to attach video note", e);
                                 }
                             });
                         }).start();
@@ -2472,8 +2474,14 @@ public class ConversationFragment extends XmppFragment
             }
             startVoiceRecording();
             return;
-        } else if (attachmentChoice == ATTACHMENT_CHOICE_TAKE_PHOTO
-                || attachmentChoice == ATTACHMENT_CHOICE_RECORD_VIDEO) {
+        } else if (attachmentChoice == ATTACHMENT_CHOICE_RECORD_VIDEO) {
+            if (!hasPermissions(
+                    attachmentChoice,
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO)) {
+                return;
+            }
+        } else if (attachmentChoice == ATTACHMENT_CHOICE_TAKE_PHOTO) {
             if (!hasPermissions(
                     attachmentChoice,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,

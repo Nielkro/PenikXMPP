@@ -141,16 +141,28 @@ object PenikVideoNoteTranscoder {
                 if (endOfStream) {
                     encoder.signalEndOfInputStream()
                 }
+                var tryCount = 0
                 while (true) {
                     val encoderStatus = encoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC)
                     if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                        if (!endOfStream) break else continue
+                        if (!endOfStream) {
+                            break
+                        } else {
+                            tryCount++
+                            if (tryCount > 25) break
+                            continue
+                        }
                     } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                         if (muxerStarted) throw RuntimeException("Encoder format changed twice")
                         val newFormat = encoder.outputFormat
                         muxerVideoTrack = muxer.addTrack(newFormat)
                         if (audioTrackIndex >= 0 && inputAudioFormat != null) {
-                            muxerAudioTrack = muxer.addTrack(inputAudioFormat)
+                            try {
+                                muxerAudioTrack = muxer.addTrack(inputAudioFormat)
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Failed to add audio track to muxer", e)
+                                muxerAudioTrack = -1
+                            }
                         }
                         muxer.start()
                         muxerStarted = true
@@ -315,12 +327,12 @@ object PenikVideoNoteTranscoder {
             textureId = createOesTexture()
             surfaceTexture = android.graphics.SurfaceTexture(textureId).apply {
                 setDefaultBufferSize(OUTPUT_SIZE, OUTPUT_SIZE)
-                setOnFrameAvailableListener {
+                setOnFrameAvailableListener({
                     synchronized(frameSyncObject) {
                         frameAvailable = true
                         frameSyncObject.notifyAll()
                     }
-                }
+                }, android.os.Handler(android.os.Looper.getMainLooper()))
             }
 
             initShaders()
@@ -361,13 +373,19 @@ object PenikVideoNoteTranscoder {
 
         fun awaitNewImage() {
             synchronized(frameSyncObject) {
-                while (!frameAvailable) {
-                    frameSyncObject.wait(500)
+                var waitAttempts = 0
+                while (!frameAvailable && waitAttempts < 15) {
+                    frameSyncObject.wait(15)
+                    waitAttempts++
                 }
                 frameAvailable = false
             }
-            surfaceTexture.updateTexImage()
-            surfaceTexture.getTransformMatrix(stMatrix)
+            try {
+                surfaceTexture.updateTexImage()
+                surfaceTexture.getTransformMatrix(stMatrix)
+            } catch (e: Exception) {
+                Log.w(TAG, "updateTexImage failed: ${e.message}")
+            }
         }
 
         fun drawImage() {
