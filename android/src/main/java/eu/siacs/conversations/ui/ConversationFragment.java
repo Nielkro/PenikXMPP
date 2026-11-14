@@ -1323,8 +1323,9 @@ public class ConversationFragment extends XmppFragment
                     final String rawPath = data.getStringExtra(PenikVideoNoteActivity.EXTRA_RAW_VIDEO_PATH);
                     final File rawFile = rawPath != null ? new File(rawPath) : null;
                     if (rawFile != null && rawFile.exists() && rawFile.length() > 0) {
-                        final File cacheDir = requireContext().getCacheDir();
-                        final File outputFile = new File(cacheDir, "penik_video_note_" + System.currentTimeMillis() + ".mp4");
+                        final File recordingsDir = new File(requireContext().getCacheDir(), "Recordings");
+                        recordingsDir.mkdirs();
+                        final File outputFile = new File(recordingsDir, "penik_video_note_" + System.currentTimeMillis() + ".mp4");
                         new Thread(() -> {
                             final File finalFile = PenikVideoNoteTranscoder.INSTANCE.transcode(rawFile, outputFile);
                             try {

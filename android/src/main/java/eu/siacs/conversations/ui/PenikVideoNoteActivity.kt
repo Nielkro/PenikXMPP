@@ -125,9 +125,26 @@ class PenikVideoNoteActivity : ComponentActivity() {
         }
     }
 
+    private var isFlippingCamera = false
+
     private fun flipCamera() {
-        if (isStopping) return
-        isFrontCamera = !isFrontCamera
+        if (isStopping || isFlippingCamera) return
+        isFlippingCamera = true
+
+        val rec = activeRecording
+        activeRecording = null
+        isRecordingStarted = false
+
+        if (rec != null) {
+            try { rec.stop() } catch (ignored: Exception) {}
+        }
+        try { currentRecordedFile?.delete() } catch (ignored: Exception) {}
+        currentRecordedFile = null
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            isFrontCamera = !isFrontCamera
+            isFlippingCamera = false
+        }, 200)
     }
 
     private fun bindCameraUseCases(previewView: PreviewView) {
@@ -172,9 +189,10 @@ class PenikVideoNoteActivity : ComponentActivity() {
     }
 
     private fun startRecordingInternal() {
-        if (isRecordingStarted || isStopping) return
+        if (isRecordingStarted || isStopping || isFlippingCamera) return
         val vc = videoCapture ?: return
-        val rawFile = File(cacheDir, "raw_video_note_${System.currentTimeMillis()}.mp4")
+        val recordingsDir = File(cacheDir, "Recordings").apply { mkdirs() }
+        val rawFile = File(recordingsDir, "raw_video_note_${System.currentTimeMillis()}.mp4")
         currentRecordedFile = rawFile
 
         val outputOptions = FileOutputOptions.Builder(rawFile).build()
@@ -195,19 +213,21 @@ class PenikVideoNoteActivity : ComponentActivity() {
                                 Log.i(TAG, "Video recording started")
                             }
                             is VideoRecordEvent.Finalize -> {
-                                Log.i(TAG, "Video recording finalized, error=${event.error}, size=${rawFile.length()}")
-                                if (!event.hasError() && rawFile.exists() && rawFile.length() > 0) {
-                                    val intent = Intent().apply {
-                                        putExtra(EXTRA_RAW_VIDEO_PATH, rawFile.absolutePath)
+                                Log.i(TAG, "Video recording finalized, error=${event.error}, size=${rawFile.length()}, isStopping=$isStopping")
+                                if (isStopping) {
+                                    if (!event.hasError() && rawFile.exists() && rawFile.length() > 0) {
+                                        val intent = Intent().apply {
+                                            putExtra(EXTRA_RAW_VIDEO_PATH, rawFile.absolutePath)
+                                        }
+                                        setResult(Activity.RESULT_OK, intent)
+                                    } else {
+                                        Log.e(TAG, "Recording finalize error: ${event.error}")
+                                        try { rawFile.delete() } catch (ignored: Exception) {}
+                                        setResult(Activity.RESULT_CANCELED)
                                     }
-                                    setResult(Activity.RESULT_OK, intent)
-                                } else {
-                                    Log.e(TAG, "Recording finalize error: ${event.error}")
-                                    try { rawFile.delete() } catch (ignored: Exception) {}
-                                    setResult(Activity.RESULT_CANCELED)
+                                    finish()
+                                    overridePendingTransition(0, 0)
                                 }
-                                finish()
-                                overridePendingTransition(0, 0)
                             }
                         }
                     }
@@ -281,6 +301,10 @@ class PenikVideoNoteActivity : ComponentActivity() {
 
         LaunchedEffect(previewViewRef, isFrontCamera) {
             previewViewRef?.let { bindCamera(it) }
+        }
+
+        LaunchedEffect(isFrontCamera) {
+            recordedDurationSec = 0f
         }
 
         // Live timer loop up to MAX_RECORD_SECONDS

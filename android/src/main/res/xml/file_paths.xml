@@ -7,6 +7,9 @@
         name="attachments"
         path="attachments/" />
 
+    <cache-path
+        name="cache"
+        path="." />
     <!-- When we call the camera app to take a picture it will be stored in this directory.
     Upon sending the picture it will be copied over to internal or external storage -->
     <cache-path
