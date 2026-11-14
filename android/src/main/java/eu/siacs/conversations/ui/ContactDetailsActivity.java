@@ -50,6 +50,9 @@ import de.gultsch.common.MiniUri;
 import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
+import eu.siacs.conversations.utils.PenikClientDetector;
+import eu.siacs.conversations.xmpp.manager.DiscoManager;
+import im.conversations.android.xmpp.Entity;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
 import eu.siacs.conversations.crypto.axolotl.XmppAxolotlSession;
@@ -641,6 +644,16 @@ public class ContactDetailsActivity extends OmemoActivity
         }
         binding.toolbar.setTitle("");
         binding.detailsContactName.setText(contact.getDisplayName());
+
+        // Client detection
+        final PenikClientDetector.ClientInfo clientInfo = PenikClientDetector.detectClientInfo(contact);
+        if (!Strings.isNullOrEmpty(clientInfo.displaySummary)) {
+            binding.detailsClientValue.setText(clientInfo.displaySummary);
+            binding.rowClient.setVisibility(View.VISIBLE);
+        } else {
+            binding.rowClient.setVisibility(View.GONE);
+        }
+
         final boolean isBot = contact.isBot();
         binding.badgeBot.setVisibility(View.GONE);
         if (isBot) {
@@ -676,6 +689,31 @@ public class ContactDetailsActivity extends OmemoActivity
                 account.getXmppConnection()
                         .getManager(LastActivityManager.class)
                         .retrieveLastActivity(contact, () -> runOnUiThread(this::populateView));
+            }
+
+            if (account != null && account.getXmppConnection() != null) {
+                final var discoManager = account.getXmppConnection().getManager(DiscoManager.class);
+                if (discoManager != null) {
+                    for (final var presence : contact.getPresences()) {
+                        if (discoManager.get(presence.getFrom()) == null) {
+                            final var nodeHash = presence.getCapabilities();
+                            final var discoFuture = discoManager.infoOrCache(
+                                    Entity.presence(presence.getFrom()),
+                                    nodeHash != null ? nodeHash.node : null,
+                                    nodeHash != null ? nodeHash.hash : null
+                            );
+                            Futures.addCallback(discoFuture, new FutureCallback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    runOnUiThread(() -> populateView());
+                                }
+
+                                @Override
+                                public void onFailure(@NonNull Throwable t) {}
+                            }, MoreExecutors.directExecutor());
+                        }
+                    }
+                }
             }
         }
 

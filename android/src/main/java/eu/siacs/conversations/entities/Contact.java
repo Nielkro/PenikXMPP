@@ -35,6 +35,7 @@ import im.conversations.android.xmpp.model.idle.LastUserInteraction;
 import im.conversations.android.xmpp.model.stanza.Presence;
 import im.conversations.android.xmpp.model.stanza.Stanza;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -90,6 +91,28 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public List<String> getLastClients() {
+        return this.attributes.lastClients;
+    }
+
+    public void setLastClients(List<String> clients) {
+        if (clients == null || clients.isEmpty()) {
+            return;
+        }
+        if (!Objects.equals(this.attributes.lastClients, clients)) {
+            this.attributes.lastClients = new ArrayList<>(clients);
+            if (this.account != null && this.account.getXmppConnection() != null) {
+                final var rosterManager =
+                        this.account
+                                .getXmppConnection()
+                                .getManager(eu.siacs.conversations.xmpp.manager.RosterManager.class);
+                if (rosterManager != null) {
+                    rosterManager.writeToDatabaseAsync();
+                }
+            }
+        }
     }
 
     public Contact(
@@ -590,6 +613,9 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
     public static class Attributes {
         @SerializedName("pgp_keyid")
         public Long pgpKeyId;
+
+        @SerializedName("last_clients")
+        public List<String> lastClients;
 
         public static Attributes parse(final String json) {
             if (Strings.isNullOrEmpty(json)) {

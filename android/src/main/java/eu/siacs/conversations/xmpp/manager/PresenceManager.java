@@ -19,6 +19,7 @@ import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.services.XmppConnectionService;
+import eu.siacs.conversations.utils.PenikClientDetector;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import im.conversations.android.xmpp.Entity;
@@ -100,6 +101,8 @@ public class PresenceManager extends AbstractManager {
                             .infoOrCache(Entity.presence(from), nodeHash.node, nodeHash.hash);
 
             awaitDiscoFuture(contact, discoFuture);
+        } else {
+            PenikClientDetector.detectClientInfo(contact);
         }
 
         final PgpEngine pgp = this.service.getPgpEngine();
@@ -213,6 +216,7 @@ public class PresenceManager extends AbstractManager {
                 new FutureCallback<>() {
                     @Override
                     public void onSuccess(Void result) {
+                        PenikClientDetector.detectClientInfo(contact);
                         if (contact.refreshRtpCapability()) {
                             getManager(RosterManager.class).writeToDatabaseAsync();
                         }

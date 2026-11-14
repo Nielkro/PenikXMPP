@@ -401,6 +401,40 @@
                                 android:textSize="12sp" />
                         </LinearLayout>
 
+                        <!-- Client / App Row -->
+                        <LinearLayout
+                            android:id="@+id/row_client"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:orientation="vertical"
+                            android:visibility="gone"
+                            tools:visibility="visible">
+
+                            <View
+                                android:id="@+id/divider_client"
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginBottom="12dp"
+                                android:background="@color/penik_border" />
+
+                            <TextView
+                                android:id="@+id/details_client_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/penik_text_primary"
+                                android:textSize="15sp"
+                                tools:text="Penik + Gajim" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Приложение"
+                                android:textColor="@color/penik_text_muted"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
                         <!-- Hidden presence & account views to preserve data binding compatibility -->
                         <CheckBox
                             android:id="@+id/details_send_presence"
