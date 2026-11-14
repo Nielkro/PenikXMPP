@@ -4379,7 +4379,10 @@ public class ConversationFragment extends XmppFragment
                         this.binding.toolbar.setSubtitleTextColor(
                                 ContextCompat.getColor(requireContext(), R.color.penik_text_muted));
                     }
-                    if (lastSeen == null && contact.getLastActivity() == null && account != null && account.getStatus() == Account.State.ONLINE && connection != null) {
+                    if (contact.getShownStatus() == Presence.Availability.OFFLINE
+                            && account != null
+                            && account.getStatus() == Account.State.ONLINE
+                            && connection != null) {
                         connection.getManager(LastActivityManager.class).retrieveLastActivity(contact, () -> {
                             final var activity = getActivity();
                             if (activity != null && isAdded() && !isDetached()) {

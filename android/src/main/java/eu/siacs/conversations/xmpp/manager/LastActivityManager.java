@@ -69,7 +69,7 @@ public class LastActivityManager extends AbstractManager {
     }
 
     public void retrieveLastActivity(final Contact contact, final Runnable onUpdated) {
-        if (contact == null || !this.appSettings.isBroadcastLastActivity()) {
+        if (contact == null) {
             return;
         }
         final Jid address = contact.getAddress().asBareJid();
@@ -78,6 +78,7 @@ public class LastActivityManager extends AbstractManager {
         }
         this.queryCooldown.put(address, System.currentTimeMillis());
 
+        Log.d(Config.LOGTAG, "Querying last activity for " + address);
         final Iq request = new Iq(Iq.Type.GET, address, new Query());
         final var future = this.connection.sendIqPacket(request);
         Futures.addCallback(
@@ -87,6 +88,7 @@ public class LastActivityManager extends AbstractManager {
                     public void onSuccess(final Iq result) {
                         if (result != null && result.getType() == Iq.Type.RESULT) {
                             final Query query = result.getExtension(Query.class);
+                            Log.d(Config.LOGTAG, "Received last activity for " + address + ": " + (query != null ? query.getSeconds() : "null") + "s");
                             if (query != null) {
                                 final Instant instant = query.getInstant();
                                 if (instant != null) {
@@ -96,6 +98,8 @@ public class LastActivityManager extends AbstractManager {
                                     }
                                 }
                             }
+                        } else {
+                            Log.d(Config.LOGTAG, "Received non-result last activity response for " + address + ": " + (result != null ? result.getType() : "null"));
                         }
                     }
 

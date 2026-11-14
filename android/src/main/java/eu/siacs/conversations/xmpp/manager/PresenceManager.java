@@ -28,6 +28,7 @@ import im.conversations.android.xmpp.ServiceDescription;
 import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.capabilties.Capabilities;
 import im.conversations.android.xmpp.model.capabilties.LegacyCapabilities;
+import im.conversations.android.xmpp.model.delay.Delay;
 import im.conversations.android.xmpp.model.idle.Idle;
 import im.conversations.android.xmpp.model.nick.Nick;
 import im.conversations.android.xmpp.model.pars.PreAuth;
@@ -154,10 +155,13 @@ public class PresenceManager extends AbstractManager {
         }
         if (contact != null && contact.getPresences().isEmpty()) {
             final var idle = packet.getExtension(Idle.class);
+            final var delay = packet.getExtension(Delay.class);
             if (idle != null && idle.getSince() != null) {
                 contact.setLastActivity(idle.getSince());
+            } else if (delay != null && delay.getStamp() != null) {
+                contact.setLastActivity(delay.getStamp());
             } else {
-                contact.setLastActivity(Instant.now());
+                contact.setLastActivity(null);
             }
         }
         this.service.onContactStatusChanged.onContactStatusChanged(contact, false);

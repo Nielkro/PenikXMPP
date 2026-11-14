@@ -666,13 +666,16 @@ public class ContactDetailsActivity extends OmemoActivity
                 binding.detailsLastSeen.setText("был(а) недавно");
                 binding.detailsLastSeen.setVisibility(View.VISIBLE);
                 binding.detailsLastSeen.setTextColor(getColor(R.color.penik_text_muted));
+            }
 
-                final Account account = contact.getAccount();
-                if (account != null && account.getStatus() == Account.State.ONLINE && account.getXmppConnection() != null && contact.getLastActivity() == null) {
-                    account.getXmppConnection()
-                            .getManager(LastActivityManager.class)
-                            .retrieveLastActivity(contact, () -> runOnUiThread(this::populateView));
-                }
+            final Account account = contact.getAccount();
+            if (contact.getShownStatus() == Presence.Availability.OFFLINE
+                    && account != null
+                    && account.getStatus() == Account.State.ONLINE
+                    && account.getXmppConnection() != null) {
+                account.getXmppConnection()
+                        .getManager(LastActivityManager.class)
+                        .retrieveLastActivity(contact, () -> runOnUiThread(this::populateView));
             }
         }
 
