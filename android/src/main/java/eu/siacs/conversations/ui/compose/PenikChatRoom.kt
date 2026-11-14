@@ -392,20 +392,24 @@ fun PenikChatRoom(
     val listState = rememberLazyListState()
     val rows =
             remember(state.messages, state.revision) {
-                val inOrder =
-                        state.messages
-                                .filter { m ->
-                                    val body = m.body ?: ""
-                                    if (m.type == Message.TYPE_STATUS) {
-                                        body.isNotBlank() &&
-                                                body != MessageAdapter.BODY_DATE_SEPARATOR &&
-                                                body != MessageAdapter.BODY_LOAD_MORE &&
-                                                body != MessageAdapter.BODY_LOCAL_TIME &&
-                                                body != MessageAdapter.BODY_DND
-                                    } else {
-                                        true
-                                    }
-                                }
+                val seenUuids = HashSet<String>()
+                val inOrder = ArrayList<Message>()
+                for (m in state.messages) {
+                    val body = m.body ?: ""
+                    if (m.type == Message.TYPE_STATUS) {
+                        if (body.isBlank() ||
+                                body == MessageAdapter.BODY_DATE_SEPARATOR ||
+                                body == MessageAdapter.BODY_LOAD_MORE ||
+                                body == MessageAdapter.BODY_LOCAL_TIME ||
+                                body == MessageAdapter.BODY_DND) {
+                            continue
+                        }
+                    }
+                    val uid = m.uuid
+                    if (uid == null || seenUuids.add(uid)) {
+                        inOrder.add(m)
+                    }
+                }
                 val items = ArrayList<ChatRow>()
                 var lastDay: LocalDate? = null
                 for (m in inOrder) {
