@@ -58,6 +58,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -845,6 +846,8 @@ fun penikIsVideo(message: Message): Boolean {
     if (message.isGeoUri) return false
     val mime = message.mimeType ?: ""
     if (mime.startsWith("video/")) return true
+    val path = (message.relativeFilePath?.file?.name ?: "").lowercase()
+    if (path.endsWith(".mp4") || path.endsWith(".webm") || path.endsWith(".mov")) return true
     val body = message.body ?: ""
     val cleanUrl = (if (body.startsWith("aesgcm://", ignoreCase = true)) body.substring("aesgcm://".length) else body).substringBefore("|").trim()
     val lower = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
@@ -858,6 +861,10 @@ fun penikIsVideo(message: Message): Boolean {
 
 fun penikIsVideoNote(message: Message): Boolean {
     if (!penikIsVideo(message)) return false
+    val path = (message.relativeFilePath?.file?.name ?: "").lowercase()
+    if (path.contains("video_note") || path.contains("videonote") || path.contains("round_video")) {
+        return true
+    }
     val url = (message.fileParams?.url ?: message.body ?: "").lowercase()
     if (url.contains("video_note") || url.contains("videonote") || url.contains("round_video")) {
         return true
@@ -3792,7 +3799,7 @@ fun PenikVideoNoteBubble(
                     ),
             contentAlignment = Alignment.Center
     ) {
-        if (localFile != null) {
+        if (localFile != null && localFile.length() > 0L && status != Message.STATUS_WAITING) {
             // Live circular video view
             AndroidView(
                     factory = { ctx ->
@@ -3867,9 +3874,14 @@ fun PenikVideoNoteBubble(
                     )
                 }
             }
-
         } else {
-            // Local file not yet downloaded or loading - show thumbnail with download icon
+            // Optimistic instant preview thumbnail with progress spinner if transcoding/uploading
+            var previewThumb by remember(message.uuid) { mutableStateOf<Bitmap?>(null) }
+            LaunchedEffect(message.uuid) {
+                previewThumb = service?.bitmapCache?.get(message.uuid) ?: withContext(Dispatchers.IO) {
+                    try { service?.fileBackend?.getThumbnail(message, 384, false) } catch (e: Exception) { null }
+                }
+            }
             Box(
                     modifier = Modifier
                             .size(212.dp)
@@ -3877,7 +3889,32 @@ fun PenikVideoNoteBubble(
                             .background(Color(0xFF1E232B)),
                     contentAlignment = Alignment.Center
             ) {
-                PenikVideoThumb(message = message, activity = activity, fgColor = Color.White)
+                val pt = previewThumb
+                if (pt != null) {
+                    Image(
+                            bitmap = pt.asImageBitmap(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                    )
+                }
+                if (status == Message.STATUS_WAITING) {
+                    Box(
+                            modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.55f)),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                                modifier = Modifier.size(28.dp),
+                                color = Color.White,
+                                strokeWidth = 2.5.dp
+                        )
+                    }
+                } else {
+                    PenikVideoThumb(message = message, activity = activity, fgColor = Color.White)
+                }
             }
         }
 

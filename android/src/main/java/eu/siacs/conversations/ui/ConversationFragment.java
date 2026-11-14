@@ -21,7 +21,9 @@ import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
@@ -1340,26 +1342,81 @@ public class ConversationFragment extends XmppFragment
                         }
                     }
                     if (!rawFiles.isEmpty()) {
-                        final File recordingsDir = new File(requireContext().getCacheDir(), "Recordings");
-                        recordingsDir.mkdirs();
-                        final File outputFile = new File(recordingsDir, "penik_video_note_" + System.currentTimeMillis() + ".mp4");
+                        final var service = requireXmppActivity().xmppConnectionService;
+                        if (service == null || this.conversation == null) {
+                            break;
+                        }
+
+                        // 1. Instantly extract first frame Bitmap for immediate preview
+                        Bitmap previewBitmap = null;
+                        try {
+                            final MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                            mmr.setDataSource(rawFiles.get(0).getAbsolutePath());
+                            previewBitmap = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+                            mmr.release();
+                        } catch (Exception e) {
+                            Log.w(Config.LOGTAG, "Could not extract video note first frame", e);
+                        }
+
+                        // 2. Create the Message entity immediately
+                        final Message message = new Message(this.conversation, "", this.conversation.getNextEncryption());
+                        message.setType(Message.TYPE_FILE);
+                        message.setCounterpart(this.conversation.getNextCounterpart());
+                        message.setStatus(Message.STATUS_WAITING);
+                        message.setTime(System.currentTimeMillis());
+
+                        // Target filename for video note
+                        final String filename = "penik_video_note_" + message.getUuid() + ".mp4";
+                        service.getFileBackend().setupRelativeFilePath(message, filename);
+                        final File targetFile = service.getFileBackend().getFile(message);
+                        final File parentDir = targetFile.getParentFile();
+                        if (parentDir != null) {
+                            parentDir.mkdirs();
+                        }
+
+                        // Put extracted thumbnail directly into memory cache
+                        if (previewBitmap != null) {
+                            service.getBitmapCache().put(message.getUuid(), previewBitmap);
+                        }
+
+                        // 3. Optimistically display in conversation right now
+                        this.conversation.add(message);
+                        service.databaseBackend.createMessage(message);
+                        this.messageListAdapter.notifyDataSetChanged();
+                        pushPenikChatState();
+                        this.binding.messagesView.post(() -> setSelection(this.messageList.size() - 1, true));
+
+                        // 4. Background transcode + upload + delivery
                         new Thread(() -> {
-                            final File finalFile = PenikVideoNoteTranscoder.INSTANCE.transcode(rawFiles, outputFile);
-                            for (File rf : rawFiles) {
+                            try {
+                                final File finalFile = PenikVideoNoteTranscoder.INSTANCE.transcode(rawFiles, targetFile);
+                                for (File rf : rawFiles) {
+                                    try {
+                                        if (finalFile != null && !finalFile.getAbsolutePath().equals(rf.getAbsolutePath())) {
+                                            rf.delete();
+                                        }
+                                    } catch (Exception ignored) {}
+                                }
+                                service.getFileBackend().updateFileParams(message);
+                                service.databaseBackend.updateMessage(message, false);
+
+                                // Refresh thumbnail cache with final circular transcoded preview
                                 try {
-                                    if (finalFile != null && !finalFile.getAbsolutePath().equals(rf.getAbsolutePath())) {
-                                        rf.delete();
+                                    final Bitmap fullThumb = service.getFileBackend().getThumbnail(message, 256, false);
+                                    if (fullThumb != null) {
+                                        service.getBitmapCache().put(message.getUuid(), fullThumb);
                                     }
                                 } catch (Exception ignored) {}
+
+                                // Send / upload via HTTP upload slot
+                                service.sendMessage(message);
+                                runOnUiThreadQuiet(this::pushPenikChatState);
+                            } catch (Exception e) {
+                                Log.e(Config.LOGTAG, "Failed to transcode and send video note", e);
+                                message.setStatus(Message.STATUS_SEND_FAILED);
+                                service.databaseBackend.updateMessage(message, false);
+                                runOnUiThreadQuiet(this::pushPenikChatState);
                             }
-                            runOnUiThreadQuiet(() -> {
-                                try {
-                                    final Uri contentUri = FileBackend.getUriForFile(requireContext(), finalFile != null ? finalFile : rawFiles.get(0));
-                                    attachFileToConversation(this.conversation, contentUri, "video/mp4");
-                                } catch (Exception e) {
-                                    Log.e(Config.LOGTAG, "Failed to attach video note", e);
-                                }
-                            });
                         }).start();
                         break;
                     }
