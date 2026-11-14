@@ -43,6 +43,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import eu.siacs.conversations.phone.PenikPhoneDirectoryManager;
+import eu.siacs.conversations.xmpp.Jid;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -258,8 +259,14 @@ public class ConversationsOverviewFragment extends XmppFragment {
         } else {
             requireXmppActivity().xmppConnectionService.deleteConversation(c);
         }
+        final Jid bareJid = c.getAddress() != null ? c.getAddress().asBareJid() : null;
         this.conversations.remove(c);
-        this.conversations.removeIf(conv -> conv.getUuid().equals(c.getUuid()));
+        this.conversations.removeIf(
+                conv ->
+                        conv.getUuid().equals(c.getUuid())
+                                || (bareJid != null
+                                        && conv.getAddress() != null
+                                        && bareJid.equals(conv.getAddress().asBareJid())));
         if (getActivity() instanceof OnConversationArchived callback) {
             callback.onConversationArchived(c);
         }

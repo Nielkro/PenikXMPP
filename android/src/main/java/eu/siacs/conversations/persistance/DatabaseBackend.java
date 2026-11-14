@@ -1981,13 +1981,12 @@ public class DatabaseBackend extends SQLiteOpenHelper {
 
     public boolean deleteConversation(final Conversation conversation) {
         final var db = this.getWritableDatabase();
-        final String accountUuid = conversation.getAccountUuid();
         final String bareJid =
                 conversation.getAddress() != null
                         ? conversation.getAddress().asBareJid().toString()
                         : null;
         int rows = 0;
-        if (accountUuid != null && bareJid != null) {
+        if (bareJid != null) {
             try {
                 db.execSQL(
                         "DELETE FROM "
@@ -1999,28 +1998,26 @@ public class DatabaseBackend extends SQLiteOpenHelper {
                                 + " FROM "
                                 + Conversation.TABLENAME
                                 + " WHERE "
-                                + Conversation.ACCOUNT
-                                + "=? AND ("
+                                + Conversation.UUID
+                                + "=? OR "
                                 + Conversation.CONTACTJID
                                 + "=? OR "
                                 + Conversation.CONTACTJID
-                                + " LIKE ?))",
-                        new String[] {accountUuid, bareJid, bareJid + "/%"});
+                                + " LIKE ?)",
+                        new String[] {conversation.getUuid(), bareJid, bareJid + "/%"});
             } catch (final Exception ignored) {
             }
             rows =
                     db.delete(
                             Conversation.TABLENAME,
                             Conversation.UUID
-                                    + "=? OR ("
-                                    + Conversation.ACCOUNT
-                                    + "=? AND ("
+                                    + "=? OR "
                                     + Conversation.CONTACTJID
                                     + "=? OR "
                                     + Conversation.CONTACTJID
-                                    + " LIKE ?))",
+                                    + " LIKE ?",
                             new String[] {
-                                conversation.getUuid(), accountUuid, bareJid, bareJid + "/%"
+                                conversation.getUuid(), bareJid, bareJid + "/%"
                             });
         } else {
             rows =

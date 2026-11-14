@@ -2458,7 +2458,7 @@ public class XmppConnectionService extends Service {
                     c ->
                             c.getUuid().equals(conversation.getUuid())
                                     || (bareJid != null
-                                            && c.getAccount() == conversation.getAccount()
+                                            && c.getAddress() != null
                                             && bareJid.equals(c.getAddress().asBareJid())));
             databaseBackend.deleteConversation(conversation);
             mDatabaseWriterExecutor.execute(() -> databaseBackend.deleteConversation(conversation));

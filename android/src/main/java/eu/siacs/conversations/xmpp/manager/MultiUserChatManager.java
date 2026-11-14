@@ -148,6 +148,13 @@ public class MultiUserChatManager extends AbstractManager {
                 getOrCreateState(conversation).setError(MucOptions.Error.SERVER_NOT_FOUND);
                 service.updateConversationUi();
                 return Futures.immediateFailedFuture(ex);
+            } else if (iqError != null && iqError.getCondition() instanceof Condition.Gone) {
+                synchronized (this.inProgressConferenceJoins) {
+                    this.inProgressConferenceJoins.remove(conversation);
+                }
+                getOrCreateState(conversation).setError(MucOptions.Error.DESTROYED);
+                service.updateConversationUi();
+                return Futures.immediateFailedFuture(ex);
             } else {
                 return Futures.immediateVoidFuture();
             }

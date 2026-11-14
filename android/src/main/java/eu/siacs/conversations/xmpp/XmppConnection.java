@@ -820,9 +820,18 @@ public class XmppConnection implements Runnable {
                 final var challenge = tagReader.readElement(startTag, Challenge.class);
                 processChallenge(challenge);
             } else if (!LoginInfo.isSuccess(this.loginInfo)) {
-                throw new StateChangingException(
-                        Account.State.INCOMPATIBLE_SERVER,
-                        "premature stanzas. login not yet successful");
+                Log.w(
+                        Config.LOGTAG,
+                        "premature stanza received before login success: id="
+                                + startTag.getId()
+                                + ", skipping");
+                try {
+                    tagReader.readElement(startTag);
+                } catch (final Exception e) {
+                    throw new StateChangingException(
+                            Account.State.INCOMPATIBLE_SERVER,
+                            "failed to read premature stanza: " + startTag.getId());
+                }
             } else if (this.streamId != null && startTag.is(Resumed.class)) {
                 final Resumed resumed = tagReader.readElement(startTag, Resumed.class);
                 processResumed(resumed);
