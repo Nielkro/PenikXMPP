@@ -368,6 +368,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
                                     .contains(newState);
                     searchViewOnBackPressedCallback.setEnabled(isShowing);
                 });
+        this.binding.appBarLayout.setVisibility(View.GONE);
         this.binding.searchBar.setVisibility(View.GONE);
         this.binding.searchView.setVisibility(View.GONE);
 
@@ -726,10 +727,12 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 }
             }
         }
-        if (self != null && !self.hasMessages()) {
-            final var dbMessages = service.databaseBackend.getMessages(self, Config.PAGE_SIZE);
-            if (!dbMessages.isEmpty()) {
-                self.addAll(0, dbMessages);
+        for (final var c : main) {
+            if (!c.hasMessages()) {
+                final var dbMessages = service.databaseBackend.getMessages(c, Config.PAGE_SIZE);
+                if (!dbMessages.isEmpty()) {
+                    c.addAll(0, dbMessages);
+                }
             }
         }
         Collections.sort(main);

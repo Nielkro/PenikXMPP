@@ -681,6 +681,12 @@ fun PenikChatsTab(
     val haptic = LocalHapticFeedback.current
     val pullThresholdPx = with(density) { 56.dp.toPx() }
 
+    LaunchedEffect(state.conversations.firstOrNull()?.uuid) {
+        if (listState.firstVisibleItemIndex <= 1) {
+            listState.scrollToItem(0)
+        }
+    }
+
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex }
             .collect { firstIndex ->
@@ -828,7 +834,7 @@ fun PenikChatsTab(
                     .nestedScroll(nestedScrollConnection)
             ) {
                 // Archive folder (height-animated pull-to-reveal)
-                if (state.archived.isNotEmpty() && searchQuery.isBlank()) {
+                if (state.archived.isNotEmpty() && searchQuery.isBlank() && (isArchiveRevealed || pullPx > 0f)) {
                     item(key = "archive_folder") {
                         Box(
                             modifier = Modifier
