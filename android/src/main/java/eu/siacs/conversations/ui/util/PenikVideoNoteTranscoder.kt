@@ -46,6 +46,17 @@ object PenikVideoNoteTranscoder {
     private const val TIMEOUT_USEC = 10_000L
 
     fun transcode(inputFile: File, outputFile: File): File {
+        return transcodeSingle(inputFile, outputFile)
+    }
+
+    fun transcode(inputFiles: List<File>, outputFile: File): File {
+        val validFiles = inputFiles.filter { it.exists() && it.length() > 0L }
+        if (validFiles.isEmpty()) return outputFile
+        if (validFiles.size == 1) return transcodeSingle(validFiles[0], outputFile)
+        return transcodeMultiple(validFiles, outputFile)
+    }
+
+    private fun transcodeSingle(inputFile: File, outputFile: File): File {
         if (!inputFile.exists() || inputFile.length() == 0L) {
             return inputFile
         }
@@ -255,6 +266,220 @@ object PenikVideoNoteTranscoder {
             try { encoder?.stop(); encoder?.release() } catch (ignored: Exception) {}
             try { muxer?.stop(); muxer?.release() } catch (ignored: Exception) {}
             try { extractor?.release() } catch (ignored: Exception) {}
+            try { eglHelper?.release() } catch (ignored: Exception) {}
+        }
+    }
+
+    private fun transcodeMultiple(inputFiles: List<File>, outputFile: File): File {
+        var muxer: MediaMuxer? = null
+        var encoder: MediaCodec? = null
+        var eglHelper: EglHelper? = null
+
+        try {
+            val outputFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, OUTPUT_SIZE, OUTPUT_SIZE).apply {
+                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+                setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
+                setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, I_FRAME_INTERVAL)
+            }
+            encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+            encoder.configure(outputFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            val encoderSurface = encoder.createInputSurface()
+            encoder.start()
+
+            eglHelper = EglHelper(encoderSurface, 0, 640, 480)
+            eglHelper.makeCurrent()
+
+            muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            muxer.setOrientationHint(0)
+
+            var muxerVideoTrack = -1
+            var muxerAudioTrack = -1
+            var muxerStarted = false
+
+            val bufferInfo = MediaCodec.BufferInfo()
+
+            fun drainEncoder(endOfStream: Boolean) {
+                if (endOfStream) {
+                    encoder.signalEndOfInputStream()
+                }
+                var tryCount = 0
+                while (true) {
+                    val encoderStatus = encoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC)
+                    if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                        if (!endOfStream) break else {
+                            tryCount++
+                            if (tryCount > 25) break
+                            continue
+                        }
+                    } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                        if (muxerStarted) throw RuntimeException("Encoder format changed twice")
+                        val newFormat = encoder.outputFormat
+                        muxerVideoTrack = muxer.addTrack(newFormat)
+                        // Read audio format from first file with audio
+                        for (file in inputFiles) {
+                            try {
+                                val testEx = MediaExtractor().apply { setDataSource(file.absolutePath) }
+                                for (i in 0 until testEx.trackCount) {
+                                    val f = testEx.getTrackFormat(i)
+                                    val m = f.getString(MediaFormat.KEY_MIME) ?: ""
+                                    if (m.startsWith("audio/")) {
+                                        try {
+                                            muxerAudioTrack = muxer.addTrack(f)
+                                        } catch (ignored: Exception) {}
+                                        break
+                                    }
+                                }
+                                testEx.release()
+                                if (muxerAudioTrack >= 0) break
+                            } catch (ignored: Exception) {}
+                        }
+                        muxer.start()
+                        muxerStarted = true
+                    } else if (encoderStatus >= 0) {
+                        val encodedData = encoder.getOutputBuffer(encoderStatus)
+                                ?: throw RuntimeException("encoderOutputBuffer was null")
+                        if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                            bufferInfo.size = 0
+                        }
+                        if (bufferInfo.size != 0 && muxerStarted) {
+                            encodedData.position(bufferInfo.offset)
+                            encodedData.limit(bufferInfo.offset + bufferInfo.size)
+                            muxer.writeSampleData(muxerVideoTrack, encodedData, bufferInfo)
+                        }
+                        encoder.releaseOutputBuffer(encoderStatus, false)
+                        if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                            break
+                        }
+                    }
+                }
+            }
+
+            var globalBasePtsUs = 0L
+
+            for (file in inputFiles) {
+                var fileExtractor: MediaExtractor? = null
+                var fileDecoder: MediaCodec? = null
+                try {
+                    fileExtractor = MediaExtractor().apply { setDataSource(file.absolutePath) }
+                    var vTrack = -1
+                    var vFormat: MediaFormat? = null
+                    for (i in 0 until fileExtractor.trackCount) {
+                        val f = fileExtractor.getTrackFormat(i)
+                        val m = f.getString(MediaFormat.KEY_MIME) ?: ""
+                        if (m.startsWith("video/") && vTrack < 0) {
+                            vTrack = i
+                            vFormat = f
+                        }
+                    }
+                    if (vTrack < 0 || vFormat == null) continue
+
+                    fileExtractor.selectTrack(vTrack)
+                    val mime = vFormat.getString(MediaFormat.KEY_MIME) ?: MediaFormat.MIMETYPE_VIDEO_AVC
+                    fileDecoder = MediaCodec.createDecoderByType(mime)
+                    fileDecoder.configure(vFormat, Surface(eglHelper.surfaceTexture), null, 0)
+                    fileDecoder.start()
+
+                    var isFileExtractorEOS = false
+                    var isFileDecoderEOS = false
+                    var lastPtsInFileUs = 0L
+
+                    while (!isFileDecoderEOS) {
+                        if (!isFileExtractorEOS) {
+                            val inIdx = fileDecoder.dequeueInputBuffer(TIMEOUT_USEC)
+                            if (inIdx >= 0) {
+                                val inBuf = fileDecoder.getInputBuffer(inIdx)!!
+                                val sampleSize = fileExtractor.readSampleData(inBuf, 0)
+                                if (sampleSize < 0) {
+                                    fileDecoder.queueInputBuffer(inIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                                    isFileExtractorEOS = true
+                                } else {
+                                    val pts = fileExtractor.sampleTime
+                                    fileDecoder.queueInputBuffer(inIdx, 0, sampleSize, pts, 0)
+                                    fileExtractor.advance()
+                                }
+                            }
+                        }
+
+                        val outIdx = fileDecoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC)
+                        if (outIdx >= 0) {
+                            val doRender = bufferInfo.size != 0
+                            fileDecoder.releaseOutputBuffer(outIdx, doRender)
+                            if (doRender) {
+                                eglHelper.awaitNewImage()
+                                eglHelper.drawImage()
+                                val presentationPtsUs = globalBasePtsUs + bufferInfo.presentationTimeUs
+                                lastPtsInFileUs = maxOf(lastPtsInFileUs, bufferInfo.presentationTimeUs)
+                                eglHelper.setPresentationTime(presentationPtsUs * 1000)
+                                eglHelper.swapBuffers()
+                            }
+                            if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                                isFileDecoderEOS = true
+                            }
+                        }
+                        drainEncoder(false)
+                    }
+                    globalBasePtsUs += lastPtsInFileUs + 33_333L
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error decoding segment ${file.name}", e)
+                } finally {
+                    try { fileDecoder?.stop(); fileDecoder?.release() } catch (ignored: Exception) {}
+                    try { fileExtractor?.release() } catch (ignored: Exception) {}
+                }
+            }
+
+            drainEncoder(true)
+
+            if (muxerAudioTrack >= 0 && muxerStarted) {
+                val audioBuffer = ByteBuffer.allocateDirect(128 * 1024)
+                val audioBufferInfo = MediaCodec.BufferInfo()
+                var globalAudioPtsUs = 0L
+                for (file in inputFiles) {
+                    var audioExtractor: MediaExtractor? = null
+                    try {
+                        audioExtractor = MediaExtractor().apply { setDataSource(file.absolutePath) }
+                        var aTrack = -1
+                        for (i in 0 until audioExtractor.trackCount) {
+                            val f = audioExtractor.getTrackFormat(i)
+                            val m = f.getString(MediaFormat.KEY_MIME) ?: ""
+                            if (m.startsWith("audio/")) {
+                                aTrack = i
+                                break
+                            }
+                        }
+                        if (aTrack >= 0) {
+                            audioExtractor.selectTrack(aTrack)
+                            var lastAudioPtsInFile = 0L
+                            while (true) {
+                                val sampleSize = audioExtractor.readSampleData(audioBuffer, 0)
+                                if (sampleSize < 0) break
+                                audioBufferInfo.offset = 0
+                                audioBufferInfo.size = sampleSize
+                                val pts = audioExtractor.sampleTime
+                                lastAudioPtsInFile = maxOf(lastAudioPtsInFile, pts)
+                                audioBufferInfo.presentationTimeUs = globalAudioPtsUs + pts
+                                audioBufferInfo.flags = audioExtractor.sampleFlags
+                                muxer.writeSampleData(muxerAudioTrack, audioBuffer, audioBufferInfo)
+                                audioExtractor.advance()
+                            }
+                            globalAudioPtsUs += lastAudioPtsInFile + 33_333L
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Error copying audio for segment ${file.name}", e)
+                    } finally {
+                        try { audioExtractor?.release() } catch (ignored: Exception) {}
+                    }
+                }
+            }
+
+            Log.i(TAG, "Multi-segment transcode completed: ${outputFile.length()} bytes")
+            return outputFile
+        } catch (e: Exception) {
+            Log.e(TAG, "Multi-segment transcode failed, falling back to last segment", e)
+            return transcodeSingle(inputFiles.last(), outputFile)
+        } finally {
+            try { encoder?.stop(); encoder?.release() } catch (ignored: Exception) {}
+            try { muxer?.stop(); muxer?.release() } catch (ignored: Exception) {}
             try { eglHelper?.release() } catch (ignored: Exception) {}
         }
     }

@@ -1320,22 +1320,41 @@ public class ConversationFragment extends XmppFragment
                 break;
             case ATTACHMENT_CHOICE_RECORD_VIDEO:
                 if (data != null) {
-                    final String rawPath = data.getStringExtra(PenikVideoNoteActivity.EXTRA_RAW_VIDEO_PATH);
-                    final File rawFile = rawPath != null ? new File(rawPath) : null;
-                    if (rawFile != null && rawFile.exists() && rawFile.length() > 0) {
+                    final ArrayList<String> rawPaths = data.getStringArrayListExtra(PenikVideoNoteActivity.EXTRA_RAW_VIDEO_PATHS);
+                    final List<File> rawFiles = new ArrayList<>();
+                    if (rawPaths != null && !rawPaths.isEmpty()) {
+                        for (String p : rawPaths) {
+                            final File f = new File(p);
+                            if (f.exists() && f.length() > 0) {
+                                rawFiles.add(f);
+                            }
+                        }
+                    }
+                    if (rawFiles.isEmpty()) {
+                        final String singlePath = data.getStringExtra(PenikVideoNoteActivity.EXTRA_RAW_VIDEO_PATH);
+                        if (singlePath != null) {
+                            final File f = new File(singlePath);
+                            if (f.exists() && f.length() > 0) {
+                                rawFiles.add(f);
+                            }
+                        }
+                    }
+                    if (!rawFiles.isEmpty()) {
                         final File recordingsDir = new File(requireContext().getCacheDir(), "Recordings");
                         recordingsDir.mkdirs();
                         final File outputFile = new File(recordingsDir, "penik_video_note_" + System.currentTimeMillis() + ".mp4");
                         new Thread(() -> {
-                            final File finalFile = PenikVideoNoteTranscoder.INSTANCE.transcode(rawFile, outputFile);
-                            try {
-                                if (finalFile != null && !finalFile.getAbsolutePath().equals(rawFile.getAbsolutePath())) {
-                                    rawFile.delete();
-                                }
-                            } catch (Exception ignored) {}
+                            final File finalFile = PenikVideoNoteTranscoder.INSTANCE.transcode(rawFiles, outputFile);
+                            for (File rf : rawFiles) {
+                                try {
+                                    if (finalFile != null && !finalFile.getAbsolutePath().equals(rf.getAbsolutePath())) {
+                                        rf.delete();
+                                    }
+                                } catch (Exception ignored) {}
+                            }
                             runOnUiThreadQuiet(() -> {
                                 try {
-                                    final Uri contentUri = FileBackend.getUriForFile(requireContext(), finalFile != null ? finalFile : rawFile);
+                                    final Uri contentUri = FileBackend.getUriForFile(requireContext(), finalFile != null ? finalFile : rawFiles.get(0));
                                     attachFileToConversation(this.conversation, contentUri, "video/mp4");
                                 } catch (Exception e) {
                                     Log.e(Config.LOGTAG, "Failed to attach video note", e);

@@ -80,6 +80,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_RAW_VIDEO_PATH = "extra_raw_video_path"
+        const val EXTRA_RAW_VIDEO_PATHS = "extra_raw_video_paths"
         const val MAX_RECORD_SECONDS = 60
         private const val TAG = "PenikVideoNoteActivity"
     }
@@ -89,8 +90,11 @@ class PenikVideoNoteActivity : ComponentActivity() {
     private var activeRecording: Recording? = null
     private var isFrontCamera by mutableStateOf(true)
     private var currentRecordedFile: File? = null
+    private val recordedSegments = ArrayList<String>()
     private var isRecordingStarted by mutableStateOf(false)
     private var isStopping by mutableStateOf(false)
+    private var isFlippingCamera = false
+    private var sessionStartTime = 0L
     private var recordingStartTime = 0L
 
     private val permissionLauncher = registerForActivityResult(
@@ -125,8 +129,6 @@ class PenikVideoNoteActivity : ComponentActivity() {
         }
     }
 
-    private var isFlippingCamera = false
-
     private fun flipCamera() {
         if (isStopping || isFlippingCamera) return
         isFlippingCamera = true
@@ -138,13 +140,11 @@ class PenikVideoNoteActivity : ComponentActivity() {
         if (rec != null) {
             try { rec.stop() } catch (ignored: Exception) {}
         }
-        try { currentRecordedFile?.delete() } catch (ignored: Exception) {}
-        currentRecordedFile = null
 
         Handler(Looper.getMainLooper()).postDelayed({
             isFrontCamera = !isFrontCamera
             isFlippingCamera = false
-        }, 200)
+        }, 150)
     }
 
     private fun bindCameraUseCases(previewView: PreviewView) {
@@ -199,6 +199,9 @@ class PenikVideoNoteActivity : ComponentActivity() {
 
         try {
             isRecordingStarted = true
+            if (sessionStartTime == 0L) {
+                sessionStartTime = System.currentTimeMillis()
+            }
             recordingStartTime = System.currentTimeMillis()
             activeRecording = vc.output
                     .prepareRecording(this, outputOptions)
@@ -210,19 +213,23 @@ class PenikVideoNoteActivity : ComponentActivity() {
                     .start(ContextCompat.getMainExecutor(this)) { event ->
                         when (event) {
                             is VideoRecordEvent.Start -> {
-                                Log.i(TAG, "Video recording started")
+                                Log.i(TAG, "Video recording segment started")
                             }
                             is VideoRecordEvent.Finalize -> {
-                                Log.i(TAG, "Video recording finalized, error=${event.error}, size=${rawFile.length()}, isStopping=$isStopping")
+                                Log.i(TAG, "Video recording segment finalized, error=${event.error}, size=${rawFile.length()}, isStopping=$isStopping")
+                                if (!event.hasError() && rawFile.exists() && rawFile.length() > 0) {
+                                    if (!recordedSegments.contains(rawFile.absolutePath)) {
+                                        recordedSegments.add(rawFile.absolutePath)
+                                    }
+                                }
                                 if (isStopping) {
-                                    if (!event.hasError() && rawFile.exists() && rawFile.length() > 0) {
+                                    if (recordedSegments.isNotEmpty()) {
                                         val intent = Intent().apply {
-                                            putExtra(EXTRA_RAW_VIDEO_PATH, rawFile.absolutePath)
+                                            putExtra(EXTRA_RAW_VIDEO_PATH, recordedSegments.first())
+                                            putStringArrayListExtra(EXTRA_RAW_VIDEO_PATHS, recordedSegments)
                                         }
                                         setResult(Activity.RESULT_OK, intent)
                                     } else {
-                                        Log.e(TAG, "Recording finalize error: ${event.error}")
-                                        try { rawFile.delete() } catch (ignored: Exception) {}
                                         setResult(Activity.RESULT_CANCELED)
                                     }
                                     finish()
@@ -242,6 +249,10 @@ class PenikVideoNoteActivity : ComponentActivity() {
             activeRecording?.stop()
             activeRecording = null
             currentRecordedFile?.delete()
+            for (p in recordedSegments) {
+                try { File(p).delete() } catch (ignored: Exception) {}
+            }
+            recordedSegments.clear()
         } catch (ignored: Exception) {}
         setResult(Activity.RESULT_CANCELED)
         finish()
@@ -254,15 +265,22 @@ class PenikVideoNoteActivity : ComponentActivity() {
 
         val rec = activeRecording
         if (rec == null) {
-            setResult(Activity.RESULT_CANCELED)
+            if (recordedSegments.isNotEmpty()) {
+                val intent = Intent().apply {
+                    putExtra(EXTRA_RAW_VIDEO_PATH, recordedSegments.first())
+                    putStringArrayListExtra(EXTRA_RAW_VIDEO_PATHS, recordedSegments)
+                }
+                setResult(Activity.RESULT_OK, intent)
+            } else {
+                setResult(Activity.RESULT_CANCELED)
+            }
             finish()
             overridePendingTransition(0, 0)
             return
         }
 
         val elapsedMs = System.currentTimeMillis() - recordingStartTime
-        if (elapsedMs < 1000) {
-            // Ensure at least 1 second is recorded so CameraX has valid keyframes
+        if (elapsedMs < 600L) {
             Handler(Looper.getMainLooper()).postDelayed({
                 try {
                     rec.stop()
@@ -270,7 +288,7 @@ class PenikVideoNoteActivity : ComponentActivity() {
                 } catch (e: Exception) {
                     finish()
                 }
-            }, 1000 - elapsedMs)
+            }, (600L - elapsedMs).coerceAtLeast(0L))
         } else {
             try {
                 rec.stop()
@@ -303,16 +321,12 @@ class PenikVideoNoteActivity : ComponentActivity() {
             previewViewRef?.let { bindCamera(it) }
         }
 
-        LaunchedEffect(isFrontCamera) {
-            recordedDurationSec = 0f
-        }
-
-        // Live timer loop up to MAX_RECORD_SECONDS
+        // Continuous live timer loop across camera flips
         LaunchedEffect(isRecording) {
             if (isRecording) {
-                val start = System.currentTimeMillis()
                 while (!isStoppingState && recordedDurationSec < MAX_RECORD_SECONDS) {
                     kotlinx.coroutines.delay(50)
+                    val start = if (sessionStartTime > 0L) sessionStartTime else System.currentTimeMillis()
                     recordedDurationSec = (System.currentTimeMillis() - start) / 1000f
                     if (recordedDurationSec >= MAX_RECORD_SECONDS) {
                         onSend()
