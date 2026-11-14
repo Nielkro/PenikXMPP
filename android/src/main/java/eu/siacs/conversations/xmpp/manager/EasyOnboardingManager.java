@@ -49,7 +49,8 @@ public class EasyOnboardingManager extends AbstractManager {
                             future,
                             data -> {
                                 Preconditions.checkNotNull(data);
-                                if (MiniUri.getOrNull(data.getValue("landing-url"))
+                                final var landingUrl = normalizeLandingUrl(data.getValue("landing-url"));
+                                if (MiniUri.getOrNull(landingUrl)
                                         instanceof MiniUri.Http http) {
                                     return http;
                                 } else {
@@ -202,6 +203,18 @@ public class EasyOnboardingManager extends AbstractManager {
                 future, this::getEasyOnboardingInvite, MoreExecutors.directExecutor());
     }
 
+    private static String normalizeLandingUrl(final String url) {
+        if (url == null) {
+            return null;
+        }
+        if (url.startsWith("https://snikket.penik.ru/invite/")) {
+            return url.replace("https://snikket.penik.ru/invite/", "https://penik.ru/invite/");
+        } else if (url.startsWith("http://snikket.penik.ru/invite/")) {
+            return url.replace("http://snikket.penik.ru/invite/", "https://penik.ru/invite/");
+        }
+        return url;
+    }
+
     private EasyOnboardingInvite getEasyOnboardingInvite(final AdHocCommandsManager.Stage stage) {
         final var data = AdHocCommandsManager.completedData(stage);
         final MiniUri.Xmpp uri;
@@ -210,7 +223,7 @@ public class EasyOnboardingManager extends AbstractManager {
         } else {
             throw new IllegalStateException("Did not find valid XMPP uri");
         }
-        final var landingUrl = data.getValue("landing-url");
+        final var landingUrl = normalizeLandingUrl(data.getValue("landing-url"));
         if (Strings.isNullOrEmpty(landingUrl)) {
             return new EasyOnboardingInvite(getAccount().getDomain(), uri);
         }

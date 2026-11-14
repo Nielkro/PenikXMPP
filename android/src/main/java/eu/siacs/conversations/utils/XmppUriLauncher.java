@@ -43,6 +43,14 @@ public class XmppUriLauncher {
         Log.d(Config.LOGTAG, "trying to launch: " + uri);
         final Intent intent;
         final var jid = uri.asJid();
+        final String password = uri.getParameter("password");
+        if (password != null && jid != null && !jid.isDomainJid()) {
+            final Intent loginIntent = SignupUtils.getLoginIntent(context, jid, password);
+            loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            this.context.startActivity(loginIntent);
+            return;
+        }
+
         if (SignupUtils.isSupportTokenRegistry() && uri.isAddress() && jid != null) {
             final String preAuth = uri.getParameter(MiniUri.Xmpp.PARAMETER_PRE_AUTH);
             if (uri.isAction(MiniUri.Xmpp.ACTION_REGISTER)) {

@@ -21,6 +21,11 @@ public class SignupUtils {
         return getSignUpIntent(activity);
     }
 
+    public static Intent getLoginIntent(
+            final Context context, final Jid jid, final String password) {
+        return getSignUpIntent(context);
+    }
+
     public static Intent getSignUpIntent(final Context context) {
         final var preferences = PreferenceManager.getDefaultSharedPreferences(context);
         if (preferences.getBoolean("tos", false)) {

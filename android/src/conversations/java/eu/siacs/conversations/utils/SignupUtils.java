@@ -36,6 +36,14 @@ public class SignupUtils {
         return intent;
     }
 
+    public static Intent getLoginIntent(
+            final Context context, final Jid jid, final String password) {
+        final Intent intent = new Intent(context, WelcomeActivity.class);
+        intent.putExtra(WelcomeActivity.EXTRA_USERNAME, jid.asBareJid().toString());
+        intent.putExtra(WelcomeActivity.EXTRA_PASSWORD, password);
+        return intent;
+    }
+
     public static Intent getSignUpIntent(final Context context) {
         return getSignUpIntent(context, false);
     }

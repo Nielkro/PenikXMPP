@@ -34,11 +34,14 @@ class WelcomeActivity : QrCodeProcessingActivity(),
     private var pendingDisplayName by mutableStateOf<String?>(null)
     private var pendingAvatarUri by mutableStateOf<Uri?>(null)
     private var pendingPhoneNumber by mutableStateOf<String?>(null)
+    private var pendingAutoLoginUser: String? = null
+    private var pendingAutoLoginPassword: String? = null
 
     companion object {
         const val EXTRA_DOMAIN = "domain"
         const val EXTRA_PRE_AUTH = "pre_auth"
         const val EXTRA_USERNAME = "username"
+        const val EXTRA_PASSWORD = "password"
         private const val REQUEST_IMPORT_BACKUP = 0x63fb
 
         @JvmStatic
@@ -78,9 +81,28 @@ class WelcomeActivity : QrCodeProcessingActivity(),
         var domain = intent.getStringExtra(EXTRA_DOMAIN)
         var preAuth = intent.getStringExtra(EXTRA_PRE_AUTH)
         var username = intent.getStringExtra(EXTRA_USERNAME)
+        val password = intent.getStringExtra(EXTRA_PASSWORD)
 
         val data = intent.data
         if (data != null) {
+            val qUser = data.getQueryParameter("u") ?: data.getQueryParameter("username")
+            val qPass = data.getQueryParameter("p") ?: data.getQueryParameter("password")
+            if (!qUser.isNullOrBlank() && !qPass.isNullOrBlank()) {
+                username = qUser
+                val qDomain = data.getQueryParameter("d") ?: Config.MAGIC_CREATE_DOMAIN ?: "snikket.penik.ru"
+                domain = qDomain
+                pendingAutoLoginUser = if (username.contains("@")) username else "$username@$domain"
+                pendingAutoLoginPassword = qPass
+                authState = authState.copy(
+                    initialMode = PenikAuthMode.LOGIN,
+                    initialNickname = username,
+                    isLoading = true,
+                    error = null
+                )
+                triggerAutoLoginIfPossible()
+                return
+            }
+
             val path = data.path
             if (path != null && path.contains("/invite/")) {
                 val parts = path.split("/")
@@ -96,6 +118,19 @@ class WelcomeActivity : QrCodeProcessingActivity(),
             }
         }
 
+        if (!username.isNullOrBlank() && !password.isNullOrBlank()) {
+            pendingAutoLoginUser = username
+            pendingAutoLoginPassword = password
+            authState = authState.copy(
+                initialMode = PenikAuthMode.LOGIN,
+                initialNickname = username,
+                isLoading = true,
+                error = null
+            )
+            triggerAutoLoginIfPossible()
+            return
+        }
+
         if (domain != null || preAuth != null || username != null) {
             authState = authState.copy(
                 initialMode = PenikAuthMode.REGISTER,
@@ -103,6 +138,17 @@ class WelcomeActivity : QrCodeProcessingActivity(),
                 inviteDomain = domain,
                 preAuthToken = preAuth
             )
+        }
+    }
+
+    private fun triggerAutoLoginIfPossible() {
+        val user = pendingAutoLoginUser
+        val pass = pendingAutoLoginPassword
+        val service = xmppConnectionService
+        if (!user.isNullOrBlank() && !pass.isNullOrBlank() && service != null) {
+            pendingAutoLoginUser = null
+            pendingAutoLoginPassword = null
+            onLogin(user, pass)
         }
     }
 
@@ -116,6 +162,7 @@ class WelcomeActivity : QrCodeProcessingActivity(),
     }
 
     override fun refreshUiReal() {
+        triggerAutoLoginIfPossible()
         if (currentTargetAccountJid == null) {
             if (checkAlreadyLoggedIn()) return
         }
@@ -123,6 +170,7 @@ class WelcomeActivity : QrCodeProcessingActivity(),
     }
 
     override fun onBackendConnected() {
+        triggerAutoLoginIfPossible()
         if (currentTargetAccountJid == null) {
             if (checkAlreadyLoggedIn()) return
         }

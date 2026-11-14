@@ -83,6 +83,14 @@ public class ScanResultProcessor {
             return Futures.immediateFailedFuture(
                     new IllegalArgumentException("xmpp uri has no address"));
         } else if (uri instanceof MiniUri.Http http) {
+            final var androidUri = http.asUri();
+            final String user = androidUri.getQueryParameter("u") != null ? androidUri.getQueryParameter("u") : androidUri.getQueryParameter("username");
+            final String pass = androidUri.getQueryParameter("p") != null ? androidUri.getQueryParameter("p") : androidUri.getQueryParameter("password");
+            if (user != null && pass != null) {
+                String domain = androidUri.getQueryParameter("d") != null ? androidUri.getQueryParameter("d") : (Config.MAGIC_CREATE_DOMAIN != null ? Config.MAGIC_CREATE_DOMAIN : "snikket.penik.ru");
+                final String jid = user.contains("@") ? user : (user + "@" + domain);
+                return Futures.immediateFuture(MiniUri.asMiniUri("xmpp:" + jid + "?password=" + pass));
+            }
             if (http.transform() instanceof MiniUri.Xmpp xmpp) {
                 if (xmpp.isAddress()) {
                     return Futures.immediateFuture(xmpp);

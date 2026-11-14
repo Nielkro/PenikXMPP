@@ -27,6 +27,18 @@ public class YuriLauncherActivity extends AppCompatActivity {
             new Handler(Looper.getMainLooper()).post(this::finish);
             return;
         }
+        final String user = data.getQueryParameter("u") != null ? data.getQueryParameter("u") : data.getQueryParameter("username");
+        final String pass = data.getQueryParameter("p") != null ? data.getQueryParameter("p") : data.getQueryParameter("password");
+        if (user != null && pass != null) {
+            String domain = data.getQueryParameter("d") != null ? data.getQueryParameter("d") : (Config.MAGIC_CREATE_DOMAIN != null ? Config.MAGIC_CREATE_DOMAIN : "snikket.penik.ru");
+            final Jid jid = user.contains("@") ? Jid.of(user) : Jid.ofLocalAndDomain(user, domain);
+            final Intent loginIntent = SignupUtils.getLoginIntent(this, jid, pass);
+            loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(loginIntent);
+            finish();
+            return;
+        }
+
         final String path = data.getPath();
         if (path != null && path.contains("/invite/")) {
             final String[] parts = path.split("/");
@@ -47,7 +59,10 @@ public class YuriLauncherActivity extends AppCompatActivity {
                     finish();
                     return;
                 }
-                final String domain = data.getHost() != null ? data.getHost() : (Config.MAGIC_CREATE_DOMAIN != null ? Config.MAGIC_CREATE_DOMAIN : "snikket.penik.ru");
+                String domain = data.getHost();
+                if (domain == null || "penik.ru".equalsIgnoreCase(domain) || "www.penik.ru".equalsIgnoreCase(domain)) {
+                    domain = Config.MAGIC_CREATE_DOMAIN != null ? Config.MAGIC_CREATE_DOMAIN : "snikket.penik.ru";
+                }
                 final Intent regIntent = SignupUtils.getTokenRegistrationIntent(this, Jid.of(domain), token);
                 regIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(regIntent);

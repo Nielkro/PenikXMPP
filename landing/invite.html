@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Приглашение в Penik Messenger</title>
+<meta name="description" content="Приглашение в Penik Messenger — чат, где переписка живёт на сервере: группы, звонки и один аккаунт на всех устройствах.">
+<link rel="icon" href="/logo_flat.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f7f4ee;
+  --paper-2:#f1ece2;
+  --card:#fdfbf7;
+  --raised:#efe9df;
+  --ink:#1f1b16;
+  --ink-2:#5e554a;
+  --ink-3:#7b7266;
+  --hair:rgba(31,27,22,.12);
+  --hair-soft:rgba(31,27,22,.07);
+  --accent:#1f6b4f;
+  --accent-soft:rgba(31,107,79,.08);
+  --danger:#c93b2b;
+  --danger-soft:rgba(201,59,43,.08);
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+::selection{background:rgba(31,107,79,.16)}
+a{color:inherit;text-decoration:none}
+button, input{font-family:inherit}
+
+nav{
+  border-bottom:1px solid var(--hair);
+  background:rgba(247,244,238,.92);
+  backdrop-filter:blur(12px);
+  height:64px;
+}
+.container{
+  max-width:680px;
+  margin:0 auto;
+  padding:0 24px;
+  width:100%;
+}
+.nav-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  height:64px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:500;
+  font-size:17px;
+  letter-spacing:-.01em;
+}
+.brand img{
+  width:28px;
+  height:28px;
+  border-radius:7px;
+}
+.brand-sub{
+  font:400 11px var(--mono);
+  color:var(--ink-3);
+  letter-spacing:.02em;
+}
+
+main{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px 0;
+}
+.invite-card{
+  background:var(--card);
+  border:1px solid var(--hair);
+  border-radius:18px;
+  padding:36px;
+  box-shadow:0 12px 32px -16px rgba(31,27,22,.12);
+  width:100%;
+}
+.tag{
+  display:inline-block;
+  font:400 12px var(--mono);
+  color:var(--accent);
+  margin-bottom:8px;
+}
+.tag::before{
+  content:"→ ";
+  color:var(--ink-3);
+}
+h1{
+  font-size:clamp(24px,3.8vw,30px);
+  font-weight:500;
+  line-height:1.2;
+  letter-spacing:-.025em;
+  margin-bottom:8px;
+}
+.desc{
+  color:var(--ink-2);
+  font-size:15px;
+  line-height:1.55;
+  margin-bottom:24px;
+}
+
+/* Form Styles */
+.form-group{
+  margin-bottom:18px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.form-label{
+  font:500 13px var(--mono);
+  color:var(--ink);
+  letter-spacing:-.01em;
+}
+.input-wrap{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.input-text{
+  width:100%;
+  height:44px;
+  padding:0 14px;
+  background:var(--paper);
+  border:1px solid var(--hair);
+  border-radius:10px;
+  font-size:15px;
+  color:var(--ink);
+  transition:border-color .15s var(--ease), box-shadow .15s var(--ease);
+}
+.input-text:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+.input-suffix{
+  position:absolute;
+  right:14px;
+  font:400 12px var(--mono);
+  color:var(--ink-3);
+  pointer-events:none;
+}
+.has-suffix{
+  padding-right:150px;
+}
+
+.alert-box{
+  display:none;
+  padding:10px 14px;
+  border-radius:8px;
+  font-size:13.5px;
+  margin-bottom:16px;
+  line-height:1.45;
+}
+.alert-error{
+  background:var(--danger-soft);
+  color:var(--danger);
+  border:1px solid rgba(201,59,43,.2);
+}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:0 20px;
+  height:44px;
+  border-radius:10px;
+  font-weight:500;
+  font-size:14.5px;
+  font-family:inherit;
+  transition:background-color .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease);
+  cursor:pointer;
+  border:1px solid transparent;
+  white-space:nowrap;
+  text-align:center;
+  width:100%;
+}
+.btn-primary{
+  background:var(--ink);
+  color:var(--paper);
+}
+.btn-primary:hover{
+  background:#332c24;
+}
+.btn-primary:disabled{
+  opacity:0.6;
+  cursor:not-allowed;
+}
+.btn-outline{
+  border-color:var(--hair);
+  color:var(--ink);
+  background:transparent;
+}
+.btn-outline:hover{
+  background:var(--raised);
+}
+.btn-secondary{
+  background:var(--accent-soft);
+  color:var(--accent);
+  border-color:rgba(31,107,79,.2);
+}
+.btn-secondary:hover{
+  background:rgba(31,107,79,.14);
+}
+.btn-accent{
+  background:var(--accent);
+  color:#fff;
+}
+.btn-accent:hover{
+  background:#17523d;
+}
+
+.divider{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:24px 0;
+  font:400 11.5px var(--mono);
+  color:var(--ink-3);
+}
+.divider::before, .divider::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:var(--hair-soft);
+}
+
+/* QR Code Section */
+.qr-section{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px;
+  background:var(--paper-2);
+  border:1px solid var(--hair);
+  border-radius:14px;
+  margin-bottom:20px;
+}
+.qr-frame{
+  background:#fff;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid var(--hair);
+  box-shadow:0 4px 12px rgba(31,27,22,.06);
+  margin-bottom:12px;
+}
+.qr-frame canvas, .qr-frame img{
+  display:block;
+  width:170px;
+  height:170px;
+}
+.qr-label{
+  font:400 12.5px var(--mono);
+  color:var(--ink-3);
+  text-align:center;
+  max-width:320px;
+  line-height:1.45;
+}
+
+/* Actions */
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+/* Web Registration Box */
+.web-reg-box{
+  border-top:1px solid var(--hair-soft);
+  padding-top:20px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.web-reg-hint{
+  font:400 12.5px var(--mono);
+  color:var(--ink-3);
+  line-height:1.5;
+}
+
+/* Success View */
+.success-banner{
+  background:var(--accent-soft);
+  border:1px solid rgba(31,107,79,.2);
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:24px;
+  text-align:center;
+}
+.success-title{
+  color:var(--accent);
+  font-weight:600;
+  font-size:16px;
+  margin-bottom:4px;
+}
+.success-jid{
+  font:500 15px var(--mono);
+  color:var(--ink);
+}
+
+.mobile-only{
+  display:none;
+}
+.desktop-only{
+  display:flex;
+}
+
+@media (max-width: 768px){
+  .mobile-only{
+    display:flex;
+  }
+  .desktop-only{
+    display:none;
+  }
+  .invite-card{
+    padding:26px 18px;
+  }
+  .has-suffix{
+    padding-right:14px;
+  }
+  .input-suffix{
+    display:none;
+  }
+}
+
+footer{
+  border-top:1px solid var(--hair-soft);
+  padding:20px 0;
+  text-align:center;
+  font:400 12px var(--mono);
+  color:var(--ink-3);
+}
+footer a:hover{
+  color:var(--ink);
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<nav>
+  <div class="container nav-inner">
+    <a href="/" class="brand">
+      <img src="/logo_flat.svg" alt="Penik Logo">
+      <div>
+        Penik
+        <div class="brand-sub">snikket.penik.ru</div>
+      </div>
+    </a>
+    <a href="/" class="btn btn-outline" style="height:34px;padding:0 12px;font-size:13px">О мессенджере</a>
+  </div>
+</nav>
+
+<main>
+  <div class="container">
+    <div class="invite-card">
+
+      <!-- 1. LANDING OVERVIEW VIEW -->
+      <div id="viewOverview">
+        <div class="tag">персональный инвайт</div>
+        <h1>Вас приглашают в Penik</h1>
+        <p class="desc">
+          Penik Messenger — чат, где переписка живёт на сервере: группы, звонки и один аккаунт на всех устройствах.
+        </p>
+
+        <!-- Desktop QR: Scan from phone -->
+        <div class="qr-section desktop-only">
+          <div class="qr-frame" id="qrcodeInitial"></div>
+          <div class="qr-label">
+            Отсканируйте камерой телефона, чтобы открыть приглашение в приложении или установить Penik
+          </div>
+        </div>
+
+        <!-- Mobile Buttons -->
+        <div class="actions mobile-only">
+          <a id="btnOpenMobile" href="#" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            Открыть в приложении Penik
+          </a>
+          <a href="/#download" class="btn btn-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Скачать APK для Android
+          </a>
+        </div>
+
+        <!-- Button to Register in Browser (on the same penik.ru domain) -->
+        <div class="web-reg-box">
+          <div class="web-reg-hint">
+            Нет приложения или хотите зарегистрироваться прямо сейчас?
+          </div>
+          <button id="btnOpenWebRegister" class="btn btn-secondary" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            Зарегистрировать аккаунт в браузере
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. REGISTRATION FORM VIEW (on the same domain penik.ru) -->
+      <div id="viewRegister" style="display:none">
+        <div class="tag">регистрация аккаунта</div>
+        <h1>Создайте аккаунт в Penik</h1>
+        <p class="desc">
+          Придумайте никнейм и пароль — регистрация займёт несколько секунд.
+        </p>
+
+        <div id="alertBox" class="alert-box alert-error"></div>
+
+        <form id="regForm" onsubmit="return false;">
+          <div class="form-group">
+            <label class="form-label" for="username">Имя пользователя (логин)</label>
+            <div class="input-wrap">
+              <input id="username" class="input-text has-suffix" type="text" placeholder="alex" required autocomplete="username" autocapitalize="none" spellcheck="false">
+              <span class="input-suffix">@snikket.penik.ru</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Пароль</label>
+            <div class="input-wrap">
+              <input id="password" class="input-text" type="password" placeholder="Минимум 8 символов" required minlength="8" autocomplete="new-password">
+            </div>
+          </div>
+
+          <button id="btnSubmit" class="btn btn-primary" type="submit" style="margin-top:8px">
+            Создать аккаунт
+          </button>
+        </form>
+
+        <div style="margin-top:16px;text-align:center">
+          <button id="btnBackToOverview" type="button" class="btn btn-outline" style="height:38px;font-size:13.5px">
+            ← Назад к приглашению
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. SUCCESS VIEW (shown right after registration) -->
+      <div id="viewSuccess" style="display:none">
+        <div class="tag">всё готово</div>
+        <h1>Добро пожаловать в Penik!</h1>
+        <p class="desc">
+          Ваш аккаунт успешно создан на сервере.
+        </p>
+
+        <div class="success-banner">
+          <div class="success-title">✓ Аккаунт зарегистрирован</div>
+          <div class="success-jid" id="registeredJid"></div>
+        </div>
+
+        <!-- QR Code for fast mobile login -->
+        <div class="qr-section">
+          <div class="qr-frame" id="qrcodeLogin"></div>
+          <div class="qr-label">
+            Отсканируйте этот QR-код камерой в приложении Penik, чтобы сразу войти в аккаунт на телефоне
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+          <a id="btnGoWeb" href="https://web.penik.ru" class="btn btn-accent" target="_blank" rel="noopener">
+            Открыть веб-клиент Penik
+          </a>
+          <button id="btnCopyCreds" class="btn btn-outline" type="button">
+            Скопировать логин и пароль
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    Penik Messenger · <a href="/">penik.ru</a> · сервер snikket.penik.ru
+  </div>
+</footer>
+
+<script>
+(function() {
+  // Extract token from path: /invite/<token> or /invite/<token>/register
+  var path = window.location.pathname;
+  var token = '';
+  var isRegisterPath = false;
+  var parts = path.split('/').filter(Boolean);
+
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i] === 'invite' && i + 1 < parts.length) {
+      token = parts[i + 1];
+      if (i + 2 < parts.length && parts[i + 2] === 'register') {
+        isRegisterPath = true;
+      }
+      break;
+    }
+  }
+
+  // Fallback: query param ?token=...
+  if (!token) {
+    var params = new URLSearchParams(window.location.search);
+    token = params.get('token') || '';
+  }
+
+  var currentBaseUrl = window.location.origin + '/invite/' + encodeURIComponent(token);
+  var btnOpenMobile = document.getElementById('btnOpenMobile');
+  if (btnOpenMobile) {
+    btnOpenMobile.href = currentBaseUrl;
+  }
+
+  // Render initial QR (to open invite on phone)
+  var qrInitial = document.getElementById('qrcodeInitial');
+  if (qrInitial) {
+    renderQr(qrInitial, currentBaseUrl);
+  }
+
+  function renderQr(container, text) {
+    container.innerHTML = '';
+    if (typeof QRCode !== 'undefined') {
+      new QRCode(container, {
+        text: text,
+        width: 170,
+        height: 170,
+        colorDark: '#1f1b16',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      var img = document.createElement('img');
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=' + encodeURIComponent(text);
+      img.alt = 'QR Code';
+      container.appendChild(img);
+    }
+  }
+
+  var viewOverview = document.getElementById('viewOverview');
+  var viewRegister = document.getElementById('viewRegister');
+  var viewSuccess = document.getElementById('viewSuccess');
+
+  function showRegisterView(pushHistory) {
+    viewOverview.style.display = 'none';
+    viewRegister.style.display = 'block';
+    viewSuccess.style.display = 'none';
+    if (pushHistory && window.history && window.history.pushState) {
+      window.history.pushState({ mode: 'register' }, '', '/invite/' + encodeURIComponent(token) + '/register');
+    }
+    var uInput = document.getElementById('username');
+    if (uInput) { uInput.focus(); }
+  }
+
+  function showOverviewView(pushHistory) {
+    viewOverview.style.display = 'block';
+    viewRegister.style.display = 'none';
+    viewSuccess.style.display = 'none';
+    if (pushHistory && window.history && window.history.pushState) {
+      window.history.pushState({ mode: 'overview' }, '', '/invite/' + encodeURIComponent(token));
+    }
+  }
+
+  // Check URL on load: if /register, show form immediately
+  if (isRegisterPath) {
+    showRegisterView(false);
+  }
+
+  window.addEventListener('popstate', function() {
+    if (window.location.pathname.endsWith('/register')) {
+      showRegisterView(false);
+    } else {
+      showOverviewView(false);
+    }
+  });
+
+  document.getElementById('btnOpenWebRegister').addEventListener('click', function() {
+    showRegisterView(true);
+  });
+
+  document.getElementById('btnBackToOverview').addEventListener('click', function() {
+    showOverviewView(true);
+  });
+
+  // Form submission
+  var form = document.getElementById('regForm');
+  var btnSubmit = document.getElementById('btnSubmit');
+  var alertBox = document.getElementById('alertBox');
+
+  function showAlert(msg) {
+    alertBox.textContent = msg;
+    alertBox.style.display = 'block';
+  }
+  function hideAlert() {
+    alertBox.style.display = 'none';
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    hideAlert();
+
+    var rawUser = document.getElementById('username').value.trim().toLowerCase();
+    var password = document.getElementById('password').value;
+
+    if (!token) {
+      showAlert('Ошибка: токен приглашения отсутствует в ссылке.');
+      return;
+    }
+    if (!rawUser) {
+      showAlert('Введите желаемый логин.');
+      return;
+    }
+    if (password.length < 8) {
+      showAlert('Пароль должен содержать минимум 8 символов.');
+      return;
+    }
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Создаём аккаунт...';
+
+    fetch('/register_api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: rawUser,
+        password: password,
+        token: token
+      })
+    })
+    .then(function(resp) {
+      if (resp.ok) {
+        return resp.json();
+      }
+      if (resp.status === 409) {
+        throw new Error('Этот логин уже занят. Пожалуйста, выберите другой.');
+      } else if (resp.status === 404) {
+        throw new Error('Ссылка-приглашение недействительна или уже была использована.');
+      } else if (resp.status === 400) {
+        throw new Error('Недопустимый формат логина или пароля.');
+      } else {
+        throw new Error('Ошибка сервера при регистрации (код ' + resp.status + '). Попробуйте позже.');
+      }
+    })
+    .then(function(data) {
+      // Registration successful!
+      var fullJid = data.jid || (rawUser + '@snikket.penik.ru');
+      showSuccess(rawUser, password, fullJid);
+    })
+    .catch(function(err) {
+      showAlert(err.message || 'Ошибка сети. Проверьте соединение.');
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Создать аккаунт';
+    });
+  });
+
+  function showSuccess(username, password, jid) {
+    viewOverview.style.display = 'none';
+    viewRegister.style.display = 'none';
+    viewSuccess.style.display = 'block';
+
+    document.getElementById('registeredJid').textContent = jid;
+
+    // Login QR link: when scanned, phone camera or Penik app opens auto-login link
+    var loginUrl = 'https://penik.ru/invite/login?u=' + encodeURIComponent(username) + '&p=' + encodeURIComponent(password);
+    var qrLogin = document.getElementById('qrcodeLogin');
+    renderQr(qrLogin, loginUrl);
+
+    // Copy credentials button
+    var btnCopy = document.getElementById('btnCopyCreds');
+    btnCopy.addEventListener('click', function() {
+      var creds = 'Логин: ' + jid + '\nПароль: ' + password;
+      navigator.clipboard.writeText(creds).then(function() {
+        btnCopy.textContent = '✓ Скопировано!';
+        setTimeout(function() { btnCopy.textContent = 'Скопировать логин и пароль'; }, 2500);
+      }).catch(function() {
+        alert(creds);
+      });
+    });
+  }
+
+  // Device detection adjustment
+  var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (isMobile) {
+    document.querySelectorAll('.mobile-only').forEach(function(el) { el.style.display = 'flex'; });
+    document.querySelectorAll('.desktop-only').forEach(function(el) { el.style.display = 'none'; });
+  } else {
+    document.querySelectorAll('.mobile-only').forEach(function(el) { el.style.display = 'none'; });
+    document.querySelectorAll('.desktop-only').forEach(function(el) { el.style.display = 'flex'; });
+  }
+})();
+</script>
+
+</body>
+</html>
