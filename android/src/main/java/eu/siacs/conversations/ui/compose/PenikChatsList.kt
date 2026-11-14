@@ -65,9 +65,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -76,14 +80,17 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -633,31 +640,45 @@ fun PenikChatsTab(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     var isArchiveRevealed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    var pullOffset by remember { mutableStateOf(0f) }
+    var pullPx by remember { mutableFloatStateOf(0f) }
+    var hasTriggeredHaptic by remember { mutableStateOf(false) }
     val density = LocalDensity.current
+    val haptic = LocalHapticFeedback.current
     val pullThresholdPx = with(density) { 56.dp.toPx() }
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex }
             .collect { firstIndex ->
-                if (firstIndex > 1 && isArchiveRevealed) {
+                if (firstIndex > 4 && isArchiveRevealed) {
                     isArchiveRevealed = false
                 }
             }
     }
 
-    LaunchedEffect(isArchiveRevealed) {
-        if (isArchiveRevealed) {
-            listState.animateScrollToItem(0)
-        }
+    val targetHeight = when {
+        isArchiveRevealed -> 72.dp
+        pullPx > 0f -> with(density) { pullPx.coerceIn(0f, 72.dp.toPx()).toDp() }
+        else -> 0.dp
     }
+    val animatedArchiveHeight by animateDpAsState(
+        targetValue = targetHeight,
+        animationSpec = if (pullPx > 0f) {
+            spring(stiffness = Spring.StiffnessHigh)
+        } else {
+            spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
+        },
+        label = "archive_height"
+    )
 
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (pullOffset > 0f && available.y < 0f) {
-                    val consumed = available.y.coerceAtLeast(-pullOffset)
-                    pullOffset += consumed
+                if (pullPx > 0f && available.y < 0f) {
+                    val consumed = available.y.coerceAtLeast(-pullPx)
+                    pullPx += consumed
+                    if (pullPx < pullThresholdPx) {
+                        hasTriggeredHaptic = false
+                    }
                     return Offset(0f, consumed)
                 }
                 return Offset.Zero
@@ -672,13 +693,10 @@ fun PenikChatsTab(
                     listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
                 ) {
                     if (available.y > 0f) {
-                        pullOffset += available.y * 0.5f
-                        if (pullOffset >= pullThresholdPx) {
-                            isArchiveRevealed = true
-                            pullOffset = 0f
-                            coroutineScope.launch {
-                                listState.animateScrollToItem(0)
-                            }
+                        pullPx = (pullPx + available.y * 0.55f).coerceIn(0f, pullThresholdPx * 1.4f)
+                        if (pullPx >= pullThresholdPx && !hasTriggeredHaptic) {
+                            hasTriggeredHaptic = true
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         }
                         return Offset(0f, available.y)
                     }
@@ -686,12 +704,43 @@ fun PenikChatsTab(
                 return Offset.Zero
             }
 
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (pullOffset >= pullThresholdPx * 0.7f && !isArchiveRevealed && state.archived.isNotEmpty()) {
-                    isArchiveRevealed = true
-                    listState.animateScrollToItem(0)
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (state.archived.isNotEmpty() && !isArchiveRevealed &&
+                    listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+                ) {
+                    if (available.y > 350f || pullPx >= pullThresholdPx * 0.55f) {
+                        isArchiveRevealed = true
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        pullPx = 0f
+                        hasTriggeredHaptic = false
+                        return Velocity(0f, available.y)
+                    }
                 }
-                pullOffset = 0f
+                if (pullPx > 0f) {
+                    if (pullPx >= pullThresholdPx * 0.55f) {
+                        isArchiveRevealed = true
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    } else {
+                        isArchiveRevealed = false
+                    }
+                    pullPx = 0f
+                    hasTriggeredHaptic = false
+                    return available
+                }
+                return Velocity.Zero
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                if (pullPx > 0f) {
+                    if (pullPx >= pullThresholdPx * 0.55f) {
+                        isArchiveRevealed = true
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    } else {
+                        isArchiveRevealed = false
+                    }
+                    pullPx = 0f
+                    hasTriggeredHaptic = false
+                }
                 return Velocity.Zero
             }
         }
@@ -737,47 +786,49 @@ fun PenikChatsTab(
                 }
             }
         } else {
-            if (pullOffset > 5f && !isArchiveRevealed && state.archived.isNotEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(with(density) { pullOffset.coerceAtMost(pullThresholdPx).toDp() }),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_archive_24dp),
-                            contentDescription = null,
-                            tint = accent,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (pullOffset >= pullThresholdPx * 0.7f) "Отпустите, чтобы открыть архив" else "Потяните вниз для архива",
-                            color = textMuted,
-                            fontSize = 13.sp,
-                            maxLines = 1
-                        )
-                    }
-                }
-            }
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .nestedScroll(nestedScrollConnection)
             ) {
-                // Archive folder (revealed on pull down, NO horizontal divider)
-                if (state.archived.isNotEmpty() && searchQuery.isBlank() && isArchiveRevealed) {
+                // Archive folder (height-animated pull-to-reveal)
+                if (state.archived.isNotEmpty() && searchQuery.isBlank()) {
                     item(key = "archive_folder") {
-                        PenikArchiveRow(
-                            count = state.archived.size,
-                            onClick = onOpenArchive,
-                            onLongClick = { isArchiveRevealed = false }
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(animatedArchiveHeight)
+                                .clipToBounds()
+                        ) {
+                            if (animatedArchiveHeight > 2.dp) {
+                                val pullSubtitle = if (!isArchiveRevealed) {
+                                    if (pullPx >= pullThresholdPx) {
+                                        "Отпустите, чтобы открыть"
+                                    } else {
+                                        "Потяните вниз для архива"
+                                    }
+                                } else null
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(72.dp)
+                                        .align(Alignment.BottomCenter)
+                                ) {
+                                    PenikArchiveRow(
+                                        count = state.archived.size,
+                                        subtitle = pullSubtitle,
+                                        onClick = onOpenArchive,
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            isArchiveRevealed = false
+                                            pullPx = 0f
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -1177,7 +1228,12 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PenikArchiveRow(count: Int, onClick: () -> Unit, onLongClick: (() -> Unit)? = null) {
+fun PenikArchiveRow(
+    count: Int,
+    subtitle: String? = null,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null
+) {
     val panelSecondary = colorResource(R.color.penik_panel_secondary)
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
@@ -1216,7 +1272,12 @@ fun PenikArchiveRow(count: Int, onClick: () -> Unit, onLongClick: (() -> Unit)? 
                     fontSize = 16.sp,
                     color = textPrimary
             )
-            Text(text = "$count $chatWord", fontSize = 13.sp, color = textMuted)
+            Text(
+                text = subtitle ?: "$count $chatWord",
+                fontSize = 13.sp,
+                color = if (subtitle != null) accent else textMuted,
+                maxLines = 1
+            )
         }
         Box(
                 modifier = Modifier.background(accent.copy(alpha = 0.2f), RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
