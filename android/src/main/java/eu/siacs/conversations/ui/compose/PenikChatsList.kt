@@ -23,6 +23,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -63,7 +70,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -567,14 +576,21 @@ fun ConnectionBanner(
     val warning = colorResource(R.color.penik_warning)
     val danger = colorResource(R.color.penik_danger)
     var dots by remember(state) { mutableStateOf(0) }
+    var visible by remember { mutableStateOf(false) }
     LaunchedEffect(state) {
-        if (state == PenikConnectionState.CONNECTING) {
+        if (state == PenikConnectionState.ONLINE) {
+            visible = false
+        } else {
+            // Grace period so brief reconnection on startup does not flash a connecting banner
+            kotlinx.coroutines.delay(1200)
+            visible = true
             while (true) {
                 kotlinx.coroutines.delay(400)
                 dots = (dots + 1) % 4
             }
         }
     }
+    if (!visible) return
     val isConnecting = state == PenikConnectionState.CONNECTING
     val color = if (isConnecting) warning else danger
     val text = if (isConnecting) "Подключение" + ".".repeat(dots) else "Нет соединения • Нажмите для подключения"
@@ -609,11 +625,77 @@ fun PenikChatsTab(
     val textMuted = colorResource(R.color.penik_text_muted)
     val panel = colorResource(R.color.penik_panel)
     val textPrimary = colorResource(R.color.penik_text_primary)
+    val accent = colorResource(R.color.penik_accent)
     val danger = colorResource(R.color.penik_danger)
 
     var selectedConversation by remember { mutableStateOf<Conversation?>(null) }
     var pendingDeleteConversation by remember { mutableStateOf<Conversation?>(null) }
-    var isArchiveHidden by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    var isArchiveRevealed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var pullOffset by remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
+    val pullThresholdPx = with(density) { 56.dp.toPx() }
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex }
+            .collect { firstIndex ->
+                if (firstIndex > 1 && isArchiveRevealed) {
+                    isArchiveRevealed = false
+                }
+            }
+    }
+
+    LaunchedEffect(isArchiveRevealed) {
+        if (isArchiveRevealed) {
+            listState.animateScrollToItem(0)
+        }
+    }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (pullOffset > 0f && available.y < 0f) {
+                    val consumed = available.y.coerceAtLeast(-pullOffset)
+                    pullOffset += consumed
+                    return Offset(0f, consumed)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (state.archived.isNotEmpty() && !isArchiveRevealed &&
+                    listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+                ) {
+                    if (available.y > 0f) {
+                        pullOffset += available.y * 0.5f
+                        if (pullOffset >= pullThresholdPx) {
+                            isArchiveRevealed = true
+                            pullOffset = 0f
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(0)
+                            }
+                        }
+                        return Offset(0f, available.y)
+                    }
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                if (pullOffset >= pullThresholdPx * 0.7f && !isArchiveRevealed && state.archived.isNotEmpty()) {
+                    isArchiveRevealed = true
+                    listState.animateScrollToItem(0)
+                }
+                pullOffset = 0f
+                return Velocity.Zero
+            }
+        }
+    }
     val rev = state.revision
 
     val feed =
@@ -655,49 +737,47 @@ fun PenikChatsTab(
                 }
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                // 1. Archive folder placed above "Избранное"
-                if (state.archived.isNotEmpty() && searchQuery.isBlank()) {
-                    if (!isArchiveHidden) {
-                        item(key = "archive_folder") {
-                            PenikArchiveRow(
-                                    count = state.archived.size,
-                                    onClick = onOpenArchive,
-                                    onLongClick = { isArchiveHidden = true }
-                            )
-                            HorizontalDivider(
-                                    color = border,
-                                    modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
-                    } else {
-                        item(key = "archive_hidden_hint") {
-                            Row(
-                                    modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { isArchiveHidden = false }
-                                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                        painter = painterResource(R.drawable.ic_archive_24dp),
-                                        contentDescription = null,
-                                        tint = textMuted,
-                                        modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                        text = "Архив скрыт (${state.archived.size}) • Нажмите, чтобы показать",
-                                        color = textMuted,
-                                        fontSize = 13.sp
-                                )
-                            }
-                            HorizontalDivider(
-                                    color = border,
-                                    modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
+            if (pullOffset > 5f && !isArchiveRevealed && state.archived.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(with(density) { pullOffset.coerceAtMost(pullThresholdPx).toDp() }),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_archive_24dp),
+                            contentDescription = null,
+                            tint = accent,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (pullOffset >= pullThresholdPx * 0.7f) "Отпустите, чтобы открыть архив" else "Потяните вниз для архива",
+                            color = textMuted,
+                            fontSize = 13.sp,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .nestedScroll(nestedScrollConnection)
+            ) {
+                // Archive folder (revealed on pull down, NO horizontal divider)
+                if (state.archived.isNotEmpty() && searchQuery.isBlank() && isArchiveRevealed) {
+                    item(key = "archive_folder") {
+                        PenikArchiveRow(
+                            count = state.archived.size,
+                            onClick = onOpenArchive,
+                            onLongClick = { isArchiveRevealed = false }
+                        )
                     }
                 }
 

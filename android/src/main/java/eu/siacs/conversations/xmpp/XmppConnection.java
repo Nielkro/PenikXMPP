@@ -514,6 +514,7 @@ public class XmppConnection implements Runnable {
                         }
 
                         localSocket = new Socket();
+                        localSocket.setTcpNoDelay(true);
                         final int timeout;
                         if ((result.isLocalAddress() && missingLocalNetworkPermission)
                                 || new NetworkManager(mXmppConnectionService).getHint()
@@ -523,10 +524,16 @@ public class XmppConnection implements Runnable {
                             timeout = Config.SOCKET_TIMEOUT;
                         }
                         Log.d(Config.LOGTAG, "using timeout=" + timeout);
+                        final long connectStart = SystemClock.elapsedRealtime();
                         localSocket.connect(addr, timeout);
+                        final long connectEnd = SystemClock.elapsedRealtime();
+                        Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": TCP socket connected in " + (connectEnd - connectStart) + "ms");
                         localSocket.setSoTimeout(timeout);
                         if (features.encryptionEnabled) {
+                            final long tlsStart = SystemClock.elapsedRealtime();
                             localSocket = upgradeSocketToTls(localSocket);
+                            final long tlsEnd = SystemClock.elapsedRealtime();
+                            Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": TLS upgraded in " + (tlsEnd - tlsStart) + "ms");
                         }
                         if (startXmpp(localSocket)) {
                             // reset to 0; once the connection is established we don't want this
@@ -1628,9 +1635,16 @@ public class XmppConnection implements Runnable {
         }
         SSLSockets.setHostname(sslSocket, IDN.toASCII(account.getServer()));
         SSLSockets.setApplicationProtocols(sslSocket, new String[] {"pxmpp-1", "xmpp-client"});
+        try {
+            sslSocket.setTcpNoDelay(true);
+        } catch (final Throwable ignored) {
+        }
         final XmppDomainVerifier xmppDomainVerifier = new XmppDomainVerifier();
         try {
+            final long hsStart = SystemClock.elapsedRealtime();
             sslSocket.startHandshake();
+            final long hsEnd = SystemClock.elapsedRealtime();
+            Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": TLS startHandshake completed in " + (hsEnd - hsStart) + "ms");
             if (!xmppDomainVerifier.verify(
                     account.getServer(), this.verifiedHostname, sslSocket.getSession())) {
                 Log.d(
