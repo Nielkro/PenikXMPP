@@ -2,6 +2,7 @@ package eu.siacs.conversations.ui.compose
 
 import android.graphics.Bitmap
 import android.util.Patterns
+import eu.siacs.conversations.ui.util.PenikAudioWaveformExtractor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -2161,12 +2162,31 @@ object PenikVoicePlayer {
     var progressMs by mutableStateOf(0)
     var durationMs by mutableStateOf(0)
         private set
+    var playbackSpeed by mutableStateOf(1.0f)
+        private set
 
     fun position(): Int {
         return try {
             player?.currentPosition ?: progressMs
         } catch (e: Exception) {
             progressMs
+        }
+    }
+
+    fun cycleSpeed() {
+        playbackSpeed = when (playbackSpeed) {
+            1.0f -> 1.5f
+            1.5f -> 2.0f
+            else -> 1.0f
+        }
+        try {
+            player?.let {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    it.playbackParams = it.playbackParams.setSpeed(playbackSpeed)
+                }
+            }
+        } catch (e: Exception) {
+            // ignore
         }
     }
 
@@ -2178,6 +2198,13 @@ object PenikVoicePlayer {
                     isPlaying = false
                     progressMs = position()
                 } else {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        try {
+                            player?.playbackParams = player?.playbackParams?.setSpeed(playbackSpeed)
+                                    ?: android.media.PlaybackParams().setSpeed(playbackSpeed)
+                        } catch (ignored: Exception) {
+                        }
+                    }
                     player?.start()
                     isPlaying = true
                 }
@@ -2191,6 +2218,12 @@ object PenikVoicePlayer {
             val p = android.media.MediaPlayer()
             p.setDataSource(file.absolutePath)
             p.prepare()
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M && playbackSpeed != 1.0f) {
+                try {
+                    p.playbackParams = p.playbackParams.setSpeed(playbackSpeed)
+                } catch (ignored: Exception) {
+                }
+            }
             durationMs = p.duration.takeIf { it > 0 } ?: fallbackDurationMs
             p.setOnCompletionListener { stop() }
             p.start()
@@ -2427,7 +2460,19 @@ fun PenikVoiceRow(
             } else {
                 0f
             }
-    val waveform = remember(message.uuid) { generateVoiceWaveform(message.uuid, 45) }
+    val cachedWave = remember(uuid) { PenikAudioWaveformExtractor.getCached(uuid) }
+    var waveform by remember(uuid) {
+        mutableStateOf(cachedWave ?: generateVoiceWaveform(uuid, 45))
+    }
+
+    LaunchedEffect(file, uuid) {
+        if (file != null && file.exists()) {
+            val realWave = PenikAudioWaveformExtractor.getWaveform(file, uuid, 45)
+            if (realWave.isNotEmpty()) {
+                waveform = realWave
+            }
+        }
+    }
     val fileSizeStr = remember(file) {
         try {
             UIHelper.filesizeToString(file.length())
@@ -2493,20 +2538,61 @@ fun PenikVoiceRow(
                     modifier = Modifier.fillMaxWidth().height(26.dp)
             )
             Spacer(modifier = Modifier.height(3.dp))
-            val displayTimeMs = if (playingThis || progressMs > 0) progressMs else durationMs
-            val timeAndSizeText = buildString {
-                append(penikFormatVoiceTime(displayTimeMs))
-                if (fileSizeStr.isNotEmpty()) {
-                    append(", ")
-                    append(fileSizeStr)
+            Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+            ) {
+                val displayTimeMs = if (playingThis || progressMs > 0) progressMs else durationMs
+                val timeAndSizeText = buildString {
+                    append(penikFormatVoiceTime(displayTimeMs))
+                    if (fileSizeStr.isNotEmpty()) {
+                        append(", ")
+                        append(fileSizeStr)
+                    }
+                }
+                Text(
+                        text = timeAndSizeText,
+                        color = if (isSentByMe) Color.White.copy(alpha = 0.8f) else textMuted,
+                        fontSize = 11.sp,
+                        maxLines = 1
+                )
+
+                // 1X / 1.5X / 2X playback speed pill button
+                val currentSpeed = PenikVoicePlayer.playbackSpeed
+                val speedText = when (currentSpeed) {
+                    1.5f -> "1.5X"
+                    2.0f -> "2X"
+                    else -> "1X"
+                }
+                val speedBg = if (currentSpeed > 1.0f) {
+                    if (isSentByMe) Color.White.copy(alpha = 0.30f) else accent.copy(alpha = 0.20f)
+                } else {
+                    if (isSentByMe) Color.White.copy(alpha = 0.12f) else textMuted.copy(alpha = 0.12f)
+                }
+                val speedTextColor = if (isSentByMe) {
+                    Color.White
+                } else if (currentSpeed > 1.0f) {
+                    accent
+                } else {
+                    textMuted
+                }
+
+                Box(
+                        modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(speedBg)
+                                .clickable { PenikVoicePlayer.cycleSpeed() }
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                            text = speedText,
+                            color = speedTextColor,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                    )
                 }
             }
-            Text(
-                    text = timeAndSizeText,
-                    color = if (isSentByMe) Color.White.copy(alpha = 0.8f) else textMuted,
-                    fontSize = 11.sp,
-                    maxLines = 1
-            )
         }
     }
 }

@@ -199,6 +199,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/ui/util/AvatarWorkerTask.java` — Async avatar loading.
 - `android/src/main/java/eu/siacs/conversations/ui/util/ScrollState.java` — List scroll-down FAB logic.
 - `android/src/main/java/eu/siacs/conversations/ui/util/SendButtonAction.java`, `SendButtonTool.java` — Send/record button state.
+- `android/src/main/java/eu/siacs/conversations/ui/util/PenikAudioWaveformExtractor.kt` — Fast runtime audio waveform extractor using MediaExtractor/MediaCodec with LRU cache.
 - `android/src/main/java/eu/siacs/conversations/ui/util/ShareUtil.java` — Share/link helpers.
 - `android/src/main/java/eu/siacs/conversations/ui/util/SettingsUtils.java` — Night mode / theme helpers.
 - `android/src/main/java/eu/siacs/conversations/ui/widget/` — Custom views (scanner, bubbles, spans, audio recorder).
