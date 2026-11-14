@@ -852,6 +852,22 @@ fun penikIsVideo(message: Message): Boolean {
             lower.endsWith(".avi")
 }
 
+fun penikIsVideoNote(message: Message): Boolean {
+    if (!penikIsVideo(message)) return false
+    val url = (message.fileParams?.url ?: message.body ?: "").lowercase()
+    if (url.contains("video_note") || url.contains("videonote") || url.contains("round_video")) {
+        return true
+    }
+    val params = message.fileParams
+    if (params != null && params.width > 0 && params.height > 0) {
+        val ratio = params.width.toFloat() / params.height.toFloat()
+        if (ratio in 0.92f..1.08f) {
+            return true
+        }
+    }
+    return false
+}
+
 @Composable
 fun PenikSwipeToReplyWrapper(
         message: Message,
@@ -3216,6 +3232,7 @@ fun PenikAttachmentRow(
     val isSticker = message.type == Message.TYPE_STICKER || message.isSticker
     val isImage = (message.type == Message.TYPE_IMAGE || mime.startsWith("image/")) && !message.isGeoUri && !isSticker
     val isVideo = penikIsVideo(message)
+    val isVideoNote = penikIsVideoNote(message)
 
     val service = activity.xmppConnectionService
     val resolvedModel = remember(message.uuid) {
@@ -3233,6 +3250,30 @@ fun PenikAttachmentRow(
                 isSentByMe = isSentByMe,
                 timeText = timeText,
                 onClick = {},
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    showMenu = true
+                }
+            )
+            if (showMenu) {
+                PenikMessageMenu(
+                    message = message,
+                    isSentByMe = isSentByMe,
+                    onDismiss = { showMenu = false },
+                    onAction = {
+                        showMenu = false
+                        listener.onMessageAction(it, message)
+                    }
+                )
+            }
+        } else if (isVideoNote) {
+            PenikVideoNoteBubble(
+                message = message,
+                activity = activity,
+                isSentByMe = isSentByMe,
+                timeText = timeText,
+                status = status,
+                readCount = message.readByMarkers?.size ?: 0,
                 onLongClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     showMenu = true
@@ -3611,6 +3652,191 @@ fun PenikImageThumb(message: Message, activity: XmppActivity, fgColor: Color) {
                 fgColor = fgColor,
                 textMuted = fgColor.copy(alpha = 0.7f)
         )
+    }
+}
+
+@Composable
+fun PenikVideoNoteBubble(
+        message: Message,
+        activity: XmppActivity,
+        isSentByMe: Boolean,
+        timeText: String,
+        status: Int,
+        readCount: Int,
+        onLongClick: () -> Unit
+) {
+    val service = activity.xmppConnectionService
+    val localFile = remember(message.uuid) {
+        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+    }
+    var isPlaying by remember(message.uuid) { mutableStateOf(false) }
+    var currentPosMs by remember(message.uuid) { mutableStateOf(0) }
+    var durationMs by remember(message.uuid) { mutableStateOf(0) }
+    var mediaPlayerRef by remember(message.uuid) { mutableStateOf<android.media.MediaPlayer?>(null) }
+    val accent = colorResource(R.color.penik_accent)
+    val danger = colorResource(R.color.penik_danger)
+
+    // Progress updater loop
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            mediaPlayerRef?.let { mp ->
+                try {
+                    currentPosMs = mp.currentPosition
+                    if (durationMs <= 0 && mp.duration > 0) {
+                        durationMs = mp.duration
+                    }
+                } catch (ignored: Exception) {}
+            }
+            kotlinx.coroutines.delay(100)
+        }
+    }
+
+    Box(
+            modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 2.dp)
+                    .size(220.dp)
+                    .combinedClickable(
+                            onClick = {
+                                mediaPlayerRef?.let { mp ->
+                                    try {
+                                        if (mp.isPlaying) {
+                                            mp.pause()
+                                            isPlaying = false
+                                        } else {
+                                            mp.start()
+                                            isPlaying = true
+                                        }
+                                    } catch (ignored: Exception) {}
+                                }
+                            },
+                            onLongClick = onLongClick
+                    ),
+            contentAlignment = Alignment.Center
+    ) {
+        if (localFile != null) {
+            // Live circular video playback
+            AndroidView(
+                    factory = { ctx ->
+                        android.view.TextureView(ctx).apply {
+                            surfaceTextureListener = object : android.view.TextureView.SurfaceTextureListener {
+                                override fun onSurfaceTextureAvailable(surface: android.graphics.SurfaceTexture, width: Int, height: Int) {
+                                    try {
+                                        val mp = android.media.MediaPlayer().apply {
+                                            setDataSource(localFile.absolutePath)
+                                            setSurface(android.view.Surface(surface))
+                                            isLooping = true
+                                            setOnPreparedListener { player ->
+                                                durationMs = player.duration
+                                                player.start()
+                                                isPlaying = true
+                                            }
+                                            prepareAsync()
+                                        }
+                                        mediaPlayerRef = mp
+                                    } catch (e: Exception) {
+                                        android.util.Log.w("PenikVideoNote", "Failed to start media player", e)
+                                    }
+                                }
+
+                                override fun onSurfaceTextureSizeChanged(surface: android.graphics.SurfaceTexture, width: Int, height: Int) {}
+                                override fun onSurfaceTextureDestroyed(surface: android.graphics.SurfaceTexture): Boolean {
+                                    try {
+                                        mediaPlayerRef?.stop()
+                                        mediaPlayerRef?.release()
+                                    } catch (ignored: Exception) {}
+                                    mediaPlayerRef = null
+                                    isPlaying = false
+                                    return true
+                                }
+                                override fun onSurfaceTextureUpdated(surface: android.graphics.SurfaceTexture) {}
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                            .size(212.dp)
+                            .clip(CircleShape)
+            )
+
+            // Circular progress indicator around perimeter
+            androidx.compose.foundation.Canvas(modifier = Modifier.size(220.dp)) {
+                val strokeWidth = 3.dp.toPx()
+                val sweep = if (durationMs > 0) (currentPosMs.toFloat() / durationMs.toFloat()) * 360f else 0f
+
+                // Track
+                drawCircle(
+                        color = Color.White.copy(alpha = 0.15f),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
+                )
+                // Progress
+                if (sweep > 0f) {
+                    drawArc(
+                            color = accent,
+                            startAngle = -90f,
+                            sweepAngle = sweep,
+                            useCenter = false,
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+                }
+            }
+
+            // Center play button overlay when paused
+            if (!isPlaying) {
+                Box(
+                        modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.55f)),
+                        contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Воспроизвести",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            // Bottom duration / status pill inside circle
+            Box(
+                    modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 10.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color.Black.copy(alpha = 0.55f))
+                            .padding(horizontal = 7.dp, vertical = 2.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val remainingMs = (durationMs - currentPosMs).coerceAtLeast(0)
+                    Text(
+                            text = penikFormatVoiceTime(if (remainingMs > 0) remainingMs else durationMs),
+                            fontSize = 11.sp,
+                            color = Color.White
+                    )
+                    if (isSentByMe) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        if (status == Message.STATUS_SEND_FAILED) {
+                            Text(text = "!", color = danger, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        } else {
+                            val isDouble = status >= Message.STATUS_SEND_RECEIVED || readCount > 0
+                            val checkColor = if (readCount > 0) accent else Color.White.copy(alpha = 0.8f)
+                            Text(text = if (isDouble) "✓✓" else "✓", color = checkColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        } else {
+            // Local file not yet downloaded or loading - show thumbnail with download icon
+            Box(
+                    modifier = Modifier
+                            .size(212.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF1E232B)),
+                    contentAlignment = Alignment.Center
+            ) {
+                PenikVideoThumb(message = message, activity = activity, fgColor = Color.White)
+            }
+        }
     }
 }
 

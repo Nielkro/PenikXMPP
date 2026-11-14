@@ -164,6 +164,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/ui/ContactDetailsActivity.java` — 1:1 contact profile (Telegram-style): big centered avatar, name, online/last seen status, quick action buttons (Chat, Sound, Call, Video), username, bio, shared media, and 3-dots overflow menu with icons (Notifications, Edit, Delete, Block, Share).
 - `android/src/main/java/eu/siacs/conversations/ui/PenikProfileActivity.kt` — Modern standalone user profile screen with Compose-based PenikProfileTab, top bar, avatar editor, bio, and settings navigation.
 - `android/src/main/java/eu/siacs/conversations/ui/PenikImageViewerActivity.kt` — Full-screen in-app photo viewer with gesture zoom/pan for profile avatars and shared media.
+- `android/src/main/java/eu/siacs/conversations/ui/PenikVideoNoteActivity.kt` — Telegram-style Video Note ("Кружочки") recording screen with CameraX, live circular viewfinder, progress ring, and review controls.
 - `android/src/main/java/eu/siacs/conversations/ui/EditAccountActivity.java` — XMPP account add/edit (login/register).
 - `android/src/main/java/eu/siacs/conversations/ui/RtpSessionActivity.java` — Audio/video call screen (Jingle/WebRTC) modernized with Penik dark theme, big avatar, E2EE badge, and circular call controls.
 - `android/src/main/java/eu/siacs/conversations/ui/activity/SettingsActivity.java` — Preferences host.
@@ -200,6 +201,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/ui/util/ScrollState.java` — List scroll-down FAB logic.
 - `android/src/main/java/eu/siacs/conversations/ui/util/SendButtonAction.java`, `SendButtonTool.java` — Send/record button state.
 - `android/src/main/java/eu/siacs/conversations/ui/util/PenikAudioWaveformExtractor.kt` — Fast runtime audio waveform extractor using MediaExtractor/MediaCodec with LRU cache.
+- `android/src/main/java/eu/siacs/conversations/ui/util/PenikVideoNoteTranscoder.kt` — Fast hardware-accelerated 1:1 square video note transcoder with OpenGL center cropping, AAC audio preservation, and corner Penik watermark branding.
 - `android/src/main/java/eu/siacs/conversations/ui/util/ShareUtil.java` — Share/link helpers.
 - `android/src/main/java/eu/siacs/conversations/ui/util/SettingsUtils.java` — Night mode / theme helpers.
 - `android/src/main/java/eu/siacs/conversations/ui/widget/` — Custom views (scanner, bubbles, spans, audio recorder).

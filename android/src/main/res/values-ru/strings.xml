@@ -1266,7 +1266,7 @@
     <string name="attachment_choice_file">Файл</string>
     <string name="attachment_choice_location">Местоположение</string>
     <string name="attachment_choice_camera">Камера</string>
-    <string name="attachment_choice_video">Видео</string>
+    <string name="attachment_choice_video">Кружочек</string>
     <string name="attachment_choice_recording">Аудиозапись</string>
     <string name="attachment_choice_contact">Контакт</string>
     <string name="note_to_self">Заметка себе</string>

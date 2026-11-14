@@ -198,6 +198,11 @@
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.Penik.Dialog" />
         <activity
+            android:name=".ui.PenikVideoNoteActivity"
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Penik.FullScreen" />
+        <activity
             android:name=".ui.ShowLocationActivity"
             android:label="@string/title_activity_show_location" />
         <activity

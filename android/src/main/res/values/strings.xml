@@ -1206,7 +1206,7 @@
     <string name="attachment_choice_file">File</string>
     <string name="attachment_choice_location">Location</string>
     <string name="attachment_choice_camera">Camera</string>
-    <string name="attachment_choice_video">Video</string>
+    <string name="attachment_choice_video">Video note</string>
     <string name="attachment_choice_recording">Recording</string>
     <string name="attachment_choice_contact">Contact</string>
     <string name="note_to_self">Note to self</string>

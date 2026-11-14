@@ -346,6 +346,7 @@ public class ConversationFragment extends XmppFragment
     private File inlineVoiceOutputFile;
     private final Handler inlineVoiceHandler = new Handler(Looper.getMainLooper());
     private boolean isRecordingVoice = false;
+    private boolean isVideoNoteMode = false;
 
     private final Runnable inlineVoiceTicker =
             new Runnable() {
@@ -1311,11 +1312,23 @@ public class ConversationFragment extends XmppFragment
                 }
                 break;
             case ATTACHMENT_CHOICE_CHOOSE_FILE:
-            case ATTACHMENT_CHOICE_RECORD_VIDEO:
                 final List<Attachment> fileUris =
                         Attachment.extractAttachments(requireContext(), data, Attachment.Type.FILE);
                 mediaPreviewAdapter.addMediaPreviews(fileUris);
                 toggleInputMethod();
+                break;
+            case ATTACHMENT_CHOICE_RECORD_VIDEO:
+                if (data != null && data.getData() != null) {
+                    final List<Attachment> videoNotes =
+                            Attachment.of(requireContext(), data.getData(), Attachment.Type.FILE);
+                    commitAttachments(videoNotes);
+                } else {
+                    final List<Attachment> vFiles =
+                            Attachment.extractAttachments(requireContext(), data, Attachment.Type.FILE);
+                    if (!vFiles.isEmpty()) {
+                        commitAttachments(vFiles);
+                    }
+                }
                 break;
             case ATTACHMENT_CHOICE_RECORD_VOICE:
                 final List<Attachment> recordings =
@@ -1591,6 +1604,20 @@ public class ConversationFragment extends XmppFragment
                 });
 
         binding.textSendButton.setOnClickListener(this.mSendButtonListener);
+        binding.textSendButton.setOnLongClickListener(
+                v -> {
+                    final String text = CharSequences.nullToEmpty(this.binding.textInput.getText());
+                    if (text.isEmpty() && !mediaPreviewAdapter.hasAttachments()) {
+                        isVideoNoteMode = !isVideoNoteMode;
+                        updateSendButton();
+                        Toast.makeText(
+                                requireContext(),
+                                isVideoNoteMode ? "Режим видеосообщения (кружочек)" : "Режим голосового сообщения",
+                                Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    return false;
+                });
         binding.cancelRecordingButton.setOnClickListener(v -> stopVoiceRecording(false));
 
         binding.scrollToBottomButton.setOnClickListener(this.mScrollButtonListener);
@@ -2879,7 +2906,7 @@ public class ConversationFragment extends XmppFragment
                         }
                     case ATTACHMENT_CHOICE_RECORD_VIDEO:
                         {
-                            yield new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+                            yield new Intent(requireContext(), PenikVideoNoteActivity.class);
                         }
                     case ATTACHMENT_CHOICE_TAKE_PHOTO:
                         {
@@ -4308,11 +4335,14 @@ public class ConversationFragment extends XmppFragment
         final var connection = c.getAccount().getXmppConnection();
         final Presence.Availability status;
         final String text = CharSequences.nullToEmpty(this.binding.textInput.getText());
-        final SendButtonAction action;
+        SendButtonAction action;
         if (hasAttachments) {
             action = SendButtonAction.TEXT;
         } else {
             action = SendButtonTool.getAction(getContext(), c, text);
+            if (action == SendButtonAction.RECORD_VOICE && isVideoNoteMode) {
+                action = SendButtonAction.RECORD_VIDEO;
+            }
         }
         if (c.getAccount().getStatus() == Account.State.ONLINE) {
             if (connection.getManager(MessageArchiveManager.class).isCatchingUp(c)) {
