@@ -55,7 +55,7 @@ public class AvatarService {
     private static final Character HORIZONTAL_ELLIPSIS = '…';
     private static final Character CHANNEL_SYMBOL = '#';
 
-    private static final float FONT_SIZE_DEFAULT = 0.44f;
+    private static final float FONT_SIZE_DEFAULT = 0.75f;
     private static final float FONT_SIZE_ADAPTIVE = 0.45f;
 
     private static final int AVATAR_SIZE_ADAPTIVE = 108;
@@ -685,18 +685,18 @@ public class AvatarService {
         tilePaint.setColor(tileColor);
         textPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
         textPaint.setColor(FG_COLOR);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, 600, false));
-        } else {
-            textPaint.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
-        }
+        textPaint.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
         final float fontSize = surface == Surface.REGULAR ? FONT_SIZE_DEFAULT : FONT_SIZE_ADAPTIVE;
         textPaint.setTextSize((right - left) * fontSize);
-        textPaint.setTextAlign(Paint.Align.CENTER);
+        final Rect rect = new Rect();
         canvas.drawRect(new Rect(left, top, right, bottom), tilePaint);
-        final Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
-        final float baseline = (top + bottom) / 2f - (fontMetrics.ascent + fontMetrics.descent) / 2f;
-        canvas.drawText(character.toString(), (right + left) / 2f, baseline, textPaint);
+        textPaint.getTextBounds(character.toString(), 0, 1, rect);
+        float width = textPaint.measureText(character.toString());
+        canvas.drawText(
+                character.toString(),
+                (right + left) / 2f - width / 2f,
+                (top + bottom) / 2f + rect.height() / 2f,
+                textPaint);
     }
 
     private void drawTile(

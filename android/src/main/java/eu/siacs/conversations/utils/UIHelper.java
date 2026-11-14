@@ -147,28 +147,12 @@ public class UIHelper {
         }
     }
 
-    private static final int[] AVATAR_PALETTE = {
-        0xFFE17076, // Coral / Soft Red
-        0xFFFAA774, // Warm Orange
-        0xFFA695E7, // Violet / Purple
-        0xFF7BC862, // Bright Green
-        0xFF6EC9CB, // Cyan / Mint
-        0xFF65AADD, // Sky Blue
-        0xFFEE7AAE, // Pink
-        0xFFFF8E56  // Amber
-    };
-
     @ColorInt
     public static int getColorForName(final String name) {
-        if (Strings.isNullOrEmpty(name)) {
-            return AVATAR_PALETTE[0];
-        }
-        if (name.contains("Избранное") || name.contains("Saved Messages")) {
+        if (name != null && (name.contains("Избранное") || name.contains("Saved Messages"))) {
             return 0xFF5FA8DF;
         }
-        final String key = name.trim().toLowerCase(java.util.Locale.ROOT);
-        final int hash = Math.abs(key.hashCode());
-        return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
+        return XEP0392Helper.rgbFromNick(name);
     }
 
     public static Pair<CharSequence, Boolean> getMessagePreview(

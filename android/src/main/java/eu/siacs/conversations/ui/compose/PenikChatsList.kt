@@ -96,6 +96,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -1607,7 +1608,7 @@ fun PenikAvatarImage(
         val initial = cleanName.firstOrNull { it.isLetterOrDigit() }?.uppercase()
                 ?: cleanName.firstOrNull()?.uppercase()
                 ?: "?"
-        val fontSize = (size.value * 0.44f).sp
+        val fontSize = (size.value * 0.70f).sp
         Box(
                 modifier = modifier.size(size).clip(CircleShape).background(tint),
                 contentAlignment = Alignment.Center
@@ -1616,7 +1617,8 @@ fun PenikAvatarImage(
                     text = initial,
                     color = Color.White,
                     fontSize = fontSize,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Light,
+                    fontFamily = FontFamily.SansSerif
             )
         }
     }
@@ -2032,8 +2034,9 @@ fun PenikProfileTab(
                         Text(
                                 text = initial,
                                 color = Color.White,
-                                fontSize = 42.sp,
-                                fontWeight = FontWeight.SemiBold
+                                fontSize = 68.sp,
+                                fontWeight = FontWeight.Light,
+                                fontFamily = FontFamily.SansSerif
                         )
                     }
                 }
@@ -2271,8 +2274,9 @@ fun PenikProfileTab(
                                 Text(
                                     text = initial,
                                     color = Color.White,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontSize = 30.sp,
+                                    fontWeight = FontWeight.Light,
+                                    fontFamily = FontFamily.SansSerif
                                 )
                             }
                         }
