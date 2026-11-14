@@ -594,6 +594,9 @@ public class Conversation extends AbstractEntity
     }
 
     public @NonNull CharSequence getName() {
+        if (isSelf()) {
+            return "Избранное";
+        }
         if (getMode() == MODE_MULTI) {
             return getName(getMucOptions(), getBookmark());
         } else if ((QuickConversationsService.isConversations()
@@ -1091,6 +1094,17 @@ public class Conversation extends AbstractEntity
         return count;
     }
 
+    public boolean hasMessages() {
+        synchronized (this.messages) {
+            for (final Message m : this.messages) {
+                if (m.getType() != Message.TYPE_STATUS) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
     public boolean isSelf() {
         if (mode != MODE_SINGLE) {
             return false;
@@ -1099,7 +1113,25 @@ public class Conversation extends AbstractEntity
         if (contact != null && contact.isSelf()) {
             return true;
         }
-        return account != null && this.contactJid != null && account.getJid().asBareJid().equals(this.contactJid.asBareJid());
+        if (account == null || this.contactJid == null) {
+            return false;
+        }
+        final Jid accJid = account.getJid().asBareJid();
+        final Jid cJid = this.contactJid.asBareJid();
+        if (accJid.equals(cJid)) {
+            return true;
+        }
+        final String accLocal = accJid.getLocal();
+        final String cLocal = cJid.getLocal();
+        if (accLocal != null && accLocal.equalsIgnoreCase(cLocal)) {
+            final String accDomain = accJid.getDomain().toString();
+            final String cDomain = cJid.getDomain().toString();
+            if (("snikket.penik.ru".equalsIgnoreCase(accDomain) || "penik.ru".equalsIgnoreCase(accDomain))
+                    && ("snikket.penik.ru".equalsIgnoreCase(cDomain) || "penik.ru".equalsIgnoreCase(cDomain))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isWithStranger() {

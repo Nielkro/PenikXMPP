@@ -177,10 +177,7 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
     @Override
     public String getDisplayName() {
         if (isSelf()) {
-            final String displayName = account.getDisplayName();
-            if (!Strings.isNullOrEmpty(displayName)) {
-                return displayName;
-            }
+            return "Избранное";
         }
         if (Config.X509_VERIFICATION && !TextUtils.isEmpty(this.commonName)) {
             return this.commonName;
@@ -483,7 +480,25 @@ public class Contact implements ListItem, Blockable, MucOptions.IdentifiableUser
     }
 
     public boolean isSelf() {
-        return account.getJid().asBareJid().equals(jid.asBareJid());
+        if (account == null || jid == null) {
+            return false;
+        }
+        final Jid accJid = account.getJid().asBareJid();
+        final Jid cJid = jid.asBareJid();
+        if (accJid.equals(cJid)) {
+            return true;
+        }
+        final String accLocal = accJid.getLocal();
+        final String cLocal = cJid.getLocal();
+        if (accLocal != null && accLocal.equalsIgnoreCase(cLocal)) {
+            final String accDomain = accJid.getDomain().toString();
+            final String cDomain = cJid.getDomain().toString();
+            if (("snikket.penik.ru".equalsIgnoreCase(accDomain) || "penik.ru".equalsIgnoreCase(accDomain))
+                    && ("snikket.penik.ru".equalsIgnoreCase(cDomain) || "penik.ru".equalsIgnoreCase(cDomain))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isBot() {

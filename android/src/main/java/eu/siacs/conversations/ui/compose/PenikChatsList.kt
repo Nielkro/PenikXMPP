@@ -984,7 +984,8 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long
     val context = LocalContext.current
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
-    val latest = selfChat?.latestMessage
+    val hasRealMessages = selfChat != null && selfChat.hasMessages()
+    val latest = if (hasRealMessages) selfChat.latestMessage else null
     val service = activity.xmppConnectionService
     val rawBody = latest?.body?.trim() ?: ""
     val isAesGcm = rawBody.startsWith("aesgcm://", ignoreCase = true)
@@ -1040,7 +1041,7 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long
                     overflow = TextOverflow.Ellipsis
             )
             val preview = if (latest != null) penikMessagePreviewData(context, latest) else null
-            if (preview != null) {
+            if (preview != null && preview.text.isNotBlank()) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val loadedThumb = thumb
@@ -1069,9 +1070,18 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long
                             overflow = TextOverflow.Ellipsis
                     )
                 }
+            } else {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                        text = "Сообщения, заметки",
+                        color = textMuted,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                )
             }
         }
-        if (latest != null && latest.timeSent > 0) {
+        if (hasRealMessages && latest != null && latest.timeSent > 0) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                     text = penikRelativeTime(context, latest.timeSent),
@@ -1151,18 +1161,22 @@ fun PenikConversationRow(
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
     val accent = colorResource(R.color.penik_accent)
-    val latest = conversation.latestMessage
+    val isSelfChat = conversation.isSelf
+    val hasRealMessages = conversation.hasMessages()
+    val latest = if (hasRealMessages) conversation.latestMessage else null
     val draft = if (conversation.isRead) conversation.draft else null
     val timestamp =
             if (draft != null) {
                 draft.instant().toEpochMilli()
+            } else if (hasRealMessages && latest != null) {
+                latest.timeSent
             } else {
-                latest?.timeSent ?: 0L
+                0L
             }
     val preview =
             if (draft != null) {
                 PenikPreviewData(text = "Черновик: ${draft.message()}")
-            } else if (latest != null) {
+            } else if (hasRealMessages && latest != null) {
                 val sender =
                         if (latest.status == Message.STATUS_RECEIVED &&
                                         conversation.mode == Conversational.MODE_MULTI
@@ -1172,13 +1186,16 @@ fun PenikConversationRow(
                                     ?.plus(": ")
                                     ?: ""
                         } else if (latest.status != Message.STATUS_RECEIVED &&
-                                        latest.type != Message.TYPE_STATUS
+                                        latest.type != Message.TYPE_STATUS &&
+                                        !isSelfChat
                         ) {
                             "Вы: "
                         } else {
                             ""
                         }
                 penikMessagePreviewData(context, latest, sender)
+            } else if (isSelfChat) {
+                PenikPreviewData(text = "Сообщения, заметки")
             } else {
                 null
             }
@@ -1188,7 +1205,8 @@ fun PenikConversationRow(
             conversation.mutedTill?.let { it == Instant.MAX || it.isAfter(Instant.now()) }
                     ?: false
     val isEncrypted = conversation.nextEncryption != Message.ENCRYPTION_NONE
-    val avatarBitmap = penikAvatarBitmap(conversation, activity)
+    val avatarBitmap = if (isSelfChat) null else penikAvatarBitmap(conversation, activity)
+    val displayName = if (isSelfChat) "Избранное" else conversation.name.toString()
     Row(
             modifier = Modifier
                     .fillMaxWidth()
@@ -1196,10 +1214,24 @@ fun PenikConversationRow(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
     ) {
-        PenikAvatarImage(
-                name = conversation.name.toString(),
-                bitmap = avatarBitmap
-        )
+        if (isSelfChat) {
+            Box(
+                    modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF5FA8DF)),
+                    contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                        imageVector = Icons.Default.Bookmark,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                )
+            }
+        } else {
+            PenikAvatarImage(
+                    name = displayName,
+                    bitmap = avatarBitmap
+            )
+        }
         Spacer(modifier = Modifier.width(12.dp))
         Row(
                 modifier = Modifier.weight(1f),
@@ -1208,7 +1240,7 @@ fun PenikConversationRow(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                            text = conversation.name.toString(),
+                            text = displayName,
                             color = textPrimary,
                             fontWeight = if (conversation.isRead) FontWeight.Medium else FontWeight.Bold,
                             fontSize = 16.sp,

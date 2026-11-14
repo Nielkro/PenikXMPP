@@ -4342,6 +4342,15 @@ public class ConversationFragment extends XmppFragment
         this.binding.toolbar.setSubtitleCentered(isTabletView);
         this.binding.toolbar.setTitleCentered(isTabletView);
         final var c = this.conversation;
+        if (c.isSelf()) {
+            this.binding.toolbar.setTitle("Избранное");
+            this.binding.toolbar.setSubtitle(null);
+            setToolbarBookmarkAvatar();
+            ToolbarUtils.setActionBarOnClickListener(this.binding.toolbar, null);
+            ToolbarUtils.adjustToolbarHeight(this.binding.toolbar, isTabletView);
+            this.binding.toolbar.invalidateMenu();
+            return;
+        }
         this.binding.toolbar.setTitle(c.getName());
         loadToolbarAvatar(c);
         if (c.getMode() == Conversation.MODE_SINGLE) {
@@ -4480,6 +4489,32 @@ public class ConversationFragment extends XmppFragment
                             })
                     .start();
         } catch (final Exception e) {
+            this.binding.toolbar.setLogo(null);
+        }
+    }
+
+    private void setToolbarBookmarkAvatar() {
+        try {
+            final float density = getResources().getDisplayMetrics().density;
+            final int size = Math.round(36 * density);
+            final android.graphics.Bitmap bitmap =
+                    android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888);
+            final android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+            final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            paint.setColor(0xFF5FA8DF);
+            canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint);
+
+            final android.graphics.drawable.Drawable bookmarkDrawable =
+                    ContextCompat.getDrawable(requireContext(), R.drawable.ic_bookmark_24dp);
+            if (bookmarkDrawable != null) {
+                bookmarkDrawable.mutate();
+                bookmarkDrawable.setTint(android.graphics.Color.WHITE);
+                final int iconPadding = Math.round(7 * density);
+                bookmarkDrawable.setBounds(iconPadding, iconPadding, size - iconPadding, size - iconPadding);
+                bookmarkDrawable.draw(canvas);
+            }
+            setToolbarAvatar(bitmap);
+        } catch (final Exception ignored) {
             this.binding.toolbar.setLogo(null);
         }
     }
