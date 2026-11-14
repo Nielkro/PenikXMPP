@@ -136,6 +136,7 @@ import eu.siacs.conversations.ui.compose.PenikChatActions;
 import eu.siacs.conversations.ui.compose.PenikChatBridge;
 import eu.siacs.conversations.ui.compose.PenikChatListener;
 import eu.siacs.conversations.ui.compose.PenikChatState;
+import eu.siacs.conversations.ui.PenikProfileActivity;
 import eu.siacs.conversations.ui.util.ActivityResult;
 import eu.siacs.conversations.ui.util.Attachment;
 import eu.siacs.conversations.ui.util.DateSeparator;
@@ -4169,9 +4170,7 @@ public class ConversationFragment extends XmppFragment
             if (contact != null) {
                 final var account = contact.getAccount();
                 if (contact.isSelf()) {
-                    final Intent intent = new Intent(requireContext(), EditAccountActivity.class);
-                    intent.putExtra("jid", account.getJid().asBareJid().toString());
-                    startActivity(intent);
+                    PenikProfileActivity.launch(requireContext(), account.getJid().asBareJid().toString());
                 } else {
                     final Intent intent = new Intent(requireContext(), ContactDetailsActivity.class);
                     intent.setAction(ContactDetailsActivity.ACTION_VIEW_CONTACT);
@@ -4542,8 +4541,8 @@ public class ConversationFragment extends XmppFragment
             final var contact = conversation.getContact();
             final var account = contact.getAccount();
             if (contact.isSelf()) {
-                intent = new Intent(requireContext(), EditAccountActivity.class);
-                intent.putExtra("jid", account.getJid().asBareJid().toString());
+                intent = new Intent(requireContext(), PenikProfileActivity.class);
+                intent.putExtra(PenikProfileActivity.EXTRA_ACCOUNT_JID, account.getJid().asBareJid().toString());
             } else {
                 intent = new Intent(requireContext(), ContactDetailsActivity.class);
                 intent.setAction(ContactDetailsActivity.ACTION_VIEW_CONTACT);
@@ -5095,9 +5094,7 @@ public class ConversationFragment extends XmppFragment
                 final var contact = message.getContact();
                 if (contact != null) {
                     if (contact.isSelf()) {
-                        final Intent intent = new Intent(requireContext(), EditAccountActivity.class);
-                        intent.putExtra("jid", c.getAccount().getJid().asBareJid().toString());
-                        startActivity(intent);
+                        PenikProfileActivity.launch(requireContext(), c.getAccount().getJid().asBareJid().toString());
                     } else {
                         requireXmppActivity().switchToContactDetails(contact, fingerprint);
                     }

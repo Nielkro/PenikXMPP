@@ -8,6 +8,7 @@ import android.widget.Toast;
 import com.google.common.base.Strings;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.persistance.FileBackend;
+import eu.siacs.conversations.ui.PenikImageViewerActivity;
 import eu.siacs.conversations.utils.MimeUtils;
 import java.io.File;
 import java.util.Objects;
@@ -36,6 +37,10 @@ public class ViewUtil {
 
     private static void view(
             final Context context, final File file, final String uuid, final String mime) {
+        if (mime != null && mime.startsWith("image/") && file.exists()) {
+            PenikImageViewerActivity.launch(context, file, null);
+            return;
+        }
         final Intent openIntent = new Intent(Intent.ACTION_VIEW);
         final Uri uri;
         try {

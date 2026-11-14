@@ -553,13 +553,14 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Encryption / OMEMO Keys Card -->
+                <!-- Encryption / OMEMO Keys Card (Hidden to prevent exposing crypto internals) -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/keys_wrapper"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginBottom="16dp"
+                    android:visibility="gone"
                     app:cardBackgroundColor="@color/penik_panel"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"

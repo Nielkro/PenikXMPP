@@ -784,6 +784,10 @@ public abstract class XmppActivity extends ActionBarActivity {
     }
 
     public void switchToAccount(Account account, boolean init, String fingerprint) {
+        if (!init) {
+            PenikProfileActivity.launch(this, account.getJid().asBareJid().toString());
+            return;
+        }
         Intent intent = new Intent(this, EditAccountActivity.class);
         intent.putExtra("jid", account.getJid().asBareJid().toString());
         intent.putExtra("init", init);

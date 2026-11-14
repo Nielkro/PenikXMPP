@@ -470,6 +470,12 @@
             android:name=".ui.ViewProfilePictureActivity"
             android:theme="@style/Theme.Penik.Dark" />
         <activity
+            android:name=".ui.PenikImageViewerActivity"
+            android:theme="@style/Theme.Penik.Dark" />
+        <activity
+            android:name=".ui.PenikProfileActivity"
+            android:theme="@style/Theme.Penik" />
+        <activity
             android:name=".ui.MucUsersActivity"
             android:label="@string/group_chat_members" />
         <activity

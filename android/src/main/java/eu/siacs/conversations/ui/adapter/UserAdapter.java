@@ -31,7 +31,7 @@ import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.ContactDetailsActivity;
-import eu.siacs.conversations.ui.EditAccountActivity;
+import eu.siacs.conversations.ui.PenikProfileActivity;
 import eu.siacs.conversations.ui.XmppActivity;
 import eu.siacs.conversations.ui.util.AvatarWorkerTask;
 import eu.siacs.conversations.ui.util.MucDetailsContextMenuHelper;
@@ -105,9 +105,7 @@ public class UserAdapter extends ListAdapter<MucOptions.User, UserAdapter.ViewHo
                             final Jid realJid = user.getRealJid();
                             if (realJid != null) {
                                 if (user.realJidMatchesAccount()) {
-                                    final Intent intent = new Intent(activity, EditAccountActivity.class);
-                                    intent.putExtra("jid", user.getAccount().getJid().asBareJid().toString());
-                                    activity.startActivity(intent);
+                                    PenikProfileActivity.launch(activity, user.getAccount().getJid().asBareJid().toString());
                                 } else {
                                     final Contact contact = user.getAccount().getRoster().getContact(realJid);
                                     final Intent intent = new Intent(activity, ContactDetailsActivity.class);

@@ -162,6 +162,8 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/ui/ConferenceDetailsActivity.java` — MUC details, subject, members, config.
 - `android/src/main/java/eu/siacs/conversations/ui/EditConferenceActivity.java` — Dedicated screen for editing group chat name, subject/topic, and avatar.
 - `android/src/main/java/eu/siacs/conversations/ui/ContactDetailsActivity.java` — 1:1 contact profile (Telegram-style): big centered avatar, name, online/last seen status, quick action buttons (Chat, Sound, Call, Video), username, bio, shared media, and 3-dots overflow menu with icons (Notifications, Edit, Delete, Block, Share).
+- `android/src/main/java/eu/siacs/conversations/ui/PenikProfileActivity.kt` — Modern standalone user profile screen with Compose-based PenikProfileTab, top bar, avatar editor, bio, and settings navigation.
+- `android/src/main/java/eu/siacs/conversations/ui/PenikImageViewerActivity.kt` — Full-screen in-app photo viewer with gesture zoom/pan for profile avatars and shared media.
 - `android/src/main/java/eu/siacs/conversations/ui/EditAccountActivity.java` — XMPP account add/edit (login/register).
 - `android/src/main/java/eu/siacs/conversations/ui/RtpSessionActivity.java` — Audio/video call screen (Jingle/WebRTC) modernized with Penik dark theme, big avatar, E2EE badge, and circular call controls.
 - `android/src/main/java/eu/siacs/conversations/ui/activity/SettingsActivity.java` — Preferences host.

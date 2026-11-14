@@ -50,6 +50,9 @@ import de.gultsch.common.MiniUri;
 import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
+import eu.siacs.conversations.persistance.FileBackend;
+import eu.siacs.conversations.ui.PenikImageViewerActivity;
+import eu.siacs.conversations.ui.PenikProfileActivity;
 import eu.siacs.conversations.utils.PenikClientDetector;
 import eu.siacs.conversations.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.Entity;
@@ -637,6 +640,12 @@ public class ContactDetailsActivity extends OmemoActivity
         if (contact == null) {
             return;
         }
+        if (contact.isSelf()) {
+            PenikProfileActivity.launch(this, contact.getAccount().getJid().asBareJid().toString());
+            finish();
+            return;
+        }
+        binding.keysWrapper.setVisibility(View.GONE);
         invalidateOptionsMenu();
         setTitle("");
         if (getSupportActionBar() != null) {
@@ -940,10 +949,10 @@ public class ContactDetailsActivity extends OmemoActivity
         if (avatar == null) {
             return;
         }
-        final var intent = new Intent(this, ViewProfilePictureActivity.class);
-        intent.setData(Uri.fromParts("avatar", avatar, null));
-        intent.putExtra(ViewProfilePictureActivity.EXTRA_DISPLAY_NAME, contact.getDisplayName());
-        startActivity(intent);
+        final var file = FileBackend.getAvatarFile(this, avatar);
+        if (file.exists()) {
+            PenikImageViewerActivity.launch(this, file, contact.getDisplayName());
+        }
     }
 
     private void onAddToAddressBookClick(final View view) {
@@ -980,6 +989,11 @@ public class ContactDetailsActivity extends OmemoActivity
                 return;
             }
             this.contact = account.getRoster().getContact(contactJid);
+            if (this.contact.isSelf()) {
+                PenikProfileActivity.launch(this, account.getJid().asBareJid().toString());
+                finish();
+                return;
+            }
             if (mPendingFingerprintVerificationUri != null) {
                 processFingerprintVerification(mPendingFingerprintVerificationUri);
                 mPendingFingerprintVerificationUri = null;
