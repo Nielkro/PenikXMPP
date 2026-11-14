@@ -3744,6 +3744,22 @@ fun PenikVideoNoteBubble(
     val isPlaying = isActive && PenikVideoNotePlayer.isPlaying
     val currentPosMs = if (isActive) PenikVideoNotePlayer.currentPosMs else 0
     val durationMs = if (isActive) PenikVideoNotePlayer.durationMs else 0
+    val staticDurationMs = remember(localFile?.absolutePath) {
+        val f = localFile
+        if (f != null && f.exists()) {
+            try {
+                val mmr = android.media.MediaMetadataRetriever()
+                mmr.setDataSource(f.absolutePath)
+                val durStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+                mmr.release()
+                durStr?.toIntOrNull() ?: 0
+            } catch (e: Exception) {
+                0
+            }
+        } else {
+            0
+        }
+    }
     val accent = colorResource(R.color.penik_accent)
     val danger = colorResource(R.color.penik_danger)
     var surfaceRef by remember(message.uuid) { mutableStateOf<android.view.Surface?>(null) }
@@ -3848,38 +3864,6 @@ fun PenikVideoNoteBubble(
                 }
             }
 
-            // Bottom duration / status pill inside circle
-            Box(
-                    modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 10.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color.Black.copy(alpha = 0.55f))
-                            .padding(horizontal = 7.dp, vertical = 2.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val remainingMs = if (durationMs > 0) (durationMs - currentPosMs).coerceAtLeast(0) else 0
-                    if (remainingMs > 0) {
-                        Text(
-                                text = penikFormatVoiceTime(remainingMs),
-                                fontSize = 11.sp,
-                                color = Color.White
-                        )
-                    }
-                    if (isSentByMe) {
-                        if (remainingMs > 0) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                        }
-                        if (status == Message.STATUS_SEND_FAILED) {
-                            Text(text = "!", color = danger, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        } else {
-                            val isDouble = status >= Message.STATUS_SEND_RECEIVED || readCount > 0
-                            val checkColor = if (readCount > 0) accent else Color.White.copy(alpha = 0.8f)
-                            Text(text = if (isDouble) "✓✓" else "✓", color = checkColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
         } else {
             // Local file not yet downloaded or loading - show thumbnail with download icon
             Box(
@@ -3890,6 +3874,64 @@ fun PenikVideoNoteBubble(
                     contentAlignment = Alignment.Center
             ) {
                 PenikVideoThumb(message = message, activity = activity, fgColor = Color.White)
+            }
+        }
+
+        // Left badge: video note duration
+        val displayDurationMs = if (isPlaying && durationMs > 0) {
+            (durationMs - currentPosMs).coerceAtLeast(0)
+        } else if (staticDurationMs > 0) {
+            staticDurationMs
+        } else {
+            0
+        }
+        if (displayDurationMs > 0) {
+            Box(
+                    modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 14.dp, bottom = 10.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color.Black.copy(alpha = 0.55f))
+                            .padding(horizontal = 7.dp, vertical = 2.dp)
+            ) {
+                Text(
+                        text = penikFormatVoiceTime(displayDurationMs),
+                        fontSize = 11.sp,
+                        color = Color.White
+                )
+            }
+        }
+
+        // Right badge: time sent and status ticks
+        Box(
+                modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 14.dp, bottom = 10.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.Black.copy(alpha = 0.55f))
+                        .padding(horizontal = 7.dp, vertical = 2.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                        text = timeText,
+                        fontSize = 11.sp,
+                        color = Color.White
+                )
+                if (isSentByMe) {
+                    Spacer(modifier = Modifier.width(3.dp))
+                    if (status == Message.STATUS_SEND_FAILED) {
+                        Text(text = "!", color = danger, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    } else {
+                        val isDouble = status >= Message.STATUS_SEND_RECEIVED || readCount > 0
+                        val checkColor = if (readCount > 0) accent else Color.White.copy(alpha = 0.85f)
+                        Text(
+                                text = if (isDouble) "✓✓" else "✓",
+                                color = checkColor,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }
