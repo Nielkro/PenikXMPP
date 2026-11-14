@@ -367,7 +367,7 @@ footer a:hover{
       <img src="/logo_flat.svg" alt="Penik Logo">
       <div>
         Penik
-        <div class="brand-sub">snikket.penik.ru</div>
+        <div class="brand-sub">penik.ru</div>
       </div>
     </a>
     <a href="/" class="btn btn-outline" style="height:34px;padding:0 12px;font-size:13px">О мессенджере</a>
@@ -398,11 +398,11 @@ footer a:hover{
         <div class="actions mobile-only">
           <a id="btnOpenMobile" href="#" class="btn btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-            Открыть в приложении Penik
+            <span id="labelOpenMobile">Открыть в приложении Penik</span>
           </a>
-          <a href="/#download" class="btn btn-outline">
+          <a id="btnDownloadMobile" href="/#download" class="btn btn-outline">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Скачать APK для Android
+            <span id="labelDownloadMobile">Скачать APK для Android</span>
           </a>
         </div>
 
@@ -433,7 +433,7 @@ footer a:hover{
             <label class="form-label" for="username">Имя пользователя (логин)</label>
             <div class="input-wrap">
               <input id="username" class="input-text has-suffix" type="text" placeholder="alex" required autocomplete="username" autocapitalize="none" spellcheck="false">
-              <span class="input-suffix">@snikket.penik.ru</span>
+              <span class="input-suffix">@penik.ru</span>
             </div>
           </div>
 
@@ -493,7 +493,7 @@ footer a:hover{
 
 <footer>
   <div class="container">
-    Penik Messenger · <a href="/">penik.ru</a> · сервер snikket.penik.ru
+    Penik Messenger · <a href="/">penik.ru</a>
   </div>
 </footer>
 
@@ -522,9 +522,34 @@ footer a:hover{
   }
 
   var currentBaseUrl = window.location.origin + '/invite/' + encodeURIComponent(token);
+  var xmppInviteUri = 'xmpp:snikket.penik.ru?register;preauth=' + encodeURIComponent(token);
+  var snikketAppStoreUrl = 'https://apps.apple.com/app/snikket/id1545164121';
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
   var btnOpenMobile = document.getElementById('btnOpenMobile');
-  if (btnOpenMobile) {
-    btnOpenMobile.href = currentBaseUrl;
+  var labelOpenMobile = document.getElementById('labelOpenMobile');
+  var btnDownloadMobile = document.getElementById('btnDownloadMobile');
+  var labelDownloadMobile = document.getElementById('labelDownloadMobile');
+
+  if (isIOS) {
+    if (btnOpenMobile) {
+      btnOpenMobile.href = xmppInviteUri;
+      if (labelOpenMobile) {
+        labelOpenMobile.textContent = 'Открыть в Snikket';
+      }
+    }
+    if (btnDownloadMobile) {
+      btnDownloadMobile.href = snikketAppStoreUrl;
+      btnDownloadMobile.target = '_blank';
+      btnDownloadMobile.rel = 'noopener';
+      if (labelDownloadMobile) {
+        labelDownloadMobile.textContent = 'Скачать Snikket в App Store';
+      }
+    }
+  } else {
+    if (btnOpenMobile) {
+      btnOpenMobile.href = currentBaseUrl;
+    }
   }
 
   // Render initial QR (to open invite on phone)
@@ -660,7 +685,7 @@ footer a:hover{
     })
     .then(function(data) {
       // Registration successful!
-      var fullJid = data.jid || (rawUser + '@snikket.penik.ru');
+      var fullJid = data.jid || (rawUser + '@penik.ru');
       showSuccess(rawUser, password, fullJid);
     })
     .catch(function(err) {

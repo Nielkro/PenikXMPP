@@ -4079,6 +4079,30 @@ public class XmppConnectionService extends Service {
                 MoreExecutors.directExecutor());
     }
 
+    public void publishBio(final Account account, final String bio) {
+        final var connection = account.getXmppConnection();
+        if (connection == null) {
+            return;
+        }
+        final var future = connection.getManager(VCardManager.class).publishBio(bio);
+        Futures.addCallback(
+                future,
+                new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        Log.d(
+                                Config.LOGTAG,
+                                account.getJid().asBareJid() + ": published bio to vCard");
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Throwable t) {
+                        Log.d(Config.LOGTAG, "could not publish bio to vCard", t);
+                    }
+                },
+                MoreExecutors.directExecutor());
+    }
+
     public void changeStatus(
             final Account account, final PresenceTemplate template, final String signature) {
         if (!template.getStatusMessage().isEmpty()) {

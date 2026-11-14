@@ -43,4 +43,27 @@ public class VCard extends Extension {
             this.addChild(newTel);
         }
     }
+
+    public String getBio() {
+        final Element desc = findChild("DESC");
+        if (desc != null) {
+            final String content = desc.getContent();
+            if (content != null && !content.trim().isEmpty()) {
+                return content.trim();
+            }
+        }
+        return null;
+    }
+
+    public void setBio(final String bio) {
+        final Element desc = findChild("DESC");
+        if (desc != null) {
+            this.children.remove(desc);
+        }
+        if (bio != null && !bio.trim().isEmpty()) {
+            final Element newDesc = new Element("DESC");
+            newDesc.setContent(bio.trim());
+            this.addChild(newDesc);
+        }
+    }
 }

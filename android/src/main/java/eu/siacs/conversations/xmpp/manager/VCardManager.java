@@ -122,6 +122,25 @@ public class VCardManager extends AbstractManager {
                 MoreExecutors.directExecutor());
     }
 
+    public ListenableFuture<Void> publishBio(final String bio) {
+        final var address = getAccount().getJid().asBareJid();
+        return Futures.transformAsync(
+                retrieve(address),
+                existing -> {
+                    final VCard vCard = existing != null ? existing : new VCard();
+                    vCard.setBio(bio);
+                    return publish(address, vCard);
+                },
+                MoreExecutors.directExecutor());
+    }
+
+    public ListenableFuture<String> retrieveBio(final Jid address) {
+        return Futures.transform(
+                retrieve(address),
+                vCard -> vCard != null ? vCard.getBio() : null,
+                MoreExecutors.directExecutor());
+    }
+
     public ListenableFuture<Void> deletePhoto() {
         final var vCardFuture = retrieve(getAccount().getJid().asBareJid());
         return Futures.transformAsync(

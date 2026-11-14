@@ -10,6 +10,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +49,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -194,6 +197,7 @@ fun PenikMainScreen(
     var isSearchActive by remember { mutableStateOf(false) }
     val isArchiveOpen = state.isArchiveOpen
     var showNewChatSheet by remember { mutableStateOf(false) }
+    var showEditProfileSheet by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(isSearchActive) {
         if (isSearchActive) {
@@ -317,6 +321,36 @@ fun PenikMainScreen(
                                             titleContentColor = textPrimary
                                     )
                     )
+                } else if (tab == PenikTab.PROFILE) {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "Профиль",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp
+                            )
+                        },
+                        actions = {
+                            IconButton(onClick = { showEditProfileSheet = true }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_edit_24dp),
+                                    contentDescription = "Редактировать профиль",
+                                    tint = textPrimary
+                                )
+                            }
+                            IconButton(onClick = { listener.onOpenSettings() }) {
+                                Icon(
+                                    Icons.Default.Settings,
+                                    contentDescription = "Настройки",
+                                    tint = textPrimary
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = background,
+                            titleContentColor = textPrimary
+                        )
+                    )
                 }
             },
             bottomBar = {
@@ -424,7 +458,10 @@ fun PenikMainScreen(
                             PenikProfileTab(
                                     state = state,
                                     activity = activity,
-                                    listener = listener
+                                    listener = listener,
+                                    showEditProfile = showEditProfileSheet,
+                                    onOpenEditProfile = { showEditProfileSheet = true },
+                                    onDismissEditProfile = { showEditProfileSheet = false }
                             )
                 }
             }
@@ -1819,7 +1856,14 @@ fun PenikCallRow(entry: PenikCallEntry, activity: XmppActivity, onClick: () -> U
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: PenikChatsListener) {
+fun PenikProfileTab(
+    state: PenikChatsState,
+    activity: XmppActivity,
+    listener: PenikChatsListener,
+    showEditProfile: Boolean = false,
+    onOpenEditProfile: () -> Unit = {},
+    onDismissEditProfile: () -> Unit = {}
+) {
     val background = colorResource(R.color.penik_background)
     val panel = colorResource(R.color.penik_panel)
     val textPrimary = colorResource(R.color.penik_text_primary)
@@ -1848,6 +1892,9 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
     var currentDisplayName by remember(account.uuid) {
         mutableStateOf(account.displayName ?: "")
     }
+    var bio by remember(account.uuid) {
+        mutableStateOf(prefs.getString("user_bio", null) ?: "")
+    }
 
     var showAvatarOptions by remember { mutableStateOf(false) }
     var showEditPhoneDialog by remember { mutableStateOf(false) }
@@ -1868,6 +1915,21 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                                 activity.runOnUiThread {
                                     phoneNumber = result
                                     prefs.edit().putString("phone_number", result).apply()
+                                }
+                            }
+                        }
+                        override fun onFailure(t: Throwable) {}
+                    },
+                    activity.mainExecutor
+                )
+                Futures.addCallback(
+                    vCardManager.retrieveBio(account.jid.asBareJid()),
+                    object : FutureCallback<String?> {
+                        override fun onSuccess(result: String?) {
+                            if (!result.isNullOrBlank()) {
+                                activity.runOnUiThread {
+                                    bio = result
+                                    prefs.edit().putString("user_bio", result).apply()
                                 }
                             }
                         }
@@ -1926,11 +1988,14 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
 
     Column(
             modifier =
-                    Modifier.fillMaxSize().background(background).padding(horizontal = 24.dp)
-                            .padding(bottom = 16.dp),
+                    Modifier.fillMaxSize()
+                            .background(background)
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 24.dp)
+                            .padding(bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         Box(modifier = Modifier.size(104.dp), contentAlignment = Alignment.Center) {
             val loaded = bitmap
             Box(
@@ -2039,17 +2104,11 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Нажмите, чтобы изменить номер",
+                        text = "Номер телефона",
                         color = textMuted,
                         fontSize = 12.sp
                     )
                 }
-                Icon(
-                    painter = painterResource(R.drawable.ic_edit_24dp),
-                    contentDescription = "Изменить номер",
-                    tint = textMuted,
-                    modifier = Modifier.size(18.dp)
-                )
             }
 
             HorizontalDivider(
@@ -2094,16 +2153,16 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                 thickness = 1.dp
             )
 
-            // Display Name row
+            // Bio / About row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { showEditNameDialog = true }
+                    .clickable { onOpenEditProfile() }
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_edit_24dp),
+                    painter = painterResource(R.drawable.ic_description_24dp),
                     contentDescription = null,
                     tint = accent,
                     modifier = Modifier.size(24.dp)
@@ -2111,28 +2170,22 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (currentDisplayName.isNotBlank()) currentDisplayName else "Не указано",
-                        color = textPrimary,
+                        text = if (bio.isNotBlank()) bio else "О себе",
+                        color = if (bio.isNotBlank()) textPrimary else textMuted,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Имя в профиле",
+                        text = "О себе",
                         color = textMuted,
                         fontSize = 12.sp
                     )
                 }
-                Icon(
-                    painter = painterResource(R.drawable.ic_edit_24dp),
-                    contentDescription = "Изменить имя",
-                    tint = textMuted,
-                    modifier = Modifier.size(18.dp)
-                )
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(32.dp))
 
         androidx.compose.material3.Button(
             onClick = { showLogoutDialog = true },
@@ -2148,6 +2201,187 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
+        }
+    }
+
+    if (showEditProfile) {
+        val editProfileSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var tempName by remember(currentDisplayName) { mutableStateOf(currentDisplayName) }
+        var tempBio by remember(bio) { mutableStateOf(bio) }
+        ModalBottomSheet(
+            onDismissRequest = onDismissEditProfile,
+            sheetState = editProfileSheetState,
+            containerColor = panel,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp, top = 8.dp)
+            ) {
+                Text(
+                    text = "Изменить профиль",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textPrimary,
+                    modifier = Modifier.padding(bottom = 20.dp)
+                )
+
+                // Avatar change row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(background)
+                        .clickable { showAvatarOptions = true }
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                        val loaded = bitmap
+                        if (loaded != null) {
+                            androidx.compose.foundation.Image(
+                                bitmap = loaded.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier.size(44.dp).clip(CircleShape)
+                            )
+                        } else {
+                            val local = JidHelper.displayAddress(account.jid.asBareJid())
+                            Box(
+                                modifier = Modifier.fillMaxSize().clip(CircleShape).background(penikInitialsColor(local)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = local.firstOrNull()?.uppercase() ?: "?",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Фотография профиля",
+                            color = textPrimary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Нажмите, чтобы изменить фото",
+                            color = accent,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Name field
+                OutlinedTextField(
+                    value = tempName,
+                    onValueChange = { tempName = it },
+                    label = { Text("Имя") },
+                    placeholder = { Text("Ваше имя", color = textMuted) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = accent,
+                        unfocusedBorderColor = textMuted.copy(alpha = 0.4f),
+                        focusedTextColor = textPrimary,
+                        unfocusedTextColor = textPrimary,
+                        cursorColor = accent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Имя, которое видят другие пользователи Penik.",
+                    color = textMuted,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Bio field
+                OutlinedTextField(
+                    value = tempBio,
+                    onValueChange = {
+                        if (it.length <= 160) tempBio = it
+                    },
+                    label = { Text("О себе") },
+                    placeholder = { Text("Несколько слов о себе", color = textMuted) },
+                    minLines = 2,
+                    maxLines = 4,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = accent,
+                        unfocusedBorderColor = textMuted.copy(alpha = 0.4f),
+                        focusedTextColor = textPrimary,
+                        unfocusedTextColor = textPrimary,
+                        cursorColor = accent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Любые подробности о себе, например: возраст, профессия или хобби.",
+                        color = textMuted,
+                        fontSize = 12.sp,
+                        modifier = Modifier.weight(1f).padding(start = 4.dp)
+                    )
+                    Text(
+                        text = "${160 - tempBio.length}",
+                        color = textMuted,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Save button
+                androidx.compose.material3.Button(
+                    onClick = {
+                        val trimmedName = tempName.trim()
+                        val trimmedBio = tempBio.trim()
+
+                        currentDisplayName = trimmedName
+                        account.displayName = trimmedName
+                        bio = trimmedBio
+                        prefs.edit()
+                            .putString("user_bio", trimmedBio)
+                            .apply()
+
+                        val service = activity.xmppConnectionService
+                        if (service != null) {
+                            service.publishDisplayName(account)
+                            service.databaseBackend.updateAccount(account)
+                            service.publishBio(account, trimmedBio)
+                        }
+
+                        onDismissEditProfile()
+                    },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = accent
+                    )
+                ) {
+                    Text(
+                        text = "Сохранить",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 
@@ -2346,8 +2580,10 @@ fun PenikProfileTab(state: PenikChatsState, activity: XmppActivity, listener: Pe
         )
     }
     if (showAvatarOptions) {
+        val avatarSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
                 onDismissRequest = { showAvatarOptions = false },
+                sheetState = avatarSheetState,
                 containerColor = panel,
                 dragHandle = { BottomSheetDefaults.DragHandle() }
         ) {
