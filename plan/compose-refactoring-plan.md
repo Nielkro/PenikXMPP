@@ -224,15 +224,15 @@ Decompose monolithic files into focused feature packages:
 
 ## Task Checklist
 
-- [ ] **Phase 1: Targeted Fixes & I/O Extraction**
-  - [ ] Remove per-row `DisposableEffect(uuid)` from `PenikVoiceRow`
-  - [ ] Add root screen `DisposableEffect(Unit)` with `stop()` in `PenikChatRoom`
-  - [ ] Wrap `MediaMetadataRetriever.release()` in `finally` without `.use {}`
-  - [ ] In `remember`: `cachedOnly = true` for avatars, load full images via `Dispatchers.IO`
-  - [ ] Move media checks (`file.exists()`, `length()`, `getThumbnail()`) to `Dispatchers.IO`
-  - [ ] Prefetch preview messages (`getMessages(c, 1)`) on background `Executor`, mutate and sort on Main
-  - [ ] Implement generation-guard and `emptyCheckedKeys` cache (`account.uuid:conversation.uuid`)
-  - [ ] Remove synchronous `getMessages(...)` from `remember` in `PenikConversationRow` and `PenikSelfRow`
+- [x] **Phase 1: Targeted Fixes & I/O Extraction**
+  - [x] Remove per-row `DisposableEffect(uuid)` from `PenikVoiceRow`
+  - [x] Add root screen `DisposableEffect(Unit)` with `stop()` in `PenikChatRoom`
+  - [x] Wrap `MediaMetadataRetriever.release()` in `finally` without `.use {}`
+  - [x] In `remember`: `cachedOnly = true` for avatars, load full images via `Dispatchers.IO`
+  - [x] Move media checks (`file.exists()`, `length()`, `getThumbnail()`) to `Dispatchers.IO`
+  - [x] Prefetch preview messages (`getMessages(c, 1)`) on background `Executor`, mutate and sort on Main
+  - [x] Implement generation-guard and `emptyCheckedKeys` cache (`account.uuid:conversation.uuid`)
+  - [x] Remove synchronous `getMessages(...)` from `remember` in `PenikConversationRow` and `PenikSelfRow`
 - [ ] **Phase 2: Immutable UI Models & Stability**
   - [ ] Create `@Immutable` models `ChatMessageUi` and `ConversationUi`
   - [ ] Replace Guava `ImmutableList` with `kotlinx.collections.immutable.ImmutableList`

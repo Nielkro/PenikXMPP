@@ -104,7 +104,15 @@ import im.conversations.android.provider.SearchSuggestionProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.services.XmppConnectionService;
 
 public class ConversationsOverviewFragment extends XmppFragment {
 
@@ -118,6 +126,9 @@ public class ConversationsOverviewFragment extends XmppFragment {
     private static final int REQUEST_CHOOSE_PHONEBOOK_CONTACT = 0x28d0;
     private final PendingActionHelper pendingActionHelper = new PendingActionHelper();
     private final PenikChatsState penikChatsState = new PenikChatsState();
+    private final Set<String> emptyCheckedKeys = Collections.synchronizedSet(new HashSet<>());
+    private final AtomicInteger previewLoadGeneration = new AtomicInteger(0);
+    private String lastActiveAccountUuid = null;
 
     private final MenuProvider globalMenuProvider =
             new MenuProvider() {
@@ -227,6 +238,9 @@ public class ConversationsOverviewFragment extends XmppFragment {
     }
 
     public void onArchiveConversation(final Conversation c) {
+        if (c != null && c.getAccount() != null) {
+            this.emptyCheckedKeys.remove(c.getAccount().getUuid() + ":" + c.getUuid());
+        }
         c.setStatus(Conversation.STATUS_ARCHIVED);
         requireXmppActivity().xmppConnectionService.archiveConversation(c);
         if (getActivity() instanceof OnConversationArchived callback) {
@@ -616,6 +630,9 @@ public class ConversationsOverviewFragment extends XmppFragment {
         service.populateWithOrderedConversations(this.conversations);
         Conversation removed = this.swipedConversation.peek();
         if (removed != null) {
+            if (removed.getAccount() != null) {
+                this.emptyCheckedKeys.remove(removed.getAccount().getUuid() + ":" + removed.getUuid());
+            }
             if (removed.isRead()) {
                 this.conversations.remove(removed);
             } else {
@@ -658,20 +675,17 @@ public class ConversationsOverviewFragment extends XmppFragment {
                 }
             }
         }
+        final String currentAccountUuid = firstEnabled != null ? firstEnabled.getUuid() : null;
+        if (!Objects.equals(this.lastActiveAccountUuid, currentAccountUuid)) {
+            this.emptyCheckedKeys.clear();
+            this.lastActiveAccountUuid = currentAccountUuid;
+        }
         if (self == null && firstEnabled != null) {
             final var contact = firstEnabled.getSelfContact();
             if (contact != null) {
                 self = service.findOrCreateConversation(firstEnabled, contact.getAddress(), false, false);
                 if (self != null && !main.contains(self)) {
                     main.add(self);
-                }
-            }
-        }
-        for (final var c : main) {
-            if (!c.hasMessages()) {
-                final var dbMessages = service.databaseBackend.getMessages(c, Config.PAGE_SIZE);
-                if (!dbMessages.isEmpty()) {
-                    c.addAll(0, dbMessages);
                 }
             }
         }
@@ -687,9 +701,70 @@ public class ConversationsOverviewFragment extends XmppFragment {
         this.penikChatsState.bumpRevision();
         this.binding.emptyChatHint.setVisibility(View.GONE);
         this.binding.composeList.setVisibility(View.VISIBLE);
+
+        final List<Conversation> toLoad = new ArrayList<>();
+        for (final var c : main) {
+            final String key = (c.getAccount() != null ? c.getAccount().getUuid() : "") + ":" + c.getUuid();
+            if (!c.hasMessages() && !this.emptyCheckedKeys.contains(key)) {
+                toLoad.add(c);
+            }
+        }
+        for (final var c : archived) {
+            final String key = (c.getAccount() != null ? c.getAccount().getUuid() : "") + ":" + c.getUuid();
+            if (!c.hasMessages() && !this.emptyCheckedKeys.contains(key)) {
+                toLoad.add(c);
+            }
+        }
+
+        if (!toLoad.isEmpty()) {
+            final int currentGen = this.previewLoadGeneration.incrementAndGet();
+            final var finalMain = new ArrayList<>(main);
+            final var finalArchived = new ArrayList<>(archived);
+            XmppConnectionService.DATABASE_READER.execute(() -> {
+                final Map<Conversation, List<Message>> loadedMap = new HashMap<>();
+                final List<String> newlyEmpty = new ArrayList<>();
+                for (final var c : toLoad) {
+                    final var dbMessages = service.databaseBackend.getMessages(c, 1);
+                    final String key = (c.getAccount() != null ? c.getAccount().getUuid() : "") + ":" + c.getUuid();
+                    if (dbMessages == null || dbMessages.isEmpty()) {
+                        newlyEmpty.add(key);
+                    } else {
+                        loadedMap.put(c, dbMessages);
+                    }
+                }
+                final var activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+                activity.runOnUiThread(() -> {
+                    if (currentGen != this.previewLoadGeneration.get() || this.binding == null || !isAdded()) {
+                        return;
+                    }
+                    this.emptyCheckedKeys.addAll(newlyEmpty);
+                    boolean changed = false;
+                    for (final var entry : loadedMap.entrySet()) {
+                        final var c = entry.getKey();
+                        final var msgs = entry.getValue();
+                        if (!msgs.isEmpty() && !c.hasMessages()) {
+                            c.addAll(0, msgs);
+                            changed = true;
+                        }
+                    }
+                    if (changed) {
+                        Collections.sort(finalMain);
+                        this.penikChatsState.setConversations(ImmutableList.copyOf(finalMain));
+                        this.penikChatsState.setArchived(ImmutableList.copyOf(finalArchived));
+                        this.penikChatsState.bumpRevision();
+                    }
+                });
+            });
+        }
     }
 
     public void onUnarchiveConversation(final Conversation c) {
+        if (c != null && c.getAccount() != null) {
+            this.emptyCheckedKeys.remove(c.getAccount().getUuid() + ":" + c.getUuid());
+        }
         requireXmppActivity().xmppConnectionService.unarchiveConversation(c);
         refresh();
     }

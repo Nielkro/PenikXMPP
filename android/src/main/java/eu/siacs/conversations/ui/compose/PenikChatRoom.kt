@@ -397,6 +397,12 @@ fun PenikChatRoom(
         activity: XmppActivity,
         listener: PenikChatListener
 ) {
+    DisposableEffect(Unit) {
+        onDispose {
+            PenikVoicePlayer.stop()
+            PenikVideoNotePlayer.stop()
+        }
+    }
     val background = colorResource(R.color.penik_background)
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -1270,11 +1276,26 @@ fun PenikMessageRow(
         ) {
             if (showAvatar) {
                 val context = LocalContext.current
-                val avatarBitmap = remember(message.uuid, revision) {
+                val density = context.resources.displayMetrics.density
+                val sizePx = (28 * density).toInt()
+                val cachedAvatar = remember(message.uuid, revision) {
                     try {
-                        activity.avatarService()?.get(message, (28 * context.resources.displayMetrics.density).toInt(), false)
+                        activity.avatarService()?.get(message, sizePx, true)
                     } catch (e: Exception) {
                         null
+                    }
+                }
+                var avatarBitmap by remember(message.uuid, revision) { mutableStateOf(cachedAvatar) }
+                LaunchedEffect(message.uuid, revision) {
+                    val loaded = withContext(Dispatchers.IO) {
+                        try {
+                            activity.avatarService()?.get(message, sizePx, false)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    if (loaded != null) {
+                        avatarBitmap = loaded
                     }
                 }
                 PenikAvatarImage(
@@ -2568,7 +2589,18 @@ fun PenikVoiceRow(
                     null
                 }
             }
-    if (file == null || !file.exists()) {
+    var fileExists by remember(message.uuid) { mutableStateOf(false) }
+    LaunchedEffect(file?.absolutePath) {
+        val f = file
+        fileExists = if (f != null) {
+            withContext(Dispatchers.IO) {
+                try { f.exists() } catch (e: Exception) { false }
+            }
+        } else {
+            false
+        }
+    }
+    if (file == null || !fileExists) {
         Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
@@ -2606,27 +2638,35 @@ fun PenikVoiceRow(
         return
     }
     val uuid = message.uuid
-    val runtimeMs =
-            remember(message.uuid, file) {
-                val paramsRuntime = message.fileParams?.runtime ?: 0
-                if (paramsRuntime > 0) {
-                    paramsRuntime
-                } else if (file != null && file.exists()) {
+    val initialRuntime = message.fileParams?.runtime ?: 0
+    var runtimeMs by remember(message.uuid) { mutableStateOf(initialRuntime) }
+    LaunchedEffect(message.uuid, file.absolutePath) {
+        if (runtimeMs <= 0) {
+            val extracted = withContext(Dispatchers.IO) {
+                try {
+                    val mmr = android.media.MediaMetadataRetriever()
                     try {
-                        val mmr = android.media.MediaMetadataRetriever()
                         mmr.setDataSource(file.absolutePath)
                         val durStr =
                                 mmr.extractMetadata(
                                         android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
                                 )
                         durStr?.toIntOrNull() ?: 0
-                    } catch (e: Exception) {
-                        0
+                    } finally {
+                        try {
+                            mmr.release()
+                        } catch (ignored: Exception) {
+                        }
                     }
-                } else {
+                } catch (e: Exception) {
                     0
                 }
             }
+            if (extracted > 0) {
+                runtimeMs = extracted
+            }
+        }
+    }
     val playingThis = PenikVoicePlayer.currentUuid == uuid && PenikVoicePlayer.isPlaying
     val progressMs =
             if (PenikVoicePlayer.currentUuid == uuid) {
@@ -2651,33 +2691,38 @@ fun PenikVoiceRow(
         mutableStateOf(cachedWave ?: generateVoiceWaveform(uuid, 45))
     }
 
-    LaunchedEffect(file, uuid) {
-        if (file != null && file.exists()) {
-            val realWave = PenikAudioWaveformExtractor.getWaveform(file, uuid, 45)
-            if (realWave.isNotEmpty()) {
-                waveform = realWave
+    LaunchedEffect(file.absolutePath, uuid) {
+        val realWave = withContext(Dispatchers.IO) {
+            try {
+                if (file.exists()) {
+                    PenikAudioWaveformExtractor.getWaveform(file, uuid, 45)
+                } else {
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                emptyList()
             }
         }
-    }
-    val fileSizeStr = remember(file) {
-        try {
-            UIHelper.filesizeToString(file.length())
-        } catch (e: Exception) {
-            ""
+        if (realWave.isNotEmpty()) {
+            waveform = realWave
         }
+    }
+    var fileSizeStr by remember(file.absolutePath) { mutableStateOf("") }
+    LaunchedEffect(file.absolutePath) {
+        val str = withContext(Dispatchers.IO) {
+            try {
+                UIHelper.filesizeToString(file.length())
+            } catch (e: Exception) {
+                ""
+            }
+        }
+        fileSizeStr = str
     }
 
     LaunchedEffect(playingThis, uuid) {
         while (PenikVoicePlayer.currentUuid == uuid && PenikVoicePlayer.isPlaying) {
             delay(100)
             PenikVoicePlayer.progressMs = PenikVoicePlayer.position()
-        }
-    }
-    DisposableEffect(uuid) {
-        onDispose {
-            if (PenikVoicePlayer.currentUuid == uuid) {
-                PenikVoicePlayer.stop()
-            }
         }
     }
     val btnBg = if (isSentByMe) fgColor.copy(alpha = 0.2f) else accent
@@ -3033,9 +3078,21 @@ fun PenikVideoViewer(
 ) {
     val context = LocalContext.current
     val service = activity.xmppConnectionService
-    val localFile = remember(message.uuid) {
-        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+    val rawLocalFile = remember(message.uuid) {
+        service?.fileBackend?.getFile(message, false)
     }
+    var localFileExists by remember(message.uuid) { mutableStateOf(false) }
+    LaunchedEffect(rawLocalFile?.absolutePath) {
+        val file = rawLocalFile
+        localFileExists = if (file != null) {
+            withContext(Dispatchers.IO) {
+                try { file.exists() } catch (e: Exception) { false }
+            }
+        } else {
+            false
+        }
+    }
+    val localFile = if (localFileExists) rawLocalFile else null
     val rawUrl = message.fileParams?.url ?: message.body?.trim()
     val videoUri = remember(message.uuid, localFile) {
         if (localFile != null) {
@@ -3455,9 +3512,22 @@ fun PenikAttachmentRow(
     val isVideoNote = penikIsVideoNote(message)
 
     val service = activity.xmppConnectionService
-    val resolvedModel = remember(message.uuid) {
-        val file = service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
-        file ?: message.fileParams?.url
+    val rawFile = remember(message.uuid) {
+        service?.fileBackend?.getFile(message, false)
+    }
+    var fileExists by remember(message.uuid) { mutableStateOf(false) }
+    LaunchedEffect(rawFile?.absolutePath) {
+        val f = rawFile
+        fileExists = if (f != null) {
+            withContext(Dispatchers.IO) {
+                try { f.exists() } catch (e: Exception) { false }
+            }
+        } else {
+            false
+        }
+    }
+    val resolvedModel = remember(message.uuid, fileExists) {
+        if (fileExists && rawFile != null) rawFile else message.fileParams?.url
     }
 
     Box(
@@ -3522,11 +3592,25 @@ fun PenikAttachmentRow(
                     status == Message.STATUS_UNSEND ||
                     status == Message.STATUS_WAITING
             )
-            val currentTotal = remember(message.uuid, revision) {
+            val initialTotal = remember(message.uuid, revision) {
                 t?.fileSize?.takeIf { it > 0L }
                     ?: message.fileParams?.getSize()?.takeIf { it > 0L }
-                    ?: activity.xmppConnectionService?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }?.length()
                     ?: 0L
+            }
+            var currentTotal by remember(message.uuid, revision) { mutableStateOf(initialTotal) }
+            LaunchedEffect(message.uuid, revision) {
+                if (currentTotal <= 0L) {
+                    val len = withContext(Dispatchers.IO) {
+                        try {
+                            activity.xmppConnectionService?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }?.length() ?: 0L
+                        } catch (e: Exception) {
+                            0L
+                        }
+                    }
+                    if (len > 0L) {
+                        currentTotal = len
+                    }
+                }
             }
             val currentTransferred = remember(message.uuid, revision) {
                 t?.transferred ?: ((t?.progress?.toLong() ?: 0L) * currentTotal / 100L)
@@ -3844,9 +3928,21 @@ fun PenikUrlImageRow(
 fun PenikImageThumb(message: Message, activity: XmppActivity, fgColor: Color) {
     val service = activity.xmppConnectionService
     var bitmap by remember(message.uuid) { mutableStateOf<Bitmap?>(null) }
-    val localFile = remember(message.uuid) {
-        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+    val rawFile = remember(message.uuid) {
+        service?.fileBackend?.getFile(message, false)
     }
+    var localFileExists by remember(message.uuid) { mutableStateOf(false) }
+    LaunchedEffect(rawFile?.absolutePath) {
+        val f = rawFile
+        localFileExists = if (f != null) {
+            withContext(Dispatchers.IO) {
+                try { f.exists() } catch (e: Exception) { false }
+            }
+        } else {
+            false
+        }
+    }
+    val localFile = if (localFileExists) rawFile else null
     LaunchedEffect(message.uuid) {
         if (service == null || localFile != null) {
             return@LaunchedEffect
@@ -3917,9 +4013,21 @@ fun PenikVideoNoteBubble(
 ) {
     val context = LocalContext.current
     val service = activity.xmppConnectionService
-    val localFile = remember(message.uuid, status, message.relativeFilePath) {
-        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() && it.length() > 0L }
+    val rawLocalFile = remember(message.uuid, status, message.relativeFilePath) {
+        service?.fileBackend?.getFile(message, false)
     }
+    var localFileValid by remember(message.uuid, status, message.relativeFilePath) { mutableStateOf(false) }
+    LaunchedEffect(rawLocalFile?.absolutePath) {
+        val f = rawLocalFile
+        localFileValid = if (f != null) {
+            withContext(Dispatchers.IO) {
+                try { f.exists() && f.length() > 0L } catch (e: Exception) { false }
+            }
+        } else {
+            false
+        }
+    }
+    val localFile = if (localFileValid) rawLocalFile else null
     val isActive = PenikVideoNotePlayer.activeUuid == message.uuid
     val isPlaying = isActive && PenikVideoNotePlayer.isPlaying
     val currentPosMs = if (isActive) PenikVideoNotePlayer.currentPosMs else 0
@@ -4189,9 +4297,21 @@ fun PenikVideoNoteBubble(
 fun PenikVideoThumb(message: Message, activity: XmppActivity, fgColor: Color) {
     val service = activity.xmppConnectionService
     var bitmap by remember(message.uuid) { mutableStateOf<Bitmap?>(null) }
-    val localFile = remember(message.uuid) {
-        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+    val rawFile = remember(message.uuid) {
+        service?.fileBackend?.getFile(message, false)
     }
+    var localFileExists by remember(message.uuid) { mutableStateOf(false) }
+    LaunchedEffect(rawFile?.absolutePath) {
+        val f = rawFile
+        localFileExists = if (f != null) {
+            withContext(Dispatchers.IO) {
+                try { f.exists() } catch (e: Exception) { false }
+            }
+        } else {
+            false
+        }
+    }
+    val localFile = if (localFileExists) rawFile else null
     LaunchedEffect(message.uuid) {
         if (service == null) return@LaunchedEffect
         bitmap = withContext(Dispatchers.IO) {

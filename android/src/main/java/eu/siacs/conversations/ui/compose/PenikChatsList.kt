@@ -1506,18 +1506,10 @@ fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long
     val textMuted = colorResource(R.color.penik_text_muted)
     val service = activity.xmppConnectionService
     val latest = remember(selfChat, revision) {
-        if (selfChat == null) {
-            null
-        } else if (selfChat.hasMessages()) {
+        if (selfChat != null && selfChat.hasMessages()) {
             selfChat.latestMessage
         } else {
-            val dbMessages = service?.databaseBackend?.getMessages(selfChat, 1)
-            if (!dbMessages.isNullOrEmpty()) {
-                selfChat.addAll(0, dbMessages)
-                dbMessages.first()
-            } else {
-                null
-            }
+            null
         }
     }
     val hasRealMessages = latest != null && latest.type != Message.TYPE_STATUS
@@ -1711,13 +1703,7 @@ fun PenikConversationRow(
         if (conversation.hasMessages()) {
             conversation.latestMessage
         } else {
-            val dbMessages = service?.databaseBackend?.getMessages(conversation, 1)
-            if (!dbMessages.isNullOrEmpty()) {
-                conversation.addAll(0, dbMessages)
-                dbMessages.first()
-            } else {
-                null
-            }
+            null
         }
     }
     val hasRealMessages = latest != null && latest.type != Message.TYPE_STATUS
