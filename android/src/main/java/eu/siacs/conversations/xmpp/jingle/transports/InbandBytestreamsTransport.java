@@ -2,6 +2,7 @@ package eu.siacs.conversations.xmpp.jingle.transports;
 
 import android.util.Log;
 import androidx.annotation.NonNull;
+import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.FutureCallback;
@@ -35,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class InbandBytestreamsTransport implements Transport {
 
     private static final int DEFAULT_BLOCK_SIZE = 8192;
+    public static final int MINIMUM_BLOCK_SIZE = 512;
 
     private final PipedInputStream pipedInputStream = new PipedInputStream(DEFAULT_BLOCK_SIZE);
     private final PipedOutputStream pipedOutputStream = new PipedOutputStream();
@@ -67,6 +69,7 @@ public class InbandBytestreamsTransport implements Transport {
             final boolean initiator,
             final String streamId,
             final int blockSize) {
+        Preconditions.checkArgument(blockSize >= MINIMUM_BLOCK_SIZE, "Block size too small");
         this.xmppConnection = xmppConnection;
         this.with = with;
         this.initiator = initiator;

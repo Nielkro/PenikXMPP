@@ -12,8 +12,6 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.xml.Namespace;
-import eu.siacs.conversations.xmpp.jingle.stanzas.FileTransferDescription;
-import eu.siacs.conversations.xmpp.jingle.stanzas.GenericTransportInfo;
 import eu.siacs.conversations.xmpp.jingle.stanzas.Group;
 import eu.siacs.conversations.xmpp.jingle.stanzas.IceUdpTransportInfo;
 import eu.siacs.conversations.xmpp.jingle.stanzas.RtpDescription;
@@ -148,9 +146,7 @@ public class SessionDescription {
         // TODO my-media-stream can be removed I think
         attributeMap.put("msid-semantic", " WMS my-media-stream");
 
-        for (final Map.Entry<
-                        String, DescriptionTransport<FileTransferDescription, GenericTransportInfo>>
-                entry : contentMap.contents.entrySet()) {
+        for (final var entry : contentMap.contents.entrySet()) {
             final var dt = entry.getValue();
             final WebRTCDataChannelTransportInfo webRTCDataChannelTransportInfo;
             if (dt.transport instanceof WebRTCDataChannelTransportInfo transportInfo) {

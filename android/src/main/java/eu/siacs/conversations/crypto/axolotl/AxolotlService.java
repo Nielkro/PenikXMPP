@@ -1763,10 +1763,10 @@ public class AxolotlService implements OnAdvancedStreamFeaturesLoaded {
                                 (OmemoVerifiedIceUdpTransportInfo) descriptionTransport.transport,
                                 from,
                                 pepVerificationFutures);
-            } catch (CryptoFailedException e) {
+                omemoVerification.setOrEnsureEqual(decryptedTransport);
+            } catch (final RuntimeException | CryptoFailedException e) {
                 return Futures.immediateFailedFuture(e);
             }
-            omemoVerification.setOrEnsureEqual(decryptedTransport);
             descriptionTransportBuilder.put(
                     content.getKey(),
                     new DescriptionTransport<>(
@@ -1811,8 +1811,13 @@ public class AxolotlService implements OnAdvancedStreamFeaturesLoaded {
                 final Element encrypted =
                         child.findChildEnsureSingle(
                                 XmppAxolotlMessage.CONTAINERTAG, AxolotlService.PEP_PREFIX);
-                final XmppAxolotlMessage xmppAxolotlMessage =
-                        XmppAxolotlMessage.fromElement(encrypted, from.asBareJid());
+                final XmppAxolotlMessage xmppAxolotlMessage;
+                try {
+                    xmppAxolotlMessage =
+                            XmppAxolotlMessage.fromElement(encrypted, from.asBareJid());
+                } catch (final Exception e) {
+                    throw new CryptoFailedException(e);
+                }
                 final XmppAxolotlSession session = getReceivingSession(xmppAxolotlMessage);
                 final XmppAxolotlMessage.XmppAxolotlPlaintextMessage plaintext =
                         xmppAxolotlMessage.decrypt(session, getOwnDeviceId());
@@ -1915,7 +1920,7 @@ public class AxolotlService implements OnAdvancedStreamFeaturesLoaded {
             if (preKeyId != null) {
                 postPreKeyMessageHandling(session, postponePreKeyMessageHandling);
             }
-        } catch (NotEncryptedForThisDeviceException e) {
+        } catch (final NotEncryptedForThisDeviceException e) {
             if (account.getJid().asBareJid().equals(message.getFrom().asBareJid())
                     && message.getSenderDeviceId() == ownDeviceId) {
                 Log.w(Config.LOGTAG, getLogprefix(account) + "Reflected omemo message received");
@@ -2076,7 +2081,7 @@ public class AxolotlService implements OnAdvancedStreamFeaturesLoaded {
             if (preKeyId != null) {
                 postPreKeyMessageHandling(session, postponePreKeyMessageHandling);
             }
-        } catch (CryptoFailedException e) {
+        } catch (final CryptoFailedException e) {
             Log.d(Config.LOGTAG, "could not decrypt keyTransport message " + e.getMessage());
             return null;
         }

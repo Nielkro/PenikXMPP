@@ -1,10 +1,10 @@
 package de.gultsch.common;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.util.Log;
 import com.google.common.collect.ImmutableList;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
+import eu.siacs.conversations.Conversations;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -73,11 +73,11 @@ public final class CombiningTrustManager implements X509TrustManager {
         return certificates.build().toArray(new X509Certificate[0]);
     }
 
-    static X509TrustManager combineWithDefault(final X509TrustManager... trustManagers)
-            throws NoSuchAlgorithmException, KeyStoreException {
+    static X509TrustManager combineWithDefault(
+            final Context context, final X509TrustManager... trustManagers) {
         final ImmutableList.Builder<X509TrustManager> builder = ImmutableList.builder();
         builder.addAll(Arrays.asList(trustManagers));
-        builder.add(TrustManagers.createDefaultTrustManager());
+        builder.add(Conversations.getInstance(context).getFilteredDefaultTrustManager());
         return new CombiningTrustManager(builder.build());
     }
 }

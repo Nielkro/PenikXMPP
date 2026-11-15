@@ -92,10 +92,19 @@ jobs:
         if: env.SSH_KEY != '' && env.DEPLOY_SCRIPT != ''
         run: |
           mkdir -p ~/.ssh scripts
-          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$SNIKKET_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh-keyscan -H "$STICKERS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa || true
+
+          cat << 'EOF' > ~/.ssh/config
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ServerAliveInterval 30
+            ServerAliveCountMax 5
+          EOF
+          chmod 600 ~/.ssh/config
 
           # Unpack private deployment script from secret
           echo "$DEPLOY_SCRIPT" | base64 -d > scripts/deploy_server.sh

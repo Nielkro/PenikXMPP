@@ -92,6 +92,9 @@ public class SocksSocketFactory {
             bndDestination = new byte[4];
         } else if (type == 0x03) {
             final int length = inputStream.read();
+            if (length < 1) {
+                throw new IOException("Invalid destination length");
+            }
             bndDestination = new byte[length];
         } else if (type == 0x04) {
             bndDestination = new byte[16];

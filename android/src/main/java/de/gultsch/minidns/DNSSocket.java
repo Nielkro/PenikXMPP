@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.persistance.FileBackend;
+import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -16,14 +17,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import org.conscrypt.OkHostnameVerifier;
@@ -52,7 +50,7 @@ final class DNSSocket implements Closeable {
     private void readDNSMessages() {
         try {
             while (socket.isConnected()) {
-                final DnsMessage response = readDNSMessage();
+                final var response = readDNSMessage();
                 final SettableFuture<DnsMessage> future;
                 synchronized (inFlightQueries) {
                     future = inFlightQueries.remove(response.id);
@@ -90,8 +88,9 @@ final class DNSSocket implements Closeable {
     }
 
     private static DNSSocket of(final Socket socket) throws IOException {
-        final DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-        final DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        final var dataInputStream = new DataInputStream(socket.getInputStream());
+        final var dataOutputStream =
+                new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         return new DNSSocket(socket, dataInputStream, dataOutputStream);
     }
 
@@ -105,9 +104,8 @@ final class DNSSocket implements Closeable {
 
     private static DNSSocket connectTcpSocket(final DNSServer dnsServer) throws IOException {
         Preconditions.checkArgument(dnsServer.uniqueTransport() == Transport.TCP);
-        final SocketAddress socketAddress =
-                new InetSocketAddress(dnsServer.inetAddress, dnsServer.port);
-        final Socket socket = new Socket();
+        final var socketAddress = new InetSocketAddress(dnsServer.inetAddress, dnsServer.port);
+        final var socket = new Socket();
         socket.connect(socketAddress, QUERY_TIMEOUT / 2);
         socket.setSoTimeout(QUERY_TIMEOUT);
         return DNSSocket.of(socket);
@@ -115,22 +113,20 @@ final class DNSSocket implements Closeable {
 
     private static DNSSocket connectTlsSocket(final DNSServer dnsServer) throws IOException {
         Preconditions.checkArgument(dnsServer.uniqueTransport() == Transport.TLS);
-        final SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-        final SSLSocket sslSocket = (SSLSocket) factory.createSocket();
+        final var factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        final var sslSocket = (SSLSocket) factory.createSocket();
         if (Strings.isNullOrEmpty(dnsServer.hostname)) {
-            final SocketAddress socketAddress =
-                    new InetSocketAddress(dnsServer.inetAddress, dnsServer.port);
+            final var socketAddress = new InetSocketAddress(dnsServer.inetAddress, dnsServer.port);
             sslSocket.connect(socketAddress, QUERY_TIMEOUT / 2);
             sslSocket.setSoTimeout(QUERY_TIMEOUT);
             sslSocket.startHandshake();
         } else {
-            final SocketAddress socketAddress =
-                    new InetSocketAddress(dnsServer.hostname, dnsServer.port);
+            final var socketAddress = new InetSocketAddress(dnsServer.hostname, dnsServer.port);
             sslSocket.connect(socketAddress, QUERY_TIMEOUT / 2);
             sslSocket.setSoTimeout(QUERY_TIMEOUT);
             sslSocket.startHandshake();
-            final SSLSession session = sslSocket.getSession();
-            final Certificate[] peerCertificates = session.getPeerCertificates();
+            final var session = sslSocket.getSession();
+            final var peerCertificates = session.getPeerCertificates();
             if (peerCertificates.length == 0
                     || !(peerCertificates[0] instanceof X509Certificate certificate)) {
                 throw new IOException("Peer did not provide X509 certificates");

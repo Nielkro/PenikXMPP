@@ -14,6 +14,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
+import com.google.common.primitives.UnsignedBytes;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -553,22 +554,30 @@ public class SocksByteStreamsTransport implements Transport {
                 final OutputStream outputStream = socket.getOutputStream();
                 ByteStreams.readFully(inputStream, authBegin);
                 if (authBegin[0] != 0x5) {
-                    socket.close();
+                    throw new IOException("Unsupported SOCKS version " + authBegin[0]);
                 }
-                final short methodCount = authBegin[1];
+                final int methodCount = UnsignedBytes.toInt(authBegin[1]);
+                if (methodCount < 1) {
+                    throw new IOException("Received invalid method length");
+                }
                 final byte[] methods = new byte[methodCount];
                 ByteStreams.readFully(inputStream, methods);
                 if (SocksSocketFactory.contains((byte) 0x00, methods)) {
                     outputStream.write(new byte[] {0x05, 0x00});
                 } else {
                     outputStream.write(new byte[] {0x05, (byte) 0xff});
+                    outputStream.flush();
+                    throw new IOException("No acceptable SOCKS authentication method");
                 }
                 final byte[] connectCommand = new byte[4];
                 ByteStreams.readFully(inputStream, connectCommand);
                 if (connectCommand[0] == 0x05
                         && connectCommand[1] == 0x01
                         && connectCommand[3] == 0x03) {
-                    int destinationCount = inputStream.read();
+                    final int destinationCount = inputStream.read();
+                    if (destinationCount < 1) {
+                        throw new IOException("Invalid destination length");
+                    }
                     final byte[] destination = new byte[destinationCount];
                     ByteStreams.readFully(inputStream, destination);
                     final byte[] port = new byte[2];
@@ -605,8 +614,10 @@ public class SocksByteStreamsTransport implements Transport {
                                 Config.LOGTAG,
                                 remoteAddress + " successfully connected to " + candidate);
                     } else {
-                        closeSocket(socket);
+                        throw new IOException("Failed to connect");
                     }
+                } else {
+                    throw new IOException("Unsupported SOCKS connect command");
                 }
             } catch (final IOException e) {
                 Log.d(Config.LOGTAG, "failed to accept client connection to " + candidate, e);
@@ -710,7 +721,12 @@ public class SocksByteStreamsTransport implements Transport {
                 socket = SocksSocketFactory.createSocketOverTor(candidate.host, candidate.port);
             } else {
                 socket = new Socket();
-                final SocketAddress address = new InetSocketAddress(candidate.host, candidate.port);
+                final SocketAddress address;
+                try {
+                    address = new InetSocketAddress(candidate.host, candidate.port);
+                } catch (final IllegalArgumentException e) {
+                    throw new IOException(e);
+                }
                 socket.connect(address, timeout);
             }
             socket.setSoTimeout(timeout);
@@ -781,6 +797,7 @@ public class SocksByteStreamsTransport implements Transport {
                 int port,
                 int priority,
                 final CandidateType type) {
+            Preconditions.checkArgument(port > 0 && port <= 65_535, "Invalid port");
             this.cid = cid;
             this.host = host;
             this.jid = jid;

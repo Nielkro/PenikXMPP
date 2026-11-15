@@ -9,6 +9,7 @@ pub struct TgResponse<T> {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct TgStickerSet {
     pub name: String,
     pub title: String,
@@ -43,6 +44,7 @@ pub struct TgPhotoSize {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct TgFile {
     pub file_id: String,
     pub file_path: Option<String>,
