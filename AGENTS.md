@@ -5,8 +5,8 @@
 - **Code & Commits (CRITICAL):** All code comments, docstrings, inline documentation, and Git commit messages MUST be written strictly in **English**. Never use Russian inside the actual source code or version control history.
 
 ## 2. Project Architecture & Navigation
-We maintain a strict project index in `PROJECT_MAP.md`. 
-    
+We maintain a strict project index in `PROJECT_MAP.md`.
+
 When starting a new task, making changes, or looking for where to implement a feature:
 1. ALWAYS silently read `PROJECT_MAP.md` first to understand the context and project structure.
 2. Locate the exact file paths from the map before attempting to read or edit source code.
@@ -17,10 +17,10 @@ After completing any task (changes to code, config, docs, etc.) you MUST automat
 
 - Format: `type(scope): short imperative description` (no period)
 - Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `perf`
-- Scope (optional): `ws`, `ui`, `android`, `chat`, `web`, `server`, etc.
+- Scope (optional): `android`, `ui`, `chat`, `server`, `push`, `ci`, etc.
 - Body (optional): bullet-point list prefixed with `-` detailing specific changes
 - Language: English only, lowercase description
-- **No Manual Pre-Commit Testing:** Do NOT manually execute `go test`, `npm run typecheck`, or `cargo check` right before committing. The repository's smart pre-commit hook (`.githooks/pre-commit`) automatically executes targeted tests for staged components during `git commit`. Running them manually beforehand is redundant and wastes agent turns.
+- **Verification before commit:** This repository has NO pre-commit hook — CI only runs after a push. Run the targeted checks from section 4 yourself before committing, scoped to the components you actually touched. Do not run full test suites when a compile check is enough.
 
 Examples:
 ```
@@ -30,15 +30,27 @@ refactor: drop presence REST polling now that WS push delivers live updates
 chore: untrack uploaded files, ignore server/data/upload
 ```
 
-## 4. Android Build Verification (Antigravity)
-- If the agent is **Antigravity**, always verify Android build changes by running `bash ./gradlew compileDebugKotlin` from the `android/` directory. Never invoke `./gradlew` directly without `bash` (to avoid permission/deny rules).
+## 4. Build & Test Verification
+Commands mirror what CI runs (`.github/workflows/ci-fast.yml`, `dev-integration.yml`).
+
+- **Android** — from the `android/` directory, always invoke as `bash ./gradlew` (never `./gradlew` directly):
+  - Fast compile check: `bash ./gradlew compileConversationsFreeDebugKotlin`
+  - When playstore-only code changed too: `bash ./gradlew compileConversationsPlaystoreDebugKotlin`
+  - Unit tests: `bash ./gradlew testConversationsFreeDebugUnitTest`
+  - There is no plain `compileDebugKotlin` task — the app uses flavors (`conversations`/`quicksy` × `free`/`playstore`).
+- **Rust** — in `server/MicroServices/penik-service-rs/` and `fpush/`:
+  - Fast check: `cargo check`
+  - When logic changed: `cargo test --all`
+- **Lua** — server module tests run from the repo root with plain `lua`:
+  - `lua server/Modules/test_mod_funxmpp.lua`
+  - `lua server/Modules/test_mod_stickers_auth.lua`
+  - `lua server/Modules/test_mod_penik_silent_muc.lua`
 
 ## 5. Subagent Invocation Policy
 - **Read-Only / Research Subagents:** You may invoke as many concurrent or sequential research/read-only subagents as needed to explore the codebase, analyze logs, read documentation, or inspect multiple modules in parallel.
 - **Code-Modifying / Write Subagents:** If subagents are tasked with modifying code, editing files, or running build/refactoring tasks:
   - Strictly **ONLY ONE** write subagent may be active at any given time.
-  - The subagent is disposable / single-use for that task and must handle changes across all relevant layers (Rust core, Go server, Web, Android) within that single invocation. Never spawn multiple concurrent subagents to edit code simultaneously.
-  - After a write subagent finishes, the **main agent** must verify the project base (the foundation/fundamentals, NOT a database): check with `git status` / `git diff` that no needed files were deleted, nothing unrelated was removed, and the edits only touch the intended files. If the subagent damaged the base, the main agent fixes it before proceeding.
+  - The subagent is disposable / single-use for that task and must handle changes across all relevant layers (Android Kotlin/Java app, Rust microservices and push services, Lua server modules) within that single invocation. Never spawn multiple concurrent subagents to edit code simultaneously.
+  - `libs/Penik` is a read-only UI donor — never edit anything under it; port code from it instead.
+  - After a write subagent finishes, the **main agent** must verify the project base: check with `git status` / `git diff` that no needed files were deleted, nothing unrelated was removed, and the edits only touch the intended files. If the subagent damaged the base, the main agent fixes it before proceeding.
   - The **main agent** performs the `git add` / `git commit` itself. Write subagents must never commit; their edits become part of one commit made by the main agent.
-
-
