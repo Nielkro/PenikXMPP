@@ -224,7 +224,7 @@ object PenikVideoNoteTranscoder {
                         decoder.releaseOutputBuffer(outIndex, doRender)
                         if (doRender) {
                             eglHelper.awaitNewImage()
-                            eglHelper.drawImage(rotation, rawWidth, rawHeight)
+                            eglHelper.drawImage()
                             eglHelper.setPresentationTime(bufferInfo.presentationTimeUs * 1000)
                             eglHelper.swapBuffers()
                         }
@@ -374,17 +374,6 @@ object PenikVideoNoteTranscoder {
                     }
                     if (vTrack < 0 || vFormat == null) continue
 
-                    var segRotation = 0
-                    var segWidth = 640
-                    var segHeight = 480
-                    try {
-                        val retriever = MediaMetadataRetriever().apply { setDataSource(file.absolutePath) }
-                        segRotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)?.toIntOrNull() ?: 0
-                        segWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 640
-                        segHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 480
-                        retriever.release()
-                    } catch (ignored: Exception) {}
-
                     fileExtractor.selectTrack(vTrack)
                     val mime = vFormat.getString(MediaFormat.KEY_MIME) ?: MediaFormat.MIMETYPE_VIDEO_AVC
                     fileDecoder = MediaCodec.createDecoderByType(mime)
@@ -418,7 +407,7 @@ object PenikVideoNoteTranscoder {
                             fileDecoder.releaseOutputBuffer(outIdx, doRender)
                             if (doRender) {
                                 eglHelper.awaitNewImage()
-                                eglHelper.drawImage(segRotation, segWidth, segHeight)
+                                eglHelper.drawImage()
                                 val presentationPtsUs = globalBasePtsUs + bufferInfo.presentationTimeUs
                                 lastPtsInFileUs = maxOf(lastPtsInFileUs, bufferInfo.presentationTimeUs)
                                 eglHelper.setPresentationTime(presentationPtsUs * 1000)
@@ -511,7 +500,6 @@ object PenikVideoNoteTranscoder {
 
         private var program: Int = 0
         private var uSTMatrixHandle: Int = 0
-        private var uRotationHandle: Int = 0
         private var uAspectScaleHandle: Int = 0
         private var aPositionHandle: Int = 0
         private var aTextureHandle: Int = 0
@@ -624,7 +612,7 @@ object PenikVideoNoteTranscoder {
             }
         }
 
-        fun drawImage(rotation: Int = videoRotation, width: Int = rawWidth, height: Int = rawHeight) {
+        fun drawImage() {
             GLES20.glViewport(0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
             GLES20.glClearColor(0f, 0f, 0f, 1f)
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
@@ -634,13 +622,10 @@ object PenikVideoNoteTranscoder {
             // Pass ST matrix
             GLES20.glUniformMatrix4fv(uSTMatrixHandle, 1, false, stMatrix, 0)
 
-            // Pass rotation
-            GLES20.glUniform1i(uRotationHandle, rotation)
-
             // Aspect ratio scaling to center-crop portrait decoded frame into square
-            val aspectScale = if (width > 0 && height > 0) {
-                val maxDim = maxOf(width, height).toFloat()
-                val minDim = minOf(width, height).toFloat()
+            val aspectScale = if (rawWidth > 0 && rawHeight > 0) {
+                val maxDim = maxOf(rawWidth, rawHeight).toFloat()
+                val minDim = minOf(rawWidth, rawHeight).toFloat()
                 maxDim / minDim
             } else {
                 1.3333f
@@ -744,7 +729,6 @@ object PenikVideoNoteTranscoder {
             // Video shader: crops center to square, masks to circle with black background
             val vertexShader = """
                 uniform mat4 uSTMatrix;
-                uniform int uRotation;
                 uniform float uAspectScale;
                 attribute vec4 aPosition;
                 attribute vec4 aTextureCoord;
@@ -754,24 +738,16 @@ object PenikVideoNoteTranscoder {
                     gl_Position = aPosition;
                     vPos = aPosition.xy;
                     
-                    vec2 p = aPosition.xy;
-                    vec2 sensorCoord;
+                    // Coordinates in [-1, 1] range centered at (0, 0)
+                    vec2 coord = aPosition.xy;
                     
-                    if (uRotation == 90) {
-                        p.y = p.y / uAspectScale;
-                        sensorCoord = vec2(-p.y, p.x);
-                    } else if (uRotation == 270) {
-                        p.y = p.y / uAspectScale;
-                        sensorCoord = vec2(p.y, -p.x);
-                    } else if (uRotation == 180) {
-                        p.x = p.x / uAspectScale;
-                        sensorCoord = vec2(-p.x, -p.y);
-                    } else {
-                        p.x = p.x / uAspectScale;
-                        sensorCoord = vec2(p.x, p.y);
-                    }
+                    // Center crop: scale the taller portrait Y axis so the central square is sampled
+                    coord.y = coord.y / uAspectScale;
                     
-                    vec2 uv = sensorCoord * 0.5 + 0.5;
+                    // Map from [-1, 1] to [0, 1]
+                    vec2 uv = coord * 0.5 + 0.5;
+                    
+                    // Apply SurfaceTexture transformation matrix (handles orientation & flip)
                     vTextureCoord = (uSTMatrix * vec4(uv, 0.0, 1.0)).xy;
                 }
             """.trimIndent()
@@ -800,7 +776,6 @@ object PenikVideoNoteTranscoder {
             aPositionHandle = GLES20.glGetAttribLocation(program, "aPosition")
             aTextureHandle = GLES20.glGetAttribLocation(program, "aTextureCoord")
             uSTMatrixHandle = GLES20.glGetUniformLocation(program, "uSTMatrix")
-            uRotationHandle = GLES20.glGetUniformLocation(program, "uRotation")
             uAspectScaleHandle = GLES20.glGetUniformLocation(program, "uAspectScale")
 
             // 2D Watermark shader
