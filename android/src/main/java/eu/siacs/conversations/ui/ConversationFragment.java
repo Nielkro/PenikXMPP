@@ -1351,13 +1351,19 @@ public class ConversationFragment extends XmppFragment
 
                         // 1. Instantly extract first frame Bitmap for immediate preview
                         Bitmap previewBitmap = null;
+                        final MediaMetadataRetriever mmr = new MediaMetadataRetriever();
                         try {
-                            final MediaMetadataRetriever mmr = new MediaMetadataRetriever();
                             mmr.setDataSource(rawFiles.get(0).getAbsolutePath());
                             previewBitmap = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
-                            mmr.release();
+                            if (previewBitmap == null) {
+                                previewBitmap = mmr.getFrameAtTime();
+                            }
                         } catch (Exception e) {
                             Log.w(Config.LOGTAG, "Could not extract video note first frame", e);
+                        } finally {
+                            try {
+                                mmr.release();
+                            } catch (Exception ignored) {}
                         }
 
                         // 2. Create the Message entity immediately
@@ -1406,12 +1412,22 @@ public class ConversationFragment extends XmppFragment
                                 service.databaseBackend.updateMessage(message, false);
 
                                 // Refresh thumbnail cache with final circular transcoded preview
+                                final MediaMetadataRetriever bgMmr = new MediaMetadataRetriever();
                                 try {
-                                    final Bitmap fullThumb = service.getFileBackend().getThumbnail(message, 256, false);
+                                    bgMmr.setDataSource(targetFile.getAbsolutePath());
+                                    Bitmap fullThumb = bgMmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+                                    if (fullThumb == null) {
+                                        fullThumb = bgMmr.getFrameAtTime();
+                                    }
                                     if (fullThumb != null) {
                                         service.getBitmapCache().put(message.getUuid(), fullThumb);
                                     }
-                                } catch (Exception ignored) {}
+                                } catch (Exception ignored) {
+                                } finally {
+                                    try {
+                                        bgMmr.release();
+                                    } catch (Exception ignored) {}
+                                }
 
                                 // Send / upload via HTTP upload slot
                                 service.sendMessage(message);

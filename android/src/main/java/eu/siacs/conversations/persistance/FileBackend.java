@@ -983,7 +983,9 @@ public class FileBackend {
                         thumbnail = withGifOverlay;
                     }
                 }
-                cache.put(uuid, thumbnail);
+                if (thumbnail != null) {
+                    cache.put(uuid, thumbnail);
+                }
             }
         }
         return thumbnail;
@@ -1059,33 +1061,45 @@ public class FileBackend {
     }
 
     private Bitmap cropCenterSquareVideo(Uri uri, int size) {
-        MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
-        Bitmap frame;
+        final MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
         try {
             metadataRetriever.setDataSource(mXmppConnectionService, uri);
-            frame = metadataRetriever.getFrameAtTime(0);
-            metadataRetriever.release();
-            return cropCenterSquare(frame, size);
+            Bitmap frame = metadataRetriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+            if (frame == null) {
+                frame = metadataRetriever.getFrameAtTime();
+            }
+            if (frame != null) {
+                return cropCenterSquare(frame, size);
+            }
         } catch (Exception e) {
-            frame = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-            frame.eraseColor(0xff000000);
-            return frame;
+            Log.w(Config.LOGTAG, "Failed to extract cropCenterSquareVideo for " + uri, e);
+        } finally {
+            try {
+                metadataRetriever.release();
+            } catch (Exception ignored) {}
         }
+        return null;
     }
 
     private Bitmap getVideoPreview(final File file, final int size) {
         final MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
-        Bitmap frame;
         try {
             metadataRetriever.setDataSource(file.getAbsolutePath());
-            frame = metadataRetriever.getFrameAtTime(0);
-            metadataRetriever.release();
-            frame = resize(frame, size);
-        } catch (IOException | RuntimeException e) {
-            frame = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-            frame.eraseColor(0xff000000);
+            Bitmap frame = metadataRetriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+            if (frame == null) {
+                frame = metadataRetriever.getFrameAtTime();
+            }
+            if (frame != null) {
+                return resize(frame, size);
+            }
+        } catch (Exception e) {
+            Log.w(Config.LOGTAG, "Failed to extract video preview for " + file.getName(), e);
+        } finally {
+            try {
+                metadataRetriever.release();
+            } catch (Exception ignored) {}
         }
-        return frame;
+        return null;
     }
 
     private Bitmap getPdfDocumentPreview(final File file, final int size) {

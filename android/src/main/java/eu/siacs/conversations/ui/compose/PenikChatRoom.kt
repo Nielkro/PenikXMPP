@@ -1,6 +1,7 @@
 package eu.siacs.conversations.ui.compose
 
 import android.graphics.Bitmap
+import android.util.Log
 import android.util.Patterns
 import eu.siacs.conversations.ui.util.PenikAudioWaveformExtractor
 import androidx.compose.foundation.Canvas
@@ -163,6 +164,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.ui.res.stringResource
+import coil.compose.AsyncImage
+import coil.decode.VideoFrameDecoder
+import coil.request.ImageRequest
 
 fun penikHandleUrlClick(activity: XmppActivity, rawUrl: String, fallbackUriHandler: androidx.compose.ui.platform.UriHandler? = null) {
     val trimmed = rawUrl.trim()
@@ -3747,6 +3751,7 @@ fun PenikVideoNoteBubble(
         readCount: Int,
         onLongClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val service = activity.xmppConnectionService
     val localFile = remember(message.uuid, status, message.relativeFilePath) {
         service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() && it.length() > 0L }
@@ -3755,17 +3760,20 @@ fun PenikVideoNoteBubble(
     val isPlaying = isActive && PenikVideoNotePlayer.isPlaying
     val currentPosMs = if (isActive) PenikVideoNotePlayer.currentPosMs else 0
     val durationMs = if (isActive) PenikVideoNotePlayer.durationMs else 0
-    val staticDurationMs = remember(localFile?.absolutePath, localFile?.length()) {
-        val f = localFile
-        if (f != null && f.exists() && f.length() > 0L) {
+    val staticDurationMs = remember(localFile?.absolutePath) {
+        val path = localFile?.absolutePath
+        if (path != null) {
+            val mmr = android.media.MediaMetadataRetriever()
             try {
-                val mmr = android.media.MediaMetadataRetriever()
-                mmr.setDataSource(f.absolutePath)
+                mmr.setDataSource(path)
                 val durStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
-                mmr.release()
                 durStr?.toIntOrNull() ?: 0
             } catch (e: Exception) {
                 0
+            } finally {
+                try {
+                    mmr.release()
+                } catch (ignored: Exception) {}
             }
         } else {
             0
@@ -3784,6 +3792,9 @@ fun PenikVideoNoteBubble(
     }
 
     val isTranscodingOrUploading = status == Message.STATUS_WAITING || message.transferable != null
+    val previewModel = remember(message.uuid, status, localFile?.absolutePath) {
+        service?.bitmapCache?.get(message.uuid) ?: localFile
+    }
 
     Box(
             modifier = Modifier
@@ -3829,6 +3840,38 @@ fun PenikVideoNoteBubble(
                             .clip(CircleShape)
             )
 
+            // Preview thumbnail overlay when not playing
+            if (!isPlaying) {
+                AsyncImage(
+                        model = ImageRequest.Builder(context)
+                                .data(previewModel)
+                                .decoderFactory(VideoFrameDecoder.Factory())
+                                .crossfade(true)
+                                .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                                .size(212.dp)
+                                .clip(CircleShape)
+                )
+
+                // Center play button overlay when not playing
+                Box(
+                        modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.55f)),
+                        contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Воспроизвести",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
             // Circular progress indicator around perimeter
             if (isActive && durationMs > 0) {
                 androidx.compose.foundation.Canvas(modifier = Modifier.size(220.dp)) {
@@ -3858,36 +3901,8 @@ fun PenikVideoNoteBubble(
                                 .border(1.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
                 )
             }
-
-            // Center play button overlay when not playing
-            if (!isPlaying) {
-                Box(
-                        modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.55f)),
-                        contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Воспроизвести",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
         } else {
             // Optimistic instant preview thumbnail with progress spinner if transcoding/uploading
-            var previewThumb by remember(message.uuid) {
-                mutableStateOf(service?.bitmapCache?.get(message.uuid))
-            }
-            LaunchedEffect(message.uuid, status) {
-                if (previewThumb == null) {
-                    previewThumb = service?.bitmapCache?.get(message.uuid) ?: withContext(Dispatchers.IO) {
-                        try { service?.fileBackend?.getThumbnail(message, 384, false) } catch (e: Exception) { null }
-                    }
-                }
-            }
             Box(
                     modifier = Modifier
                             .size(212.dp)
@@ -3895,15 +3910,17 @@ fun PenikVideoNoteBubble(
                             .background(Color(0xFF1E232B)),
                     contentAlignment = Alignment.Center
             ) {
-                val pt = previewThumb
-                if (pt != null) {
-                    Image(
-                            bitmap = pt.asImageBitmap(),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                    )
-                }
+                AsyncImage(
+                        model = ImageRequest.Builder(context)
+                                .data(previewModel)
+                                .decoderFactory(VideoFrameDecoder.Factory())
+                                .crossfade(true)
+                                .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                )
+
                 if (isTranscodingOrUploading) {
                     Box(
                             modifier = Modifier
@@ -3919,9 +3936,29 @@ fun PenikVideoNoteBubble(
                         )
                     }
                 } else {
-                    PenikVideoThumb(message = message, activity = activity, fgColor = Color.White)
+                    Box(
+                            modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.55f)),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Воспроизвести",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
             }
+
+            Box(
+                    modifier = Modifier
+                            .size(216.dp)
+                            .clip(CircleShape)
+                            .border(1.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+            )
         }
 
         // Left badge: video note duration
