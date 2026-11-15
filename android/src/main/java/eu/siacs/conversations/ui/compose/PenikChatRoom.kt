@@ -3748,16 +3748,16 @@ fun PenikVideoNoteBubble(
         onLongClick: () -> Unit
 ) {
     val service = activity.xmppConnectionService
-    val localFile = remember(message.uuid) {
-        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }
+    val localFile = remember(message.uuid, status, message.relativeFilePath) {
+        service?.fileBackend?.getFile(message, false)?.takeIf { it.exists() && it.length() > 0L }
     }
     val isActive = PenikVideoNotePlayer.activeUuid == message.uuid
     val isPlaying = isActive && PenikVideoNotePlayer.isPlaying
     val currentPosMs = if (isActive) PenikVideoNotePlayer.currentPosMs else 0
     val durationMs = if (isActive) PenikVideoNotePlayer.durationMs else 0
-    val staticDurationMs = remember(localFile?.absolutePath) {
+    val staticDurationMs = remember(localFile?.absolutePath, localFile?.length()) {
         val f = localFile
-        if (f != null && f.exists()) {
+        if (f != null && f.exists() && f.length() > 0L) {
             try {
                 val mmr = android.media.MediaMetadataRetriever()
                 mmr.setDataSource(f.absolutePath)
@@ -3783,13 +3783,15 @@ fun PenikVideoNoteBubble(
         }
     }
 
+    val isTranscodingOrUploading = status == Message.STATUS_WAITING || message.transferable != null
+
     Box(
             modifier = Modifier
                     .padding(horizontal = 12.dp, vertical = 2.dp)
                     .size(220.dp)
                     .combinedClickable(
                             onClick = {
-                                if (localFile != null) {
+                                if (!isTranscodingOrUploading && localFile != null) {
                                     surfaceRef?.let { s ->
                                         PenikVideoNotePlayer.toggle(localFile, message.uuid, s)
                                     }
@@ -3799,7 +3801,7 @@ fun PenikVideoNoteBubble(
                     ),
             contentAlignment = Alignment.Center
     ) {
-        if (localFile != null && localFile.length() > 0L && status != Message.STATUS_WAITING) {
+        if (localFile != null && localFile.length() > 0L && !isTranscodingOrUploading) {
             // Live circular video view
             AndroidView(
                     factory = { ctx ->
@@ -3876,10 +3878,14 @@ fun PenikVideoNoteBubble(
             }
         } else {
             // Optimistic instant preview thumbnail with progress spinner if transcoding/uploading
-            var previewThumb by remember(message.uuid) { mutableStateOf<Bitmap?>(null) }
-            LaunchedEffect(message.uuid) {
-                previewThumb = service?.bitmapCache?.get(message.uuid) ?: withContext(Dispatchers.IO) {
-                    try { service?.fileBackend?.getThumbnail(message, 384, false) } catch (e: Exception) { null }
+            var previewThumb by remember(message.uuid) {
+                mutableStateOf(service?.bitmapCache?.get(message.uuid))
+            }
+            LaunchedEffect(message.uuid, status) {
+                if (previewThumb == null) {
+                    previewThumb = service?.bitmapCache?.get(message.uuid) ?: withContext(Dispatchers.IO) {
+                        try { service?.fileBackend?.getThumbnail(message, 384, false) } catch (e: Exception) { null }
+                    }
                 }
             }
             Box(
@@ -3898,7 +3904,7 @@ fun PenikVideoNoteBubble(
                             modifier = Modifier.fillMaxSize()
                     )
                 }
-                if (status == Message.STATUS_WAITING) {
+                if (isTranscodingOrUploading) {
                     Box(
                             modifier = Modifier
                                     .size(48.dp)

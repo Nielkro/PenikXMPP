@@ -2,9 +2,13 @@ package eu.siacs.conversations.ui
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.net.Uri
+import eu.siacs.conversations.ui.compose.PenikVideoNotePlayer
+import eu.siacs.conversations.ui.compose.PenikVoicePlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -111,6 +115,17 @@ class PenikVideoNoteActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        PenikVideoNotePlayer.stop()
+        PenikVoicePlayer.stop()
+        try {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            audioManager?.requestAudioFocus(
+                null,
+                AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+            )
+        } catch (ignored: Exception) {}
+
         val hasCamera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         val hasAudio = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         if (!hasCamera || !hasAudio) {
@@ -190,6 +205,8 @@ class PenikVideoNoteActivity : ComponentActivity() {
 
     private fun startRecordingInternal() {
         if (isRecordingStarted || isStopping || isFlippingCamera) return
+        PenikVideoNotePlayer.stop()
+        PenikVoicePlayer.stop()
         val vc = videoCapture ?: return
         val recordingsDir = File(cacheDir, "Recordings").apply { mkdirs() }
         val rawFile = File(recordingsDir, "raw_video_note_${System.currentTimeMillis()}.mp4")
@@ -303,6 +320,10 @@ class PenikVideoNoteActivity : ComponentActivity() {
         super.onDestroy()
         activeRecording?.stop()
         cameraProvider?.unbindAll()
+        try {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            audioManager?.abandonAudioFocus(null)
+        } catch (ignored: Exception) {}
     }
 
     @Composable

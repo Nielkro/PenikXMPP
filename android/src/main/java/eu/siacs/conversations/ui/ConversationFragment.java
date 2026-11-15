@@ -138,6 +138,8 @@ import eu.siacs.conversations.ui.compose.PenikChatActions;
 import eu.siacs.conversations.ui.compose.PenikChatBridge;
 import eu.siacs.conversations.ui.compose.PenikChatListener;
 import eu.siacs.conversations.ui.compose.PenikChatState;
+import eu.siacs.conversations.ui.compose.PenikVideoNotePlayer;
+import eu.siacs.conversations.ui.compose.PenikVoicePlayer;
 import eu.siacs.conversations.ui.PenikProfileActivity;
 import eu.siacs.conversations.ui.util.PenikVideoNoteTranscoder;
 import eu.siacs.conversations.ui.util.ActivityResult;
@@ -1381,6 +1383,9 @@ public class ConversationFragment extends XmppFragment
 
                         // 3. Optimistically display in conversation right now
                         this.conversation.add(message);
+                        synchronized (this.messageList) {
+                            this.conversation.populateWithMessages(this.messageList);
+                        }
                         service.databaseBackend.createMessage(message);
                         this.messageListAdapter.notifyDataSetChanged();
                         pushPenikChatState();
@@ -1410,12 +1415,24 @@ public class ConversationFragment extends XmppFragment
 
                                 // Send / upload via HTTP upload slot
                                 service.sendMessage(message);
-                                runOnUiThreadQuiet(this::pushPenikChatState);
+                                runOnUiThreadQuiet(() -> {
+                                    synchronized (this.messageList) {
+                                        this.conversation.populateWithMessages(this.messageList);
+                                    }
+                                    this.messageListAdapter.notifyDataSetChanged();
+                                    pushPenikChatState();
+                                });
                             } catch (Exception e) {
                                 Log.e(Config.LOGTAG, "Failed to transcode and send video note", e);
                                 message.setStatus(Message.STATUS_SEND_FAILED);
                                 service.databaseBackend.updateMessage(message, false);
-                                runOnUiThreadQuiet(this::pushPenikChatState);
+                                runOnUiThreadQuiet(() -> {
+                                    synchronized (this.messageList) {
+                                        this.conversation.populateWithMessages(this.messageList);
+                                    }
+                                    this.messageListAdapter.notifyDataSetChanged();
+                                    pushPenikChatState();
+                                });
                             }
                         }).start();
                         break;
@@ -2544,6 +2561,11 @@ public class ConversationFragment extends XmppFragment
 
     public void attachFile(final int attachmentChoice) {
         if (attachmentChoice == ATTACHMENT_CHOICE_RECORD_VOICE) {
+            PenikVideoNotePlayer.INSTANCE.stop();
+            PenikVoicePlayer.INSTANCE.stop();
+            if (this.messageListAdapter != null) {
+                this.messageListAdapter.stopAudioPlayer();
+            }
             if (!hasPermissions(
                     attachmentChoice,
                     Manifest.permission.RECORD_AUDIO)) {
@@ -2552,6 +2574,11 @@ public class ConversationFragment extends XmppFragment
             startVoiceRecording();
             return;
         } else if (attachmentChoice == ATTACHMENT_CHOICE_RECORD_VIDEO) {
+            PenikVideoNotePlayer.INSTANCE.stop();
+            PenikVoicePlayer.INSTANCE.stop();
+            if (this.messageListAdapter != null) {
+                this.messageListAdapter.stopAudioPlayer();
+            }
             if (!hasPermissions(
                     attachmentChoice,
                     Manifest.permission.CAMERA,
@@ -2638,6 +2665,11 @@ public class ConversationFragment extends XmppFragment
     }
 
     public void startVoiceRecording() {
+        PenikVideoNotePlayer.INSTANCE.stop();
+        PenikVoicePlayer.INSTANCE.stop();
+        if (this.messageListAdapter != null) {
+            this.messageListAdapter.stopAudioPlayer();
+        }
         if (!hasPermissions(
                 ATTACHMENT_CHOICE_RECORD_VOICE,
                 Manifest.permission.RECORD_AUDIO)) {
@@ -3076,6 +3108,11 @@ public class ConversationFragment extends XmppFragment
     @Override
     public void onPause() {
         super.onPause();
+        PenikVideoNotePlayer.INSTANCE.stop();
+        PenikVoicePlayer.INSTANCE.stop();
+        if (this.messageListAdapter != null) {
+            this.messageListAdapter.stopAudioPlayer();
+        }
         stopVoiceRecording(false);
         binding.textInput.setOnFocusChangeListener(null);
     }
