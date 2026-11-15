@@ -308,25 +308,40 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
     private static boolean configureTransportWithPeerInfo(
             final Transport transport, final FileTransferContentMap contentMap) {
         final GenericTransportInfo transportInfo = contentMap.requireOnlyTransportInfo();
-        if (transport instanceof WebRTCDataChannelTransport webRTCDataChannelTransport
-                && transportInfo instanceof WebRTCDataChannelTransportInfo) {
-            webRTCDataChannelTransport.setResponderDescription(SessionDescription.of(contentMap));
-            return true;
-        } else if (transport instanceof SocksByteStreamsTransport socksBytestreamsTransport
-                && transportInfo
-                        instanceof SocksByteStreamsTransportInfo socksBytestreamsTransportInfo) {
-            socksBytestreamsTransport.setTheirCandidates(
-                    socksBytestreamsTransportInfo.getCandidates());
-            return true;
-        } else if (transport instanceof InbandBytestreamsTransport inbandBytestreamsTransport
-                && transportInfo instanceof IbbTransportInfo ibbTransportInfo) {
-            final var peerBlockSize = ibbTransportInfo.getBlockSize();
-            if (peerBlockSize != null) {
-                inbandBytestreamsTransport.setPeerBlockSize(peerBlockSize);
+        switch (transport) {
+            case WebRTCDataChannelTransport webRTCDataChannelTransport
+                    when transportInfo instanceof WebRTCDataChannelTransportInfo -> {
+                final SessionDescription sessionDescription;
+                try {
+                    sessionDescription = SessionDescription.of(contentMap);
+                } catch (final RuntimeException e) {
+                    return false;
+                }
+                webRTCDataChannelTransport.setResponderDescription(sessionDescription);
+                return true;
             }
-            return true;
-        } else {
-            return false;
+            case SocksByteStreamsTransport socksBytestreamsTransport
+                    when transportInfo
+                            instanceof
+                            SocksByteStreamsTransportInfo socksBytestreamsTransportInfo -> {
+                socksBytestreamsTransport.setTheirCandidates(
+                        socksBytestreamsTransportInfo.getCandidates());
+                return true;
+            }
+            case InbandBytestreamsTransport inbandBytestreamsTransport
+                    when transportInfo instanceof IbbTransportInfo ibbTransportInfo -> {
+                final var peerBlockSize = ibbTransportInfo.getBlockSize();
+                if (peerBlockSize != null) {
+                    if (peerBlockSize < InbandBytestreamsTransport.MINIMUM_BLOCK_SIZE) {
+                        return false;
+                    }
+                    inbandBytestreamsTransport.setPeerBlockSize(peerBlockSize);
+                }
+                return true;
+            }
+            case null, default -> {
+                return false;
+            }
         }
     }
 
@@ -353,18 +368,27 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
             return;
         }
         final XmppAxolotlMessage.XmppAxolotlKeyTransportMessage keyTransportMessage;
-        final var contents = jingle.getJingleContents();
-        final var rawContent = contents.get(Iterables.getOnlyElement(contentMap.contents.keySet()));
-        final var security =
-                rawContent == null ? null : rawContent.getSecurity(jinglePacket.getFrom());
-        if (security != null) {
-            Log.d(Config.LOGTAG, "found security element!");
-            keyTransportMessage =
-                    id.account
-                            .getAxolotlService()
-                            .processReceivingKeyTransportMessage(security, false);
-        } else {
-            keyTransportMessage = null;
+        try {
+            final var contents = jingle.getJingleContents();
+            final var rawContent =
+                    contents.get(Iterables.getOnlyElement(contentMap.contents.keySet()));
+            final var security =
+                    rawContent == null ? null : rawContent.getSecurity(jinglePacket.getFrom());
+            if (security != null) {
+
+                keyTransportMessage =
+                        id.account
+                                .getAxolotlService()
+                                .processReceivingKeyTransportMessage(security, false);
+
+            } else {
+                keyTransportMessage = null;
+            }
+        } catch (final RuntimeException e) {
+            Log.d(Config.LOGTAG, "could not process key transport message", e);
+            respondOk(jinglePacket);
+            sendSessionTerminate(Reason.of(e), e.getMessage());
+            return;
         }
         receiveSessionInitiate(jinglePacket, contentMap, file, keyTransportMessage);
     }
@@ -444,8 +468,15 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
     public void sendSessionAccept() {
         final FileTransferContentMap contentMap = this.initiatorFileTransferContentMap;
         final Transport transport;
+        final SessionDescription sessionDescription;
         try {
-            transport = setupTransport(contentMap.requireOnlyTransportInfo());
+            final var transportInfo = contentMap.requireOnlyTransportInfo();
+            if (transportInfo instanceof WebRTCDataChannelTransportInfo) {
+                sessionDescription = SessionDescription.of(contentMap);
+            } else {
+                sessionDescription = null;
+            }
+            transport = setupTransport(transportInfo);
         } catch (final RuntimeException e) {
             sendSessionTerminate(Reason.of(e), e.getMessage());
             return;
@@ -454,8 +485,8 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         this.transport = transport;
         this.transport.setTransportCallback(this);
         if (this.transport instanceof WebRTCDataChannelTransport webRTCDataChannelTransport) {
-            final var sessionDescription = SessionDescription.of(contentMap);
-            webRTCDataChannelTransport.setInitiatorDescription(sessionDescription);
+            webRTCDataChannelTransport.setInitiatorDescription(
+                    Objects.requireNonNull(sessionDescription));
         }
         final var transportInfoFuture = transport.asTransportInfo();
         Futures.addCallback(
@@ -504,32 +535,40 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         final var appSettings = new AppSettings(xmppConnectionService.getApplicationContext());
         final boolean useTor = id.account.isOnion() || appSettings.isUseTor();
         final boolean useRelays = appSettings.isUseRelays();
-        if (transportInfo instanceof IbbTransportInfo ibbTransportInfo) {
-            final String streamId = ibbTransportInfo.getTransportId();
-            final Long blockSize = ibbTransportInfo.getBlockSize();
-            if (streamId == null || blockSize == null) {
-                throw new IllegalStateException("ibb transport is missing sid and/or block-size");
+        switch (transportInfo) {
+            case IbbTransportInfo ibbTransportInfo -> {
+                final String streamId = ibbTransportInfo.getTransportId();
+                final Long blockSize = ibbTransportInfo.getBlockSize();
+                if (streamId == null
+                        || blockSize == null
+                        || blockSize < InbandBytestreamsTransport.MINIMUM_BLOCK_SIZE) {
+                    throw new IllegalStateException(
+                            "ibb transport is missing sid and/or block-size");
+                }
+                return new InbandBytestreamsTransport(
+                        xmppConnection,
+                        id.with,
+                        isInitiator(),
+                        streamId,
+                        Ints.saturatedCast(blockSize));
             }
-            return new InbandBytestreamsTransport(
-                    xmppConnection,
-                    id.with,
-                    isInitiator(),
-                    streamId,
-                    Ints.saturatedCast(blockSize));
-        } else if (transportInfo
-                instanceof SocksByteStreamsTransportInfo socksBytestreamsTransportInfo) {
-            final String streamId = socksBytestreamsTransportInfo.getTransportId();
-            final String destination = socksBytestreamsTransportInfo.getDestinationAddress();
-            final List<SocksByteStreamsTransport.Candidate> candidates =
-                    socksBytestreamsTransportInfo.getCandidates();
-            Log.d(Config.LOGTAG, "received socks candidates " + candidates);
-            return new SocksByteStreamsTransport(
-                    xmppConnection, id, isInitiator(), useTor, useRelays, streamId, candidates);
-        } else if (!useTor && transportInfo instanceof WebRTCDataChannelTransportInfo) {
-            return new WebRTCDataChannelTransport(
-                    xmppConnectionService.getApplicationContext(), xmppConnection, isInitiator());
-        } else {
-            throw new IllegalArgumentException("Do not know how to create transport");
+            case SocksByteStreamsTransportInfo socksBytestreamsTransportInfo -> {
+                final String streamId = socksBytestreamsTransportInfo.getTransportId();
+                final String destination = socksBytestreamsTransportInfo.getDestinationAddress();
+                final List<SocksByteStreamsTransport.Candidate> candidates =
+                        socksBytestreamsTransportInfo.getCandidates();
+                Log.d(Config.LOGTAG, "received socks candidates " + candidates);
+                return new SocksByteStreamsTransport(
+                        xmppConnection, id, isInitiator(), useTor, useRelays, streamId, candidates);
+            }
+            case WebRTCDataChannelTransportInfo webRTCDataChannelTransportInfo when !useTor -> {
+                return new WebRTCDataChannelTransport(
+                        xmppConnectionService.getApplicationContext(),
+                        xmppConnection,
+                        isInitiator());
+            }
+            case null, default ->
+                    throw new IllegalArgumentException("Do not know how to create transport");
         }
     }
 

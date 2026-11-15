@@ -143,14 +143,14 @@ public class NetworkDataSource {
     protected DnsMessage queryUdp(
             final DnsMessage message, final InetAddress address, final int port)
             throws IOException {
-        final DatagramPacket request = message.asDatagram(address, port);
+        final var request = message.asDatagram(address, port);
         final byte[] buffer = new byte[udpPayloadSize];
-        try (final DatagramSocket socket = new DatagramSocket()) {
+        try (final var socket = new DatagramSocket()) {
             socket.setSoTimeout(DNSSocket.QUERY_TIMEOUT);
             socket.send(request);
-            final DatagramPacket response = new DatagramPacket(buffer, buffer.length);
+            final var response = new DatagramPacket(buffer, buffer.length);
             socket.receive(response);
-            final DnsMessage dnsMessage = readDNSMessage(response.getData());
+            final var dnsMessage = readDNSMessage(response.getData());
             if (dnsMessage.id != message.id) {
                 throw new MiniDnsException.IdMismatch(message, dnsMessage);
             }
