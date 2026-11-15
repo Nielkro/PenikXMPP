@@ -63,6 +63,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.stringprep.XmppStringprepException;
 import org.whispersystems.libsignal.IdentityKey;
@@ -1390,6 +1391,40 @@ public class DatabaseBackend extends SQLiteOpenHelper {
                 list.add(0, Message.fromCursor(context, cursor, conversation));
             } catch (final Exception e) {
                 Log.e(Config.LOGTAG, "unable to restore message", e);
+            }
+        }
+        cursor.close();
+        return list;
+    }
+
+    public List<Message> getRtpSessionMessages(
+            final int limit, final Function<String, Conversation> conversationLookup) {
+        final ArrayList<Message> list = new ArrayList<>();
+        final SQLiteDatabase db = this.getReadableDatabase();
+        final Cursor cursor =
+                db.query(
+                        Message.TABLENAME,
+                        null,
+                        Message.TYPE + "=?",
+                        new String[] {String.valueOf(Message.TYPE_RTP_SESSION)},
+                        null,
+                        null,
+                        Message.TIME_SENT + " DESC",
+                        String.valueOf(limit));
+        CursorUtils.upgradeCursorWindowSize(cursor);
+        while (cursor.moveToNext()) {
+            try {
+                final String conversationUuid =
+                        cursor.getString(cursor.getColumnIndexOrThrow(Message.CONVERSATION));
+                final Conversation conversation =
+                        conversationLookup != null
+                                ? conversationLookup.apply(conversationUuid)
+                                : null;
+                if (conversation != null) {
+                    list.add(Message.fromCursor(context, cursor, conversation));
+                }
+            } catch (final Exception e) {
+                Log.e(Config.LOGTAG, "unable to restore rtp message", e);
             }
         }
         cursor.close();

@@ -399,6 +399,59 @@ public class FileBackend {
         message.setBody(url + '|' + size);
     }
 
+    public void prepareOptimisticVideoParams(final Message message, final Uri uri) {
+        setupRelativeFilePath(message, String.format("%s.%s", message.getUuid(), "mp4"));
+        final long fileSize = getFileSize(mXmppConnectionService, uri);
+        int width = 0;
+        int height = 0;
+        final MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(mXmppConnectionService, uri);
+            final Bitmap frame = retriever.getFrameAtTime(0);
+            if (frame != null) {
+                width = frame.getWidth();
+                height = frame.getHeight();
+                final Bitmap thumbnail = resize(frame, 640);
+                mXmppConnectionService.getBitmapCache().put(message.getUuid(), thumbnail);
+            }
+            if (width <= 0 || height <= 0) {
+                final String w =
+                        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                final String h =
+                        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+                final String rot =
+                        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+                if (w != null && h != null) {
+                    final int pw = Integer.parseInt(w);
+                    final int ph = Integer.parseInt(h);
+                    if ("90".equals(rot) || "270".equals(rot)) {
+                        width = ph;
+                        height = pw;
+                    } else {
+                        width = pw;
+                        height = ph;
+                    }
+                }
+            }
+        } catch (final Exception e) {
+            Log.w(
+                    Config.LOGTAG,
+                    "unable to extract video preview/dimensions for " + message.getUuid(),
+                    e);
+        } finally {
+            try {
+                retriever.release();
+            } catch (final Exception ignored) {
+            }
+        }
+        if (width > 0 && height > 0) {
+            message.setBody("|" + fileSize + "|" + width + "|" + height);
+        } else {
+            message.setBody("|" + fileSize);
+        }
+        message.setStatus(Message.STATUS_UNSEND);
+    }
+
     public Bitmap getPreviewForUri(Attachment attachment, int size, boolean cacheOnly) {
         final String key = "attachment_" + attachment.getUuid() + "_" + size;
         final LruCache<String, Bitmap> cache = mXmppConnectionService.getBitmapCache();

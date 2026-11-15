@@ -17,10 +17,16 @@ import eu.siacs.conversations.utils.PhoneHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.manager.PushNotificationManager;
+import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import org.jspecify.annotations.NonNull;
 
 public class PushManagementService {
+
+    private static final ScheduledExecutorService FCM_TIMEOUT_EXECUTOR =
+            Executors.newSingleThreadScheduledExecutor();
 
     protected final Context context;
 
@@ -36,9 +42,12 @@ public class PushManagementService {
         final var connection = account.getXmppConnection();
         Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": has push support");
         final var fcmTokenFuture = retrieveFcmInstanceToken();
+        final var fcmTokenTimeoutFuture =
+                Futures.withTimeout(
+                        fcmTokenFuture, Duration.ofSeconds(30L), FCM_TIMEOUT_EXECUTOR);
         final var future =
                 Futures.transformAsync(
-                        fcmTokenFuture,
+                        fcmTokenTimeoutFuture,
                         fcmToken -> {
                             final var pushManager =
                                     connection.getManager(PushNotificationManager.class);

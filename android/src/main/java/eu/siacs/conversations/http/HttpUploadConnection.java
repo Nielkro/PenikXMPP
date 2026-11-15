@@ -78,6 +78,11 @@ public class HttpUploadConnection
     }
 
     @Override
+    public Long getTransferred() {
+        return transmitted;
+    }
+
+    @Override
     public void cancel() {
         final ListenableFuture<HttpUploadManager.Slot> slotFuture = this.slotFuture;
         if (slotFuture != null && !slotFuture.isDone()) {

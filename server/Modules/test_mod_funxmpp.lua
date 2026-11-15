@@ -238,18 +238,18 @@ do
     assert_eq(bin, "", "Stanza with >255 attributes dropped safely as empty string");
 end
  
--- Test 6: Session cleanup on disconnect or hibernation resets state and removes filters
+-- Test 6: Session cleanup on permanent destruction resets state and removes filters
 do
     local cleanup_handler = hooks["c2s-closed"];
     assert(type(cleanup_handler) == "function", "c2s-closed hook is registered");
     assert(hooks["c2s-destroyed"] == cleanup_handler, "c2s-destroyed hook is registered to same handler");
-    assert(hooks["smacks-hibernation-start"] == cleanup_handler, "smacks-hibernation-start hook is registered to same handler");
+    assert(type(hooks["smacks-hibernation-start"]) == "function", "smacks-hibernation-start hook is registered");
 
     session.funxmpp_enabled = true;
     session.funxmpp_in_buf = "leftover";
     session.funxmpp_last_out = mock_stanza.stanza("message", { id = "m6" });
 
-    cleanup_handler({ session = session });
+    cleanup_handler({ session = session, event = "c2s-destroyed" });
     assert_eq(session.funxmpp_enabled, false, "funxmpp_enabled reset to false");
     assert_eq(session.funxmpp_in_buf, nil, "funxmpp_in_buf reset to nil");
     assert_eq(session.funxmpp_last_out, nil, "funxmpp_last_out reset to nil");
@@ -544,6 +544,94 @@ do
     local in_filter = filters_map["bytes/in"][1].fn;
     -- Must finish cleanly without hang
     in_filter(frame, session);
+end
+
+-- Test 16: Stream Management resume on non-direct connection restores FunXMPP state and filters
+-- Tests the realistic hook sequence: enable -> smacks-hibernation-start -> new socket connect (no enable) -> c2s-session-updated -> resume
+do
+    local session = {
+        type = "c2s",
+        full_jid = "user@snikket.penik.ru/phone",
+        conn = { id = "initial_socket" },
+        send_queue = {},
+        send = function(s) end
+    };
+    -- 1. Client enables FunXMPP on initial standard XMPP connection
+    enable_handler(session, mock_stanza.stanza("enable", { xmlns = "penik:protocol:funxmpp", dict = "3a145c7a" }));
+    assert_eq(session.funxmpp_enabled, true, "Initial session has funxmpp_enabled = true");
+    assert_true(session.conn.funxmpp_state ~= nil, "Initial conn has funxmpp_state");
+
+    -- 2. Network drop: session enters SM hibernation
+    local hibernation_start = hooks["smacks-hibernation-start"];
+    assert(type(hibernation_start) == "function", "smacks-hibernation-start hook is registered");
+    hibernation_start({ session = session });
+
+    -- Verify session state is preserved for resumption and filters are detached from dead socket
+    assert_true(session.funxmpp_hibernated == true, "Session marked as funxmpp_hibernated");
+    assert_true(session.funxmpp_dict ~= nil, "Session dictionary preserved during hibernation");
+
+    -- 3. Reconnect on fresh socket: client sends <resume> without prior <enable>
+    local fresh_conn = { id = "new_reconnected_socket" };
+    local new_temp_session = {
+        type = "c2s",
+        id = "new-temp-sess-1",
+        conn = fresh_conn,
+        -- Non-direct connection: fresh session has no FunXMPP negotiation before resume
+        funxmpp_enabled = nil,
+    };
+    assert_true(fresh_conn.funxmpp_state == nil, "Fresh socket conn has no funxmpp_state initially");
+
+    -- 4. Mod_smacks resumes session and fires c2s-session-updated
+    session.conn = fresh_conn;
+    local resume_handler = hooks["c2s-session-updated"];
+    assert(type(resume_handler) == "function", "c2s-session-updated hook is registered");
+    resume_handler({ session = session, from_session = new_temp_session });
+
+    -- 5. Verify complete FunXMPP state and socket stash restoration
+    assert_eq(session.funxmpp_enabled, true, "Resumed session has funxmpp_enabled = true");
+    assert_eq(session.funxmpp_direct, false, "Resumed session preserves non-direct mode");
+    assert_true(session.funxmpp_hibernated == nil, "funxmpp_hibernated flag cleared");
+    assert_true(fresh_conn.funxmpp_state ~= nil, "Fresh conn received funxmpp_state stash");
+    assert_eq(fresh_conn.funxmpp_state.enabled, true, "Fresh conn funxmpp_state is enabled");
+
+    -- 6. Verify outgoing binary encoding on resumed connection
+    local resumed_stanza = mock_stanza.stanza("resumed", { xmlns = "urn:xmpp:sm:3", previd = "old-sess-1", h = "5" });
+    local wrapped = out_filter(resumed_stanza, session);
+    assert_true(type(wrapped) == "table", "Out filter returned binary wrapper");
+    local bin = tostring(wrapped);
+    assert_true(#bin > 0, "Resumed stanza correctly encoded into binary frame");
+    assert_true(bin:byte(1) ~= 0x3C, "Frame is binary, not plain XML '<'");
+
+    -- 7. Verify incoming binary decoding on resumed connection
+    local in_fn = filters_map["bytes/in"][1].fn;
+    local dispatched_stanza = nil;
+    prosody.core_process_stanza = function(sess, stanza)
+        dispatched_stanza = stanza;
+    end
+    -- Send binary frame through resumed in_filter
+    in_fn(bin, session);
+    assert_true(dispatched_stanza ~= nil, "Incoming binary frame decoded and dispatched on resumed session");
+    assert_eq(dispatched_stanza.name, "resumed", "Decoded stanza name matches resumed");
+end
+
+-- Test 17: Permanent session destruction cleans up all FunXMPP state
+do
+    local session = {
+        type = "c2s",
+        full_jid = "user@snikket.penik.ru/phone",
+        conn = { id = "sock_destroy", funxmpp_state = { enabled = true } },
+        funxmpp_enabled = true,
+        funxmpp_hibernated = true,
+        funxmpp_dict = {},
+    };
+    local destroy_handler = hooks["c2s-destroyed"];
+    assert(type(destroy_handler) == "function", "c2s-destroyed hook registered");
+    destroy_handler({ session = session, event = "c2s-destroyed" });
+
+    assert_eq(session.funxmpp_enabled, false, "funxmpp_enabled set to false");
+    assert_true(session.funxmpp_hibernated == nil, "funxmpp_hibernated cleared");
+    assert_true(session.funxmpp_dict == nil, "funxmpp_dict wiped");
+    assert_true(session.conn.funxmpp_state == nil, "conn stash wiped");
 end
 
 print("ALL MOD_FUNXMPP TESTS PASSED SUCCESSFULLY!");

@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.OpenableColumns;
@@ -23,6 +24,7 @@ import androidx.work.WorkerParameters;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CountingInputStream;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -57,6 +59,7 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 import javax.crypto.BadPaddingException;
+import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.io.CipherInputStream;
 import org.bouncycastle.crypto.modes.AEADBlockCipher;
@@ -113,7 +116,9 @@ public class ImportBackupWorker extends Worker {
         } catch (final Exception e) {
             Log.d(Config.LOGTAG, "error restoring backup " + uri, e);
             final Throwable throwable = e.getCause();
-            if (throwable instanceof BadPaddingException || e instanceof ZipException) {
+            if (throwable instanceof BadPaddingException
+                    || throwable instanceof InvalidCipherTextException
+                    || e instanceof ZipException) {
                 return failure(Reason.DECRYPTION_FAILED);
             } else {
                 return failure(Reason.GENERIC);
@@ -190,30 +195,38 @@ public class ImportBackupWorker extends Worker {
         final AEADBlockCipher cipher = GCMBlockCipher.newInstance(AESEngine.newInstance());
         cipher.init(
                 false, new AEADParameters(new KeyParameter(key), 128, backupFileHeader.getIv()));
-        final CipherInputStream cipherInputStream =
-                new CipherInputStream(countingInputStream, cipher);
-
-        final GZIPInputStream gzipInputStream = new GZIPInputStream(cipherInputStream);
-        final BufferedReader reader =
-                new BufferedReader(new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8));
-        final JsonReader jsonReader = new JsonReader(reader);
-        if (jsonReader.peek() == JsonToken.BEGIN_ARRAY) {
-            jsonReader.beginArray();
-        } else {
-            throw new IllegalStateException("Backup file did not begin with array");
-        }
-        db.beginTransaction();
-        while (jsonReader.hasNext()) {
-            if (jsonReader.peek() == JsonToken.BEGIN_OBJECT) {
-                importRow(db, jsonReader, backupFileHeader.getJid(), password);
-            } else if (jsonReader.peek() == JsonToken.END_ARRAY) {
-                jsonReader.endArray();
-                continue;
+        try (final CipherInputStream cipherInputStream =
+                new CipherInputStream(countingInputStream, cipher)) {
+            final GZIPInputStream gzipInputStream = new GZIPInputStream(cipherInputStream);
+            final JsonReader jsonReader =
+                    new JsonReader(
+                            new BufferedReader(
+                                    new InputStreamReader(
+                                            gzipInputStream, StandardCharsets.UTF_8)));
+            if (jsonReader.peek() != JsonToken.BEGIN_ARRAY) {
+                throw new IllegalStateException("Backup file did not begin with array");
             }
-            updateImportBackupNotification(fileSize, countingInputStream.getCount());
+            jsonReader.beginArray();
+            db.beginTransaction();
+            try {
+                while (jsonReader.hasNext()) {
+                    if (jsonReader.peek() != JsonToken.BEGIN_OBJECT) {
+                        throw new IOException("Unexpected token in backup: " + jsonReader.peek());
+                    }
+                    importRow(db, jsonReader, backupFileHeader.getJid(), password);
+                    updateImportBackupNotification(fileSize, countingInputStream.getCount());
+                }
+                jsonReader.endArray();
+                if (jsonReader.peek() != JsonToken.END_DOCUMENT) {
+                    throw new IOException("Unexpected data after backup array");
+                }
+                ByteStreams.exhaust(gzipInputStream);
+                ByteStreams.exhaust(cipherInputStream);
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
+            }
         }
-        db.setTransactionSuccessful();
-        db.endTransaction();
         final Jid jid = backupFileHeader.getJid();
         final Cursor countCursor =
                 db.rawQuery(
@@ -298,18 +311,29 @@ public class ImportBackupWorker extends Worker {
             contentValues.put(Account.KEYS, Services.GSON.toJson(importReadyKeys));
         }
         if (this.includeOmemo) {
-            db.insert(table, null, contentValues);
+            insert(db, table, contentValues);
         } else {
             if (OMEMO_TABLE_LIST.contains(table)) {
                 if (SQLiteAxolotlStore.IDENTITIES_TABLENAME.equals(table)
                         && contentValues.getAsInteger(SQLiteAxolotlStore.OWN) == 0) {
-                    db.insert(table, null, contentValues);
+                    insert(db, table, contentValues);
                 } else {
                     Log.d(Config.LOGTAG, "skipping over omemo key material in table " + table);
                 }
             } else {
-                db.insert(table, null, contentValues);
+                insert(db, table, contentValues);
             }
+        }
+    }
+
+    private static void insert(
+            final SQLiteDatabase db, final String table, final ContentValues contentValues)
+            throws IOException {
+        try {
+            db.insertOrThrow(table, null, contentValues);
+        } catch (final SQLException e) {
+            throw new IOException(
+                    String.format("Failed to insert row into %s: %s", table, e.getMessage()));
         }
     }
 

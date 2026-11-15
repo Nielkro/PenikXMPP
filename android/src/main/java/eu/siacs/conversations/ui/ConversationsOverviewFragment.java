@@ -114,7 +114,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
     private final List<Conversation> conversations = new ArrayList<>();
     private final PendingItem<Conversation> swipedConversation = new PendingItem<>();
     private FragmentConversationsOverviewBinding binding;
-    private SearchSuggestionAdapter searchSuggestionAdapter;
     private static final int REQUEST_SYNC_CONTACTS = 0x28cf;
     private static final int REQUEST_CHOOSE_PHONEBOOK_CONTACT = 0x28d0;
     private final PendingActionHelper pendingActionHelper = new PendingActionHelper();
@@ -195,13 +194,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     }
                 }
             };
-    private final OnBackPressedCallback searchViewOnBackPressedCallback =
-            new OnBackPressedCallback(false) {
-                @Override
-                public void handleOnBackPressed() {
-                    binding.searchView.hide();
-                }
-            };
 
     private void openPrivacyPolicy() {
         if (BuildConfig.PRIVACY_POLICY == null) {
@@ -218,6 +210,12 @@ public class ConversationsOverviewFragment extends XmppFragment {
                             Toast.LENGTH_SHORT)
                     .show();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refresh();
     }
 
     @Override
@@ -317,7 +315,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
     public void onDestroyView() {
         super.onDestroyView();
         this.binding = null;
-        this.searchSuggestionAdapter = null;
     }
 
     @Override
@@ -329,9 +326,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requireActivity()
-                .getOnBackPressedDispatcher()
-                .addCallback(this, this.searchViewOnBackPressedCallback);
     }
 
     @Override
@@ -480,56 +474,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
     }
 
     private void submitSearchSuggestion(final String raw) {
-        final var search = raw.trim();
-        if (Strings.isNullOrEmpty(search)) {
-            this.searchSuggestionAdapter.submitList(Collections.emptyList());
-            return;
-        }
-        final var builder = new ImmutableList.Builder<SearchSuggestion>();
-        builder.add(new SearchSuggestion.Text(search));
-        if (Patterns.URI_GENERIC.matcher(search).matches()) {
-            final var xmppUri = MiniUri.getXmppUriOrNull(search);
-            if (xmppUri != null && xmppUri.isAddress()) {
-                builder.add(new SearchSuggestion.Uri(xmppUri));
-            }
-        }
-        final var service = requireXmppActivity().xmppConnectionService;
-        final List<SearchSuggestion.Sortable> suggestions;
-        final boolean noteToSelf;
-        if (service != null) {
-            final var accounts = service.getAccounts();
-            final var matchInAccount =
-                    Iterables.any(
-                            accounts,
-                            a ->
-                                    a != null
-                                            && a.isEnabled()
-                                            && CharSequences.containsAll(
-                                                    a.getJid().asBareJid().toString(), search));
-            noteToSelf =
-                    matchInAccount
-                            || CharSequences.containsAll(getString(R.string.note_to_self), search);
-            final var provider = new SearchSuggestionProvider(accounts);
-            suggestions = provider.suggest(search);
-        } else {
-            noteToSelf = false;
-            suggestions = Collections.emptyList();
-        }
-        // we do not want to spam the list with tens of results of searching for individual letters
-        if (suggestions.size() <= 8 || search.length() >= 3) {
-            if (noteToSelf) {
-                builder.add(new SearchSuggestion.Note());
-            }
-            builder.addAll(
-                    new Ordering<SearchSuggestion.Sortable>() {
-                        @Override
-                        public int compare(
-                                SearchSuggestion.Sortable left, SearchSuggestion.Sortable right) {
-                            return left.address().compareTo(right.address());
-                        }
-                    }.sortedCopy(suggestions));
-        }
-        this.searchSuggestionAdapter.submitList(builder.build());
+        // no-op: Penik uses Jetpack Compose search in PenikChatsList
     }
 
     private void executeSuggestion(final SearchSuggestion suggestion) {
@@ -592,13 +537,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
     }
 
     private void hideSearchView() {
-        if (ConversationsActivity.isTabletView(requireActivity())) {
-            this.binding.searchView.hide();
-        } else {
-            this.binding.searchView.hide();
-            this.binding.searchView.setVisible(false);
-            this.binding.searchView.clearFocus();
-        }
     }
 
     @Override
@@ -675,7 +613,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
             requireActivity().finish();
             return;
         }
-        this.binding.searchBar.invalidateMenu();
         service.populateWithOrderedConversations(this.conversations);
         Conversation removed = this.swipedConversation.peek();
         if (removed != null) {
@@ -694,9 +631,12 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     archived.add(c);
                 }
             } else {
-                final boolean isSelfChat = c.isSelf();
+                final var contact = c.getContact();
+                final boolean isSelfChat =
+                        c.getMode() == Conversation.MODE_SINGLE
+                                && ((contact != null && contact.isSelf()) || c.isSelf());
                 if (isSelfChat) {
-                    if (self == null) {
+                    if (self == null || (self.countMessages() == 0 && c.countMessages() > 0)) {
                         self = c;
                     }
                 }

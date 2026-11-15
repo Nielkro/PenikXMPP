@@ -149,7 +149,8 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 
 - `android/src/main/java/eu/siacs/conversations/ui/ConversationActivity.java` — Main chat screen (launcher): conversation list + active chat fragment.
 - `android/src/main/java/eu/siacs/conversations/ui/ConversationFragment.java` — Chat room: messages, input, receipts, call buttons.
-- `android/src/main/java/eu/siacs/conversations/ui/compose/PenikChatsList.kt` — Penik main screen (Compose, 1:1 with Penik app): TopAppBar with search, connection banner, chats tab (self-chat row, archive folder, rows with avatars/unread/lock/mute, archive dialogs), calls tab from RTP history, profile tab (avatar, Telegram-style info card with phone number and display name editing), bottom navigation; data bridged from `ConversationsOverviewFragment` via `PenikChatsState`.
+-`android/src/main/java/eu/siacs/conversations/ui/compose/PenikChatsList.kt` — Penik main screen (Compose, 1:1 with Penik app): TopAppBar with search, connection banner, chats tab (self-chat row, archive folder, rows with avatars/unread/lock/mute, archive dialogs), calls tab from RTP history, profile tab (avatar, Telegram-style info card with phone number and display name editing), navigation mode support (Bottom Bar tabs or Telegram-style ModalNavigationDrawer); data bridged from `ConversationsOverviewFragment` via `PenikChatsState`.
+- `android/src/main/java/eu/siacs/conversations/ui/compose/NavigationStyleManager.kt` — Navigation layout preference manager: persists user navigation style (`BOTTOM_BAR` vs `DRAWER`) and exposes reactive `StateFlow<NavigationStyle>` synced with SharedPreferences.
 - `android/src/main/java/eu/siacs/conversations/ui/compose/PenikChatRoom.kt` — Penik chat room (Compose): timeline with date headers, text bubbles with links/quotes/ticks/lock/edited, emoji-only messages, attachments (image thumbs, inline voice player, files, audio, geo), call cards from RTP history, bug-report collapse, long-press menu (copy/reply/edit/share/resend/open); data bridged from `ConversationFragment` via `PenikChatState`.
 - `android/src/main/java/eu/siacs/conversations/ui/compose/PenikAttachmentPickerBottomSheet.kt` — Penik attachment picker (Compose, Telegram-style): 3-column media grid with live camera tile, numeric multi-selection pills, floating bottom capsule ("Галерея" / "Файл"), permission flow, and quick send.
 - `android/src/main/java/eu/siacs/conversations/ui/compose/PenikBotCommands.kt` — Penik bot commands popup & autocomplete (Compose): floating command picker over input bar with icons, descriptions, and one-tap command execution.
@@ -204,6 +205,8 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/ui/util/PenikVideoNoteTranscoder.kt` — Fast hardware-accelerated 1:1 square video note transcoder with OpenGL center cropping, AAC audio preservation, and corner Penik watermark branding.
 - `android/src/main/java/eu/siacs/conversations/ui/util/ShareUtil.java` — Share/link helpers.
 - `android/src/main/java/eu/siacs/conversations/ui/util/SettingsUtils.java` — Night mode / theme helpers.
+- `android/src/main/java/eu/siacs/conversations/ui/util/PenikPredictiveBackHelper.kt` — Telegram-style interactive predictive back and edge-swipe gesture handler for chat screens (smooth scaling to card, dynamic corner rounding, translation, and live preview of the underlying chats list).
+- `android/src/main/java/eu/siacs/conversations/ui/widget/PenikSwipeBackLayout.kt` — Telegram-style interactive follow-the-finger swipe-back container with edge touch interception, dynamic drop shadow, and underlying parallax.
 - `android/src/main/java/eu/siacs/conversations/ui/widget/` — Custom views (scanner, bubbles, spans, audio recorder).
 - `android/src/main/java/eu/siacs/conversations/ui/text/` — Message spans (quote, URL, divider).
 - `android/src/main/java/eu/siacs/conversations/ui/interfaces/` — Activity/fragment callbacks (backend connected, conversation selected/read).
@@ -280,6 +283,7 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `.woodpecker.yml` — CI pipeline.
 - `.gitmodules` — `libs/Penik` submodule (read-only UI donor, branch `feat/cloud-chats`).
 - `scripts/install_phone.sh` — Automated build and installation of Penik debug APK (free or playstore/FCM) to connected Android devices via ADB.
+- `scripts/setup_upstream_mirror.sh` — Rebuilds the path-rewritten `upstream-sync` branch (and its graft) used for scheduled Conversations upstream merges.
 - `scripts/deploy_server.sh` — Deployment script for Prosody Lua modules (`mod_funxmpp`, `mod_stickers_auth`) and Rust microservice to remote Snikket/Prosody servers.
 - `plan/penik-xmpp-ui-port-plan.md` — Plan to port Penik UI and rebrand to `ru.penik.xmpp`.
 - `plan/xmpp-stanza-diet-plan.md` — Plan to cut XMPP stanza overhead (245 → 193 bytes): omit outbound `from` per RFC 6120, short 12-char ids, chat-state composing throttle (8s), MAM page 20, preserving Monal/Dino interoperability (markable/request receipts).

@@ -16,6 +16,14 @@
             android:key="theme"
             android:title="@string/pref_light_dark_mode"
             app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            android:defaultValue="BOTTOM_BAR"
+            android:entries="@array/nav_style_entries"
+            android:entryValues="@array/nav_style_values"
+            android:icon="@drawable/ic_category_24dp"
+            android:key="nav_style"
+            android:title="@string/pref_nav_style"
+            app:useSimpleSummaryProvider="true" />
         <Preference
             android:icon="@drawable/ic_forum_24dp"
             app:fragment="eu.siacs.conversations.ui.fragment.settings.InterfaceBubblesSettingsFragment"

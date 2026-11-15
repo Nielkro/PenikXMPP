@@ -360,7 +360,10 @@ public class ConversationsActivity extends QrCodeProcessingActivity
         Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
         ;
         this.getSupportFragmentManager()
-                .addOnBackStackChangedListener(this::showDialogsIfMainIsOverview);
+                .addOnBackStackChangedListener(() -> {
+                    showDialogsIfMainIsOverview();
+                    onConversationsListItemUpdated();
+                });
         this.initializeFragments();
         final Intent intent;
         if (savedInstanceState == null) {
@@ -372,6 +375,13 @@ public class ConversationsActivity extends QrCodeProcessingActivity
             pendingViewIntent.push(intent);
             setIntent(createLauncherIntent(this));
         }
+        new Thread(() -> {
+            try {
+                Class.forName("eu.siacs.conversations.ui.compose.PenikChatRoomKt");
+                Class.forName("eu.siacs.conversations.ui.ConversationFragment");
+                Class.forName("eu.siacs.conversations.ui.widget.PenikSwipeBackLayout");
+            } catch (Throwable ignored) {}
+        }, "penik-prewarm").start();
     }
 
     @Override
@@ -441,9 +451,6 @@ public class ConversationsActivity extends QrCodeProcessingActivity
                         R.anim.penik_slide_out_left,
                         R.anim.penik_slide_in_left,
                         R.anim.penik_slide_out_right);
-                if (mainFragment != null) {
-                    fragmentTransaction.hide(mainFragment);
-                }
                 fragmentTransaction.add(R.id.main_fragment, conversationFragment);
                 fragmentTransaction.addToBackStack(null);
                 fragmentTransaction.commitAllowingStateLoss();

@@ -62,6 +62,23 @@ public class InterfaceSettingsFragment extends XmppPreferenceFragment {
         }
         quickAction.setEntryValues(quickActionsEntryValues);
         quickAction.setEntries(quickActionEntries);
+
+        final ListPreference navStyle = findPreference("nav_style");
+        if (navStyle != null) {
+            navStyle.setValue(eu.siacs.conversations.ui.compose.NavigationStyleManager.getStyle(requireContext()).name());
+            navStyle.setOnPreferenceChangeListener(
+                    (preference, newValue) -> {
+                        if (newValue instanceof final String styleName) {
+                            try {
+                                final eu.siacs.conversations.ui.compose.NavigationStyle style =
+                                        eu.siacs.conversations.ui.compose.NavigationStyle.valueOf(styleName);
+                                eu.siacs.conversations.ui.compose.NavigationStyleManager.setStyle(style);
+                            } catch (final Exception ignored) {
+                            }
+                        }
+                        return true;
+                    });
+        }
     }
 
     @Override

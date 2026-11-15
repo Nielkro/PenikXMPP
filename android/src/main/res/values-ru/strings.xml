@@ -1051,6 +1051,9 @@
     <string name="appearance">Внешний вид</string>
     <string name="pref_title_interface">Интерфейс</string>
     <string name="pref_light_dark_mode">Светлая/тёмная тема</string>
+    <string name="pref_nav_style">Стиль навигации</string>
+    <string name="pref_nav_style_bottom_bar">Вкладки снизу</string>
+    <string name="pref_nav_style_drawer">Боковое меню</string>
     <string name="pref_allow_screenshots_summary">Показывать содержимое экрана приложения в переключателе и разрешить делать снимки экрана</string>
     <string name="pref_category_e2ee">Сквозное шифрование</string>
     <string name="pref_title_trust_system_ca_store">Удостоверяющие центры</string>
@@ -1154,6 +1157,7 @@
     <string name="moderate_delete_dot_dot_dot">Удалить как модератор…</string>
     <string name="moderate_delete">Удалить как модератор</string>
     <string name="delete_message">Удалить сообщение</string>
+    <string name="delete_message_dialog_confirm">Вы действительно хотите удалить это сообщение?</string>
     <string name="moderation_explained">Сообщение будет удалено для вас и всех остальных участников этого публичного канала.</string>
     <string name="do_not_show_this_warning_again">Больше не предупреждать.</string>
     <string name="could_not_moderate_message">Невозможно модерировать сообщение</string>
