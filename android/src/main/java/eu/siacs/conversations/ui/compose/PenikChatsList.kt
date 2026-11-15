@@ -1945,15 +1945,6 @@ fun PenikProfileTab(
                     listener.onPublishAvatar(uri)
                 }
             }
-    val permissionLauncher =
-            rememberLauncherForActivityResult(
-                    androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
-            ) { granted ->
-                if (granted) {
-                    launchPenikCamera(context) { tempCameraUri = it }
-                            ?.let { galleryLauncher.launch("") }
-                }
-            }
     val cameraLauncher =
             rememberLauncherForActivityResult(
                     androidx.activity.result.contract.ActivityResultContracts.TakePicture()
@@ -1961,6 +1952,15 @@ fun PenikProfileTab(
                 val uri = tempCameraUri
                 if (success && uri != null) {
                     listener.onPublishAvatar(uri)
+                }
+            }
+    val permissionLauncher =
+            rememberLauncherForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                if (granted) {
+                    launchPenikCamera(context) { tempCameraUri = it }
+                            ?.let { cameraLauncher.launch(it) }
                 }
             }
 
