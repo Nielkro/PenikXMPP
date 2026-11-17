@@ -358,39 +358,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
         this.binding =
                 DataBindingUtil.inflate(
                         inflater, R.layout.fragment_conversations_overview, container, false);
-        this.binding.searchBar.addMenuProvider(
-                menuProvider, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
-        this.binding.searchBar.addMenuProvider(
-                globalMenuProvider, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
-        this.binding
-                .searchView
-                .getEditText()
-                .setOnEditorActionListener(
-                        (v, actionId, event) -> {
-                            startSearch(CharSequences.nullToEmpty(v.getText()));
-                            this.binding.searchView.hide();
-                            return true;
-                        });
-        this.binding
-                .searchView
-                .getEditText()
-                .addTextChangedListener(new TextChangeListener(this::submitSearchSuggestion));
-        this.binding.searchView.addTransitionListener(
-                (searchView, oldState, newState) -> {
-                    final boolean isShowing =
-                            Arrays.asList(
-                                            SearchView.TransitionState.SHOWING,
-                                            SearchView.TransitionState.SHOWN)
-                                    .contains(newState);
-                    searchViewOnBackPressedCallback.setEnabled(isShowing);
-                });
-        this.binding.appBarLayout.setVisibility(View.GONE);
-        this.binding.searchBar.setVisibility(View.GONE);
-        this.binding.searchView.setVisibility(View.GONE);
-
-        this.searchSuggestionAdapter = new SearchSuggestionAdapter();
-        this.binding.searchSuggestionList.setAdapter(this.searchSuggestionAdapter);
-        this.searchSuggestionAdapter.setOnSearchSuggestionClicked(this::executeSuggestion);
         PenikChatsBridge.render(
                 this.binding.composeList,
                 this.penikChatsState,

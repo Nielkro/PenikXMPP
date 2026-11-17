@@ -248,5 +248,5 @@ Decompose monolithic files into focused feature packages:
   - [x] Implement `PenikRepository` with ref-counting and cleanup in `onDestroy()`
   - [x] Create ViewModels with `StateFlow` and `collectAsStateWithLifecycle()`
   - [x] Segregate `UiEffect` channels: buffered for dialogs, conflated for snackbars
-- [ ] **Phase 5: Navigation**
-  - [ ] Introduce scoped `navigation-compose` for nested screens without breaking activities
+- [x] **Phase 5: Navigation**
+  - [x] Introduce scoped `navigation-compose` for nested screens without breaking activities
