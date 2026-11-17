@@ -240,10 +240,10 @@ Decompose monolithic files into focused feature packages:
   - [x] Implement immutable snapshot extraction and UUID-based diff-mapper
   - [x] Stabilize callbacks using `remember(uuid, callbacks)`
   - [x] Verify skipped recompositions in Layout Inspector
-- [ ] **Phase 3: Monolith Decomposition**
-  - [ ] Split `PenikChatRoom.kt` into `chat/components/` and `chat/viewers/`
-  - [ ] Split `PenikChatsList.kt` into `main/` modular rows and tab components
-  - [ ] Isolate leaf components from domain entities and enable `@Preview`
+- [x] **Phase 3: Monolith Decomposition**
+  - [x] Split `PenikChatRoom.kt` into `chat/components/` and `chat/viewers/`
+  - [x] Split `PenikChatsList.kt` into `main/` modular rows and tab components
+  - [x] Isolate leaf components from domain entities and enable `@Preview`
 - [ ] **Phase 4: Reactive Layer**
   - [ ] Implement `PenikRepository` with ref-counting and cleanup in `onDestroy()`
   - [ ] Create ViewModels with `StateFlow` and `collectAsStateWithLifecycle()`
