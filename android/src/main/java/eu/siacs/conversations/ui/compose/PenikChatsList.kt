@@ -1,5 +1,7 @@
 package eu.siacs.conversations.ui.compose
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import android.content.Context
 import android.graphics.Bitmap
 import com.google.common.util.concurrent.FutureCallback
@@ -169,19 +171,14 @@ interface PenikChatsListener {
 }
 
 class PenikChatsState {
-    var conversations by mutableStateOf<List<Conversation>>(emptyList())
-    var archived by mutableStateOf<List<Conversation>>(emptyList())
+    var conversations by mutableStateOf<ImmutableList<ConversationUi>>(persistentListOf())
+    var archived by mutableStateOf<ImmutableList<ConversationUi>>(persistentListOf())
     var connectionState by mutableStateOf(PenikConnectionState.OFFLINE)
-    var selfChat by mutableStateOf<Conversation?>(null)
+    var selfChat by mutableStateOf<ConversationUi?>(null)
     var account by mutableStateOf<Account?>(null)
     var isArchiveOpen by mutableStateOf(false)
-    var revision by mutableStateOf(0L)
     var calls by mutableStateOf<List<PenikCallEntry>>(emptyList())
     var callsLoaded by mutableStateOf(false)
-
-    fun bumpRevision() {
-        revision++
-    }
 }
 
 enum class PenikConnectionState {
@@ -294,19 +291,18 @@ fun PenikMainScreen(
                 }
     }
 
-    LaunchedEffect(state.revision, activity.xmppConnectionService) {
+    LaunchedEffect(state.conversations.size, state.archived.size, activity.xmppConnectionService) {
         val service = activity.xmppConnectionService ?: return@LaunchedEffect
         withContext(Dispatchers.IO) {
-            val convMap = (state.conversations + state.archived).associateBy { it.uuid }
             val rtpMessages = try {
                 service.databaseBackend.getRtpSessionMessages(60) { uuid ->
-                    convMap[uuid] ?: service.findConversationByUuid(uuid)
+                    service.findConversationByUuid(uuid)
                 }
             } catch (e: Exception) {
                 emptyList()
             }
             val entries = rtpMessages.mapNotNull { msg ->
-                val conv = (msg.conversation as? Conversation) ?: convMap[msg.conversationUuid] ?: service.findConversationByUuid(msg.conversationUuid)
+                val conv = (msg.conversation as? Conversation) ?: service.findConversationByUuid(msg.conversationUuid)
                 if (conv != null) PenikCallEntry(conv, msg) else null
             }
             withContext(Dispatchers.Main) {
@@ -1024,7 +1020,7 @@ fun PenikChatsTab(
     val accent = colorResource(R.color.penik_accent)
     val danger = colorResource(R.color.penik_danger)
 
-    var selectedConversation by remember { mutableStateOf<Conversation?>(null) }
+    var selectedConversation by remember { mutableStateOf<ConversationUi?>(null) }
     var pendingDeleteConversation by remember { mutableStateOf<Conversation?>(null) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -1140,22 +1136,14 @@ fun PenikChatsTab(
             }
         }
     }
-    val rev = state.revision
-
-    val feed =
-            if (isArchiveOpen) {
-                state.archived
-            } else {
-                state.conversations
-            }
+    val feed = if (isArchiveOpen) state.archived else state.conversations
     val filtered =
             if (searchQuery.isBlank()) {
                 feed
             } else {
                 feed.filter {
-                    it.name.contains(searchQuery, ignoreCase = true) ||
-                            it.latestMessage?.body?.contains(searchQuery, ignoreCase = true) ==
-                                    true
+                    it.displayName.contains(searchQuery, ignoreCase = true) ||
+                            it.previewText.contains(searchQuery, ignoreCase = true)
                 }
             }
     val bottomPadding = if (!isDrawerMode) 92.dp else 16.dp
@@ -1173,13 +1161,16 @@ fun PenikChatsTab(
                     items(
                         items = filtered,
                         key = { it.uuid }
-                    ) { conversation ->
+                    ) { conversationUi ->
                         PenikConversationRow(
-                                conversation = conversation,
+                                item = conversationUi,
                                 activity = activity,
-                                revision = rev,
-                                onClick = { listener.onConversationClick(conversation) },
-                                onLongClick = { selectedConversation = conversation }
+                                onClick = {
+                                    activity.xmppConnectionService?.findConversationByUuid(conversationUi.uuid)?.let {
+                                        listener.onConversationClick(it)
+                                    }
+                                },
+                                onLongClick = { selectedConversation = conversationUi }
                         )
                     }
                 }
@@ -1249,13 +1240,16 @@ fun PenikChatsTab(
                     items(
                         items = filtered,
                         key = { it.uuid }
-                    ) { conversation ->
+                    ) { conversationUi ->
                         PenikConversationRow(
-                                conversation = conversation,
+                                item = conversationUi,
                                 activity = activity,
-                                revision = rev,
-                                onClick = { listener.onConversationClick(conversation) },
-                                onLongClick = { selectedConversation = conversation }
+                                onClick = {
+                                    activity.xmppConnectionService?.findConversationByUuid(conversationUi.uuid)?.let {
+                                        listener.onConversationClick(it)
+                                    }
+                                },
+                                onLongClick = { selectedConversation = conversationUi }
                         )
                     }
                 }
@@ -1266,7 +1260,8 @@ fun PenikChatsTab(
     // Modal Bottom Sheet on long-pressing a chat
     val selected = selectedConversation
     if (selected != null) {
-        val isPinned = selected.isPinnedOnTop
+        val selectedConv = activity.xmppConnectionService?.findConversationByUuid(selected.uuid)
+        val isPinned = selected.isPinned
         val isMuted = selected.isMuted
         ModalBottomSheet(
                 onDismissRequest = { selectedConversation = null },
@@ -1287,7 +1282,7 @@ fun PenikChatsTab(
                         verticalAlignment = Alignment.CenterVertically
                 ) {
                     PenikAvatarImage(
-                            name = selected.name.toString(),
+                            name = selected.displayName,
                             bitmap = sheetAvatar,
                             backgroundColor = Color(selected.avatarBackgroundColor),
                             size = 46.dp
@@ -1295,21 +1290,21 @@ fun PenikChatsTab(
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                                text = selected.name.toString(),
+                                text = selected.displayName,
                                 color = textPrimary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                         )
-                        val isSelf = selected.mode == Conversational.MODE_SINGLE && selected.contact?.isSelf == true
+                        val isSelf = selected.isSelfChat
                         val subtitle = if (isSelf) {
                             "Избранное"
-                        } else if (selected.mode == Conversational.MODE_MULTI) {
-                            val count = selected.mucOptions?.userCount ?: 0
+                        } else if (selectedConv != null && selectedConv.mode == Conversational.MODE_MULTI) {
+                            val count = selectedConv.mucOptions?.userCount ?: 0
                             if (count > 0) "$count участников" else "Групповой чат"
                         } else {
-                            selected.account?.jid?.asBareJid()?.toString() ?: ""
+                            selectedConv?.account?.jid?.asBareJid()?.toString() ?: ""
                         }
                         if (subtitle.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(2.dp))
@@ -1330,9 +1325,8 @@ fun PenikChatsTab(
                         iconRes = R.drawable.ic_push_pin_24dp,
                         title = if (isPinned) "Открепить" else "Закрепить",
                         onClick = {
-                            val conv = selected
                             selectedConversation = null
-                            listener.onTogglePin(conv)
+                            selectedConv?.let { listener.onTogglePin(it) }
                         }
                 )
 
@@ -1341,9 +1335,8 @@ fun PenikChatsTab(
                         iconRes = if (isMuted) R.drawable.ic_notifications_24dp else R.drawable.ic_notifications_off_24dp,
                         title = if (isMuted) "Включить уведомления" else "Выключить уведомления",
                         onClick = {
-                            val conv = selected
                             selectedConversation = null
-                            listener.onToggleMute(conv)
+                            selectedConv?.let { listener.onToggleMute(it) }
                         }
                 )
 
@@ -1353,9 +1346,8 @@ fun PenikChatsTab(
                             iconRes = R.drawable.ic_unarchive_24dp,
                             title = "Вернуть из архива",
                             onClick = {
-                                val conv = selected
                                 selectedConversation = null
-                                listener.onUnarchiveConversation(conv)
+                                selectedConv?.let { listener.onUnarchiveConversation(it) }
                             }
                     )
                 } else {
@@ -1363,23 +1355,21 @@ fun PenikChatsTab(
                             iconRes = R.drawable.ic_archive_24dp,
                             title = "В архив",
                             onClick = {
-                                val conv = selected
                                 selectedConversation = null
-                                listener.onArchiveConversation(conv)
+                                selectedConv?.let { listener.onArchiveConversation(it) }
                             }
                     )
                 }
 
                 // Delete chat / Leave conversation
-                val isGroup = selected?.mode == Conversation.MODE_MULTI
+                val isGroup = selectedConv?.mode == Conversation.MODE_MULTI
                 PenikSheetActionItem(
                         iconRes = if (isGroup) R.drawable.ic_logout_24dp else R.drawable.ic_delete_24dp,
                         title = if (isGroup) "Покинуть беседу" else "Удалить чат",
                         tint = danger,
                         onClick = {
-                            val conv = selected
                             selectedConversation = null
-                            pendingDeleteConversation = conv
+                            pendingDeleteConversation = selectedConv
                         }
                 )
             }
@@ -1500,122 +1490,14 @@ fun PenikConfirmDialog(
 }
 
 @Composable
-fun PenikSelfRow(selfChat: Conversation?, activity: XmppActivity, revision: Long = 0L, onClick: () -> Unit) {
-    val context = LocalContext.current
-    val textPrimary = colorResource(R.color.penik_text_primary)
-    val textMuted = colorResource(R.color.penik_text_muted)
-    val service = activity.xmppConnectionService
-    val latest = remember(selfChat, revision) {
-        if (selfChat != null && selfChat.hasMessages()) {
-            selfChat.latestMessage
-        } else {
-            null
-        }
-    }
-    val hasRealMessages = latest != null && latest.type != Message.TYPE_STATUS
-    val rawBody = latest?.body?.trim() ?: ""
-    val isAesGcm = rawBody.startsWith("aesgcm://", ignoreCase = true)
-    val cleanUrl = (if (isAesGcm) rawBody.substring("aesgcm://".length) else rawBody).substringBefore("|").trim()
-    val lowerUrl = cleanUrl.lowercase().substringBefore("?").substringBefore("#")
-    val isImageExt = lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") ||
-            lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp") ||
-            lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".bmp")
-    val isImage =
-            latest != null &&
-                    (latest.type == Message.TYPE_IMAGE ||
-                            (latest.mimeType?.startsWith("image/") == true) ||
-                            isImageExt) &&
-                    !latest.isGeoUri
-    var thumb by remember(latest?.uuid) { mutableStateOf<Bitmap?>(null) }
-    LaunchedEffect(latest?.uuid) {
-        if (!isImage || service == null || latest == null) {
-            thumb = null
-            return@LaunchedEffect
-        }
-        thumb =
-                withContext(Dispatchers.IO) {
-                    try {
-                        service.fileBackend.getThumbnail(latest, 256, false)
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-    }
-    Row(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-                modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF5FA8DF)),
-                contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                    imageVector = Icons.Default.Bookmark,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                    text = "Избранное",
-                    color = penikInitialsColor("Избранное"),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-            )
-            val preview = if (latest != null) penikMessagePreviewData(context, latest) else null
-            if (preview != null && (preview.text.isNotBlank() || preview.iconRes != null)) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val loadedThumb = thumb
-                    if (loadedThumb != null) {
-                        Image(
-                                bitmap = loadedThumb.asImageBitmap(),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(18.dp).clip(RoundedCornerShape(4.dp))
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                    } else if (preview.iconRes != null) {
-                        Icon(
-                                painter = painterResource(preview.iconRes),
-                                contentDescription = null,
-                                tint = textMuted,
-                                modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
-                    Text(
-                            text = preview.text,
-                            color = textMuted,
-                            fontSize = 14.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                    )
-                }
-            } else {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                        text = "Сообщения, заметки",
-                        color = textMuted,
-                        fontSize = 14.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        if (hasRealMessages && latest != null && latest.timeSent > 0) {
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                    text = penikRelativeTime(context, latest.timeSent),
-                    color = textMuted,
-                    fontSize = 12.sp
-            )
-        }
-    }
+fun PenikSelfRow(selfChat: ConversationUi?, activity: XmppActivity, onClick: () -> Unit) {
+    if (selfChat == null) return
+    PenikConversationRow(
+        item = selfChat,
+        activity = activity,
+        onClick = onClick,
+        onLongClick = {}
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -1687,9 +1569,8 @@ fun PenikArchiveRow(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PenikConversationRow(
-        conversation: Conversation,
+        item: ConversationUi,
         activity: XmppActivity,
-        revision: Long = 0L,
         onClick: () -> Unit,
         onLongClick: () -> Unit
 ) {
@@ -1697,59 +1578,9 @@ fun PenikConversationRow(
     val textPrimary = colorResource(R.color.penik_text_primary)
     val textMuted = colorResource(R.color.penik_text_muted)
     val accent = colorResource(R.color.penik_accent)
-    val isSelfChat = conversation.isSelf
-    val service = activity.xmppConnectionService
-    val latest = remember(conversation, revision) {
-        if (conversation.hasMessages()) {
-            conversation.latestMessage
-        } else {
-            null
-        }
-    }
-    val hasRealMessages = latest != null && latest.type != Message.TYPE_STATUS
-    val draft = if (conversation.isRead) conversation.draft else null
-    val timestamp =
-            if (draft != null) {
-                draft.instant().toEpochMilli()
-            } else if (hasRealMessages && latest != null) {
-                latest.timeSent
-            } else {
-                0L
-            }
-    val preview =
-            if (draft != null) {
-                PenikPreviewData(text = "Черновик: ${draft.message()}")
-            } else if (hasRealMessages && latest != null) {
-                val sender =
-                        if (latest.status == Message.STATUS_RECEIVED &&
-                                        conversation.mode == Conversational.MODE_MULTI
-                        ) {
-                            UIHelper.getMessageDisplayName(latest).split("\\s+".toRegex())
-                                    .firstOrNull()
-                                    ?.plus(": ")
-                                    ?: ""
-                        } else if (latest.status != Message.STATUS_RECEIVED &&
-                                        latest.type != Message.TYPE_STATUS &&
-                                        !isSelfChat
-                        ) {
-                            "Вы: "
-                        } else {
-                            ""
-                        }
-                penikMessagePreviewData(context, latest, sender)
-            } else if (isSelfChat) {
-                PenikPreviewData(text = "Сообщения, заметки")
-            } else {
-                null
-            }
-    val unreadCount = conversation.unreadCount()
-    val isPinned = conversation.isPinnedOnTop
-    val isMuted =
-            conversation.mutedTill?.let { it == Instant.MAX || it.isAfter(Instant.now()) }
-                    ?: false
-    val isEncrypted = conversation.nextEncryption != Message.ENCRYPTION_NONE
-    val avatarBitmap = if (isSelfChat) null else penikAvatarBitmap(conversation, activity)
-    val displayName = if (isSelfChat) "Избранное" else conversation.name.toString()
+    val isSelfChat = item.isSelfChat
+    val avatarBitmap = if (isSelfChat) null else penikAvatarBitmap(item, activity)
+    val displayName = item.displayName
     Row(
             modifier = Modifier
                     .fillMaxWidth()
@@ -1773,7 +1604,7 @@ fun PenikConversationRow(
             PenikAvatarImage(
                     name = displayName,
                     bitmap = avatarBitmap,
-                    backgroundColor = Color(conversation.avatarBackgroundColor)
+                    backgroundColor = Color(item.avatarBackgroundColor)
             )
         }
         Spacer(modifier = Modifier.width(12.dp))
@@ -1786,27 +1617,27 @@ fun PenikConversationRow(
                     Text(
                             text = displayName,
                             color = textPrimary,
-                            fontWeight = if (conversation.isRead) FontWeight.Medium else FontWeight.Bold,
+                            fontWeight = if (item.isRead) FontWeight.Medium else FontWeight.Bold,
                             fontSize = 16.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f, fill = false)
                     )
                 }
-                if (preview != null && (preview.sender.isNotEmpty() || preview.text.isNotEmpty() || preview.iconRes != null)) {
+                if (item.previewSender.isNotEmpty() || item.previewText.isNotEmpty() || item.previewIconRes != null) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (preview.sender.isNotEmpty()) {
+                        if (item.previewSender.isNotEmpty()) {
                             Text(
-                                    text = preview.sender,
+                                    text = item.previewSender,
                                     color = textMuted,
                                     fontSize = 14.sp,
                                     maxLines = 1
                             )
                         }
-                        if (preview.iconRes != null) {
+                        if (item.previewIconRes != null) {
                             Icon(
-                                    painter = painterResource(preview.iconRes),
+                                    painter = painterResource(item.previewIconRes),
                                     contentDescription = null,
                                     tint = textMuted,
                                     modifier = Modifier.size(16.dp)
@@ -1814,7 +1645,7 @@ fun PenikConversationRow(
                             Spacer(modifier = Modifier.width(4.dp))
                         }
                         Text(
-                                text = preview.text,
+                                text = item.previewText,
                                 color = textMuted,
                                 fontSize = 14.sp,
                                 maxLines = 1,
@@ -1823,14 +1654,14 @@ fun PenikConversationRow(
                     }
                 }
             }
-            if (timestamp > 0 || unreadCount > 0 || isPinned) {
+            if (item.timestamp > 0 || item.unreadCount > 0 || item.isPinned) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (isMuted) {
+                        if (item.isMuted) {
                             Icon(
                                     painter = painterResource(R.drawable.ic_notifications_off_24dp),
                                     contentDescription = null,
@@ -1839,7 +1670,7 @@ fun PenikConversationRow(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                         }
-                        if (isEncrypted) {
+                        if (item.isEncrypted) {
                             Icon(
                                     imageVector = Icons.Default.Lock,
                                     contentDescription = null,
@@ -1848,14 +1679,14 @@ fun PenikConversationRow(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                         }
-                        if (timestamp > 0) {
+                        if (item.timestamp > 0) {
                             Text(
-                                    text = penikRelativeTime(context, timestamp),
+                                    text = penikRelativeTime(context, item.timestamp),
                                     color = textMuted,
                                     fontSize = 12.sp
                             )
                         }
-                        if (isPinned) {
+                        if (item.isPinned) {
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
                                     painter = painterResource(R.drawable.ic_push_pin_24dp),
@@ -1865,7 +1696,7 @@ fun PenikConversationRow(
                             )
                         }
                     }
-                    if (unreadCount > 0) {
+                    if (item.unreadCount > 0) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Box(
                                 modifier =
@@ -1875,7 +1706,7 @@ fun PenikConversationRow(
                                 contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                    text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                                    text = if (item.unreadCount > 99) "99+" else item.unreadCount.toString(),
                                     color = Color.White,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
@@ -1886,6 +1717,41 @@ fun PenikConversationRow(
             }
         }
     }
+}
+
+@Composable
+fun penikAvatarBitmap(item: ConversationUi, activity: XmppActivity): Bitmap? {
+    val density = LocalDensity.current
+    val avatarService = activity.avatarService() ?: return null
+    val avatarKey = item.avatarKey
+    val sizePx = with(density) { 48.dp.roundToPx() }
+    val cachedBitmap = remember(avatarKey) {
+        val conv = activity.xmppConnectionService?.findConversationByUuid(item.uuid)
+        if (conv != null) {
+            try {
+                avatarService.get(conv, sizePx, true)
+            } catch (e: Exception) {
+                null
+            }
+        } else null
+    }
+    var bitmap by remember(avatarKey) { mutableStateOf(cachedBitmap) }
+    LaunchedEffect(avatarKey) {
+        val loaded = withContext(Dispatchers.IO) {
+            val conv = activity.xmppConnectionService?.findConversationByUuid(item.uuid)
+            if (conv != null) {
+                try {
+                    avatarService.get(conv, sizePx, false)
+                } catch (e: Exception) {
+                    null
+                }
+            } else null
+        }
+        if (loaded != null) {
+            bitmap = loaded
+        }
+    }
+    return bitmap ?: cachedBitmap
 }
 
 fun hasCustomAvatar(conversation: Conversation): Boolean {
@@ -2057,13 +1923,13 @@ fun PenikCallsTab(
                 val convMap = (state.conversations + state.archived).associateBy { it.uuid }
                 val rtpMessages = try {
                     service.databaseBackend.getRtpSessionMessages(60) { uuid ->
-                        convMap[uuid] ?: service.findConversationByUuid(uuid)
+                        service.findConversationByUuid(uuid)
                     }
                 } catch (e: Exception) {
                     emptyList()
                 }
                 val entries = rtpMessages.mapNotNull { msg ->
-                    val conv = (msg.conversation as? Conversation) ?: convMap[msg.conversationUuid] ?: service.findConversationByUuid(msg.conversationUuid)
+                    val conv = (msg.conversation as? Conversation) ?: service.findConversationByUuid(msg.conversationUuid)
                     if (conv != null) PenikCallEntry(conv, msg) else null
                 }
                 withContext(Dispatchers.Main) {

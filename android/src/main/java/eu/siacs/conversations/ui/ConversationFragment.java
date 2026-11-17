@@ -140,6 +140,7 @@ import eu.siacs.conversations.ui.compose.PenikChatActions;
 import eu.siacs.conversations.ui.compose.PenikChatBridge;
 import eu.siacs.conversations.ui.compose.PenikChatListener;
 import eu.siacs.conversations.ui.compose.PenikChatState;
+import eu.siacs.conversations.ui.compose.PenikMessageMapper;
 import eu.siacs.conversations.ui.compose.PenikVideoNotePlayer;
 import eu.siacs.conversations.ui.compose.PenikVoicePlayer;
 import eu.siacs.conversations.ui.PenikProfileActivity;
@@ -4171,8 +4172,13 @@ public class ConversationFragment extends XmppFragment
                         }
                     });
         }
+        final var mappedMessages = PenikMessageMapper.map(
+                this.messageList,
+                isMuc,
+                showAvatars11,
+                requireXmppActivity().xmppConnectionService);
         this.penikChatState.update(
-                new ArrayList<>(this.messageList),
+                mappedMessages,
                 isMuc,
                 showAvatars11);
         if (this.conversation.isBot() && this.conversation.getBotReplyMarkup() == null) {

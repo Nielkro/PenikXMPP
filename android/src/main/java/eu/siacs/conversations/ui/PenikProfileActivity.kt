@@ -150,7 +150,6 @@ class PenikProfileActivity : XmppActivity() {
         } else null) ?: service.accounts.firstOrNull()
 
         state.account = acc
-        state.bumpRevision()
     }
 
     companion object {

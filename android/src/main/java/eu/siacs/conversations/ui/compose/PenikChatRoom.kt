@@ -1,5 +1,7 @@
 package eu.siacs.conversations.ui.compose
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
@@ -226,21 +228,19 @@ object PenikChatActions {
 }
 
 class PenikChatState {
-    var messages by mutableStateOf<List<Message>>(emptyList(), neverEqualPolicy())
+    var messages by mutableStateOf<ImmutableList<ChatMessageUi>>(persistentListOf())
     var isMuc by mutableStateOf(false)
     var showAvatars11 by mutableStateOf(true)
     var showAttachmentPicker by mutableStateOf(false)
     var showStickerPicker by mutableStateOf(false)
     var stickerServerUrl by mutableStateOf("")
     var stickerAuthToken by mutableStateOf("")
-    var revision by mutableStateOf(0L)
     var pendingScrollTargetUuid by mutableStateOf<String?>(null)
 
-    fun update(newMessages: List<Message>, muc: Boolean, avatars11: Boolean = true) {
+    fun update(newMessages: ImmutableList<ChatMessageUi>, muc: Boolean, avatars11: Boolean = true) {
         messages = newMessages
         isMuc = muc
         showAvatars11 = avatars11
-        revision++
     }
 }
 
@@ -280,13 +280,7 @@ private sealed interface ChatRow {
     val rowKey: String
     data class DateHeader(val label: String, val key: LocalDate, override val rowKey: String) : ChatRow
     data class Msg(
-        val message: Message,
-        val status: Int,
-        val edited: Boolean,
-        val body: String,
-        val fileUrl: String,
-        val readCount: Int,
-        val reactionsCount: Int,
+        val message: ChatMessageUi,
         override val rowKey: String
     ) : ChatRow
 }
@@ -388,6 +382,7 @@ fun penikLinkified(text: String, linkColor: Color, onLinkClick: ((String) -> Uni
             }
         }
 
+val LocalPenikChatListener = compositionLocalOf<PenikChatListener> { error("No PenikChatListener provided") }
 val LocalQuoteScrollHandler = compositionLocalOf<((String, Message) -> Unit)?> { null }
 val LocalHighlightedMessageUuid = compositionLocalOf<String?> { null }
 
@@ -407,30 +402,12 @@ fun PenikChatRoom(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val rows =
-            remember(state.messages, state.revision) {
-                val seenUuids = HashSet<String>()
-                val inOrder = ArrayList<Message>()
-                for (m in state.messages) {
-                    val body = m.body ?: ""
-                    if (m.type == Message.TYPE_STATUS) {
-                        if (body.isBlank() ||
-                                body == MessageAdapter.BODY_DATE_SEPARATOR ||
-                                body == MessageAdapter.BODY_LOAD_MORE ||
-                                body == MessageAdapter.BODY_LOCAL_TIME ||
-                                body == MessageAdapter.BODY_DND) {
-                            continue
-                        }
-                    }
-                    val uid = m.uuid
-                    if (uid == null || seenUuids.add(uid)) {
-                        inOrder.add(m)
-                    }
-                }
-                val items = ArrayList<ChatRow>()
+            remember(state.messages) {
+                val items = ArrayList<ChatRow>(state.messages.size + 16)
                 val seenRowKeys = HashSet<String>()
                 var lastDay: LocalDate? = null
-                for (m in inOrder) {
-                    if (m.type != Message.TYPE_STATUS && m.timeSent > 0) {
+                for (m in state.messages) {
+                    if (m.timeSent > 0) {
                         val day =
                                 Instant.ofEpochMilli(m.timeSent)
                                         .atZone(ZoneId.systemDefault())
@@ -445,26 +422,48 @@ fun PenikChatRoom(
                             items.add(ChatRow.DateHeader(penikChatDateLabel(day), day, hKey))
                         }
                     }
-                    var mKey = "msg-${m.uuid ?: m.hashCode()}"
+                    var mKey = m.rowKey
                     if (!seenRowKeys.add(mKey)) {
                         mKey = "$mKey-${m.timeSent}-${items.size}"
                         seenRowKeys.add(mKey)
                     }
-                    items.add(
-                        ChatRow.Msg(
-                            message = m,
-                            status = m.status,
-                            edited = m.edited(),
-                            body = m.body ?: "",
-                            fileUrl = m.fileParams?.url ?: "",
-                            readCount = m.readByMarkers?.size ?: 0,
-                            reactionsCount = m.reactions?.size ?: 0,
-                            rowKey = mKey
-                        )
-                    )
+                    items.add(ChatRow.Msg(message = m, rowKey = mKey))
                 }
                 items.asReversed()
             }
+
+    val callbacks = remember(listener, activity) {
+        PenikChatCallbacks(
+            onAction = { action, uuid ->
+                val conv = activity.xmppConnectionService?.findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
+                val msg = conv?.findMessageWithUuid(uuid)
+                if (msg != null) {
+                    listener.onMessageAction(action, msg)
+                }
+            },
+            onAvatarClick = { uuid ->
+                val conv = activity.xmppConnectionService?.findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
+                val msg = conv?.findMessageWithUuid(uuid)
+                if (msg != null) {
+                    listener.onAvatarClick(msg)
+                }
+            },
+            onQuoteClick = { quote, currentUuid ->
+                val conv = activity.xmppConnectionService?.findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
+                val currentMsg = conv?.findMessageWithUuid(currentUuid)
+                if (currentMsg != null) {
+                    listener.onQuoteTargetNotFound(quote, currentMsg)
+                }
+            },
+            onBotButtonClick = { uuid, button ->
+                val conv = activity.xmppConnectionService?.findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
+                val msg = conv?.findMessageWithUuid(uuid)
+                if (msg != null) {
+                    listener.onBotButtonClick(msg, button)
+                }
+            }
+        )
+    }
     val showScrollDown by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex > 2
@@ -521,7 +520,7 @@ fun PenikChatRoom(
         }
     }
 
-    suspend fun smoothScrollTo(targetIndex: Int, targetMsg: Message? = null) {
+    suspend fun smoothScrollTo(targetIndex: Int, targetMsg: ChatMessageUi? = null) {
         val maxIdx = (rows.size - 1).coerceAtLeast(0)
         val validTarget = targetIndex.coerceIn(0, maxIdx)
         val currentIndex = listState.firstVisibleItemIndex
@@ -586,6 +585,7 @@ fun PenikChatRoom(
         derivedStateOf { jumpOriginUuids.isNotEmpty() }
     }
     CompositionLocalProvider(
+            LocalPenikChatListener provides listener,
             LocalUriHandler provides customUriHandler,
             LocalQuoteScrollHandler provides onQuoteClick,
             LocalHighlightedMessageUuid provides highlightedMessageUuid
@@ -648,14 +648,11 @@ fun PenikChatRoom(
                         is ChatRow.DateHeader -> PenikDateHeader(label = row.label)
                         is ChatRow.Msg ->
                                 PenikMessageRow(
-                                        message = row.message,
-                                        status = row.status,
-                                        edited = row.edited,
+                                        item = row.message,
                                         activity = activity,
                                         isMuc = state.isMuc,
                                         showAvatars11 = state.showAvatars11,
-                                        listener = listener,
-                                        revision = state.revision
+                                        callbacks = callbacks
                                 )
                     }
                 }
@@ -968,21 +965,21 @@ fun penikIsVideoNote(message: Message): Boolean {
 
 @Composable
 fun PenikSwipeToReplyWrapper(
-        message: Message,
-        listener: PenikChatListener,
+        uuid: String,
+        onSwipeReply: () -> Unit,
         content: @Composable () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val offsetX = remember(message.uuid) { Animatable(0f) }
+    val offsetX = remember(uuid) { Animatable(0f) }
     val density = LocalDensity.current
     val triggerThresholdPx = with(density) { 60.dp.toPx() }
     val maxDragPx = with(density) { 92.dp.toPx() }
     val haptic = LocalHapticFeedback.current
-    var hasVibrated by remember(message.uuid) { mutableStateOf(false) }
+    var hasVibrated by remember(uuid) { mutableStateOf(false) }
 
     Box(
             modifier =
-                    Modifier.fillMaxWidth().pointerInput(message.uuid) {
+                    Modifier.fillMaxWidth().pointerInput(uuid) {
                         awaitEachGesture {
                             val down = awaitFirstDown(requireUnconsumed = false)
                             val touchSlop = viewConfiguration.touchSlop
@@ -1008,7 +1005,7 @@ fun PenikSwipeToReplyWrapper(
                                                 )
                                             }
                                             if (triggered) {
-                                                listener.onMessageAction(PenikChatActions.QUOTE, message)
+                                                onSwipeReply()
                                             }
                                             hasVibrated = false
                                         }
@@ -1220,24 +1217,25 @@ fun PenikBotReplyKeyboard(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PenikMessageRow(
-        message: Message,
-        status: Int = message.status,
-        edited: Boolean = message.edited(),
+        item: ChatMessageUi,
         activity: XmppActivity,
         isMuc: Boolean,
         showAvatars11: Boolean,
-        listener: PenikChatListener,
-        revision: Long = 0L
+        callbacks: PenikChatCallbacks
 ) {
-    if (message.type == Message.TYPE_RTP_SESSION) {
-        PenikCallCard(message = message, activity = activity, listener = listener)
+    if (item.type == Message.TYPE_RTP_SESSION) {
+        val conv = activity.xmppConnectionService?.findConversationByUuid(item.conversationUuid)
+        val message = conv?.findMessageWithUuid(item.uuid)
+        if (message != null) {
+            PenikCallCard(message = message, activity = activity, listener = LocalPenikChatListener.current)
+        }
         return
     }
-    if (message.type == Message.TYPE_STATUS) {
-        PenikStatusRow(text = message.body ?: "")
+    if (item.type == Message.TYPE_STATUS) {
+        PenikStatusRow(text = item.body)
         return
     }
-    val body = message.body ?: ""
+    val body = item.body
     if (body == MessageAdapter.BODY_DATE_SEPARATOR ||
                     body == MessageAdapter.BODY_LOAD_MORE ||
                     body == MessageAdapter.BODY_LOCAL_TIME ||
@@ -1245,19 +1243,20 @@ fun PenikMessageRow(
     ) {
         return
     }
-    val isSentByMe = status != Message.STATUS_RECEIVED
+    val isSentByMe = item.isSentByMe
     val showAvatar = !isSentByMe && (isMuc || showAvatars11)
     val highlightedUuid = LocalHighlightedMessageUuid.current
-    val isHighlighted = highlightedUuid != null && highlightedUuid == message.uuid
+    val isHighlighted = highlightedUuid != null && highlightedUuid == item.uuid
     val highlightAlpha by animateFloatAsState(
             targetValue = if (isHighlighted) 0.38f else 0f,
             animationSpec = tween(durationMillis = 280),
             label = "quote_highlight"
     )
+    val listener = LocalPenikChatListener.current
 
     PenikSwipeToReplyWrapper(
-            message = message,
-            listener = listener
+            uuid = item.uuid,
+            onSwipeReply = { callbacks.onAction(PenikChatActions.QUOTE, item.uuid) }
     ) {
         Row(
                 modifier =
@@ -1274,22 +1273,25 @@ fun PenikMessageRow(
                 horizontalArrangement = if (isSentByMe) Arrangement.End else Arrangement.Start,
                 verticalAlignment = Alignment.Bottom
         ) {
+            val conv = activity.xmppConnectionService?.findConversationByUuid(item.conversationUuid)
+            val message = conv?.findMessageWithUuid(item.uuid)
+
             if (showAvatar) {
                 val context = LocalContext.current
                 val density = context.resources.displayMetrics.density
                 val sizePx = (28 * density).toInt()
-                val cachedAvatar = remember(message.uuid, revision) {
+                val cachedAvatar = remember(item.uuid) {
                     try {
-                        activity.avatarService()?.get(message, sizePx, true)
+                        if (message != null) activity.avatarService()?.get(message, sizePx, true) else null
                     } catch (e: Exception) {
                         null
                     }
                 }
-                var avatarBitmap by remember(message.uuid, revision) { mutableStateOf(cachedAvatar) }
-                LaunchedEffect(message.uuid, revision) {
+                var avatarBitmap by remember(item.uuid) { mutableStateOf(cachedAvatar) }
+                LaunchedEffect(item.uuid) {
                     val loaded = withContext(Dispatchers.IO) {
                         try {
-                            activity.avatarService()?.get(message, sizePx, false)
+                            if (message != null) activity.avatarService()?.get(message, sizePx, false) else null
                         } catch (e: Exception) {
                             null
                         }
@@ -1299,14 +1301,16 @@ fun PenikMessageRow(
                     }
                 }
                 PenikAvatarImage(
-                        name = UIHelper.getMessageDisplayName(message),
+                        name = item.senderName,
                         bitmap = avatarBitmap,
-                        backgroundColor = Color(message.avatarBackgroundColor),
+                        backgroundColor = Color(item.avatarBackgroundColor),
                         size = 28.dp,
-                        modifier = Modifier.clip(CircleShape).clickable { listener.onAvatarClick(message) }
+                        modifier = Modifier.clip(CircleShape).clickable { callbacks.onAvatarClick(item.uuid) }
                 )
                 Spacer(modifier = Modifier.width(4.dp))
             }
+
+            if (message == null) return@Row
 
             Box(
                     modifier = Modifier.weight(1f, fill = false),
@@ -1316,11 +1320,11 @@ fun PenikMessageRow(
                     modifier = Modifier.width(IntrinsicSize.Max),
                     horizontalAlignment = if (isSentByMe) Alignment.End else Alignment.Start
                 ) {
-                    val isStickerMsg = message.isSticker || (body.startsWith("{\"pack_id\":") && body.contains("\"sticker_id\":"))
+                    val isStickerMsg = item.isSticker || (body.startsWith("{\"pack_id\":") && body.contains("\"sticker_id\":"))
                     if (isStickerMsg) {
                         val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(activity) }
-                        val timeText = if (message.timeSent > 0) timeFormat.format(java.util.Date(message.timeSent)) else ""
-                        var showMenu by remember(message.uuid) { mutableStateOf(false) }
+                        val timeText = if (item.timeSent > 0) timeFormat.format(java.util.Date(item.timeSent)) else ""
+                        var showMenu by remember(item.uuid) { mutableStateOf(false) }
                         val haptic = LocalHapticFeedback.current
                         Box {
                             PenikStickerBubble(
@@ -1340,21 +1344,20 @@ fun PenikMessageRow(
                                     onDismiss = { showMenu = false },
                                     onAction = {
                                         showMenu = false
-                                        listener.onMessageAction(it, message)
+                                        callbacks.onAction(it, item.uuid)
                                     }
                                 )
                             }
                         }
-                    } else if (message.type == Message.TYPE_TEXT) {
+                    } else if (item.type == Message.TYPE_TEXT) {
                         val bareUrl = remember(body) { penikBareImageUrl(body) }
                         if (bareUrl != null) {
                             PenikUrlImageRow(
                                     url = bareUrl,
                                     message = message,
-                                    status = status,
+                                    status = item.status,
                                     isSentByMe = isSentByMe,
-                                    listener = listener,
-                                    revision = revision
+                                    listener = listener
                             )
                         } else {
                             val bareVideoUrl = remember(body) { penikBareVideoUrl(body) }
@@ -1362,42 +1365,38 @@ fun PenikMessageRow(
                             if (bareVideoUrl != null || bareAudioUrl != null) {
                                 PenikAttachmentRow(
                                         message = message,
-                                        status = status,
+                                        status = item.status,
                                         activity = activity,
                                         isSentByMe = isSentByMe,
-                                        listener = listener,
-                                        revision = revision
+                                        listener = listener
                                 )
                             } else {
                                 PenikTextBubble(
                                         message = message,
-                                        status = status,
-                                        edited = edited,
+                                        status = item.status,
+                                        edited = item.isEdited,
                                         activity = activity,
                                         isMuc = isMuc,
-                                        listener = listener,
-                                        revision = revision
+                                        listener = listener
                                 )
                             }
                         }
-                    } else if (message.isFileOrImage || message.isGeoUri || penikIsVideo(message)) {
+                    } else if (message.isFileOrImage || item.isGeoUri || penikIsVideo(message)) {
                         PenikAttachmentRow(
                                 message = message,
-                                status = status,
+                                status = item.status,
                                 activity = activity,
                                 isSentByMe = isSentByMe,
-                                listener = listener,
-                                revision = revision
+                                listener = listener
                         )
                     } else {
                         PenikTextBubble(
                                 message = message,
-                                status = status,
-                                edited = edited,
+                                status = item.status,
+                                edited = item.isEdited,
                                 activity = activity,
                                 isMuc = isMuc,
-                                listener = listener,
-                                revision = revision
+                                listener = listener
                         )
                     }
 
@@ -1489,29 +1488,22 @@ private fun findPenikQuotedMessageIndex(
         s.substringBefore("|").substringBefore("?").substringBefore("#").trim().takeIf { it.isNotBlank() }
     } else null
 
-    fun matchesAuthor(m: Message): Boolean {
+    fun matchesAuthor(m: ChatMessageUi): Boolean {
         if (author.isNullOrBlank()) return true
         val a = author.lowercase()
-        val name1 = UIHelper.getMessageDisplayName(m).lowercase()
-        val name2 = (m.counterpart?.resource ?: "").lowercase()
-        val name3 = (m.counterpart?.local ?: "").lowercase()
-        val name4 = (m.contact?.displayName ?: "").lowercase()
-        return name1 == a || a == name1 ||
-                name2 == a || a == name2 ||
-                name3 == a || a == name3 ||
-                name4 == a || a == name4 ||
-                name1.contains(a) || a.contains(name1)
+        val name1 = m.senderName.lowercase()
+        return name1 == a || a == name1 || name1.contains(a) || a.contains(name1)
     }
 
-    fun matchesContent(m: Message): Boolean {
-        val b = m.body ?: ""
+    fun matchesContent(m: ChatMessageUi): Boolean {
+        val b = m.body
 
         if (isStickerQuote) {
             val isSticker = m.type == Message.TYPE_STICKER || m.isSticker || (b.startsWith("{\"pack_id\":") && b.contains("\"sticker_id\":"))
             if (!isSticker) return false
             if (stickerId != null) return b.contains(stickerId)
             if (quoteEmoji != null) {
-                val sticker = m.sticker ?: Sticker.fromJson(b)
+                val sticker = eu.siacs.conversations.entities.Sticker.fromJson(b)
                 val candEmoji = sticker?.emoji()?.trim()
                 return if (!candEmoji.isNullOrEmpty()) {
                     candEmoji == quoteEmoji || candEmoji.contains(quoteEmoji) || quoteEmoji.contains(candEmoji)
@@ -1523,22 +1515,22 @@ private fun findPenikQuotedMessageIndex(
         }
 
         if (isPhotoQuote) {
-            val isPhotoMsg = m.type == Message.TYPE_IMAGE || (m.isFileOrImage && m.mimeType?.startsWith("image/") == true) || penikBareImageUrl(b) != null
+            val isPhotoMsg = m.type == Message.TYPE_IMAGE || (m.mimeType.startsWith("image/")) || penikBareImageUrl(b) != null
             if (!isPhotoMsg) return false
             val cleanBody = splitPenikQuote(b).second
-            return cleanBody.isBlank() || m.isFileOrImage || penikBareImageUrl(cleanBody) != null
+            return cleanBody.isBlank() || m.mimeType.startsWith("image/") || penikBareImageUrl(cleanBody) != null
         }
 
         if (isVoiceQuote) {
-            return m.isFileOrImage && (m.mimeType?.startsWith("audio/") == true || b.contains("voice"))
+            return m.mimeType.startsWith("audio/") || b.contains("voice")
         }
 
         if (isVideoQuote) {
-            return penikIsVideo(m) || (m.isFileOrImage && m.mimeType?.startsWith("video/") == true)
+            return m.mimeType.startsWith("video/")
         }
 
         if (isFileQuote) {
-            return m.isFileOrImage || m.type == Message.TYPE_FILE
+            return m.mimeType.isNotEmpty() || m.type == Message.TYPE_FILE
         }
 
         if (isGeoQuote) {
@@ -1546,13 +1538,13 @@ private fun findPenikQuotedMessageIndex(
         }
 
         if (urlBase != null) {
-            val mFileUrl = m.fileParams?.url ?: ""
+            val mFileUrl = m.fileUrl ?: ""
             val cleanBody = splitPenikQuote(b).second
             return cleanBody.contains(urlBase) || mFileUrl.contains(urlBase)
         }
 
         // Regular text quote: candidate MUST be a text message, NOT an attachment, audio, or sticker
-        if (m.type != Message.TYPE_TEXT || m.isFileOrImage || m.isSticker || m.isGeoUri) {
+        if (m.type != Message.TYPE_TEXT || m.mimeType.isNotEmpty() || m.isSticker || m.isGeoUri) {
             return false
         }
 

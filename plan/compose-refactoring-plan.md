@@ -233,13 +233,13 @@ Decompose monolithic files into focused feature packages:
   - [x] Prefetch preview messages (`getMessages(c, 1)`) on background `Executor`, mutate and sort on Main
   - [x] Implement generation-guard and `emptyCheckedKeys` cache (`account.uuid:conversation.uuid`)
   - [x] Remove synchronous `getMessages(...)` from `remember` in `PenikConversationRow` and `PenikSelfRow`
-- [ ] **Phase 2: Immutable UI Models & Stability**
-  - [ ] Create `@Immutable` models `ChatMessageUi` and `ConversationUi`
-  - [ ] Replace Guava `ImmutableList` with `kotlinx.collections.immutable.ImmutableList`
-  - [ ] Remove `revision`, `bumpRevision()`, and `neverEqualPolicy()`
-  - [ ] Implement immutable snapshot extraction and UUID-based diff-mapper
-  - [ ] Stabilize callbacks using `remember(uuid, callbacks)`
-  - [ ] Verify skipped recompositions in Layout Inspector
+- [x] **Phase 2: Immutable UI Models & Stability**
+  - [x] Create `@Immutable` models `ChatMessageUi` and `ConversationUi`
+  - [x] Replace Guava `ImmutableList` with `kotlinx.collections.immutable.ImmutableList`
+  - [x] Remove `revision`, `bumpRevision()`, and `neverEqualPolicy()`
+  - [x] Implement immutable snapshot extraction and UUID-based diff-mapper
+  - [x] Stabilize callbacks using `remember(uuid, callbacks)`
+  - [x] Verify skipped recompositions in Layout Inspector
 - [ ] **Phase 3: Monolith Decomposition**
   - [ ] Split `PenikChatRoom.kt` into `chat/components/` and `chat/viewers/`
   - [ ] Split `PenikChatsList.kt` into `main/` modular rows and tab components

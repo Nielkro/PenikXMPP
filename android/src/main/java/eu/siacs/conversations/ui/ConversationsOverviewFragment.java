@@ -88,6 +88,7 @@ import eu.siacs.conversations.ui.compose.PenikChatsBridge;
 import eu.siacs.conversations.ui.compose.PenikChatsListener;
 import eu.siacs.conversations.ui.compose.PenikChatsState;
 import eu.siacs.conversations.ui.compose.PenikConnectionState;
+import eu.siacs.conversations.ui.compose.PenikConversationMapper;
 import eu.siacs.conversations.ui.interfaces.OnConversationArchived;
 import eu.siacs.conversations.ui.interfaces.OnConversationSelected;
 import eu.siacs.conversations.ui.util.PendingActionHelper;
@@ -690,15 +691,14 @@ public class ConversationsOverviewFragment extends XmppFragment {
             }
         }
         Collections.sort(main);
-        this.penikChatsState.setConversations(ImmutableList.copyOf(main));
-        this.penikChatsState.setArchived(ImmutableList.copyOf(archived));
+        this.penikChatsState.setConversations(PenikConversationMapper.map(main, requireContext()));
+        this.penikChatsState.setArchived(PenikConversationMapper.map(archived, requireContext()));
         this.penikChatsState.setConnectionState(
                 online
                         ? PenikConnectionState.ONLINE
                         : connecting ? PenikConnectionState.CONNECTING : PenikConnectionState.OFFLINE);
-        this.penikChatsState.setSelfChat(self);
+        this.penikChatsState.setSelfChat(self != null ? PenikConversationMapper.mapSingle(self, requireContext(), null) : null);
         this.penikChatsState.setAccount(firstEnabled);
-        this.penikChatsState.bumpRevision();
         this.binding.emptyChatHint.setVisibility(View.GONE);
         this.binding.composeList.setVisibility(View.VISIBLE);
 
@@ -752,9 +752,8 @@ public class ConversationsOverviewFragment extends XmppFragment {
                     }
                     if (changed) {
                         Collections.sort(finalMain);
-                        this.penikChatsState.setConversations(ImmutableList.copyOf(finalMain));
-                        this.penikChatsState.setArchived(ImmutableList.copyOf(finalArchived));
-                        this.penikChatsState.bumpRevision();
+                        this.penikChatsState.setConversations(PenikConversationMapper.map(finalMain, requireContext()));
+                        this.penikChatsState.setArchived(PenikConversationMapper.map(finalArchived, requireContext()));
                     }
                 });
             });
