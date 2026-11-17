@@ -369,9 +369,9 @@ fun PenikVideoViewer(
         onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val service = activity.xmppConnectionService
+    val fileBackend = eu.siacs.conversations.ui.compose.PenikRepository.getInstance().fileBackend
     val rawLocalFile = remember(message.uuid) {
-        service?.fileBackend?.getFile(message, false)
+        fileBackend?.getFile(message, false)
     }
     var localFileExists by remember(message.uuid) { mutableStateOf(false) }
     LaunchedEffect(rawLocalFile?.absolutePath) {

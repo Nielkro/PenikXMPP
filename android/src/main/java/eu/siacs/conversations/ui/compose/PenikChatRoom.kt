@@ -432,31 +432,31 @@ fun PenikChatRoom(
                 items.asReversed()
             }
 
-    val callbacks = remember(listener, activity) {
+    val callbacks = remember(listener) {
         PenikChatCallbacks(
             onAction = { action, uuid ->
-                val conv = activity.xmppConnectionService?.findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
+                val conv = PenikRepository.getInstance().findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
                 val msg = conv?.findMessageWithUuid(uuid)
                 if (msg != null) {
                     listener.onMessageAction(action, msg)
                 }
             },
             onAvatarClick = { uuid ->
-                val conv = activity.xmppConnectionService?.findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
+                val conv = PenikRepository.getInstance().findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
                 val msg = conv?.findMessageWithUuid(uuid)
                 if (msg != null) {
                     listener.onAvatarClick(msg)
                 }
             },
             onQuoteClick = { quote, currentUuid ->
-                val conv = activity.xmppConnectionService?.findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
+                val conv = PenikRepository.getInstance().findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
                 val currentMsg = conv?.findMessageWithUuid(currentUuid)
                 if (currentMsg != null) {
                     listener.onQuoteTargetNotFound(quote, currentMsg)
                 }
             },
             onBotButtonClick = { uuid, button ->
-                val conv = activity.xmppConnectionService?.findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
+                val conv = PenikRepository.getInstance().findConversationByUuid(state.messages.firstOrNull()?.conversationUuid ?: "")
                 val msg = conv?.findMessageWithUuid(uuid)
                 if (msg != null) {
                     listener.onBotButtonClick(msg, button)
@@ -976,7 +976,7 @@ fun PenikMessageRow(
         callbacks: PenikChatCallbacks
 ) {
     if (item.type == Message.TYPE_RTP_SESSION) {
-        val conv = activity.xmppConnectionService?.findConversationByUuid(item.conversationUuid)
+        val conv = PenikRepository.getInstance().findConversationByUuid(item.conversationUuid)
         val message = conv?.findMessageWithUuid(item.uuid)
         if (message != null) {
             PenikCallCard(message = message, activity = activity, listener = LocalPenikChatListener.current)
@@ -1025,7 +1025,7 @@ fun PenikMessageRow(
                 horizontalArrangement = if (isSentByMe) Arrangement.End else Arrangement.Start,
                 verticalAlignment = Alignment.Bottom
         ) {
-            val conv = activity.xmppConnectionService?.findConversationByUuid(item.conversationUuid)
+            val conv = PenikRepository.getInstance().findConversationByUuid(item.conversationUuid)
             val message = conv?.findMessageWithUuid(item.uuid)
 
             if (showAvatar) {
@@ -1927,9 +1927,9 @@ fun PenikAttachmentRow(
     val isVideo = penikIsVideo(message)
     val isVideoNote = penikIsVideoNote(message)
 
-    val service = activity.xmppConnectionService
+    val fileBackend = PenikRepository.getInstance().fileBackend
     val rawFile = remember(message.uuid) {
-        service?.fileBackend?.getFile(message, false)
+        fileBackend?.getFile(message, false)
     }
     var fileExists by remember(message.uuid) { mutableStateOf(false) }
     LaunchedEffect(rawFile?.absolutePath) {
@@ -2018,7 +2018,7 @@ fun PenikAttachmentRow(
                 if (currentTotal <= 0L) {
                     val len = withContext(Dispatchers.IO) {
                         try {
-                            activity.xmppConnectionService?.fileBackend?.getFile(message, false)?.takeIf { it.exists() }?.length() ?: 0L
+                            PenikRepository.getInstance().fileBackend?.getFile(message, false)?.takeIf { it.exists() }?.length() ?: 0L
                         } catch (e: Exception) {
                             0L
                         }
@@ -2149,7 +2149,7 @@ fun PenikAttachmentRow(
             val onBubbleClick: () -> Unit = if (isVoice) {
                 {
                     val file = try {
-                        activity.xmppConnectionService?.fileBackend?.getFile(message)
+                        PenikRepository.getInstance().fileBackend?.getFile(message)
                     } catch (e: Exception) {
                         null
                     }
@@ -2226,7 +2226,7 @@ fun PenikAttachmentRow(
     }
 
     if (showImageViewer) {
-        val fallbackModel = resolvedModel ?: runCatching { service?.fileBackend?.getThumbnail(message, 1280, false) }.getOrNull()
+        val fallbackModel: Any? = resolvedModel ?: runCatching { PenikRepository.getInstance().fileBackend?.getThumbnail(message, 1280, false) }.getOrNull()
         PenikImageViewer(
                 model = fallbackModel,
                 message = message,
@@ -2342,10 +2342,10 @@ fun PenikUrlImageRow(
 
 @Composable
 fun PenikImageThumb(message: Message, activity: XmppActivity, fgColor: Color) {
-    val service = activity.xmppConnectionService
+    val fileBackend = PenikRepository.getInstance().fileBackend
     var bitmap by remember(message.uuid) { mutableStateOf<Bitmap?>(null) }
     val rawFile = remember(message.uuid) {
-        service?.fileBackend?.getFile(message, false)
+        fileBackend?.getFile(message, false)
     }
     var localFileExists by remember(message.uuid) { mutableStateOf(false) }
     LaunchedEffect(rawFile?.absolutePath) {
@@ -2360,13 +2360,13 @@ fun PenikImageThumb(message: Message, activity: XmppActivity, fgColor: Color) {
     }
     val localFile = if (localFileExists) rawFile else null
     LaunchedEffect(message.uuid) {
-        if (service == null || localFile != null) {
+        if (fileBackend == null || localFile != null) {
             return@LaunchedEffect
         }
         bitmap =
                 withContext(Dispatchers.IO) {
                     try {
-                        service.fileBackend.getThumbnail(message, 640, false)
+                        fileBackend.getThumbnail(message, 640, false)
                     } catch (e: Exception) {
                         null
                     }
@@ -2421,10 +2421,10 @@ fun PenikImageThumb(message: Message, activity: XmppActivity, fgColor: Color) {
 
 @Composable
 fun PenikVideoThumb(message: Message, activity: XmppActivity, fgColor: Color) {
-    val service = activity.xmppConnectionService
+    val fileBackend = PenikRepository.getInstance().fileBackend
     var bitmap by remember(message.uuid) { mutableStateOf<Bitmap?>(null) }
     val rawFile = remember(message.uuid) {
-        service?.fileBackend?.getFile(message, false)
+        fileBackend?.getFile(message, false)
     }
     var localFileExists by remember(message.uuid) { mutableStateOf(false) }
     LaunchedEffect(rawFile?.absolutePath) {
@@ -2439,10 +2439,10 @@ fun PenikVideoThumb(message: Message, activity: XmppActivity, fgColor: Color) {
     }
     val localFile = if (localFileExists) rawFile else null
     LaunchedEffect(message.uuid) {
-        if (service == null) return@LaunchedEffect
+        if (fileBackend == null) return@LaunchedEffect
         bitmap = withContext(Dispatchers.IO) {
             try {
-                service.fileBackend.getThumbnail(message, 640, false)
+                fileBackend.getThumbnail(message, 640, false)
             } catch (e: Exception) {
                 null
             }

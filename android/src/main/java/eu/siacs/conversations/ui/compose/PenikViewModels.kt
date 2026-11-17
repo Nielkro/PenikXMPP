@@ -1,7 +1,17 @@
 package eu.siacs.conversations.ui.compose
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import eu.siacs.conversations.domain.usecase.DeleteMessageUseCase
+import eu.siacs.conversations.domain.usecase.ResendMessageUseCase
+import eu.siacs.conversations.domain.usecase.SendAttachmentsUseCase
+import eu.siacs.conversations.domain.usecase.SendMessageUseCase
+import eu.siacs.conversations.domain.usecase.SendStickerUseCase
+import eu.siacs.conversations.entities.Conversation
+import eu.siacs.conversations.entities.Message
+import eu.siacs.conversations.entities.Sticker
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +30,7 @@ sealed interface PenikNavEffect {
 sealed interface PenikChatUiEffect {
     data class ScrollToMessage(val uuid: String) : PenikChatUiEffect
     data class ShowError(val error: String) : PenikChatUiEffect
+    data class ShowNotice(val notice: String) : PenikChatUiEffect
 }
 
 class PenikChatsViewModel(
@@ -62,7 +73,12 @@ class PenikChatsViewModel(
 }
 
 class PenikChatViewModel(
-    private val repository: PenikRepository = PenikRepository.getInstance()
+    private val repository: PenikRepository = PenikRepository.getInstance(),
+    private val sendMessageUseCase: SendMessageUseCase = SendMessageUseCase { repository.getService() },
+    private val sendStickerUseCase: SendStickerUseCase = SendStickerUseCase { repository.getService() },
+    private val sendAttachmentsUseCase: SendAttachmentsUseCase = SendAttachmentsUseCase { repository.getService() },
+    private val deleteMessageUseCase: DeleteMessageUseCase = DeleteMessageUseCase { repository.getService() },
+    private val resendMessageUseCase: ResendMessageUseCase = ResendMessageUseCase { repository.getService() }
 ) : ViewModel() {
 
     val messages: StateFlow<ImmutableList<ChatMessageUi>> = repository.chatMessages
@@ -90,5 +106,50 @@ class PenikChatViewModel(
 
     fun showError(error: String) {
         _transientNotice.trySend(error)
+    }
+
+    fun sendMessage(conversation: Conversation, text: String, replyMessage: Message? = null) {
+        viewModelScope.launch {
+            val result = sendMessageUseCase(conversation, text, replyMessage)
+            result.onFailure { error ->
+                _actionEffect.send(PenikChatUiEffect.ShowError(error.localizedMessage ?: "Failed to send message"))
+            }
+        }
+    }
+
+    fun sendSticker(conversation: Conversation, sticker: Sticker, context: Context? = null) {
+        viewModelScope.launch {
+            val result = sendStickerUseCase(conversation, sticker, context)
+            result.onFailure { error ->
+                _actionEffect.send(PenikChatUiEffect.ShowError(error.localizedMessage ?: "Failed to send sticker"))
+            }
+        }
+    }
+
+    fun sendAttachments(conversation: Conversation, uris: List<Uri>, context: Context) {
+        viewModelScope.launch {
+            val result = sendAttachmentsUseCase(conversation, uris, context)
+            result.onFailure { error ->
+                _actionEffect.send(PenikChatUiEffect.ShowError(error.localizedMessage ?: "Failed to send attachments"))
+            }
+        }
+    }
+
+    fun deleteMessage(message: Message) {
+        viewModelScope.launch {
+            val result = deleteMessageUseCase(message)
+            result.onFailure { error ->
+                _actionEffect.send(PenikChatUiEffect.ShowError(error.localizedMessage ?: "Failed to delete message"))
+            }
+        }
+    }
+
+    fun resendMessage(message: Message, forceP2P: Boolean = false) {
+        viewModelScope.launch {
+            val result = resendMessageUseCase(message, forceP2P)
+            result.onFailure { error ->
+                _actionEffect.send(PenikChatUiEffect.ShowError(error.localizedMessage ?: "Failed to resend message"))
+            }
+        }
     }
 }

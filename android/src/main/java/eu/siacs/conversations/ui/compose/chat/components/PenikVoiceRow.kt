@@ -238,11 +238,11 @@ fun PenikVoiceRow(
 ) {
     val context = LocalContext.current
     val accent = colorResource(R.color.penik_accent)
-    val service = activity.xmppConnectionService
+    val fileBackend = PenikRepository.getInstance().fileBackend
     val file =
             remember(message.uuid) {
                 try {
-                    service?.fileBackend?.getFile(message)
+                    fileBackend?.getFile(message)
                 } catch (e: Exception) {
                     null
                 }

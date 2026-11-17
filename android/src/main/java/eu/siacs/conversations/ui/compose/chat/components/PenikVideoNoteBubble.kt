@@ -134,9 +134,9 @@ fun PenikVideoNoteBubble(
         onLongClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val service = activity.xmppConnectionService
+    val fileBackend = PenikRepository.getInstance().fileBackend
     val rawLocalFile = remember(message.uuid, status, message.relativeFilePath) {
-        service?.fileBackend?.getFile(message, false)
+        fileBackend?.getFile(message, false)
     }
     var localFileValid by remember(message.uuid, status, message.relativeFilePath) { mutableStateOf(false) }
     LaunchedEffect(rawLocalFile?.absolutePath) {
@@ -187,7 +187,7 @@ fun PenikVideoNoteBubble(
 
     val isTranscodingOrUploading = status == Message.STATUS_WAITING || message.transferable != null
     val previewModel = remember(message.uuid, status, localFile?.absolutePath) {
-        service?.bitmapCache?.get(message.uuid) ?: localFile
+        PenikRepository.getInstance().getService()?.bitmapCache?.get(message.uuid) ?: localFile
     }
 
     Box(

@@ -143,6 +143,14 @@ Map of core source files for the PenikXMPP project (Conversations XMPP fork, reb
 - `android/src/main/java/eu/siacs/conversations/worker/ExportBackupWorker.java` — Encrypted `.ceb` backup export.
 - `android/src/main/java/eu/siacs/conversations/worker/ImportBackupWorker.java` — Backup restore.
 
+## Domain & Use Cases
+
+- `android/src/main/java/eu/siacs/conversations/domain/usecase/SendMessageUseCase.kt` — Domain UseCase for message validation, quote synthesis, encryption preparation, and dispatch.
+- `android/src/main/java/eu/siacs/conversations/domain/usecase/SendStickerUseCase.kt` — Domain UseCase for sticker URL resolution, message creation, recent sticker caching, and dispatch.
+- `android/src/main/java/eu/siacs/conversations/domain/usecase/SendAttachmentsUseCase.kt` — Domain UseCase for file and photo attachment extraction, compression, and dispatch.
+- `android/src/main/java/eu/siacs/conversations/domain/usecase/DeleteMessageUseCase.kt` — Domain UseCase for file cleanup, preview eviction, database deletion, and notification clearing.
+- `android/src/main/java/eu/siacs/conversations/domain/usecase/ResendMessageUseCase.kt` — Domain UseCase for retrying failed message delivery.
+
 ## UI
 
 ### Top-Level Activities

@@ -39,6 +39,11 @@ class PenikRepository private constructor() {
 
     fun getService(): XmppConnectionService? = serviceRef
 
+    val fileBackend get() = serviceRef?.fileBackend
+    val databaseBackend get() = serviceRef?.databaseBackend
+
+    fun findConversationByUuid(uuid: String): Conversation? = serviceRef?.findConversationByUuid(uuid)
+
     fun updateConversations(mainList: List<Conversation>, archivedList: List<Conversation>, context: Context) {
         val mappedMain = PenikConversationMapper.map(mainList, context)
         val mappedArchived = PenikConversationMapper.map(archivedList, context)

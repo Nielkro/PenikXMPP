@@ -140,10 +140,12 @@ import eu.siacs.conversations.ui.compose.PenikChatActions;
 import eu.siacs.conversations.ui.compose.PenikChatBridge;
 import eu.siacs.conversations.ui.compose.PenikChatListener;
 import eu.siacs.conversations.ui.compose.PenikChatState;
+import eu.siacs.conversations.ui.compose.PenikChatViewModel;
 import eu.siacs.conversations.ui.compose.PenikMessageMapper;
 import eu.siacs.conversations.ui.compose.PenikRepository;
 import eu.siacs.conversations.ui.compose.PenikVideoNotePlayer;
 import eu.siacs.conversations.ui.compose.PenikVoicePlayer;
+import androidx.lifecycle.ViewModelProvider;
 import eu.siacs.conversations.ui.PenikProfileActivity;
 import eu.siacs.conversations.ui.util.PenikVideoNoteTranscoder;
 import eu.siacs.conversations.ui.util.ActivityResult;
@@ -353,6 +355,7 @@ public class ConversationFragment extends XmppFragment
                 }
             };
     private Toast messageLoaderToast;
+    private PenikChatViewModel penikChatViewModel;
     private boolean reInitRequiredOnStart = true;
     private MediaRecorder inlineVoiceRecorder;
     private Stopwatch inlineVoiceStopwatch;
@@ -1172,6 +1175,12 @@ public class ConversationFragment extends XmppFragment
         if (body.isEmpty() || conversation == null) {
             return;
         }
+        if (this.penikChatViewModel != null && conversation.getNextEncryption() != Message.ENCRYPTION_PGP && conversation.getCorrectingMessage() == null) {
+            this.penikChatViewModel.sendMessage(conversation, body, this.activeReplyMessage);
+            clearActiveReply();
+            this.binding.textInput.setText("");
+            return;
+        }
         if (this.activeReplyMessage != null) {
             final String author;
             if (activeReplyMessage.getStatus() == Message.STATUS_RECEIVED) {
@@ -1659,6 +1668,7 @@ public class ConversationFragment extends XmppFragment
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.penikChatViewModel = new ViewModelProvider(this).get(PenikChatViewModel.class);
         requireActivity()
                 .getOnBackPressedDispatcher()
                 .addCallback(this, this.attachmentChoicesBackPressed);
@@ -4213,6 +4223,10 @@ public class ConversationFragment extends XmppFragment
         if (conversation == null || sticker == null) {
             return;
         }
+        if (this.penikChatViewModel != null) {
+            this.penikChatViewModel.sendSticker(conversation, sticker, getContext());
+            return;
+        }
         if (trustKeysIfNeeded(conversation, REQUEST_TRUST_KEYS_TEXT)) {
             return;
         }
@@ -4246,7 +4260,13 @@ public class ConversationFragment extends XmppFragment
             case PenikChatActions.CORRECT -> correctMessage(message);
             case PenikChatActions.SHARE -> ShareUtil.share(requireXmppActivity(), message);
             case PenikChatActions.SAVE_FILE -> saveFile(message);
-            case PenikChatActions.RESEND -> resendMessage(message, false);
+            case PenikChatActions.RESEND -> {
+                if (this.penikChatViewModel != null) {
+                    this.penikChatViewModel.resendMessage(message, false);
+                } else {
+                    resendMessage(message, false);
+                }
+            }
             case PenikChatActions.DELETE -> {
                 final var builder = new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireActivity());
                 builder.setTitle(R.string.delete_message);
@@ -4255,27 +4275,31 @@ public class ConversationFragment extends XmppFragment
                 builder.setPositiveButton(
                         R.string.delete,
                         (dialog, which) -> {
-                            if (message.isFileOrImage()) {
-                                try {
-                                    final var xmppService = requireXmppActivity().xmppConnectionService;
-                                    if (xmppService != null) {
-                                        xmppService.getFileBackend().deleteFile(message);
-                                        xmppService.evictPreview(message.getUuid());
+                            if (this.penikChatViewModel != null) {
+                                this.penikChatViewModel.deleteMessage(message);
+                            } else {
+                                if (message.isFileOrImage()) {
+                                    try {
+                                        final var xmppService = requireXmppActivity().xmppConnectionService;
+                                        if (xmppService != null) {
+                                            xmppService.getFileBackend().deleteFile(message);
+                                            xmppService.evictPreview(message.getUuid());
+                                        }
+                                    } catch (final Exception e) {
+                                        Log.w(Config.LOGTAG, "could not delete file for message", e);
                                     }
-                                } catch (final Exception e) {
-                                    Log.w(Config.LOGTAG, "could not delete file for message", e);
                                 }
-                            }
-                            DatabaseBackend.getInstance(requireContext())
-                                    .deleteMessage(message.getUuid());
-                            if (this.conversation != null) {
-                                this.conversation.remove(message);
+                                DatabaseBackend.getInstance(requireContext())
+                                        .deleteMessage(message.getUuid());
+                                if (this.conversation != null) {
+                                    this.conversation.remove(message);
+                                }
+                                if (requireXmppActivity().xmppConnectionService != null) {
+                                    requireXmppActivity().xmppConnectionService.getNotificationService().clear(message);
+                                }
                             }
                             synchronized (this.messageList) {
                                 this.messageList.remove(message);
-                            }
-                            if (requireXmppActivity().xmppConnectionService != null) {
-                                requireXmppActivity().xmppConnectionService.getNotificationService().clear(message);
                             }
                             requireConversationsActivity().onConversationsListItemUpdated();
                             refresh();
@@ -4451,6 +4475,10 @@ public class ConversationFragment extends XmppFragment
 
     public void onSendRecentMedias(final List<Uri> uris) {
         if (uris == null || uris.isEmpty() || this.conversation == null) {
+            return;
+        }
+        if (this.penikChatViewModel != null) {
+            this.penikChatViewModel.sendAttachments(this.conversation, uris, requireContext());
             return;
         }
         final List<Attachment> attachments = Attachment.of(requireContext(), uris, null);
