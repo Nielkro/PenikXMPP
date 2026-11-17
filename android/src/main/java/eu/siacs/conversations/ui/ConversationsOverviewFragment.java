@@ -89,6 +89,7 @@ import eu.siacs.conversations.ui.compose.PenikChatsListener;
 import eu.siacs.conversations.ui.compose.PenikChatsState;
 import eu.siacs.conversations.ui.compose.PenikConnectionState;
 import eu.siacs.conversations.ui.compose.PenikConversationMapper;
+import eu.siacs.conversations.ui.compose.PenikRepository;
 import eu.siacs.conversations.ui.interfaces.OnConversationArchived;
 import eu.siacs.conversations.ui.interfaces.OnConversationSelected;
 import eu.siacs.conversations.ui.util.PendingActionHelper;
@@ -330,6 +331,12 @@ public class ConversationsOverviewFragment extends XmppFragment {
     public void onDestroyView() {
         super.onDestroyView();
         this.binding = null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        PenikRepository.getInstance().detachService();
     }
 
     @Override
@@ -589,6 +596,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
         refresh();
         final XmppActivity xmppActivity = requireXmppActivity();
         if (xmppActivity != null && xmppActivity.xmppConnectionService != null) {
+            PenikRepository.getInstance().attachService(xmppActivity.xmppConnectionService);
             PenikPhoneDirectoryManager.syncPhoneContacts(
                     xmppActivity.xmppConnectionService, null);
         }
@@ -693,6 +701,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
         Collections.sort(main);
         this.penikChatsState.setConversations(PenikConversationMapper.map(main, requireContext()));
         this.penikChatsState.setArchived(PenikConversationMapper.map(archived, requireContext()));
+        PenikRepository.getInstance().updateConversations(main, archived, requireContext());
         this.penikChatsState.setConnectionState(
                 online
                         ? PenikConnectionState.ONLINE

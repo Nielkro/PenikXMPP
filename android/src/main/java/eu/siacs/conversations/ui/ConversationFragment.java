@@ -141,6 +141,7 @@ import eu.siacs.conversations.ui.compose.PenikChatBridge;
 import eu.siacs.conversations.ui.compose.PenikChatListener;
 import eu.siacs.conversations.ui.compose.PenikChatState;
 import eu.siacs.conversations.ui.compose.PenikMessageMapper;
+import eu.siacs.conversations.ui.compose.PenikRepository;
 import eu.siacs.conversations.ui.compose.PenikVideoNotePlayer;
 import eu.siacs.conversations.ui.compose.PenikVoicePlayer;
 import eu.siacs.conversations.ui.PenikProfileActivity;
@@ -2100,6 +2101,12 @@ public class ConversationFragment extends XmppFragment
         if (getActivity() instanceof ConversationsActivity ca) {
             ca.onConversationsListItemUpdated();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        PenikRepository.getInstance().detachService();
     }
 
     private void quoteText(String text) {
@@ -4181,6 +4188,10 @@ public class ConversationFragment extends XmppFragment
                 mappedMessages,
                 isMuc,
                 showAvatars11);
+        PenikRepository.getInstance().updateChatMessages(
+                this.messageList,
+                isMuc,
+                showAvatars11);
         if (this.conversation.isBot() && this.conversation.getBotReplyMarkup() == null) {
             for (int i = this.messageList.size() - 1; i >= 0; i--) {
                 final Message m = this.messageList.get(i);
@@ -5197,6 +5208,10 @@ public class ConversationFragment extends XmppFragment
     @Override
     public void onBackendConnected() {
         Log.d(Config.LOGTAG, "ConversationFragment.onBackendConnected()");
+        final XmppActivity xmppActivity = requireXmppActivity();
+        if (xmppActivity != null && xmppActivity.xmppConnectionService != null) {
+            PenikRepository.getInstance().attachService(xmppActivity.xmppConnectionService);
+        }
         String uuid = pendingConversationsUuid.pop();
         if (uuid != null) {
             if (!findAndReInitByUuidOrArchive(uuid)) {

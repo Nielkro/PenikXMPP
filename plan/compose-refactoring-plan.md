@@ -244,9 +244,9 @@ Decompose monolithic files into focused feature packages:
   - [x] Split `PenikChatRoom.kt` into `chat/components/` and `chat/viewers/`
   - [x] Split `PenikChatsList.kt` into `main/` modular rows and tab components
   - [x] Isolate leaf components from domain entities and enable `@Preview`
-- [ ] **Phase 4: Reactive Layer**
-  - [ ] Implement `PenikRepository` with ref-counting and cleanup in `onDestroy()`
-  - [ ] Create ViewModels with `StateFlow` and `collectAsStateWithLifecycle()`
-  - [ ] Segregate `UiEffect` channels: buffered for dialogs, conflated for snackbars
+- [x] **Phase 4: Reactive Layer**
+  - [x] Implement `PenikRepository` with ref-counting and cleanup in `onDestroy()`
+  - [x] Create ViewModels with `StateFlow` and `collectAsStateWithLifecycle()`
+  - [x] Segregate `UiEffect` channels: buffered for dialogs, conflated for snackbars
 - [ ] **Phase 5: Navigation**
   - [ ] Introduce scoped `navigation-compose` for nested screens without breaking activities
