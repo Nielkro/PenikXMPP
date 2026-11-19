@@ -2029,14 +2029,16 @@ fun PenikAttachmentRow(
         } else if (isImage || isVideo) {
             val t = message.transferable
             val transferStatus = t?.status
-            val isTranscoding = transferStatus == Transferable.STATUS_TRANSCODING
-            val isActivelyUploading = t != null && (transferStatus == Transferable.STATUS_UPLOADING || transferStatus == Transferable.STATUS_CHECKING)
-            val isStalledUpload = isSentByMe && message.fileParams?.url == null && !isTranscoding && !isActivelyUploading && (
+            val isFailed = status == Message.STATUS_SEND_FAILED
+            val isTranscoding = !isFailed && transferStatus == Transferable.STATUS_TRANSCODING
+            val isActivelyUploading = !isFailed && t != null && (transferStatus == Transferable.STATUS_UPLOADING || transferStatus == Transferable.STATUS_CHECKING)
+            val isStalledUpload = isSentByMe && !isFailed && message.fileParams?.url == null && !isTranscoding && !isActivelyUploading && (
                     message.needsUploading() ||
                     status == Message.STATUS_UNSEND ||
                     status == Message.STATUS_WAITING
             )
             val isUploading = isTranscoding || isActivelyUploading || isStalledUpload
+            val showTopBadge = isUploading || isFailed
             val initialTotal = remember(message.uuid, revision) {
                 t?.fileSize?.takeIf { it > 0L }
                     ?: message.fileParams?.getSize()?.takeIf { it > 0L }
@@ -2071,7 +2073,7 @@ fun PenikAttachmentRow(
                                     .background(Color(0x15FFFFFF))
                                     .combinedClickable(
                                             onClick = {
-                                                if (isStalledUpload) {
+                                                if (isFailed || isStalledUpload) {
                                                     listener.onMessageAction(PenikChatActions.RESEND, message)
                                                     return@combinedClickable
                                                 }
@@ -2095,8 +2097,9 @@ fun PenikAttachmentRow(
                 } else {
                     PenikImageThumb(message = message, activity = activity, fgColor = fgColor)
                 }
-                if (isUploading) {
+                if (showTopBadge) {
                     val badgeText = when {
+                        isFailed -> "Ошибка. Нажмите для повтора"
                         isTranscoding -> "Сжатие $transcodePercent%"
                         isStalledUpload -> "Ожидание отправки..."
                         currentTotal > 0L -> {
@@ -2109,17 +2112,18 @@ fun PenikAttachmentRow(
                         }
                         else -> "Загрузка..."
                     }
-                    val badgeIcon = if (isTranscoding || isStalledUpload) {
-                        painterResource(R.drawable.ic_schedule_24dp)
-                    } else {
-                        painterResource(R.drawable.ic_upload_24dp)
+                    val badgeIcon = when {
+                        isFailed -> painterResource(R.drawable.ic_refresh_24dp)
+                        isTranscoding || isStalledUpload -> painterResource(R.drawable.ic_schedule_24dp)
+                        else -> painterResource(R.drawable.ic_upload_24dp)
                     }
+                    val badgeBgColor = if (isFailed) danger.copy(alpha = 0.85f) else Color.Black.copy(alpha = 0.55f)
                     Box(
                             modifier =
                                     Modifier.align(Alignment.TopStart)
                                             .padding(6.dp)
                                             .clip(RoundedCornerShape(8.dp))
-                                            .background(Color.Black.copy(alpha = 0.55f))
+                                            .background(badgeBgColor)
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
