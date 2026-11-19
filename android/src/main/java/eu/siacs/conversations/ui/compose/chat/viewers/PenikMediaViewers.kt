@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -370,21 +371,10 @@ fun PenikVideoViewer(
 ) {
     val context = LocalContext.current
     val fileBackend = eu.siacs.conversations.ui.compose.PenikRepository.getInstance().fileBackend
-    val rawLocalFile = remember(message.uuid) {
-        fileBackend?.getFile(message, false)
+    val localFile = remember(message.uuid) {
+        val f = try { fileBackend?.getFile(message, false) } catch (e: Exception) { null }
+        if (f != null && f.exists() && f.length() > 0L) f else null
     }
-    var localFileExists by remember(message.uuid) { mutableStateOf(false) }
-    LaunchedEffect(rawLocalFile?.absolutePath) {
-        val file = rawLocalFile
-        localFileExists = if (file != null) {
-            withContext(Dispatchers.IO) {
-                try { file.exists() } catch (e: Exception) { false }
-            }
-        } else {
-            false
-        }
-    }
-    val localFile = if (localFileExists) rawLocalFile else null
     val rawUrl = message.fileParams?.url ?: message.body?.trim()
     val videoUri = remember(message.uuid, localFile) {
         if (localFile != null) {
@@ -396,14 +386,15 @@ fun PenikVideoViewer(
         }
     }
 
+    val initialRuntimeSec = message.fileParams?.runtime ?: 0
+    var isPrepared by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
     var currentPositionMs by remember { mutableStateOf(0) }
-    var durationMs by remember { mutableStateOf(0) }
+    var durationMs by remember { mutableStateOf(initialRuntimeSec * 1000) }
     var showControls by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
     var videoViewRef by remember { mutableStateOf<VideoView?>(null) }
     var mediaPlayerRef by remember { mutableStateOf<MediaPlayer?>(null) }
-    val initialRuntimeSec = message.fileParams?.runtime ?: 0
     var isLooping by remember(message.uuid) {
         mutableStateOf(initialRuntimeSec in 1..30)
     }
@@ -473,10 +464,12 @@ fun PenikVideoViewer(
                             VideoView(ctx).apply {
                                 setVideoURI(videoUri)
                                 setOnPreparedListener { mp ->
+                                    isPrepared = true
                                     mediaPlayerRef = mp
-                                    durationMs = mp.duration
+                                    val dur = mp.duration
+                                    if (dur > 0) durationMs = dur
                                     if (!isLoopingExplicit) {
-                                        isLooping = mp.duration in 1..30_000
+                                        isLooping = durationMs in 1..30_000
                                     }
                                     mp.isLooping = isLooping
                                     start()
@@ -497,6 +490,7 @@ fun PenikVideoViewer(
                                 }
                                 setOnErrorListener { _, _, _ ->
                                     isError = true
+                                    isPrepared = true
                                     false
                                 }
                                 videoViewRef = this
@@ -511,8 +505,24 @@ fun PenikVideoViewer(
                                 }
                 )
 
+                if (!isPrepared) {
+                    val thumbModel: Any? = localFile ?: rawUrl
+                    if (thumbModel != null) {
+                        AsyncImage(
+                                model = thumbModel,
+                                contentDescription = null,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    CircularProgressIndicator(
+                            color = colorResource(R.color.penik_accent),
+                            modifier = Modifier.size(48.dp)
+                    )
+                }
+
                 AnimatedVisibility(
-                        visible = showControls || !isPlaying,
+                        visible = (showControls || !isPlaying) && isPrepared,
                         enter = fadeIn(),
                         exit = fadeOut(),
                         modifier = Modifier.align(Alignment.Center)
