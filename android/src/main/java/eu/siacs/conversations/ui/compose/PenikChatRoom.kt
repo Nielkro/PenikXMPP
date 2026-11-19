@@ -115,12 +115,15 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import eu.siacs.conversations.R
+import eu.siacs.conversations.entities.Account
+import eu.siacs.conversations.entities.Contact
 import eu.siacs.conversations.entities.Conversation
 import eu.siacs.conversations.entities.Conversational
 import eu.siacs.conversations.entities.Message
 import eu.siacs.conversations.entities.RtpSessionStatus
 import eu.siacs.conversations.entities.Sticker
 import eu.siacs.conversations.entities.Transferable
+import eu.siacs.conversations.xmpp.Jid
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -228,6 +231,7 @@ object PenikChatActions {
 }
 
 class PenikChatState {
+    var conversation by mutableStateOf<Conversation?>(null)
     var messages by mutableStateOf<ImmutableList<ChatMessageUi>>(persistentListOf())
     var isMuc by mutableStateOf(false)
     var showAvatars11 by mutableStateOf(true)
@@ -237,10 +241,19 @@ class PenikChatState {
     var stickerAuthToken by mutableStateOf("")
     var pendingScrollTargetUuid by mutableStateOf<String?>(null)
 
-    fun update(newMessages: ImmutableList<ChatMessageUi>, muc: Boolean, avatars11: Boolean = true) {
+    @JvmOverloads
+    fun update(
+        newMessages: ImmutableList<ChatMessageUi>,
+        muc: Boolean,
+        avatars11: Boolean = true,
+        conv: Conversation? = null
+    ) {
         messages = newMessages
         isMuc = muc
         showAvatars11 = avatars11
+        if (conv != null) {
+            conversation = conv
+        }
     }
 }
 
@@ -1026,7 +1039,26 @@ fun PenikMessageRow(
                 verticalAlignment = Alignment.Bottom
         ) {
             val conv = PenikRepository.getInstance().findConversationByUuid(item.conversationUuid)
-            val message = conv?.findMessageWithUuid(item.uuid)
+            val realMessage = conv?.findMessageWithUuid(item.uuid)
+            val message: Message = realMessage ?: run {
+                val effectiveConv: Conversational = conv ?: object : Conversational {
+                    override fun getUuid(): String = item.conversationUuid
+                    override fun getMode(): Int = if (item.isMuc) Conversational.MODE_MULTI else Conversational.MODE_SINGLE
+                    override fun getAccount(): Account? = null
+                    override fun getAddress(): Jid? = null
+                    override fun getContact(): Contact? = null
+                }
+                Message(
+                    effectiveConv,
+                    item.body,
+                    if (item.isEncrypted) Message.ENCRYPTION_AXOLOTL else Message.ENCRYPTION_NONE,
+                    item.status
+                ).apply {
+                    setUuid(item.uuid)
+                    setTime(item.timeSent)
+                    setType(item.type)
+                }
+            }
 
             if (showAvatar) {
                 val context = LocalContext.current
@@ -1061,8 +1093,6 @@ fun PenikMessageRow(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
             }
-
-            if (message == null) return@Row
 
             Box(
                     modifier = Modifier.weight(1f, fill = false),
@@ -2000,14 +2030,13 @@ fun PenikAttachmentRow(
             val t = message.transferable
             val transferStatus = t?.status
             val isTranscoding = transferStatus == Transferable.STATUS_TRANSCODING
-            val isUploading = isSentByMe && message.fileParams?.url == null && (
-                    isTranscoding ||
-                    transferStatus == Transferable.STATUS_UPLOADING ||
-                    transferStatus == Transferable.STATUS_CHECKING ||
+            val isActivelyUploading = t != null && (transferStatus == Transferable.STATUS_UPLOADING || transferStatus == Transferable.STATUS_CHECKING)
+            val isStalledUpload = isSentByMe && message.fileParams?.url == null && !isTranscoding && !isActivelyUploading && (
                     message.needsUploading() ||
                     status == Message.STATUS_UNSEND ||
                     status == Message.STATUS_WAITING
             )
+            val isUploading = isTranscoding || isActivelyUploading || isStalledUpload
             val initialTotal = remember(message.uuid, revision) {
                 t?.fileSize?.takeIf { it > 0L }
                     ?: message.fileParams?.getSize()?.takeIf { it > 0L }
@@ -2042,6 +2071,10 @@ fun PenikAttachmentRow(
                                     .background(Color(0x15FFFFFF))
                                     .combinedClickable(
                                             onClick = {
+                                                if (isStalledUpload) {
+                                                    listener.onMessageAction(PenikChatActions.RESEND, message)
+                                                    return@combinedClickable
+                                                }
                                                 if (isUploading) {
                                                     return@combinedClickable
                                                 }
@@ -2065,6 +2098,7 @@ fun PenikAttachmentRow(
                 if (isUploading) {
                     val badgeText = when {
                         isTranscoding -> "Сжатие $transcodePercent%"
+                        isStalledUpload -> "Ожидание отправки..."
                         currentTotal > 0L -> {
                             val transferredFormatted = android.text.format.Formatter.formatShortFileSize(
                                     context,
@@ -2075,7 +2109,7 @@ fun PenikAttachmentRow(
                         }
                         else -> "Загрузка..."
                     }
-                    val badgeIcon = if (isTranscoding) {
+                    val badgeIcon = if (isTranscoding || isStalledUpload) {
                         painterResource(R.drawable.ic_schedule_24dp)
                     } else {
                         painterResource(R.drawable.ic_upload_24dp)

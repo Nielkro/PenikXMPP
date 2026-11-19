@@ -42,7 +42,16 @@ class PenikRepository private constructor() {
     val fileBackend get() = serviceRef?.fileBackend
     val databaseBackend get() = serviceRef?.databaseBackend
 
-    fun findConversationByUuid(uuid: String): Conversation? = serviceRef?.findConversationByUuid(uuid)
+    var activeConversation: Conversation? = null
+
+    fun findConversationByUuid(uuid: String): Conversation? {
+        val active = activeConversation
+        if (active != null && active.uuid == uuid) {
+            return active
+        }
+        return serviceRef?.findConversationByUuid(uuid)
+            ?: serviceRef?.findConversationByUuidReliable(uuid)
+    }
 
     fun updateConversations(mainList: List<Conversation>, archivedList: List<Conversation>, context: Context) {
         val mappedMain = PenikConversationMapper.map(mainList, context)

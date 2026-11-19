@@ -55,3 +55,6 @@ scripts/deploy_server.sh
 # Desktop build artifacts
 desktop/target/
 desktop/build/
+
+# Web build artifacts
+node_modules/

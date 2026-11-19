@@ -229,7 +229,8 @@ public class Conversation extends AbstractEntity
         final ArrayList<Message> results = new ArrayList<>();
         synchronized (this.messages) {
             for (Message message : this.messages) {
-                if (message.getStatus() == Message.STATUS_WAITING) {
+                final int s = message.getStatus();
+                if (s == Message.STATUS_WAITING || s == Message.STATUS_UNSEND) {
                     results.add(message);
                 }
             }
@@ -370,8 +371,7 @@ public class Conversation extends AbstractEntity
         final ArrayList<Message> results = new ArrayList<>();
         synchronized (this.messages) {
             for (Message message : this.messages) {
-                if ((message.getType() == Message.TYPE_TEXT || message.hasFileOnRemoteHost())
-                        && message.getStatus() == Message.STATUS_UNSEND) {
+                if (message.getStatus() == Message.STATUS_UNSEND) {
                     results.add(message);
                 }
             }

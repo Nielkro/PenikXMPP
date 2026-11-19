@@ -3741,11 +3741,12 @@ public class ConversationFragment extends XmppFragment
             this.conversation.trim();
         }
 
-        if (this.conversation.countMessages() == 0 && requireXmppActivity().xmppConnectionService != null) {
-            final var messages = requireXmppActivity()
-                    .xmppConnectionService
-                    .databaseBackend
-                    .getMessages(this.conversation, Config.PAGE_SIZE);
+        if (this.conversation.countMessages() == 0) {
+            final var xmppService = requireXmppActivity().xmppConnectionService;
+            final var db = xmppService != null
+                    ? xmppService.databaseBackend
+                    : DatabaseBackend.getInstance(requireContext());
+            final var messages = db.getMessages(this.conversation, Config.PAGE_SIZE);
             this.conversation.addAll(0, messages);
         }
 
@@ -4194,10 +4195,13 @@ public class ConversationFragment extends XmppFragment
                 isMuc,
                 showAvatars11,
                 requireXmppActivity().xmppConnectionService);
+        this.penikChatState.setConversation(this.conversation);
+        PenikRepository.getInstance().setActiveConversation(this.conversation);
         this.penikChatState.update(
                 mappedMessages,
                 isMuc,
-                showAvatars11);
+                showAvatars11,
+                this.conversation);
         PenikRepository.getInstance().updateChatMessages(
                 this.messageList,
                 isMuc,
@@ -5246,12 +5250,22 @@ public class ConversationFragment extends XmppFragment
                 return;
             }
         } else {
-            if (!requireXmppActivity()
-                    .xmppConnectionService
-                    .isConversationStillOpen(conversation)) {
-                clearPending();
-                requireConversationsActivity().onConversationArchived(conversation);
-                return;
+            if (this.conversation != null) {
+                if (xmppActivity != null && xmppActivity.xmppConnectionService != null) {
+                    final Conversation live =
+                            xmppActivity.xmppConnectionService.findConversationByUuidReliable(this.conversation.getUuid());
+                    if (live != null) {
+                        this.conversation = live;
+                    }
+                    if (!xmppActivity.xmppConnectionService.isConversationStillOpen(this.conversation)) {
+                        clearPending();
+                        requireConversationsActivity().onConversationArchived(this.conversation);
+                        return;
+                    }
+                    reInit(this.conversation);
+                    refresh(false);
+                    xmppActivity.xmppConnectionService.sendUnsentMessages(this.conversation);
+                }
             }
         }
         ActivityResult activityResult = postponedActivityResult.pop();
@@ -5270,6 +5284,9 @@ public class ConversationFragment extends XmppFragment
             return false;
         }
         reInit(conversation);
+        if (requireXmppActivity().xmppConnectionService != null) {
+            requireXmppActivity().xmppConnectionService.sendUnsentMessages(conversation);
+        }
         ScrollState scrollState = pendingScrollState.pop();
         String lastMessageUuid = pendingLastMessageUuid.pop();
         List<Attachment> attachments = pendingMediaPreviews.pop();
